@@ -13,6 +13,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppAppIndexRouteImport } from './routes/_app.app.index'
+import { Route as AppAppTemplatesRouteImport } from './routes/_app.app.templates'
+import { Route as AppAppHistoryRouteImport } from './routes/_app.app.history'
+import { Route as AppAppGenerateRouteImport } from './routes/_app.app.generate'
+import { Route as AppAppEmployeesRouteImport } from './routes/_app.app.employees'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -33,15 +37,43 @@ const AppAppIndexRoute = AppAppIndexRouteImport.update({
   path: '/app/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAppTemplatesRoute = AppAppTemplatesRouteImport.update({
+  id: '/app/templates',
+  path: '/app/templates',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppHistoryRoute = AppAppHistoryRouteImport.update({
+  id: '/app/history',
+  path: '/app/history',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppGenerateRoute = AppAppGenerateRouteImport.update({
+  id: '/app/generate',
+  path: '/app/generate',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppEmployeesRoute = AppAppEmployeesRouteImport.update({
+  id: '/app/employees',
+  path: '/app/employees',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/app/employees': typeof AppAppEmployeesRoute
+  '/app/generate': typeof AppAppGenerateRoute
+  '/app/history': typeof AppAppHistoryRoute
+  '/app/templates': typeof AppAppTemplatesRoute
   '/app/': typeof AppAppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/app/employees': typeof AppAppEmployeesRoute
+  '/app/generate': typeof AppAppGenerateRoute
+  '/app/history': typeof AppAppHistoryRoute
+  '/app/templates': typeof AppAppTemplatesRoute
   '/app': typeof AppAppIndexRoute
 }
 export interface FileRoutesById {
@@ -49,14 +81,41 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/app/employees': typeof AppAppEmployeesRoute
+  '/_app/app/generate': typeof AppAppGenerateRoute
+  '/_app/app/history': typeof AppAppHistoryRoute
+  '/_app/app/templates': typeof AppAppTemplatesRoute
   '/_app/app/': typeof AppAppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/app/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/app/employees'
+    | '/app/generate'
+    | '/app/history'
+    | '/app/templates'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/app'
-  id: '__root__' | '/' | '/_app' | '/login' | '/_app/app/'
+  to:
+    | '/'
+    | '/login'
+    | '/app/employees'
+    | '/app/generate'
+    | '/app/history'
+    | '/app/templates'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/app/employees'
+    | '/_app/app/generate'
+    | '/_app/app/history'
+    | '/_app/app/templates'
+    | '/_app/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,14 +154,50 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/app/templates': {
+      id: '/_app/app/templates'
+      path: '/app/templates'
+      fullPath: '/app/templates'
+      preLoaderRoute: typeof AppAppTemplatesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/history': {
+      id: '/_app/app/history'
+      path: '/app/history'
+      fullPath: '/app/history'
+      preLoaderRoute: typeof AppAppHistoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/generate': {
+      id: '/_app/app/generate'
+      path: '/app/generate'
+      fullPath: '/app/generate'
+      preLoaderRoute: typeof AppAppGenerateRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/employees': {
+      id: '/_app/app/employees'
+      path: '/app/employees'
+      fullPath: '/app/employees'
+      preLoaderRoute: typeof AppAppEmployeesRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAppEmployeesRoute: typeof AppAppEmployeesRoute
+  AppAppGenerateRoute: typeof AppAppGenerateRoute
+  AppAppHistoryRoute: typeof AppAppHistoryRoute
+  AppAppTemplatesRoute: typeof AppAppTemplatesRoute
   AppAppIndexRoute: typeof AppAppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAppEmployeesRoute: AppAppEmployeesRoute,
+  AppAppGenerateRoute: AppAppGenerateRoute,
+  AppAppHistoryRoute: AppAppHistoryRoute,
+  AppAppTemplatesRoute: AppAppTemplatesRoute,
   AppAppIndexRoute: AppAppIndexRoute,
 }
 

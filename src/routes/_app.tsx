@@ -111,7 +111,7 @@ function AppLayout() {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="start" className="w-64 bg-sidebar p-0">
+              <SheetContent side="left" className="w-64 bg-sidebar p-0">
                 <div className="flex h-16 items-center border-b border-sidebar-border px-5">
                   <BrandLogo size="md" />
                 </div>

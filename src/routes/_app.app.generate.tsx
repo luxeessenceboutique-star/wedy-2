@@ -81,7 +81,7 @@ function GeneratePage() {
       if (!employee || !template) throw new Error("Sélection incomplète");
       const { data: u } = await supabase.auth.getUser();
       const docName = getName(template);
-      const { error } = await supabase.from("generated_documents").insert({
+      const payload = {
         employee_id: employee.id,
         template_id: template.id,
         generated_by: u.user?.id,
@@ -89,7 +89,10 @@ function GeneratePage() {
         content: previewContent,
         variables_used: employee as unknown as Record<string, unknown>,
         language: lang,
-      });
+      };
+      const { error } = await (supabase.from("generated_documents") as unknown as {
+        insert: (p: typeof payload) => Promise<{ error: Error | null }>;
+      }).insert(payload);
       if (error) throw error;
       return docName;
     },

@@ -14,16 +14,261 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      document_templates: {
+        Row: {
+          body_template: string
+          category: Database["public"]["Enums"]["doc_category"]
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name_ar: string
+          name_en: string
+          name_fr: string
+          updated_at: string
+          variables: string[]
+        }
+        Insert: {
+          body_template: string
+          category?: Database["public"]["Enums"]["doc_category"]
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_ar: string
+          name_en: string
+          name_fr: string
+          updated_at?: string
+          variables?: string[]
+        }
+        Update: {
+          body_template?: string
+          category?: Database["public"]["Enums"]["doc_category"]
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name_ar?: string
+          name_en?: string
+          name_fr?: string
+          updated_at?: string
+          variables?: string[]
+        }
+        Relationships: []
+      }
+      employees: {
+        Row: {
+          address: string | null
+          birth_date: string | null
+          cin: string | null
+          contract_end: string | null
+          contract_start: string | null
+          contract_type: Database["public"]["Enums"]["contract_type"] | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          email: string | null
+          full_name: string
+          hire_date: string | null
+          id: string
+          internship_end: string | null
+          internship_start: string | null
+          manager: string | null
+          matricule: string | null
+          nationality: string | null
+          notes: string | null
+          phone: string | null
+          position: string | null
+          salary: number | null
+          status: Database["public"]["Enums"]["employee_status"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          birth_date?: string | null
+          cin?: string | null
+          contract_end?: string | null
+          contract_start?: string | null
+          contract_type?: Database["public"]["Enums"]["contract_type"] | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          email?: string | null
+          full_name: string
+          hire_date?: string | null
+          id?: string
+          internship_end?: string | null
+          internship_start?: string | null
+          manager?: string | null
+          matricule?: string | null
+          nationality?: string | null
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          salary?: number | null
+          status?: Database["public"]["Enums"]["employee_status"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          birth_date?: string | null
+          cin?: string | null
+          contract_end?: string | null
+          contract_start?: string | null
+          contract_type?: Database["public"]["Enums"]["contract_type"] | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          email?: string | null
+          full_name?: string
+          hire_date?: string | null
+          id?: string
+          internship_end?: string | null
+          internship_start?: string | null
+          manager?: string | null
+          matricule?: string | null
+          nationality?: string | null
+          notes?: string | null
+          phone?: string | null
+          position?: string | null
+          salary?: number | null
+          status?: Database["public"]["Enums"]["employee_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      generated_documents: {
+        Row: {
+          content: string
+          created_at: string
+          document_type: string
+          employee_id: string
+          file_url: string | null
+          generated_by: string | null
+          id: string
+          language: string
+          template_id: string | null
+          variables_used: Json
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          document_type: string
+          employee_id: string
+          file_url?: string | null
+          generated_by?: string | null
+          id?: string
+          language?: string
+          template_id?: string | null
+          variables_used?: Json
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          document_type?: string
+          employee_id?: string
+          file_url?: string | null
+          generated_by?: string | null
+          id?: string
+          language?: string
+          template_id?: string | null
+          variables_used?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_documents_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          department: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "rh"
+      contract_type: "CDI" | "CDD" | "Stage" | "Freelance"
+      doc_category:
+        | "attestation"
+        | "contrat"
+        | "avenant"
+        | "certificat"
+        | "lettre"
+        | "autre"
+      employee_status: "active" | "inactive" | "terminated" | "intern"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +395,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "rh"],
+      contract_type: ["CDI", "CDD", "Stage", "Freelance"],
+      doc_category: [
+        "attestation",
+        "contrat",
+        "avenant",
+        "certificat",
+        "lettre",
+        "autre",
+      ],
+      employee_status: ["active", "inactive", "terminated", "intern"],
+    },
   },
 } as const

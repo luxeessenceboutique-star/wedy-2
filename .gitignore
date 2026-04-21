@@ -1,3 +1,12 @@
+# Environment files (secrets — never commit)
+.env
+.env.local
+frontend/.env
+backend/.env
+**/__pycache__/
+*.pyc
+*.pyo
+
 # Logs
 logs
 *.log

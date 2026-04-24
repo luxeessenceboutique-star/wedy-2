@@ -89,47 +89,6 @@ def delete_document(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Templates
-# ─────────────────────────────────────────────────────────────────────────────
-
-@router.get("/templates", response_model=List[TemplateOut])
-def list_templates(
-    supabase: Client = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-):
-    response = supabase.table("document_templates").select("*").execute()
-    return response.data
-
-
-@router.get("/templates/{template_id}", response_model=TemplateOut)
-def get_template(
-    template_id: UUID,
-    supabase: Client = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-):
-    response = supabase.table("document_templates").select("*").eq("id", str(template_id)).execute()
-    if not response.data:
-        raise HTTPException(status_code=404, detail="Template not found")
-    return response.data[0]
-
-
-@router.post("/templates", response_model=TemplateOut, status_code=201)
-def create_template(
-    payload: TemplateCreate,
-    supabase: Client = Depends(get_db),
-    current_user: dict = Depends(require_role("admin", "hr")),
-):
-    data = payload.model_dump()
-    response = supabase.table("document_templates").insert(data).execute()
-    if not response.data:
-        raise HTTPException(status_code=400, detail="Could not create template")
-    
-    template = response.data[0]
-    log_action(supabase, current_user["id"], "CREATE_TEMPLATE", "document_template", template["id"])
-    return template
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Document Generation
 # ─────────────────────────────────────────────────────────────────────────────
 

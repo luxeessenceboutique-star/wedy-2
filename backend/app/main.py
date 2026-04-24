@@ -9,8 +9,9 @@ from app.config import settings
 from app.routers import (
     auth, profiles, employees, interns,
     documents, cv, requests, departments,
-    notifications, dashboard
+    notifications, dashboard, templates
 )
+
 from app.dependencies import get_current_user
 
 app = FastAPI(
@@ -41,6 +42,8 @@ app.include_router(requests.router, prefix="/api")
 app.include_router(departments.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
+app.include_router(templates.router, prefix="/api")
+
 
 # Protected Uploads Endpoint
 @app.get("/api/uploads/{file_path:path}")

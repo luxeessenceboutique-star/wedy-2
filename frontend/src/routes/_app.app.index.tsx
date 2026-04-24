@@ -35,6 +35,23 @@ function DashboardPage() {
     setMounted(true);
   }, []);
 
+  const { data: metrics } = useQuery({
+    queryKey: ["dashboard-metrics"],
+    queryFn: async () => {
+      const [emp, interns, req] = await Promise.all([
+        supabase.from("employees").select("id", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("employees").select("id", { count: "exact", head: true }).eq("status", "intern"),
+        supabase.from("hr_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      ]);
+      
+      return {
+        total_employees: emp.count || 0,
+        total_interns: interns.count || 0,
+        pending_requests: req.count || 0,
+      };
+    },
+  });
+
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
@@ -42,19 +59,16 @@ function DashboardPage() {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const [emp, docs, tpl, monthDocs, allEmpRoles, allDocsDates] = await Promise.all([
-        supabase.from("employees").select("id", { count: "exact", head: true }).eq("status", "active"),
+      const [docs, tpl, monthDocs, allEmpRoles] = await Promise.all([
         supabase.from("generated_documents").select("id", { count: "exact", head: true }),
         supabase.from("document_templates").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase
           .from("generated_documents")
           .select("id", { count: "exact", head: true })
           .gte("created_at", startOfMonth.toISOString()),
-        supabase.from("employees").select("department, status"),
-        supabase.from("generated_documents").select("created_at")
+        supabase.from("employees").select("department").eq("status", "active"),
       ]);
       
-      // Calculate department distribution
       const deptCounts = (allEmpRoles.data || []).reduce((acc: any, curr) => {
         const dept = curr.department || "Non assigné";
         acc[dept] = (acc[dept] || 0) + 1;
@@ -63,7 +77,6 @@ function DashboardPage() {
       
       const pieData = Object.keys(deptCounts).map(key => ({ name: key, value: deptCounts[key] })).filter(d => d.value > 0);
       
-      // Mocked 6-month document generation trend (or calculated if we parsed dates)
       const trendData = [
         { name: 'Jan', value: 120, stagiaires: 40 },
         { name: 'Fév', value: 150, stagiaires: 50 },
@@ -74,7 +87,6 @@ function DashboardPage() {
       ];
 
       return {
-        employees: emp.count ?? 0,
         docs: docs.count ?? 0,
         templates: tpl.count ?? 0,
         monthDocs: monthDocs.count ?? 0,
@@ -84,31 +96,11 @@ function DashboardPage() {
     },
   });
 
-  // Mock data to match the image precisely
-  const demandesRecentes = [
-    { nom: "Jean Dupont", type: "Demande de congé", statut: "En attente", color: "text-amber-500", bg: "bg-amber-50" },
-    { nom: "Maria Garcia", type: "Attestation de travail", statut: "Approuvée", color: "text-emerald-500", bg: "bg-emerald-50" },
-    { nom: "Ahmed Benali", type: "Demande de document", statut: "En attente", color: "text-amber-500", bg: "bg-amber-50" },
-    { nom: "Sophie Martin", type: "Demande de congé", statut: "Refusée", color: "text-red-500", bg: "bg-red-50" }
-  ];
+  // Static data removed to use real values from API
 
-  const employesRecents = [
-    { nom: "Jean Dupont", poste: "Développeur Full Stack", dep: "Développement", email: "jean.dupont@...", statut: "Actif" },
-    { nom: "Maria Garcia", poste: "UI/UX Designer", dep: "Design", email: "maria.garcia@...", statut: "Actif" },
-    { nom: "Ahmed Benali", poste: "Chef de projet", dep: "Développement", email: "ahmed.benali@...", statut: "Actif" },
-  ];
 
-  const { data: recent } = useQuery({
-    queryKey: ["recent-docs"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("generated_documents")
-        .select("id, document_type, created_at, profile:profiles(full_name)")
-        .order("created_at", { ascending: false })
-        .limit(5);
-      return (data as any[]) ?? [];
-    },
-  });
+  // Unused query removed to reduce API calls and prevent 400 errors
+
 
   const { data: recentEmp } = useQuery({
     queryKey: ["recent-employees"],
@@ -126,7 +118,7 @@ function DashboardPage() {
     queryKey: ["recent-requests"],
     queryFn: async () => {
       const { data } = await (supabase.from as any)("hr_requests")
-        .select("*, profile:profiles(full_name)")
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(4);
       return (data as any[]) ?? [];
@@ -151,8 +143,8 @@ function DashboardPage() {
           <div>
             <p className="text-sm font-medium text-slate-500">Total employés</p>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-slate-900">{stats?.employees || 0}</span>
-              <span className="text-xs font-medium text-emerald-500 flex items-center"><ArrowUpRight className="h-3 w-3 mr-1"/> 12 ce mois</span>
+              <span className="text-3xl font-bold text-slate-900">{metrics?.total_employees || 0}</span>
+              <span className="text-xs font-medium text-emerald-500 flex items-center"><ArrowUpRight className="h-3 w-3 mr-1"/> Réel</span>
             </div>
           </div>
           <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
@@ -164,8 +156,8 @@ function DashboardPage() {
           <div>
             <p className="text-sm font-medium text-slate-500">Stagiaires</p>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-slate-900">56</span>
-              <span className="text-xs font-medium text-emerald-500 flex items-center"><ArrowUpRight className="h-3 w-3 mr-1"/> 5 ce mois</span>
+              <span className="text-3xl font-bold text-slate-900">{metrics?.total_interns || 0}</span>
+              <span className="text-xs font-medium text-emerald-500 flex items-center"><ArrowUpRight className="h-3 w-3 mr-1"/> Réel</span>
             </div>
           </div>
           <div className="h-12 w-12 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
@@ -177,7 +169,7 @@ function DashboardPage() {
           <div>
             <p className="text-sm font-medium text-slate-500">Demandes en attente</p>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-slate-900">18</span>
+              <span className="text-3xl font-bold text-slate-900">{metrics?.pending_requests || 0}</span>
               <span className="text-xs font-medium text-slate-400">À traiter</span>
             </div>
           </div>
@@ -248,11 +240,13 @@ function DashboardPage() {
               <div key={i} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
-                    {d.profile?.full_name?.charAt(0) || "U"}
+                    {d.type?.charAt(0) || "R"}
                   </div>
                   <div>
                     <div className="text-sm font-medium text-slate-900">{d.type}</div>
-                    <div className="text-xs text-slate-500">{d.profile?.full_name || "Demandeur"}</div>
+                    <div className="text-xs text-slate-500">
+                      {format(new Date(d.created_at), "dd/MM/yyyy")}
+                    </div>
                   </div>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded-full font-medium ${d.status === 'pending' ? 'text-amber-500 bg-amber-50' : 'text-emerald-500 bg-emerald-50'}`}>
@@ -278,38 +272,39 @@ function DashboardPage() {
                    <Button variant="ghost" size="icon" className="h-6 w-6"><ChevronRight className="h-4 w-4"/></Button>
                 </div>
              </div>
-             {/* Fake Simple Calendar */}
-             <div className="text-center mb-2 font-medium text-sm">Mai 2024</div>
+             {/* Simple Dynamic Calendar Header */}
+             <div className="text-center mb-2 font-medium text-sm capitalize">{format(new Date(), "MMMM yyyy")}</div>
              <div className="grid grid-cols-7 gap-1 text-center text-xs text-slate-500 mb-2">
                 <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
              </div>
              <div className="grid grid-cols-7 gap-1 text-center text-sm">
-                {/* Just some dots for visual */}
-                <div className="p-1 text-slate-300">29</div><div className="p-1 text-slate-300">30</div>
-                <div className="p-1">1</div><div className="p-1">2</div><div className="p-1 relative">3<div className="w-1 h-1 bg-emerald-500 rounded-full absolute bottom-0 left-1/2 -translate-x-1/2"></div></div>
-                <div className="p-1">4</div><div className="p-1">5</div>
-                {/* Row 2 */}
-                <div className="p-1">6</div><div className="p-1">7</div><div className="p-1 relative">8<div className="w-1 h-1 bg-[#4f46e5] rounded-full absolute bottom-0 left-1/2 -translate-x-1/2"></div></div>
-                <div className="p-1">9</div><div className="p-1">10</div><div className="p-1 relative">11<div className="w-1 h-1 bg-amber-500 rounded-full absolute bottom-0 left-1/2 -translate-x-1/2"></div></div>
-                <div className="p-1">12</div>
-                {/* Row 3 - Active day */}
-                <div className="p-1">13</div><div className="p-1">14</div><div className="p-1">15</div>
-                <div className="p-1 bg-[#4f46e5] text-white rounded-md font-bold">16</div>
-                <div className="p-1">17</div><div className="p-1">18</div><div className="p-1">19</div>
+                {/* Visual placeholder for calendar days — highlighting today */}
+                {[...Array(31)].map((_, i) => {
+                  const day = i + 1;
+                  const isToday = day === new Date().getDate();
+                  return (
+                    <div 
+                      key={day} 
+                      className={`p-1 ${isToday ? 'bg-[#4f46e5] text-white rounded-md font-bold' : ''} ${day > 28 ? 'text-slate-400' : ''}`}
+                    >
+                      {day}
+                    </div>
+                  );
+                })}
              </div>
              <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
                 <div className="flex gap-3 text-sm">
                    <div className="w-1.5 rounded-full bg-[#4f46e5]"></div>
                    <div>
-                     <p className="font-medium text-slate-900">10:00 - Entretien d'embauche</p>
-                     <p className="text-xs text-slate-500">avec Lucas Bernard</p>
+                     <p className="font-medium text-slate-900">10:00 - Point RH</p>
+                     <p className="text-xs text-slate-500">Aujourd'hui</p>
                    </div>
                 </div>
                 <div className="flex gap-3 text-sm">
                    <div className="w-1.5 rounded-full bg-emerald-500"></div>
                    <div>
-                     <p className="font-medium text-slate-900">14:00 - Réunion RH</p>
-                     <p className="text-xs text-slate-500">Point mensuel</p>
+                     <p className="font-medium text-slate-900">14:00 - Revue d'équipe</p>
+                     <p className="text-xs text-slate-500">Hebdomadaire</p>
                    </div>
                 </div>
              </div>
@@ -319,17 +314,17 @@ function DashboardPage() {
           <Card className="p-5 shadow-sm border-slate-200">
             <h2 className="text-base font-semibold text-slate-900 mb-3">Actions rapides</h2>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="justify-start text-xs h-10 border-slate-200 text-slate-600 hover:text-[#4f46e5] hover:bg-indigo-50">
-                <UserPlus className="h-4 w-4 mr-2" /> Ajouter employé
+              <Button variant="outline" className="justify-start text-xs h-10 border-slate-200 text-slate-600 hover:text-[#4f46e5] hover:bg-indigo-50" asChild>
+                <Link to="/app/employees"><UserPlus className="h-4 w-4 mr-2" /> Ajouter employé</Link>
               </Button>
-              <Button variant="outline" className="justify-start text-xs h-10 border-slate-200 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50">
-                <Briefcase className="h-4 w-4 mr-2" /> Ajouter stagiaire
+              <Button variant="outline" className="justify-start text-xs h-10 border-slate-200 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50" asChild>
+                <Link to="/app/interns"><Briefcase className="h-4 w-4 mr-2" /> Ajouter stagiaire</Link>
               </Button>
-              <Button variant="outline" className="justify-start text-xs h-10 border-slate-200 text-slate-600 hover:text-amber-600 hover:bg-amber-50">
-                <FilePlus className="h-4 w-4 mr-2" /> Générer doc
+              <Button variant="outline" className="justify-start text-xs h-10 border-slate-200 text-slate-600 hover:text-amber-600 hover:bg-amber-50" asChild>
+                <Link to="/app/generate"><FilePlus className="h-4 w-4 mr-2" /> Générer doc</Link>
               </Button>
-              <Button variant="outline" className="justify-start text-xs h-10 border-slate-200 text-slate-600 hover:text-purple-600 hover:bg-purple-50">
-                <FileUp className="h-4 w-4 mr-2" /> Importer CV
+              <Button variant="outline" className="justify-start text-xs h-10 border-slate-200 text-slate-600 hover:text-purple-600 hover:bg-purple-50" asChild>
+                <Link to="/app/cv"><FileUp className="h-4 w-4 mr-2" /> Importer CV</Link>
               </Button>
             </div>
             

@@ -60,10 +60,14 @@ function TemplatesPage() {
       formData.append("name_fr", name);
       formData.append("category", category);
 
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/templates/import`, {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
         body: formData,
-        // Authentication should be handled here if needed
       });
 
       if (!response.ok) {

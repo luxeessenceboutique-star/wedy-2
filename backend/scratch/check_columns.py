@@ -1,32 +1,30 @@
 import os
-import sys
-from sqlalchemy import create_engine, text
+from supabase import create_client
 from dotenv import load_dotenv
 
-# Load env from parent dir
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+load_dotenv(dotenv_path="../.env")
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+url = os.getenv("SUPABASE_URL")
+key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-def check_schema():
-    if not DATABASE_URL:
-        print("Erreur: DATABASE_URL non trouve")
-        return
+supabase = create_client(url, key)
 
-    engine = create_engine(DATABASE_URL)
-    tables = ['employees', 'document_templates', 'generated_documents', 'profiles', 'user_roles']
-    
-    print("STRUCTURE DES TABLES ACTUELLES :")
-    with engine.connect() as conn:
-        for t in tables:
-            print(f"\n[{t}]:")
-            try:
-                res = conn.execute(text(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{t}' ORDER BY ordinal_position;"))
-                for col in res.fetchall():
-                    print(f"  - {col[0]} ({col[1]})")
-            except Exception as e:
-                print(f"  ERROR: {e}")
-    engine.dispose()
+def check_table(table_name):
+    print(f"\nStructure of table: {table_name}")
+    try:
+        # Get one row to see columns
+        res = supabase.table(table_name).select("*").limit(1).execute()
+        if res.data:
+            print(f"Columns: {list(res.data[0].keys())}")
+        else:
+            print("Table is empty, trying to get columns via query...")
+            # We can't easily get column names from an empty table with the SDK 
+            # without running a raw SQL query or checking a view.
+    except Exception as e:
+        print(f"Error checking {table_name}: {e}")
 
-if __name__ == "__main__":
-    check_schema()
+check_table("generated_documents")
+check_table("hr_requests")
+check_table("document_templates")
+check_table("employees")
+check_table("profiles")

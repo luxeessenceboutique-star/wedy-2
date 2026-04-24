@@ -3,7 +3,7 @@ import fitz
 import re
 from app.services.ai_service import convert_to_html_template
 from supabase import Client
-from app.services.supabase import get_supabase
+from app.database import get_db
 from app.dependencies import get_current_user, require_admin
 from app.models.document import TemplateCreate, TemplateUpdate
 
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/templates", tags=["templates"])
 async def list_templates(
     category: str = Query(None),
     active_only: bool = Query(True),
-    db: Client = Depends(get_supabase),
+    db: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     query = db.table("document_templates").select("*").order("name_fr")
@@ -29,7 +29,7 @@ async def list_templates(
 @router.get("/{template_id}")
 async def get_template(
     template_id: str,
-    db: Client = Depends(get_supabase),
+    db: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     result = db.table("document_templates").select("*").eq("id", template_id).single().execute()
@@ -41,7 +41,7 @@ async def get_template(
 @router.post("", status_code=201)
 async def create_template(
     body: TemplateCreate,
-    db: Client = Depends(get_supabase),
+    db: Client = Depends(get_db),
     current_user: dict = Depends(require_admin),
 ):
     payload = body.model_dump()
@@ -53,7 +53,7 @@ async def create_template(
 async def update_template(
     template_id: str,
     body: TemplateUpdate,
-    db: Client = Depends(get_supabase),
+    db: Client = Depends(get_db),
     current_user: dict = Depends(require_admin),
 ):
     payload = body.model_dump(exclude_none=True)
@@ -68,7 +68,7 @@ async def update_template(
 @router.delete("/{template_id}", status_code=204)
 async def delete_template(
     template_id: str,
-    db: Client = Depends(get_supabase),
+    db: Client = Depends(get_db),
     current_user: dict = Depends(require_admin),
 ):
     db.table("document_templates").delete().eq("id", template_id).execute()
@@ -80,7 +80,7 @@ async def import_template_from_file(
     name_en: str = Form(""),
     name_ar: str = Form(""),
     category: str = Form("autre"),
-    db: Client = Depends(get_supabase),
+    db: Client = Depends(get_db),
     current_user: dict = Depends(require_admin),
 ):
     if not file.filename.lower().endswith(".pdf"):

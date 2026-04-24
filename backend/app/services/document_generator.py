@@ -135,13 +135,19 @@ def generate_document(
     output_format: str = "pdf",
 ) -> tuple[bytes, str]:
     ctx = build_context_from_profile(profile, extra_vars)
-    rendered = fill_template(template.get("content", ""), ctx)
+    
+    # Try body_template first (new), then content (old)
+    template_text = template.get("body_template") or template.get("content") or ""
+    rendered = fill_template(template_text, ctx)
+
+    # Try name_fr first (new), then name (old)
+    doc_title = template.get("name_fr") or template.get("name") or "Document"
 
     if output_format == "docx":
-        data = generate_docx_bytes(rendered, template.get("name", "Document"))
+        data = generate_docx_bytes(rendered, doc_title)
         media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     else:
-        data = generate_pdf_bytes(rendered, template.get("name", "Document"))
+        data = generate_pdf_bytes(rendered, doc_title)
         media_type = "application/pdf"
 
     return data, media_type

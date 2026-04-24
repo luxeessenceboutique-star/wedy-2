@@ -1,65 +1,58 @@
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, EmailStr
+"""Auth router — /api/auth (Supabase SDK Version)"""
+from fastapi import APIRouter, Depends, HTTPException, status
 from supabase import Client
-from app.services.supabase import get_supabase
+
+from app.database import get_db
 from app.dependencies import get_current_user
+from app.schemas import LoginRequest, RegisterRequest, TokenResponse, UserOut
+from app.services.auth_service import verify_password, hash_password, create_access_token
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class SignupRequest(BaseModel):
-    email: EmailStr
-    password: str
-    full_name: str
-
-
-@router.post("/login")
-async def login(body: LoginRequest, db: Client = Depends(get_supabase)):
+@router.post("/login", response_model=TokenResponse)
+def login(payload: LoginRequest, supabase: Client = Depends(get_db)):
+    """Delegate login to Supabase Auth"""
     try:
-        response = db.auth.sign_in_with_password({"email": body.email, "password": body.password})
-        return {
-            "access_token": response.session.access_token,
-            "token_type": "bearer",
-            "user": {
-                "id": response.user.id,
-                "email": response.user.email,
-            },
-        }
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-
-@router.post("/signup")
-async def signup(body: SignupRequest, db: Client = Depends(get_supabase)):
-    try:
-        response = db.auth.sign_up({
-            "email": body.email,
-            "password": body.password,
-            "options": {"data": {"full_name": body.full_name}},
+        res = supabase.auth.sign_in_with_password({
+            "email": payload.email,
+            "password": payload.password
         })
-        return {"message": "Account created. Please check your email for confirmation.", "user_id": response.user.id}
+        if not res.session:
+            raise HTTPException(status_code=400, detail="Identifiants invalides")
+        
+        return {
+            "access_token": res.session.access_token,
+            "token_type": "bearer",
+            "user_id": res.user.id,
+            "email": res.user.email,
+            "role": "employee" # Or fetch from metadata if available
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.post("/register", response_model=UserOut)
+def register(payload: RegisterRequest, supabase: Client = Depends(get_db)):
+    """Delegate registration to Supabase Auth"""
+    try:
+        res = supabase.auth.sign_up({
+            "email": payload.email,
+            "password": payload.password,
+            "options": {
+                "data": {"full_name": payload.email.split("@")[0]}
+            }
+        })
+        if not res.user:
+            raise HTTPException(status_code=400, detail="Erreur lors de l'inscription")
+        
+        # Le déclencheur Supabase (Trigger) devrait s'occuper de créer le profil et le rôle
+        return {
+            "id": res.user.id,
+            "email": res.user.email,
+            "role_name": "employee"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/logout")
-async def logout(db: Client = Depends(get_supabase), current_user: dict = Depends(get_current_user)):
-    db.auth.sign_out()
-    return {"message": "Logged out"}
-
-
-@router.get("/me")
-async def me(current_user: dict = Depends(get_current_user), db: Client = Depends(get_supabase)):
-    profile = db.table("profiles").select("*").eq("user_id", current_user["id"]).single().execute()
-    roles = db.table("user_roles").select("role").eq("user_id", current_user["id"]).execute()
-    return {
-        "id": current_user["id"],
-        "email": current_user["email"],
-        "profile": profile.data,
-        "roles": [r["role"] for r in roles.data],
-    }
+@router.get("/me", response_model=UserOut)
+def get_me(current_user: dict = Depends(get_current_user)):
+    return current_user

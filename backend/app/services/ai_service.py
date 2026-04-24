@@ -7,7 +7,8 @@ _client: anthropic.Anthropic | None = None
 def get_client() -> anthropic.Anthropic:
     global _client
     if _client is None:
-        _client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        _client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
     return _client
 
 
@@ -102,3 +103,47 @@ def translate_document(content: str, target_language: str) -> str:
         ],
     )
     return message.content[0].text
+
+
+def convert_to_html_template(raw_text: str) -> str:
+    """Use Claude to convert raw text from a document into a well-formatted HTML template."""
+    try:
+        if not settings.ANTHROPIC_API_KEY:
+            raise ValueError("ANTHROPIC_API_KEY is not set")
+            
+        message = get_client().messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4096,
+            system=SYSTEM_PROMPT,
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        "Convert the following raw text from an HR document into a clean, professional, and well-structured HTML template. "
+                        "Identify specific employee or document details (like names, dates, job titles, salaries, ID numbers, etc.) "
+                        "and replace them with template variables in the format {{variable_name}}. "
+                        "Use common variable names like: full_name, cin, cnss, job_title, department, hire_date, today, salary, address. "
+                        "The HTML should only contain the content to be placed inside a <body> tag, no <html> or <head> tags. "
+                        "Use inline CSS for styling (like text-align: center, font-weight: bold, margins, etc.) to make it look like a formal document. "
+                        "Return ONLY the raw HTML string, without any markdown formatting or explanations.\n\n"
+                        f"Raw Text:\n{raw_text}"
+                    ),
+                }
+            ],
+        )
+        return message.content[0].text
+    except Exception as e:
+        # Fallback to simple HTML formatting if AI fails
+        lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
+        html_lines = []
+        for line in lines:
+            if len(line) < 50 and (line.isupper() or ":" not in line):
+                html_lines.append(f'<h2 style="text-align: center; color: #0ea5e9;">{line}</h2>')
+            else:
+                # Basic variable detection: replace common patterns with placeholders
+                # This is very naive but better than nothing
+                line = line.replace("Nom", "{{last_name}}").replace("Prénom", "{{first_name}}")
+                html_lines.append(f'<p style="margin-bottom: 10px;">{line}</p>')
+        
+        return "\n".join(html_lines)
+

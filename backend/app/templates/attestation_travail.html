@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { size: A4; margin: 2.5cm; }
+        body { font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif; color: #1e293b; line-height: 1.7; margin: 0; padding: 0; position: relative; }
+        
+        /* Watermark */
+        .watermark { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) rotate(-40deg); font-size: 80pt; font-weight: 900; color: rgba(14, 165, 233, 0.03); z-index: -1; pointer-events: none; white-space: nowrap; user-select: none; }
+        
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 50px; border-bottom: 2px solid #0ea5e9; padding-bottom: 20px; }
+        .logo-box { font-size: 28pt; font-weight: 900; color: #0ea5e9; letter-spacing: -1.5px; line-height: 1; }
+        .logo-subtitle { font-size: 9pt; color: #64748b; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-weight: 600; }
+        .meta-info { text-align: right; }
+        .ref-number { font-family: 'Courier New', Courier, monospace; background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 4px; color: #334155; font-weight: 700; font-size: 9pt; margin-bottom: 8px; display: inline-block; letter-spacing: 1px; }
+        .date-text { font-size: 10pt; color: #475569; }
+        
+        /* Title */
+        .title { text-align: center; margin-bottom: 50px; }
+        .title h1 { font-size: 22pt; color: #0f172a; text-transform: uppercase; letter-spacing: 1.5px; margin: 0; font-weight: 800; }
+        .title-underline { width: 60px; height: 4px; background: #0ea5e9; margin: 15px auto 0; border-radius: 2px; }
+        
+        /* Content */
+        .content { font-size: 11.5pt; text-align: justify; margin-bottom: 40px; color: #334155; }
+        .highlight-box { background: #f0f9ff; border-left: 4px solid #0ea5e9; border-radius: 0 8px 8px 0; padding: 20px 25px; margin: 30px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .highlight-box p { margin: 10px 0; font-size: 11pt; display: flex; }
+        .highlight-box strong { color: #0f172a; width: 160px; flex-shrink: 0; }
+        
+        /* Verification Footer */
+        .verification-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 60px; padding-top: 25px; border-top: 1px dashed #cbd5e1; }
+        .qr-section { display: flex; align-items: center; gap: 15px; width: 40%; }
+        .qr-code { width: 75px; height: 75px; border: 1px solid #e2e8f0; padding: 5px; background: white; border-radius: 8px; }
+        .qr-text { font-size: 8pt; color: #64748b; line-height: 1.5; }
+        
+        .digital-stamp { border: 2px solid #10b981; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; text-align: center; transform: rotate(-15deg); color: #10b981; font-weight: 800; font-size: 8pt; text-transform: uppercase; opacity: 0.85; line-height: 1.2; padding: 5px; box-sizing: border-box; letter-spacing: 0.5px; }
+        
+        .signature-box { text-align: right; width: 35%; }
+        .signature-title { font-size: 10pt; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+        .signature-graphic { font-family: 'Brush Script MT', 'Lucida Handwriting', cursive; font-size: 26pt; color: #020617; transform: rotate(-5deg); opacity: 0.7; padding-right: 20px; }
+        
+        /* Absolute Footer */
+        .footer { position: absolute; bottom: 0; width: 100%; text-align: center; font-size: 8pt; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 20px; font-weight: 500; }
+        
+        .empty-field-box { display: inline-block; width: 140px; height: 16px; background-color: #f8fafc; border: 1px dashed #cbd5e1; vertical-align: middle; margin: 0 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="watermark">TYTHON HR</div>
+
+    <div class="header">
+        <div>
+            <div class="logo-box">TYTHON</div>
+            <div class="logo-subtitle">Human Resources</div>
+        </div>
+        <div class="meta-info">
+            <div class="ref-number">RÉF: TY-{{today}}-HR</div>
+            <div class="date-text">Casablanca, le <strong>{{today}}</strong></div>
+        </div>
+    </div>
+
+    <div class="title">
+        <h1>Attestation de Travail</h1>
+        <div class="title-underline"></div>
+    </div>
+
+    <div class="content">
+        <p>Nous soussignés, la société <strong>TYTHON S.A.R.L</strong>, représentée par sa Direction des Ressources Humaines, attestons par la présente que :</p>
+        
+        <div class="highlight-box">
+            <p><strong>Collaborateur</strong>: {{full_name}}</p>
+            <p><strong>N° CIN</strong>: {{cin}}</p>
+            <p><strong>Poste actuel</strong>: {{position}}</p>
+            <p><strong>Département</strong>: {{department}}</p>
+            <p><strong>Date d'embauche</strong>: {{hire_date}}</p>
+        </div>
+
+        <p>Est employé(e) au sein de notre établissement en qualité de <strong>{{position}}</strong> depuis le <strong>{{hire_date}}</strong> jusqu'à ce jour.</p>
+        
+        <p>Durant toute sa période d'activité, le collaborateur a exercé ses fonctions avec professionnalisme, rigueur et intégrité, donnant entière satisfaction dans la réalisation des missions qui lui ont été confiées.</p>
+
+        <p>Cette attestation est délivrée à la demande de l'intéressé(e) pour servir et valoir ce que de droit.</p>
+    </div>
+
+    <div class="verification-footer">
+        <div class="qr-section">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=VERIF-TYTHON-{{full_name}}-{{today}}" alt="QR Code" class="qr-code">
+            <div class="qr-text">
+                <strong style="color: #0f172a;">Document Certifié</strong><br>
+                Scannez ce code QR pour vérifier l'authenticité et la validité de ce document via notre portail sécurisé.
+            </div>
+        </div>
+        <div class="digital-stamp">
+            Certifié<br>Conforme<br>RH
+        </div>
+        <div class="signature-box">
+            <div class="signature-title">Direction des Ressources Humaines</div>
+            <div class="signature-graphic">Approuvé</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        TYTHON S.A.R.L - Capital de 100.000 DH - RC 123456 - IF 789012 - CNSS 4567890<br>
+        Technopark Casablanca, Route de Nouaceur, Casablanca, Maroc | contact@tython.ma
+    </div>
+</body>
+</html>

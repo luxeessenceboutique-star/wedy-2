@@ -1,390 +1,328 @@
-# Architecture du Projet — YODABOT RH
+# Architecture du Projet — YODABOT RH Platform v2.0
 
-Application interne de génération automatique de documents RH pour **TYTHON**.
-Powered by **Claude AI (Anthropic)**.
+Application RH interne full-stack pour **TYTHON** — Powered by **Claude AI / OpenAI**.
 
 ---
 
 ## Vue d'ensemble
 
 ```
-client-brand-design/
-├── frontend/       ← Interface utilisateur (React + TanStack)
-├── backend/        ← API REST (Python + FastAPI)
+platform-RH/
+├── backend/          ← API REST (FastAPI + SQLAlchemy + Supabase)
+├── frontend/         ← Interface (React + TanStack)
+├── docker-compose.yml
 └── ARCHITECTURE.md
 ```
 
-L'application suit une architecture **client-serveur découplée** :
-
-- Le **frontend** communique avec Supabase directement (auth, données temps réel)
-- Le **backend Python** expose une API REST qui ajoute la couche IA (Claude) et la génération de fichiers PDF/DOCX
-- **Supabase** est la base de données centrale (PostgreSQL) avec authentification intégrée
+**Architecture client-serveur découplée :**
+- Le **frontend** gère l'UI et communique avec le backend via REST
+- Le **backend** expose l'API complète avec AI, OCR, génération de documents
+- **Supabase** est la base de données PostgreSQL (tables déjà créées)
+- **MinIO** stocke les fichiers (CVs, photos, documents générés)
+- **Redis + Celery** gèrent les tâches async (parsing CV, emails)
 
 ---
 
 ## Schéma d'architecture global
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     NAVIGATEUR                          │
-│                                                         │
-│   ┌─────────────────────────────────────────────────┐   │
-│   │            FRONTEND  (port 8080)                │   │
-│   │         React 19 + TanStack Start               │   │
-│   │                                                 │   │
-│   │  Landing  Login  Dashboard  Employés            │   │
-│   │  Templates  Génération  Historique              │   │
-│   └────────────┬──────────────────┬─────────────────┘   │
-└────────────────│──────────────────│─────────────────────┘
-                 │                  │
-        Auth +   │                  │  Génération IA
-        CRUD     │                  │  PDF / DOCX
-                 ▼                  ▼
-┌────────────────────┐   ┌──────────────────────────────┐
-│   SUPABASE CLOUD   │   │   BACKEND Python (port 8000)  │
-│                    │   │         FastAPI               │
-│  PostgreSQL DB     │◄──┤                              │
-│  Auth (JWT)        │   │  /api/auth                   │
-│  Row Level Sec.    │   │  /api/employees              │
-│  Realtime          │   │  /api/templates              │
-└────────────────────┘   │  /api/documents              │
-                         │  /api/documents/ai/*         │
-                         └──────────────_───────────────┘
-
-
+┌─────────────────────────────────────────────────────────────┐
+│                       NAVIGATEUR                            │
+│                                                             │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │          FRONTEND  (port 3000/8080)                 │   │
+│   │         React 19 + TanStack Start                   │   │
+│   │                                                     │   │
+│   │  Dashboard  Employees  Interns  Templates           │   │
+│   │  CV Upload  HR Requests  Notifications              │   │
+│   └───────────────────────┬─────────────────────────────┘   │
+└───────────────────────────│─────────────────────────────────┘
+                            │  REST API (JWT Bearer)
+                            ▼
+┌───────────────────────────────────────────────────────────────┐
+│              BACKEND  FastAPI  (port 8000)                    │
+│                                                               │
+│  /api/auth        /api/profiles     /api/employees            │
+│  /api/interns     /api/documents    /api/templates            │
+│  /api/cv          /api/requests     /api/departments          │
+│  /api/notifications  /api/dashboard /api/audit                │
+│                                                               │
+│  ┌──────────┐  ┌─────────┐  ┌────────────┐  ┌────────────┐  │
+│  │ Auth JWT │  │ SQLAlch │  │ CV Parser  │  │ Doc Gen    │  │
+│  │ RBAC     │  │  ORM    │  │ OCR + AI   │  │ PDF/DOCX   │  │
+│  └──────────┘  └────┬────┘  └────────────┘  └────────────┘  │
+└───────────────────────────────────────────────────────────────┘
+         │                    │              │
+         ▼                    ▼              ▼
+┌────────────────┐  ┌──────────────┐  ┌───────────────┐
+│ SUPABASE CLOUD │  │    REDIS     │  │    MinIO      │
+│  PostgreSQL    │  │  + Celery    │  │  S3 Storage   │
+│  Auth (JWT)    │  │  Async tasks │  │  CVs / Docs   │
+│  RLS Tables    │  └──────────────┘  └───────────────┘
+└────────────────┘
 ```
 
 ---
 
-## Frontend
+## Backend — Stack Technique
 
-### Stack technique
-
-| Technologie | Version | Rôle |
-|---|---|---|
-| React | 19.2 | Framework UI |
-| TanStack Start | 1.167 | Framework fullstack |
-| TanStack Router | 1.168 | Routing type-safe |
-| TanStack Query | 5.99 | Cache & état serveur |
-| Tailwind CSS | 4.2 | Styles utilitaires |
-| Shadcn/ui | — | Composants UI (50+) |
-| Supabase JS | 2.10 | Client base de données |
-| i18next | 26 | Internationalisation FR/EN/AR |
-| jsPDF + html2canvas | — | Export PDF côté client |
-| Framer Motion | 12 | Animations |
-| Vite | 7.3 | Bundler |
-
-### Structure des fichiers
-
-```
-frontend/
-└── src/
-    ├── assets/
-    │   └── yodabot-logo.png
-    ├── components/
-    │   ├── auth-provider.tsx      ← Contexte d'authentification Supabase
-    │   ├── brand-logo.tsx         ← Logo YODABOT
-    │   ├── i18n-provider.tsx      ← Initialisation i18next
-    │   ├── lang-switcher.tsx      ← Sélecteur FR / EN / AR
-    │   └── ui/                    ← 50+ composants Shadcn (button, card, table…)
-    ├── hooks/
-    │   └── use-mobile.tsx         ← Détection mobile
-    ├── integrations/
-    │   └── supabase/
-    │       ├── client.ts          ← Client Supabase (navigateur)
-    │       ├── client.server.ts   ← Client Supabase (serveur)
-    │       ├── auth-middleware.ts ← Protection des routes
-    │       └── types.ts           ← Types TypeScript générés depuis DB
-    ├── lib/
-    │   ├── document-generator.ts  ← Remplissage templates + export PDF
-    │   ├── i18n.ts                ← Config i18next
-    │   ├── utils.ts               ← Utilitaires (cn, dates…)
-    │   └── locales/
-    │       ├── fr.ts              ← 470+ clés en français
-    │       ├── en.ts              ← Anglais
-    │       └── ar.ts              ← Arabe (RTL)
-    ├── routes/
-    │   ├── index.tsx              ← Landing page (/)
-    │   ├── login.tsx              ← Authentification (/login)
-    │   ├── __root.tsx             ← Layout racine
-    │   ├── _app.tsx               ← Layout app (sidebar + header)
-    │   ├── _app.app.index.tsx     ← Dashboard (/app)
-    │   ├── _app.app.employees.tsx ← Gestion employés (/app/employees)
-    │   ├── _app.app.templates.tsx ← Modèles documents (/app/templates)
-    │   ├── _app.app.generate.tsx  ← Générer un document (/app/generate)
-    │   └── _app.app.history.tsx   ← Historique (/app/history)
-    ├── router.tsx                 ← Configuration TanStack Router
-    └── styles.css                 ← Design tokens (OKLCH, gradients, animations)
-```
-
-### Pages et navigation
-
-```
-/                    → Landing page (publique)
-/login               → Connexion / Inscription
-/app                 → Dashboard (protégée)
-/app/employees       → Liste + CRUD des employés
-/app/templates       → Catalogue des modèles de documents
-/app/generate        → Générer un document RH
-/app/history         → Historique des documents générés
-```
-
-### Système de design
-
-- **Couleurs** : OKLCH — Cyan `#22D3EE` (primaire) + Violet (accent)
-- **Polices** : Space Grotesk (titres) + Inter (corps) + Noto Kufi Arabic (AR)
-- **Mode** : Clair (app) + Sombre cinématique (landing)
-- **RTL** : Support complet arabe via attribut `dir`
-- **Animations** : Float, pulse-glow, fade-in-up (Framer Motion)
+| Technologie       | Version | Rôle                                  |
+|-------------------|---------|---------------------------------------|
+| Python            | 3.11+   | Langage                               |
+| FastAPI           | 0.115   | Framework API REST                    |
+| SQLAlchemy        | 2.0     | ORM (reflect Supabase tables)         |
+| Supabase PostgreSQL | —     | Base de données                       |
+| Pydantic v2       | 2.10    | Validation des données                |
+| python-jose       | 3.3     | JWT Auth                              |
+| passlib[bcrypt]   | 1.7     | Hash des mots de passe                |
+| WeasyPrint        | 62      | Génération PDF                        |
+| python-docx       | 1.1     | Génération Word                       |
+| Jinja2            | 3.1     | Moteur de templates HTML              |
+| OpenAI SDK        | 1.58    | Extraction CV par IA                  |
+| Anthropic SDK     | 0.40    | Fallback IA (Claude)                  |
+| pytesseract       | 0.3     | OCR (CVs scannés/images)              |
+| pdf2image         | 1.17    | Conversion PDF → images pour OCR      |
+| PyMuPDF (fitz)    | 1.25    | Extraction texte PDF robuste          |
+| pdfminer.six      | 2023    | Extraction texte PDF                  |
+| MinIO SDK         | 7.2     | Stockage objets S3                    |
+| Redis + Celery    | 7 / 5.4 | File de tâches async                  |
+| loguru            | 0.7     | Logging structuré                     |
 
 ---
 
-## Backend
-
-### Stack technique
-
-| Technologie | Version | Rôle |
-|---|---|---|
-| Python | 3.11+ | Langage |
-| FastAPI | 0.115 | Framework API REST |
-| Uvicorn | 0.32 | Serveur ASGI |
-| Supabase Python | 2.10 | Client base de données |
-| Anthropic SDK | 0.40 | Claude AI |
-| WeasyPrint | 62 | Génération PDF (HTML → PDF) |
-| python-docx | 1.1 | Génération fichiers Word |
-| Pydantic | 2.10 | Validation des données |
-| Jinja2 | 3.1 | Moteur de templates |
-| python-jose | 3.3 | Vérification JWT |
-
-### Structure des fichiers
+## Structure des fichiers
 
 ```
 backend/
-├── .env                        ← Variables d'environnement (secrets)
-├── .env.example                ← Template de configuration
-├── requirements.txt            ← Dépendances Python
+├── Dockerfile
+├── requirements.txt
+├── .env                          ← Variables d'environnement
 └── app/
-    ├── main.py                 ← Point d'entrée FastAPI + CORS
-    ├── config.py               ← Paramètres depuis .env (Pydantic Settings)
-    ├── dependencies.py         ← Middleware auth JWT + vérification rôles
+    ├── __init__.py
+    ├── main.py                   ← Point d'entrée FastAPI
+    ├── config.py                 ← Settings (Pydantic)
+    ├── database.py               ← Engine SQLAlchemy → Supabase
+    ├── dependencies.py           ← JWT + RBAC dependencies
     ├── models/
-    │   ├── employee.py         ← Schémas Pydantic (employé)
-    │   └── document.py         ← Schémas Pydantic (template, document, IA)
+    │   ├── __init__.py
+    │   └── models.py             ← 14 modèles SQLAlchemy
+    ├── schemas/
+    │   ├── __init__.py
+    │   ├── auth.py               ← Login/Register/Token
+    │   ├── profile.py            ← Profile/Employee/Intern
+    │   ├── document.py           ← Document/Template/Generate
+    │   ├── hr_request.py         ← HR Request workflow
+    │   ├── cv.py                 ← CV Upload/Extraction
+    │   └── misc.py               ← Department/Position/Notification
     ├── routers/
-    │   ├── auth.py             ← Login, signup, logout, /me
-    │   ├── employees.py        ← CRUD employés + recherche
-    │   ├── templates.py        ← CRUD modèles (admin uniquement)
-    │   └── documents.py        ← Génération + téléchargement + IA
-    └── services/
-        ├── supabase.py         ← Clients Supabase (anon + service role)
-        ├── document_generator.py ← fill_template(), generate_pdf_bytes(), generate_docx_bytes()
-        └── ai_service.py       ← enhance_document(), suggest_document_content(), translate_document()
-```
-
-### Endpoints API
-
-#### Auth — `/api/auth`
-| Méthode | Route | Description |
-|---|---|---|
-| POST | `/api/auth/login` | Connexion (retourne JWT) |
-| POST | `/api/auth/signup` | Création de compte |
-| POST | `/api/auth/logout` | Déconnexion |
-| GET | `/api/auth/me` | Profil + rôles de l'utilisateur connecté |
-
-#### Employés — `/api/employees`
-| Méthode | Route | Description |
-|---|---|---|
-| GET | `/api/employees` | Liste (filtre : nom, CIN, département, statut) |
-| GET | `/api/employees/{id}` | Détail d'un employé |
-| POST | `/api/employees` | Créer un employé |
-| PATCH | `/api/employees/{id}` | Modifier un employé |
-| DELETE | `/api/employees/{id}` | Supprimer (admin) |
-
-#### Modèles — `/api/templates`
-| Méthode | Route | Description |
-|---|---|---|
-| GET | `/api/templates` | Liste des modèles actifs |
-| GET | `/api/templates/{id}` | Détail d'un modèle |
-| POST | `/api/templates` | Créer (admin) |
-| PATCH | `/api/templates/{id}` | Modifier (admin) |
-| DELETE | `/api/templates/{id}` | Supprimer (admin) |
-
-#### Documents — `/api/documents`
-| Méthode | Route | Description |
-|---|---|---|
-| POST | `/api/documents/generate` | Générer un document depuis un template |
-| GET | `/api/documents/generate/{id}/pdf` | Télécharger en PDF |
-| GET | `/api/documents/generate/{id}/docx` | Télécharger en Word |
-| GET | `/api/documents` | Historique des documents |
-| DELETE | `/api/documents/{id}` | Supprimer (admin) |
-| POST | `/api/documents/ai/enhance` | Améliorer un document avec Claude |
-| POST | `/api/documents/ai/suggest` | Générer un document from scratch avec Claude |
-| POST | `/api/documents/ai/translate` | Traduire un document (FR/EN/AR) |
-
-### Flux de génération d'un document
-
-```
-Frontend
-  │
-  ├─ 1. Sélectionne employé + modèle
-  │
-  └─ 2. POST /api/documents/generate
-              │
-              ├─ Récupère employé depuis Supabase
-              ├─ Récupère template depuis Supabase
-              ├─ fill_template() → remplace {{variables}}
-              ├─ [optionnel] Claude AI → enhance_document()
-              └─ Sauvegarde dans generated_documents
-                          │
-                          ▼
-              GET /api/documents/generate/{id}/pdf
-                          │
-                          └─ WeasyPrint → PDF bytes → Response
+    │   ├── __init__.py
+    │   ├── auth.py               ← POST /api/auth/login,register,me
+    │   ├── profiles.py           ← CRUD /api/profiles
+    │   ├── employees.py          ← CRUD /api/employees
+    │   ├── interns.py            ← CRUD /api/interns
+    │   ├── documents.py          ← /api/documents + /api/templates
+    │   ├── cv.py                 ← POST /api/cv/upload
+    │   ├── requests.py           ← /api/requests + approve
+    │   ├── departments.py        ← /api/departments + /api/positions
+    │   ├── notifications.py      ← /api/notifications + /api/audit
+    │   └── dashboard.py          ← GET /api/dashboard/metrics
+    ├── services/
+    │   ├── auth_service.py       ← JWT + bcrypt
+    │   ├── document_generator.py ← Template fill + PDF/DOCX export
+    │   ├── cv_parser.py          ← OCR + AI extraction pipeline
+    │   ├── storage.py            ← MinIO + local fallback
+    │   └── audit.py              ← Audit logs + notifications
+    └── templates/                ← HTML document templates
+        ├── attestation_travail.html
+        └── attestation_stage.html
 ```
 
 ---
 
-## Base de données (Supabase / PostgreSQL)
+## Endpoints API — Référence complète
 
-### Tables
+### Auth — `/api/auth`
+| Méthode | Route               | Rôle requis | Description              |
+|---------|---------------------|-------------|--------------------------|
+| POST    | `/api/auth/login`   | Public      | Connexion → JWT token    |
+| POST    | `/api/auth/register`| Public      | Création de compte       |
+| GET     | `/api/auth/me`      | Tout        | Profil utilisateur       |
 
-```
-profiles              → Profil utilisateur (nom, email, avatar)
-user_roles            → Rôles : admin | rh
-employees             → Données RH des employés/stagiaires
-document_templates    → Modèles de documents avec placeholders {{var}}
-generated_documents   → Historique des documents générés
-```
+### Profiles — `/api/profiles`
+| Méthode | Route                        | Rôle requis | Description           |
+|---------|------------------------------|-------------|-----------------------|
+| GET     | `/api/profiles`              | Tout        | Liste (filtre + search)|
+| GET     | `/api/profiles/{id}`         | Tout        | Détail profil         |
+| POST    | `/api/profiles`              | Admin/HR    | Créer profil          |
+| PATCH   | `/api/profiles/{id}`         | Tout        | Modifier profil       |
+| DELETE  | `/api/profiles/{id}`         | Admin       | Supprimer profil      |
+| POST    | `/api/profiles/{id}/photo`   | Tout        | Upload photo          |
 
-### Schéma simplifié
+### Employees — `/api/employees`
+| Méthode | Route                    | Rôle requis | Description         |
+|---------|--------------------------|-------------|---------------------|
+| GET     | `/api/employees`         | Tout        | Liste employés      |
+| GET     | `/api/employees/{id}`    | Tout        | Détail employé      |
+| POST    | `/api/employees`         | Admin/HR    | Créer employé       |
+| PATCH   | `/api/employees/{id}`    | Admin/HR    | Modifier employé    |
+| DELETE  | `/api/employees/{id}`    | Admin       | Supprimer employé   |
 
-```
-employees
-  id, full_name, cin, matricule, email, phone
-  position, department, salary
-  hire_date, contract_type (CDI|CDD|Stage|Freelance)
-  contract_start, contract_end
-  internship_start, internship_end
-  manager, status (active|inactive|terminated|intern)
-  address, birth_date, nationality, notes
+### Interns — `/api/interns`
+| Méthode | Route                | Rôle requis | Description       |
+|---------|----------------------|-------------|-------------------|
+| GET     | `/api/interns`       | Tout        | Liste stagiaires  |
+| POST    | `/api/interns`       | Admin/HR    | Créer stagiaire   |
+| PATCH   | `/api/interns/{id}`  | Admin/HR    | Modifier stagiaire|
+| DELETE  | `/api/interns/{id}`  | Admin       | Supprimer         |
 
-document_templates
-  id, code, name_fr, name_en, name_ar
-  category (attestation|contrat|avenant|certificat|lettre|autre)
-  body_template  ← texte avec {{full_name}}, {{cin}}, {{today}}…
-  variables[]    ← liste des variables requises
-  is_active
+### CV — `/api/cv`
+| Méthode | Route                      | Rôle requis | Description            |
+|---------|----------------------------|-------------|------------------------|
+| POST    | `/api/cv/upload`           | Tout        | Upload + parse CV (AI) |
+| GET     | `/api/cv/uploads`          | Tout        | Liste des CVs uploadés |
+| GET     | `/api/cv/{id}/extraction`  | Tout        | Données extraites      |
 
-generated_documents
-  id, employee_id → employees
-  template_id → document_templates
-  document_type, content, variables_used (JSONB)
-  language (fr|en|ar), file_url
-  generated_by → auth.users
-```
+### Documents — `/api/documents`
+| Méthode | Route                              | Rôle requis | Description          |
+|---------|------------------------------------|-------------|----------------------|
+| GET     | `/api/documents`                   | Tout        | Liste documents      |
+| POST    | `/api/documents`                   | Admin/HR    | Upload document      |
+| GET     | `/api/documents/{id}/download`     | Tout        | Télécharger          |
+| DELETE  | `/api/documents/{id}`              | Admin/HR    | Supprimer            |
+| POST    | `/api/documents/generate`          | Admin/HR    | Générer PDF/DOCX     |
+| GET     | `/api/documents/generated`         | Tout        | Historique générés   |
+| GET     | `/api/documents/generated/{id}/download` | Tout | Télécharger généré  |
 
-### Sécurité (Row Level Security)
+### Templates — `/api/templates`
+| Méthode | Route                    | Rôle requis | Description    |
+|---------|--------------------------|-------------|----------------|
+| GET     | `/api/templates`         | Tout        | Liste templates|
+| POST    | `/api/templates`         | Admin/HR    | Créer template |
+| PATCH   | `/api/templates/{id}`    | Admin/HR    | Modifier       |
+| DELETE  | `/api/templates/{id}`    | Admin       | Supprimer      |
 
-- Toutes les tables ont **RLS activé**
-- Les utilisateurs authentifiés peuvent lire/écrire
-- Seuls les **admins** peuvent supprimer ou gérer les modèles
-- Les profils ne sont visibles/modifiables que par leur propriétaire
+### HR Requests — `/api/requests`
+| Méthode | Route                             | Rôle requis        | Description    |
+|---------|-----------------------------------|--------------------|----------------|
+| GET     | `/api/requests`                   | Tout               | Liste demandes |
+| POST    | `/api/requests`                   | Tout               | Créer demande  |
+| PATCH   | `/api/requests/{id}/approve`      | Admin/HR/Manager   | Approuver/Rejeter|
+| DELETE  | `/api/requests/{id}`              | Admin              | Supprimer      |
 
----
-
-## Intelligence Artificielle — Claude (Anthropic)
-
-Le backend intègre `claude-sonnet-4-6` pour 3 fonctionnalités :
-
-| Fonction | Description |
-|---|---|
-| `enhance_document()` | Améliore la clarté, la formalité et la précision légale d'un document généré |
-| `suggest_document_content()` | Rédige un document from scratch à partir des données de l'employé |
-| `translate_document()` | Traduit un document en FR, EN ou AR en préservant la mise en forme |
-
-Le prompt système impose :
-- Conformité au **Code du Travail marocain**
-- Ton **formel et professionnel**
-- Préservation des **placeholders** `{{variable}}`
-
----
-
-## Documents RH supportés (11 modèles)
-
-| Code | Document | Catégorie |
-|---|---|---|
-| `attestation_travail` | Attestation de travail | attestation |
-| `attestation_stage` | Attestation de stage | attestation |
-| `attestation_poursuite_stage` | Attestation de poursuite de stage | attestation |
-| `contrat_stage` | Contrat de stage | contrat |
-| `contrat_cdi` | Contrat CDI | contrat |
-| `contrat_cdd` | Contrat CDD | contrat |
-| `avenant_contrat` | Avenant au contrat | avenant |
-| `demande_mise_disposition` | Demande de mise à disposition | lettre |
-| `solde_tout_compte` | Solde de tout compte | attestation |
-| `certificat_travail` | Certificat de travail | certificat |
-| `lettre_avertissement` | Lettre d'avertissement | lettre |
-
----
-
-## Rôles utilisateurs
-
-| Rôle | Permissions |
-|---|---|
-| **admin** | Tout — gestion modèles, suppression, gestion des accès |
-| **rh** | Générer documents, consulter historique, gérer employés |
+### Dashboard & Misc
+| Méthode | Route                       | Rôle requis | Description             |
+|---------|-----------------------------|-------------|-------------------------|
+| GET     | `/api/dashboard/metrics`   | Admin/HR    | KPIs employés/demandes  |
+| GET     | `/api/notifications`        | Tout        | Mes notifications       |
+| PATCH   | `/api/notifications/{id}/read` | Tout     | Marquer comme lu        |
+| GET     | `/api/audit`                | Admin       | Journal d'audit         |
+| GET     | `/api/departments`          | Tout        | Liste départements      |
+| POST    | `/api/departments`          | Admin       | Créer département       |
+| GET     | `/api/positions`            | Tout        | Liste postes            |
+| POST    | `/api/positions`            | Admin       | Créer poste             |
 
 ---
 
-## Démarrage rapide
+## Rôles & Permissions
 
-### Frontend
+| Rôle         | Permissions                                               |
+|--------------|-----------------------------------------------------------|
+| **admin**    | Tout — CRUD complet, audit, gestion des rôles             |
+| **hr**       | Profiles, Employees, Interns, Documents, Requests, CVs    |
+| **manager**  | Lire + Approuver/Rejeter les demandes                     |
+| **employee** | Lire son profil, soumettre des demandes, voir ses docs    |
+| **intern**   | Lire son profil, soumettre des demandes                   |
+
+---
+
+## Pipeline CV (OCR + AI)
+
+```
+Fichier uploadé
+     │
+     ▼
+Détection type
+  ├── PDF → pdfminer.six → (si <50 chars) → pdf2image + Tesseract OCR
+  ├── DOCX → python-docx
+  └── Image (PNG/JPG) → Tesseract OCR (fra+eng+ara)
+     │
+     ▼
+Texte brut extrait
+     │
+     ▼
+OpenAI GPT-4o-mini (JSON strucruré)
+  └── Si échec → Anthropic Claude (fallback)
+     │
+     ▼
+cv_extractions {
+  full_name, email, phone, skills[],
+  education, experience, languages[],
+  raw_json (JSONB complet)
+}
+     │
+     ▼
+profile_suggestion → Auto-create profile
+```
+
+---
+
+## Démarrage
+
+### Avec Docker (recommandé)
 ```bash
-cd frontend
-npm install
-node node_modules/vite/bin/vite.js
-# → http://localhost:8080
+docker-compose up -d
+# API disponible : http://localhost:8000/docs
 ```
 
-### Backend
+### Sans Docker (local)
+
+**1. Configurer `.env` :**
+```env
+DATABASE_URL=postgresql+psycopg2://postgres.[project-ref]:[password]@aws-0-eu-west-3.pooler.supabase.com:5432/postgres
+SECRET_KEY=votre_cle_secrete_32_chars_minimum
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+**2. Lancer le backend :**
 ```bash
 cd backend
 pip install -r requirements.txt
-# Remplir .env avec SUPABASE_SERVICE_ROLE_KEY et ANTHROPIC_API_KEY
-uvicorn app.main:app --reload
-# → http://localhost:8000
-# → Docs Swagger : http://localhost:8000/docs
+python -m uvicorn app.main:app --reload --port 8000
+# → http://localhost:8000/docs
+```
+
+**3. Lancer le frontend :**
+```bash
+cd frontend
+npm install
+npm run dev
+# → http://localhost:5173
 ```
 
 ---
 
-## Variables d'environnement
+## Variables d'environnement requises
 
-### Frontend (`frontend/.env`)
-```
-VITE_SUPABASE_URL=https://...supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=eyJ...
-```
-
-### Backend (`backend/.env`)
-```
-SUPABASE_URL=https://...supabase.co
-SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...   ← clé secrète (ne jamais exposer)
-ANTHROPIC_API_KEY=sk-ant-...       ← clé Claude AI
-ALLOWED_ORIGINS=http://localhost:8080
-```
+| Variable                  | Description                              |
+|---------------------------|------------------------------------------|
+| `DATABASE_URL`            | URL PostgreSQL Supabase (psycopg2)       |
+| `SECRET_KEY`              | Clé JWT (min 32 caractères)              |
+| `SUPABASE_URL`            | URL projet Supabase                      |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clé service Supabase                  |
+| `OPENAI_API_KEY`          | Clé OpenAI (CV parsing AI)              |
+| `ANTHROPIC_API_KEY`       | Clé Anthropic (fallback AI)             |
+| `MINIO_ENDPOINT`          | Endpoint MinIO (ou S3)                  |
 
 ---
 
-## Internationalisation
+## n8n Integration
 
-L'application est **trilingue** avec support RTL complet :
+Tous les endpoints sont REST standards avec JSON.
 
-| Langue | Code | Direction |
-|---|---|---|
-| Français | `fr` | LTR (défaut) |
-| Anglais | `en` | LTR |
-| Arabe | `ar` | RTL (auto) |
-
-Les documents générés sont également disponibles dans les 3 langues via l'API IA.
+**Exemple workflow n8n — CV auto-processing:**
+```
+[HTTP Trigger] → POST /api/cv/upload (multipart) → [extraction JSON]
+→ [IF full_name] → POST /api/profiles (créer profil)
+→ POST /api/notifications (alerter RH)
+```

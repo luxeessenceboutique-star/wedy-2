@@ -1,19 +1,70 @@
 from pydantic_settings import BaseSettings
+from typing import List
 
 
 class Settings(BaseSettings):
-    supabase_url: str
-    supabase_anon_key: str
-    supabase_service_role_key: str
-    anthropic_api_key: str
-    secret_key: str = "change-me-in-production"
-    allowed_origins: str = "http://localhost:5173"
+    # App
+    APP_NAME: str = "YODABOT RH Platform"
+    APP_ENV: str = "development"
+    SECRET_KEY: str = "change_me"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+
+    # Database (Supabase PostgreSQL direct connection)
+    DATABASE_URL: str = ""
+
+    # Supabase client
+    SUPABASE_URL: str = ""
+    SUPABASE_ANON_KEY: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
+
+    # Redis
+    REDIS_URL: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
+
+    # MinIO / S3
+    MINIO_ENDPOINT: str = "localhost:9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin123"
+    MINIO_BUCKET_NAME: str = "rh-platform"
+    MINIO_SECURE: bool = False
+
+    # AI
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    ANTHROPIC_API_KEY: str = ""
+
+    # Email
+    MAIL_USERNAME: str = ""
+    MAIL_PASSWORD: str = ""
+    MAIL_FROM: str = "noreply@tython.ma"
+    MAIL_FROM_NAME: str = "YODABOT RH"
+    MAIL_PORT: int = 587
+    MAIL_SERVER: str = "smtp.gmail.com"
+    MAIL_STARTTLS: bool = True
+    MAIL_SSL_TLS: bool = False
+
+    # CORS
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080,http://localhost:5173"
+
+    # Files
+    MAX_FILE_SIZE_MB: int = 20
+    UPLOAD_DIR: str = "uploads"
 
     @property
-    def origins(self) -> list[str]:
-        return [o.strip() for o in self.allowed_origins.split(",")]
+    def origins(self) -> List[str]:
+        return [o.strip() for o in self.ALLOWED_ORIGINS.split(",")]
 
-    model_config = {"env_file": ".env", "extra": "ignore"}
+    @property
+    def max_file_bytes(self) -> int:
+        return self.MAX_FILE_SIZE_MB * 1024 * 1024
+
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+        extra = "ignore"
 
 
 settings = Settings()

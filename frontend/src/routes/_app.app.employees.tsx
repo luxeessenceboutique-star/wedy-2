@@ -57,7 +57,7 @@ function EmployeesPage() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data as any[]) ?? [];
     },
   });
 
@@ -65,7 +65,7 @@ function EmployeesPage() {
     const q = search.toLowerCase();
     return (
       !q ||
-      e.full_name.toLowerCase().includes(q) ||
+      e.full_name?.toLowerCase().includes(q) ||
       e.cin?.toLowerCase().includes(q) ||
       e.matricule?.toLowerCase().includes(q) ||
       e.department?.toLowerCase().includes(q)

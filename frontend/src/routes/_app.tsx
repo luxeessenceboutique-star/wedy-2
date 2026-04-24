@@ -6,15 +6,24 @@ import {
   FileText,
   History,
   LogOut,
-  FilePlus2,
+  FilePlus,
   Loader2,
   Menu,
+  FileSearch,
+  Inbox,
+  Briefcase,
+  Search,
+  Bell,
+  Mail,
+  HelpCircle,
+  Plus
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { BrandLogo } from "@/components/brand-logo";
 import { LangSwitcher } from "@/components/lang-switcher";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,13 +61,27 @@ function AppLayout() {
     return null;
   }
 
-  const navItems = [
+  const isEmployee = role === "employee" || !role;
+
+  let navItems = [
     { to: "/app", label: t("nav.dashboard"), icon: LayoutDashboard, exact: true },
     { to: "/app/employees", label: t("nav.employees"), icon: Users },
+    { to: "/app/interns", label: t("nav.interns"), icon: Briefcase },
     { to: "/app/templates", label: t("nav.templates"), icon: FileText },
-    { to: "/app/generate", label: t("nav.generate"), icon: FilePlus2 },
+    { to: "/app/generate", label: t("nav.generate"), icon: FilePlus },
+    { to: "/app/cv", label: t("nav.cv"), icon: FileSearch },
+    { to: "/app/requests", label: t("nav.requests"), icon: Inbox },
     { to: "/app/history", label: t("nav.history"), icon: History },
   ];
+
+  // Self-Service portal for standard employees
+  if (isEmployee) {
+    navItems = [
+      { to: "/app", label: t("nav.dashboard"), icon: LayoutDashboard, exact: true },
+      { to: "/app/requests", label: "Mes Demandes", icon: Inbox },
+      { to: "/app/history", label: "Mes Documents", icon: History },
+    ];
+  }
 
   const initials = (fullName || session.user.email || "U")
     .split(" ")
@@ -121,9 +144,37 @@ function AppLayout() {
             <div className="md:hidden">
               <BrandLogo size="sm" />
             </div>
+
+            {/* Desktop Search Bar */}
+            <div className="hidden md:flex items-center relative w-96 ml-4">
+              <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Rechercher un employé, document, demande..." 
+                className="w-full pl-9 bg-secondary/50 border-transparent focus-visible:ring-primary/20 rounded-full h-10"
+              />
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-2 mr-2">
+              <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 border border-background"></span>
+              </Button>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                <Mail className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+              <Button className="ml-2 bg-[#4f46e5] hover:bg-[#4338ca] text-white shadow-sm rounded-md">
+                <Plus className="h-4 w-4 mr-2" />
+                Nouveau
+              </Button>
+            </div>
+            
+            <div className="h-6 w-px bg-border hidden md:block mx-1"></div>
+
             <LangSwitcher />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

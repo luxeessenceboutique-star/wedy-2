@@ -33,61 +33,60 @@ const isDateField = (k: string) =>
     k,
   );
 
-export function fillTemplate(template: string, vars: EmployeeVars): string {
+export function fillTemplate(template: string, vars: EmployeeVars, isPreview: boolean = false): string {
   const today = format(new Date(), "dd/MM/yyyy");
   const merged: Record<string, unknown> = { ...vars, today };
+  
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
     const val = merged[key];
-    if (val === null || val === undefined || val === "") return "____________";
+    if (val === null || val === undefined || val === "") {
+      if (isPreview) {
+        return `<span 
+          class="empty-field-box manual-edit" 
+          contenteditable="true"
+          data-key="${key}"
+          style="display: inline-block; min-width: 120px; min-height: 18px; border: 1px dashed #0ea5e9; background: #f0f9ff; border-radius: 3px; padding: 0 5px; vertical-align: middle; outline: none; cursor: text;"
+        ></span>`;
+      }
+      return "";
+    }
     if (isDateField(key)) return fmtDate(val);
     return String(val);
   });
 }
 
-export function exportToPdf(filename: string, title: string, content: string) {
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 20;
-  const contentWidth = pageWidth - margin * 2;
+export async function exportToPdf(filename: string, title: string, content: string) {
+  const doc = new jsPDF({
+    unit: "mm",
+    format: "a4",
+    orientation: "portrait",
+  });
 
-  // Header band
-  doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, pageWidth, 28, "F");
+  // Create a temporary container to render the HTML
+  const container = document.createElement("div");
+  container.style.width = "210mm"; // A4 Width
+  container.style.position = "absolute";
+  container.style.left = "-9999px";
+  container.innerHTML = content;
+  document.body.appendChild(container);
 
-  doc.setTextColor(34, 211, 238);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.text("YODABOT", margin, 14);
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text("TYTHON — Internal HR Document", margin, 21);
-
-  // Title
-  doc.setTextColor(15, 23, 42);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text(title, margin, 42);
-
-  // Body
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(40, 40, 40);
-  const lines = doc.splitTextToSize(content, contentWidth);
-  doc.text(lines, margin, 52);
-
-  // Footer
-  const pageHeight = doc.internal.pageSize.getHeight();
-  doc.setDrawColor(34, 211, 238);
-  doc.setLineWidth(0.5);
-  doc.line(margin, pageHeight - 22, pageWidth - margin, pageHeight - 22);
-
-  doc.setFontSize(8);
-  doc.setTextColor(120, 120, 120);
-  doc.text("TYTHON — Application interne YODABOT", margin, pageHeight - 14);
-  doc.text(`Émis le ${format(new Date(), "dd/MM/yyyy HH:mm")}`, margin, pageHeight - 9);
-  doc.text("Signature & cachet", pageWidth - margin - 35, pageHeight - 9);
-
-  doc.save(filename);
+  try {
+    await doc.html(container, {
+      callback: function (doc) {
+        doc.save(filename);
+        document.body.removeChild(container);
+      },
+      x: 0,
+      y: 0,
+      width: 210,
+      windowWidth: 794, // Standard A4 pixel width at 96dpi
+      autoPaging: "text",
+    });
+  } catch (error) {
+    console.error("PDF Export error:", error);
+    document.body.removeChild(container);
+    // Fallback simple si html2canvas échoue
+    doc.text("Erreur lors de la génération du PDF complexe.", 10, 10);
+    doc.save(filename);
+  }
 }

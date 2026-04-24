@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 const searchSchema = z.object({
   template: z.string().optional(),
@@ -32,13 +33,27 @@ function GeneratePage() {
   const { t, i18n } = useTranslation();
   const search = Route.useSearch();
   const qc = useQueryClient();
-  const [employeeId, setEmployeeId] = useState<string>(search.employee ?? "");
+  const [employeeIds, setEmployeeIds] = useState<string[]>(search.employee ? [search.employee] : []);
   const [templateId, setTemplateId] = useState<string>(search.template ?? "");
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [manualVars, setManualVars] = useState<Record<string, string>>({});
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (search.template) setTemplateId(search.template);
-    if (search.employee) setEmployeeId(search.employee);
+    if (search.employee) setEmployeeIds([search.employee]);
   }, [search]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "manual_var") {
+        const { key, value } = event.data;
+        setManualVars((prev: Record<string, string>) => ({ ...prev, [key]: value }));
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   const { data: employees } = useQuery({
     queryKey: ["employees-light"],
@@ -46,8 +61,8 @@ function GeneratePage() {
       const { data } = await supabase
         .from("employees")
         .select("*")
-        .order("full_name");
-      return data ?? [];
+        .order("created_at", { ascending: false });
+      return (data as any[]) ?? [];
     },
   });
 
@@ -59,52 +74,97 @@ function GeneratePage() {
         .select("*")
         .eq("is_active", true)
         .order("category");
-      return data ?? [];
+      return (data as any[]) ?? [];
     },
   });
 
-  const employee = employees?.find((e) => e.id === employeeId);
+  const selectedEmployees = employees?.filter((e) => employeeIds.includes(e.id)) ?? [];
   const template = templates?.find((t) => t.id === templateId);
 
   const lang = i18n.language;
   const getName = (tpl: { name_fr: string; name_en: string; name_ar: string }) =>
     lang === "ar" ? tpl.name_ar : lang === "en" ? tpl.name_en : tpl.name_fr;
 
+  const missingVars = useMemo(() => {
+    if (!template || selectedEmployees.length === 0) return [];
+    const emp = selectedEmployees[0] as any;
+    return template.variables.filter((v: string) => !emp[v] && v !== 'today');
+  }, [template, selectedEmployees]);
+
   const previewContent = useMemo(() => {
-    if (!template) return "";
-    const vars: EmployeeVars = (employee as unknown as EmployeeVars) ?? {};
-    return fillTemplate(template.body_template, vars);
-  }, [template, employee]);
+    if (!template || selectedEmployees.length === 0) return "";
+    // Pour aperçu, on utilise le premier employé
+    // On ignore manualVars ici pour éviter le refresh de l'iframe pendant la saisie
+    const vars: EmployeeVars = (selectedEmployees[0] as unknown as EmployeeVars) ?? {};
+    return fillTemplate(template.body_template, vars, true);
+  }, [template, selectedEmployees]);
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      if (!employee || !template) throw new Error("Sélection incomplète");
+      if (selectedEmployees.length === 0 || !template) throw new Error("Sélection incomplète");
       const { data: u } = await supabase.auth.getUser();
       const docName = getName(template);
-      const payload = {
-        employee_id: employee.id,
-        template_id: template.id,
-        generated_by: u.user?.id,
-        document_type: docName,
-        content: previewContent,
-        variables_used: employee as unknown as Record<string, unknown>,
-        language: lang,
-      };
-      const { error } = await (supabase.from("generated_documents") as unknown as {
-        insert: (p: typeof payload) => Promise<{ error: Error | null }>;
-      }).insert(payload);
+      
+      const payloads = await Promise.all(selectedEmployees.map(async (emp, idx) => {
+        let content = "";
+        let mergedVars: any = { ...emp };
+
+        // Si c'est le premier employé (celui de l'aperçu) et qu'on n'est pas en bulk
+        if (idx === 0 && !isBulkMode && iframeRef.current?.contentDocument) {
+          const doc = iframeRef.current.contentDocument;
+          // On récupère les éditions manuelles directement du DOM de l'iframe
+          const editableSpans = doc.querySelectorAll(".manual-edit");
+          editableSpans.forEach((span: any) => {
+            const key = span.getAttribute("data-key");
+            const val = span.innerText.trim();
+            if (key) mergedVars[key] = val;
+          });
+          
+          // On nettoie le HTML pour le PDF (enlever les styles d'édition)
+          const cleanDoc = doc.documentElement.cloneNode(true) as HTMLElement;
+          cleanDoc.querySelectorAll(".manual-edit").forEach((span: any) => {
+            span.style.border = "none";
+            span.style.background = "transparent";
+            span.style.padding = "0";
+            span.removeAttribute("contenteditable");
+          });
+          content = cleanDoc.outerHTML;
+        } else {
+          mergedVars = { ...emp, ...manualVars };
+          content = fillTemplate(template.body_template, mergedVars as unknown as EmployeeVars, false);
+        }
+
+        return {
+          employee_id: emp.id,
+          template_id: template.id,
+          generated_by: u.user?.id,
+          document_type: docName,
+          content: content,
+          variables_used: mergedVars as unknown as Record<string, unknown>,
+          language: lang,
+        };
+      }));
+
+      const { error } = await (supabase.from("generated_documents") as any).insert(payloads);
+      
       if (error) throw error;
-      return docName;
+      return { docName, payloads };
     },
-    onSuccess: (docName) => {
-      toast.success(t("generate.generated"));
+    onSuccess: ({ docName, payloads }) => {
+      toast.success(`${payloads.length} document(s) généré(s) avec succès !`);
       qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
       qc.invalidateQueries({ queryKey: ["recent-docs"] });
       qc.invalidateQueries({ queryKey: ["history"] });
-      const safeName = `${docName}-${employee?.full_name ?? ""}`
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "_");
-      exportToPdf(`${safeName}.pdf`, docName, previewContent);
+      
+      // PDF download trigger
+      const downloadAll = async () => {
+        for (const p of payloads) {
+          const empName = (p.variables_used as any).full_name ?? "";
+          const safeName = `${docName}-${empName}`.replace(/[^\w\s-]/g, "").replace(/\s+/g, "_");
+          await exportToPdf(`${safeName}.pdf`, docName, p.content);
+        }
+      };
+      downloadAll();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -120,21 +180,49 @@ function GeneratePage() {
         {/* Form */}
         <Card className="h-fit space-y-4 p-5">
           <div className="space-y-1.5">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              {t("generate.employee")}
-            </Label>
-            <Select value={employeeId} onValueChange={setEmployeeId}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("generate.selectEmployee")} />
-              </SelectTrigger>
-              <SelectContent>
+            <div className="flex items-center justify-between mb-2">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Employés sélectionnés ({employeeIds.length})
+              </Label>
+              <Button variant="ghost" size="sm" onClick={() => setIsBulkMode(!isBulkMode)} className="h-6 text-xs text-cyber">
+                {isBulkMode ? "Mode Solo" : "Génération Multiple"}
+              </Button>
+            </div>
+            {!isBulkMode ? (
+              <Select value={employeeIds[0] || ""} onValueChange={(v) => setEmployeeIds([v])}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("generate.selectEmployee")} />
+                </SelectTrigger>
+                <SelectContent>
+                {employees?.map((e: any) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.full_name} {e.cin ? `· ${e.cin}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="h-[200px] overflow-y-auto border border-border rounded-md p-2 bg-background">
+                <div className="mb-2 pb-2 border-b border-border">
+                  <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setEmployeeIds(employees?.map(e => e.id) || [])}>Tout cocher</Button>
+                  <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setEmployeeIds([])}>Décocher</Button>
+                </div>
                 {employees?.map((e) => (
-                  <SelectItem key={e.id} value={e.id}>
-                    {e.full_name} {e.cin ? `· ${e.cin}` : ""}
-                  </SelectItem>
+                  <label key={e.id} className="flex items-center gap-2 py-1 px-2 hover:bg-muted/50 rounded cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-gray-300 text-cyber focus:ring-cyber"
+                      checked={employeeIds.includes(e.id)}
+                      onChange={(ev) => {
+                        if (ev.target.checked) setEmployeeIds([...employeeIds, e.id]);
+                        else setEmployeeIds(employeeIds.filter(id => id !== e.id));
+                      }}
+                    />
+                    <span className="text-sm">{e.full_name}</span>
+                  </label>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -146,7 +234,7 @@ function GeneratePage() {
                 <SelectValue placeholder={t("generate.selectTemplate")} />
               </SelectTrigger>
               <SelectContent>
-                {templates?.map((tpl) => (
+                {templates?.map((tpl: any) => (
                   <SelectItem key={tpl.id} value={tpl.id}>
                     {getName(tpl)}
                   </SelectItem>
@@ -162,7 +250,7 @@ function GeneratePage() {
                 {t("templates.variables")} ({template.variables.length})
               </div>
               <div className="flex flex-wrap gap-1">
-                {template.variables.map((v) => (
+                {template.variables.map((v: string) => (
                   <span
                     key={v}
                     className="rounded-md bg-background px-2 py-0.5 font-mono text-xs text-primary"
@@ -174,9 +262,30 @@ function GeneratePage() {
             </div>
           )}
 
+          {missingVars.length > 0 && !isBulkMode && (
+            <div className="space-y-3 pt-2 border-t border-border mt-2">
+              <Label className="text-xs uppercase tracking-wide text-amber-600 font-semibold flex items-center gap-2">
+                Informations Manquantes
+              </Label>
+              <div className="grid gap-3">
+                {missingVars.map((v: string) => (
+                  <div key={v} className="grid gap-1.5">
+                    <Label className="text-xs text-muted-foreground">{v}</Label>
+                    <Input 
+                      value={manualVars[v] || ''} 
+                      onChange={e => setManualVars({...manualVars, [v]: e.target.value})}
+                      placeholder={`Saisir ${v}...`}
+                      className="h-8 text-sm bg-white"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <Button
             onClick={() => saveMut.mutate()}
-            disabled={!employee || !template || saveMut.isPending}
+            disabled={employeeIds.length === 0 || !template || saveMut.isPending}
             className="w-full bg-cyber text-white shadow-glow-cyan"
             size="lg"
           >
@@ -204,19 +313,17 @@ function GeneratePage() {
             {!template ? (
               <div className="flex h-[500px] flex-col items-center justify-center gap-3 text-center text-muted-foreground">
                 <FileText className="h-12 w-12 opacity-30" />
-                <p className="text-sm">{t("generate.placeholderEmployee")}</p>
+                <p className="text-sm">Sélectionnez au moins un employé pour voir l'aperçu.</p>
               </div>
             ) : (
-              <div className="mx-auto max-w-2xl">
-                <div className="mb-6 flex items-center justify-between border-b-2 border-cyan-400 pb-3">
-                  <div className="font-display text-xl font-bold tracking-tight text-slate-900">
-                    YODABOT
-                  </div>
-                  <div className="text-xs text-slate-500">TYTHON — Document interne</div>
-                </div>
-                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800">
-{previewContent}
-                </pre>
+              <div className="h-[700px] w-full border border-slate-200 rounded-sm overflow-hidden bg-white shadow-sm">
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={previewContent}
+                  title="Document Preview"
+                  className="h-full w-full border-none"
+                  sandbox="allow-same-origin allow-scripts"
+                />
               </div>
             )}
           </div>

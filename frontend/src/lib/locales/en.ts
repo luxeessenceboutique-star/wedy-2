@@ -17,6 +17,8 @@ export const en = {
     settings: "Settings",
     logout: "Sign out",
     generate: "Generate document",
+    cv: "CV Parsing (AI)",
+    requests: "HR Requests",
   },
   hero: {
     badge: "Internal TYTHON application",

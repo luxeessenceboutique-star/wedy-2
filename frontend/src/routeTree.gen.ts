@@ -14,9 +14,12 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppAppIndexRouteImport } from './routes/_app.app.index'
 import { Route as AppAppTemplatesRouteImport } from './routes/_app.app.templates'
+import { Route as AppAppRequestsRouteImport } from './routes/_app.app.requests'
+import { Route as AppAppInternsRouteImport } from './routes/_app.app.interns'
 import { Route as AppAppHistoryRouteImport } from './routes/_app.app.history'
 import { Route as AppAppGenerateRouteImport } from './routes/_app.app.generate'
 import { Route as AppAppEmployeesRouteImport } from './routes/_app.app.employees'
+import { Route as AppAppCvRouteImport } from './routes/_app.app.cv'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -42,6 +45,16 @@ const AppAppTemplatesRoute = AppAppTemplatesRouteImport.update({
   path: '/app/templates',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAppRequestsRoute = AppAppRequestsRouteImport.update({
+  id: '/app/requests',
+  path: '/app/requests',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAppInternsRoute = AppAppInternsRouteImport.update({
+  id: '/app/interns',
+  path: '/app/interns',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAppHistoryRoute = AppAppHistoryRouteImport.update({
   id: '/app/history',
   path: '/app/history',
@@ -57,22 +70,33 @@ const AppAppEmployeesRoute = AppAppEmployeesRouteImport.update({
   path: '/app/employees',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAppCvRoute = AppAppCvRouteImport.update({
+  id: '/app/cv',
+  path: '/app/cv',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/app/cv': typeof AppAppCvRoute
   '/app/employees': typeof AppAppEmployeesRoute
   '/app/generate': typeof AppAppGenerateRoute
   '/app/history': typeof AppAppHistoryRoute
+  '/app/interns': typeof AppAppInternsRoute
+  '/app/requests': typeof AppAppRequestsRoute
   '/app/templates': typeof AppAppTemplatesRoute
   '/app/': typeof AppAppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/app/cv': typeof AppAppCvRoute
   '/app/employees': typeof AppAppEmployeesRoute
   '/app/generate': typeof AppAppGenerateRoute
   '/app/history': typeof AppAppHistoryRoute
+  '/app/interns': typeof AppAppInternsRoute
+  '/app/requests': typeof AppAppRequestsRoute
   '/app/templates': typeof AppAppTemplatesRoute
   '/app': typeof AppAppIndexRoute
 }
@@ -81,9 +105,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/app/cv': typeof AppAppCvRoute
   '/_app/app/employees': typeof AppAppEmployeesRoute
   '/_app/app/generate': typeof AppAppGenerateRoute
   '/_app/app/history': typeof AppAppHistoryRoute
+  '/_app/app/interns': typeof AppAppInternsRoute
+  '/_app/app/requests': typeof AppAppRequestsRoute
   '/_app/app/templates': typeof AppAppTemplatesRoute
   '/_app/app/': typeof AppAppIndexRoute
 }
@@ -92,18 +119,24 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/app/cv'
     | '/app/employees'
     | '/app/generate'
     | '/app/history'
+    | '/app/interns'
+    | '/app/requests'
     | '/app/templates'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
+    | '/app/cv'
     | '/app/employees'
     | '/app/generate'
     | '/app/history'
+    | '/app/interns'
+    | '/app/requests'
     | '/app/templates'
     | '/app'
   id:
@@ -111,9 +144,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/app/cv'
     | '/_app/app/employees'
     | '/_app/app/generate'
     | '/_app/app/history'
+    | '/_app/app/interns'
+    | '/_app/app/requests'
     | '/_app/app/templates'
     | '/_app/app/'
   fileRoutesById: FileRoutesById
@@ -161,6 +197,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppTemplatesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/app/requests': {
+      id: '/_app/app/requests'
+      path: '/app/requests'
+      fullPath: '/app/requests'
+      preLoaderRoute: typeof AppAppRequestsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/app/interns': {
+      id: '/_app/app/interns'
+      path: '/app/interns'
+      fullPath: '/app/interns'
+      preLoaderRoute: typeof AppAppInternsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/app/history': {
       id: '/_app/app/history'
       path: '/app/history'
@@ -182,21 +232,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppEmployeesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/app/cv': {
+      id: '/_app/app/cv'
+      path: '/app/cv'
+      fullPath: '/app/cv'
+      preLoaderRoute: typeof AppAppCvRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAppCvRoute: typeof AppAppCvRoute
   AppAppEmployeesRoute: typeof AppAppEmployeesRoute
   AppAppGenerateRoute: typeof AppAppGenerateRoute
   AppAppHistoryRoute: typeof AppAppHistoryRoute
+  AppAppInternsRoute: typeof AppAppInternsRoute
+  AppAppRequestsRoute: typeof AppAppRequestsRoute
   AppAppTemplatesRoute: typeof AppAppTemplatesRoute
   AppAppIndexRoute: typeof AppAppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAppCvRoute: AppAppCvRoute,
   AppAppEmployeesRoute: AppAppEmployeesRoute,
   AppAppGenerateRoute: AppAppGenerateRoute,
   AppAppHistoryRoute: AppAppHistoryRoute,
+  AppAppInternsRoute: AppAppInternsRoute,
+  AppAppRequestsRoute: AppAppRequestsRoute,
   AppAppTemplatesRoute: AppAppTemplatesRoute,
   AppAppIndexRoute: AppAppIndexRoute,
 }

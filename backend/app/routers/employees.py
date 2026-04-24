@@ -1,92 +1,93 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+"""Employees router — /api/employees (Supabase SDK Version)"""
+from typing import List, Optional
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from supabase import Client
-from app.services.supabase import get_supabase
-from app.dependencies import get_current_user, require_admin
-from app.models.employee import EmployeeCreate, EmployeeUpdate
 
-router = APIRouter(prefix="/employees", tags=["employees"])
+from app.database import get_db
+from app.dependencies import get_current_user, require_role, require_hr_or_admin
+from app.schemas import EmployeeCreate, EmployeeUpdate, EmployeeOut
+from app.services.audit import log_action
+
+router = APIRouter(prefix="/employees", tags=["Employees"])
 
 
-def _serialize(emp: dict) -> dict:
-    for field in ("hire_date", "contract_start", "contract_end", "internship_start", "internship_end", "birth_date"):
-        if emp.get(field):
-            emp[field] = str(emp[field])
+@router.get("", response_model=List[EmployeeOut])
+def list_employees(
+    status: Optional[str] = None,
+    department_id: Optional[UUID] = None,
+    skip: int = 0,
+    limit: int = 50,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    # Select with joins for profile and position
+    query = supabase.table("employees").select("*, profiles(*), positions(*)")
+    
+    if status:
+        query = query.eq("status", status)
+    
+    response = query.range(skip, skip + limit - 1).execute()
+    # Flatten/clean result if necessary? No, Pydantic should handle the nested objects if schemas match
+    return response.data
+
+
+@router.get("/{employee_id}", response_model=EmployeeOut)
+def get_employee(
+    employee_id: UUID,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    response = supabase.table("employees").select("*, profiles(*), positions(*)").eq("id", str(employee_id)).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return response.data[0]
+
+
+@router.post("", response_model=EmployeeOut, status_code=201)
+def create_employee(
+    payload: EmployeeCreate,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_role("admin", "hr")),
+):
+    data = payload.model_dump()
+    response = supabase.table("employees").insert(data).execute()
+    if not response.data:
+        raise HTTPException(status_code=400, detail="Could not create employee")
+    
+    emp = response.data[0]
+    log_action(supabase, current_user["id"], "CREATE", "employee", emp["id"])
     return emp
 
 
-@router.get("")
-async def list_employees(
-    search: str = Query(None),
-    department: str = Query(None),
-    status: str = Query(None),
-    limit: int = Query(50, le=200),
-    offset: int = Query(0),
-    db: Client = Depends(get_supabase),
-    current_user: dict = Depends(get_current_user),
+@router.patch("/{employee_id}", response_model=EmployeeOut)
+def update_employee(
+    employee_id: UUID,
+    payload: EmployeeUpdate,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_role("admin", "hr")),
 ):
-    query = db.table("employees").select("*").order("full_name")
-
-    if search:
-        query = query.or_(f"full_name.ilike.%{search}%,cin.ilike.%{search}%,matricule.ilike.%{search}%")
-    if department:
-        query = query.eq("department", department)
-    if status:
-        query = query.eq("status", status)
-
-    result = query.range(offset, offset + limit - 1).execute()
-    return {"data": [_serialize(e) for e in result.data], "count": len(result.data)}
-
-
-@router.get("/{employee_id}")
-async def get_employee(
-    employee_id: str,
-    db: Client = Depends(get_supabase),
-    current_user: dict = Depends(get_current_user),
-):
-    result = db.table("employees").select("*").eq("id", employee_id).single().execute()
-    if not result.data:
+    data = payload.model_dump(exclude_unset=True)
+    if not data:
+        return get_employee(employee_id, supabase, current_user)
+        
+    response = supabase.table("employees").update(data).eq("id", str(employee_id)).execute()
+    if not response.data:
         raise HTTPException(status_code=404, detail="Employee not found")
-    return _serialize(result.data)
-
-
-@router.post("", status_code=201)
-async def create_employee(
-    body: EmployeeCreate,
-    db: Client = Depends(get_supabase),
-    current_user: dict = Depends(get_current_user),
-):
-    payload = body.model_dump(exclude_none=True)
-    for field in ("hire_date", "contract_start", "contract_end", "internship_start", "internship_end", "birth_date"):
-        if field in payload and payload[field]:
-            payload[field] = str(payload[field])
-    payload["created_by"] = current_user["id"]
-    result = db.table("employees").insert(payload).execute()
-    return _serialize(result.data[0])
-
-
-@router.patch("/{employee_id}")
-async def update_employee(
-    employee_id: str,
-    body: EmployeeUpdate,
-    db: Client = Depends(get_supabase),
-    current_user: dict = Depends(get_current_user),
-):
-    payload = body.model_dump(exclude_none=True)
-    if not payload:
-        raise HTTPException(status_code=400, detail="No fields to update")
-    for field in ("hire_date", "contract_start", "contract_end", "internship_start", "internship_end", "birth_date"):
-        if field in payload and payload[field]:
-            payload[field] = str(payload[field])
-    result = db.table("employees").update(payload).eq("id", employee_id).execute()
-    if not result.data:
-        raise HTTPException(status_code=404, detail="Employee not found")
-    return _serialize(result.data[0])
+    
+    emp = response.data[0]
+    log_action(supabase, current_user["id"], "UPDATE", "employee", emp["id"])
+    return emp
 
 
 @router.delete("/{employee_id}", status_code=204)
-async def delete_employee(
-    employee_id: str,
-    db: Client = Depends(get_supabase),
-    current_user: dict = Depends(require_admin),
+def delete_employee(
+    employee_id: UUID,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_role("admin")),
 ):
-    db.table("employees").delete().eq("id", employee_id).execute()
+    response = supabase.table("employees").delete().eq("id", str(employee_id)).execute()
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    log_action(supabase, current_user["id"], "DELETE", "employee", str(employee_id))

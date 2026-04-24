@@ -32,7 +32,7 @@ function HistoryPage() {
           .order("created_at", { ascending: false });
         return fb.data ?? [];
       }
-      return data;
+      return (data as any[]) ?? [];
     },
   });
 

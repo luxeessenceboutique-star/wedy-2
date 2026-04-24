@@ -1,5 +1,5 @@
-@import "tailwindcss" source(none);
-@source "../src";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap");
+@import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -105,15 +105,15 @@
   --chart-4: oklch(0.78 0.16 75);
   --chart-5: oklch(0.6 0.22 27);
 
-  /* Sidebar (light) */
-  --sidebar: oklch(0.985 0.005 240);
-  --sidebar-foreground: oklch(0.22 0.03 260);
-  --sidebar-primary: oklch(0.78 0.14 210);
-  --sidebar-primary-foreground: oklch(0.15 0.03 260);
-  --sidebar-accent: oklch(0.95 0.01 240);
-  --sidebar-accent-foreground: oklch(0.22 0.03 260);
-  --sidebar-border: oklch(0.92 0.008 240);
-  --sidebar-ring: oklch(0.78 0.14 210);
+  /* Sidebar (dark in light mode to match reference) */
+  --sidebar: oklch(0.18 0.03 260);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.45 0.25 260);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.25 0.05 260);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.15 0.03 260);
+  --sidebar-ring: oklch(0.45 0.25 260);
 
   /* Gradients & shadows */
   --gradient-hero: linear-gradient(135deg, oklch(0.12 0.02 260) 0%, oklch(0.18 0.05 280) 50%, oklch(0.15 0.04 250) 100%);
@@ -277,6 +277,3 @@
     transform: scaleX(-1);
   }
 }
-
-/* Google fonts via @font-face for self-hosted feel — using import */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap");

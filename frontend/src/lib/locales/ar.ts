@@ -17,6 +17,8 @@ export const ar = {
     settings: "الإعدادات",
     logout: "تسجيل الخروج",
     generate: "إنشاء وثيقة",
+    cv: "تحليل السير الذاتية",
+    requests: "طلبات الموظفين",
   },
   hero: {
     badge: "تطبيق داخلي لشركة TYTHON",

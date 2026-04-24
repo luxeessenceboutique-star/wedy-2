@@ -32,7 +32,7 @@ function TemplatesPage() {
         .eq("is_active", true)
         .order("category");
       if (error) throw error;
-      return data;
+      return (data as any[]) ?? [];
     },
   });
 

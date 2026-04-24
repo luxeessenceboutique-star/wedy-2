@@ -30,7 +30,7 @@ def list_profiles(
     
     if search:
         # Supabase 'or' query for multiple fields
-        query = query.or_(f"first_name.ilike.%{search}%,last_name.ilike.%{search}%,email.ilike.%{search}%,cin.ilike.%{search}%")
+        query = query.or_(f"full_name.ilike.%{search}%,email.ilike.%{search}%,cin.ilike.%{search}%")
         
     response = query.range(skip, skip + limit - 1).execute()
     return response.data

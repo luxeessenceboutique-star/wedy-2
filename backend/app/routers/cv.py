@@ -43,7 +43,13 @@ async def upload_and_parse_cv(
             # We store the file (now goes to Supabase Storage automatically)
             url = store_file(content, file.filename, subfolder="cvs", content_type=file.content_type)
             
-            # Save upload record
+            # 4.1 Sync user to public 'users' table (needed for FK constraints)
+            service_sb.table("users").upsert({
+                "id": current_user["id"],
+                "email": current_user["email"]
+            }).execute()
+            
+            # 4.2 Save upload record
             res_upload = service_sb.table("cv_uploads").insert({
                 "file_url": url, 
                 "uploaded_by": current_user["id"]

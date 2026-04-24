@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { Button, Input } from '../components/ui';
-import { WedyLogo } from '../components/Logo';
+import { WedyLogo } from '../components/WedyLogo';
 import { Sparkles } from 'lucide-react';
 
 export default function LoginPage() {

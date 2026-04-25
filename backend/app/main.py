@@ -11,8 +11,9 @@ from app.routers import (
     documents, cv, requests, departments,
     notifications, dashboard, templates
 )
+from app.routers import leaves, analytics, copilot, payroll, audit_log
 
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user  # used in protected upload below
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -43,13 +44,18 @@ app.include_router(departments.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(templates.router, prefix="/api")
+app.include_router(leaves.router,    prefix="/api")
+app.include_router(analytics.router, prefix="/api")
+app.include_router(copilot.router,   prefix="/api")
+app.include_router(payroll.router,   prefix="/api")
+app.include_router(audit_log.router, prefix="/api")
 
 
 # Protected Uploads Endpoint
 @app.get("/api/uploads/{file_path:path}")
 async def get_protected_upload(
     file_path: str,
-    current_user: dict = Depends(get_current_user)
+    _current_user: dict = Depends(get_current_user)
 ):
     """Serve files only to authenticated users"""
     full_path = os.path.join(settings.UPLOAD_DIR, file_path)

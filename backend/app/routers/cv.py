@@ -1,19 +1,23 @@
-"""CV Upload & Local Parsing router — Robust version (bypasses RLS errors for testing)"""
-from uuid import UUID
+"""CV router — upload, parse, page images, zone OCR"""
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from pydantic import BaseModel
 from supabase import Client
-from loguru import logger
 
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.services.cv_parser import (
-    extract_raw_text, local_extract_cv, save_cv_extraction,
-    build_profile_suggestion
+    extract_raw_text, local_extract_cv, extract_pages_as_images,
+    extract_photo, ocr_zone, build_profile_suggestion
 )
-from app.services.storage import store_file, _get_supabase as get_service_client
 from app.services.audit import log_action
 
-router = APIRouter(prefix="/cv", tags=["CV Parsing"])
+router = APIRouter(prefix="/cv", tags=["CV"])
+
+# Temp storage for uploaded CV files (for zone OCR)
+_CV_TEMP: dict[str, bytes] = {}
+_CV_TEMP_NAMES: dict[str, str] = {}
+
 
 @router.post("/upload", status_code=201)
 async def upload_and_parse_cv(
@@ -21,60 +25,73 @@ async def upload_and_parse_cv(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    try:
-        content = await file.read()
-        # 1. Text extraction (LOCAL)
-        raw_text = extract_raw_text(content, file.filename)
-        
-        # 2. Information extraction (LOCAL RegEx)
-        extracted = local_extract_cv(raw_text)
-        
-        # 3. Build profile suggestion (LOCAL)
-        suggestion = build_profile_suggestion(extracted)
+    """
+    Full CV processing:
+    - Extract text + structured data (name, email, phone, exp, edu, skills…)
+    - Convert PDF pages to base64 images for the visual viewer
+    - Extract embedded photo if present
+    Returns everything needed for the frontend CV importer.
+    """
+    content = await file.read()
+    filename = file.filename or "cv.pdf"
 
-        # 4. Attempt to save to DB (Optional if RLS is blocked)
-        cv_upload = {"id": "pending-db-fix", "file_url": "local-only"}
-        extraction = {"id": "pending-db-fix"}
-        
-        try:
-            # Use Service Client to bypass RLS for administrative CV storage
-            service_sb = get_service_client()
-            
-            # We store the file (now goes to Supabase Storage automatically)
-            url = store_file(content, file.filename, subfolder="cvs", content_type=file.content_type)
-            
-            # 4.1 Sync user to public 'users' table (needed for FK constraints)
-            service_sb.table("users").upsert({
-                "id": current_user["id"],
-                "email": current_user["email"]
-            }).execute()
-            
-            # 4.2 Save upload record
-            res_upload = service_sb.table("cv_uploads").insert({
-                "file_url": url, 
-                "uploaded_by": current_user["id"]
-            }).execute()
-            
-            if res_upload.data:
-                cv_upload = res_upload.data[0]
-                # Save extraction
-                try:
-                    extraction = save_cv_extraction(service_sb, cv_upload["id"], extracted)
-                except Exception as db_err:
-                    logger.warning(f"DB Extraction save failed: {db_err}")
-                
-                log_action(service_sb, current_user["id"], "UPLOAD_CV", "cv_upload", cv_upload["id"])
-        except Exception as db_err:
-            logger.error(f"Failed to save CV to Supabase: {db_err}")
+    # 1. Raw text
+    raw_text = extract_raw_text(content, filename)
 
-        return {
-            "cv_upload": cv_upload,
-            "extraction": extracted, # Send real extraction data even if not saved
-            "profile_suggestion": suggestion,
-            "raw_text": raw_text,
-            "debug": "Local analysis complete. DB save skipped/failed due to RLS."
-        }
-        
-    except Exception as e:
-        logger.error(f"Global CV Parsing error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    # 2. Structured extraction
+    extraction = local_extract_cv(raw_text)
+
+    # 3. Page images (base64 PNG, one per page)
+    pages = extract_pages_as_images(content, filename, dpi=150)
+
+    # 4. Profile photo
+    photo_b64 = extract_photo(content, filename)
+
+    # 5. Store file in memory for zone OCR (keyed by temp_id)
+    temp_id = str(uuid.uuid4())
+    _CV_TEMP[temp_id] = content
+    _CV_TEMP_NAMES[temp_id] = filename
+
+    # Limit cache size
+    if len(_CV_TEMP) > 50:
+        oldest = next(iter(_CV_TEMP))
+        _CV_TEMP.pop(oldest, None)
+        _CV_TEMP_NAMES.pop(oldest, None)
+
+    log_action(supabase, current_user["id"], "UPLOAD_CV", "cv", temp_id)
+
+    return {
+        "temp_id":   temp_id,
+        "pages":     pages,
+        "photo":     photo_b64,
+        "extraction": extraction,
+        "profile_suggestion": build_profile_suggestion(extraction),
+        "raw_text":  raw_text,
+    }
+
+
+class ZoneRequest(BaseModel):
+    temp_id: str
+    page: int = 0
+    x:     float   # fraction [0,1] from left
+    y:     float   # fraction [0,1] from top
+    w:     float   # fraction [0,1] width
+    h:     float   # fraction [0,1] height
+
+
+@router.post("/ocr-zone")
+async def ocr_zone_endpoint(
+    body: ZoneRequest,
+    _current_user: dict = Depends(get_current_user),
+):
+    """
+    OCR a rectangular zone on a CV page.
+    Coordinates are fractions of the page image size [0,1].
+    """
+    content = _CV_TEMP.get(body.temp_id)
+    filename = _CV_TEMP_NAMES.get(body.temp_id, "cv.pdf")
+    if content is None:
+        raise HTTPException(status_code=404, detail="Fichier CV temporaire introuvable (expiré ?)")
+
+    text = ocr_zone(content, filename, body.page, body.x, body.y, body.w, body.h)
+    return {"text": text}

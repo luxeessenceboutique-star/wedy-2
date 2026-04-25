@@ -19,7 +19,7 @@ def list_requests(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    query = supabase.table("hr_requests").select("*, profiles(*)")
+    query = supabase.table("hr_requests").select("*")
     if profile_id:
         query = query.eq("profile_id", str(profile_id))
     if status:

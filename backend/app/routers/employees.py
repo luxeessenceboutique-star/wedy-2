@@ -1,5 +1,5 @@
 """Employees router — /api/employees (Supabase SDK Version)"""
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -13,24 +13,25 @@ from app.services.audit import log_action
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
 
-@router.get("", response_model=List[EmployeeOut])
+@router.get("")
 def list_employees(
     status: Optional[str] = None,
     department_id: Optional[UUID] = None,
+    search: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    # Select with joins for profile and position
-    query = supabase.table("employees").select("*, profiles(*), positions(*)")
-    
+    query = supabase.table("employees").select("*", count="exact")
+
     if status:
         query = query.eq("status", status)
-    
-    response = query.range(skip, skip + limit - 1).execute()
-    # Flatten/clean result if necessary? No, Pydantic should handle the nested objects if schemas match
-    return response.data
+    if search:
+        query = query.ilike("full_name", f"%{search}%")
+
+    response = query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()
+    return {"data": response.data, "count": response.count or 0}
 
 
 @router.get("/{employee_id}", response_model=EmployeeOut)
@@ -39,7 +40,7 @@ def get_employee(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    response = supabase.table("employees").select("*, profiles(*), positions(*)").eq("id", str(employee_id)).execute()
+    response = supabase.table("employees").select("*").eq("id", str(employee_id)).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Employee not found")
     return response.data[0]

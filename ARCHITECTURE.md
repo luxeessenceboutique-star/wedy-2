@@ -1,328 +1,102 @@
-# Architecture du Projet — YODABOT RH Platform v2.0
+# Architecture — Wedy RH
 
-Application RH interne full-stack pour **TYTHON** — Powered by **Claude AI / OpenAI**.
+HR platform for Moroccan companies. AI-powered document generation, employee management, and HR workflows.
+Powered by **Claude AI (Anthropic)** and **Supabase**.
 
 ---
 
-## Vue d'ensemble
+## Project structure
 
 ```
-platform-RH/
-├── backend/          ← API REST (FastAPI + SQLAlchemy + Supabase)
-├── frontend/         ← Interface (React + TanStack)
-├── docker-compose.yml
+client-brand-design/
+├── wedy/           ← Frontend (Vite + React 18 + TypeScript)
+├── backend/        ← API (Python + FastAPI)
 └── ARCHITECTURE.md
 ```
 
-**Architecture client-serveur découplée :**
-- Le **frontend** gère l'UI et communique avec le backend via REST
-- Le **backend** expose l'API complète avec AI, OCR, génération de documents
-- **Supabase** est la base de données PostgreSQL (tables déjà créées)
-- **MinIO** stocke les fichiers (CVs, photos, documents générés)
-- **Redis + Celery** gèrent les tâches async (parsing CV, emails)
+## Frontend — `wedy/`
 
----
-
-## Schéma d'architecture global
+- **Framework**: Vite + React 18 + TypeScript
+- **Routing**: React Router v6
+- **State / fetching**: TanStack React Query
+- **Styling**: CSS variables (`src/styles.css`), inline styles
+- **Icons**: Lucide React
+- **Toasts**: Sonner
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                       NAVIGATEUR                            │
-│                                                             │
-│   ┌─────────────────────────────────────────────────────┐   │
-│   │          FRONTEND  (port 3000/8080)                 │   │
-│   │         React 19 + TanStack Start                   │   │
-│   │                                                     │   │
-│   │  Dashboard  Employees  Interns  Templates           │   │
-│   │  CV Upload  HR Requests  Notifications              │   │
-│   └───────────────────────┬─────────────────────────────┘   │
-└───────────────────────────│─────────────────────────────────┘
-                            │  REST API (JWT Bearer)
-                            ▼
-┌───────────────────────────────────────────────────────────────┐
-│              BACKEND  FastAPI  (port 8000)                    │
-│                                                               │
-│  /api/auth        /api/profiles     /api/employees            │
-│  /api/interns     /api/documents    /api/templates            │
-│  /api/cv          /api/requests     /api/departments          │
-│  /api/notifications  /api/dashboard /api/audit                │
-│                                                               │
-│  ┌──────────┐  ┌─────────┐  ┌────────────┐  ┌────────────┐  │
-│  │ Auth JWT │  │ SQLAlch │  │ CV Parser  │  │ Doc Gen    │  │
-│  │ RBAC     │  │  ORM    │  │ OCR + AI   │  │ PDF/DOCX   │  │
-│  └──────────┘  └────┬────┘  └────────────┘  └────────────┘  │
-└───────────────────────────────────────────────────────────────┘
-         │                    │              │
-         ▼                    ▼              ▼
-┌────────────────┐  ┌──────────────┐  ┌───────────────┐
-│ SUPABASE CLOUD │  │    REDIS     │  │    MinIO      │
-│  PostgreSQL    │  │  + Celery    │  │  S3 Storage   │
-│  Auth (JWT)    │  │  Async tasks │  │  CVs / Docs   │
-│  RLS Tables    │  └──────────────┘  └───────────────┘
-└────────────────┘
+src/
+├── App.tsx                        ← Routes + auth guard
+├── main.tsx
+├── styles.css                     ← Design tokens + global styles
+├── components/
+│   ├── WedyLogo.tsx               ← Brand logo component
+│   ├── layout/
+│   │   └── AppShell.tsx           ← Sidebar + page shell
+│   └── ui/
+│       └── index.tsx              ← Button, Badge, Card, Input, Modal, Avatar…
+├── lib/
+│   ├── api.ts                     ← Axios client + all API calls
+│   ├── auth.tsx                   ← AuthProvider + useAuth hook
+│   └── supabase.ts                ← Supabase browser client
+└── pages/
+    ├── LoginPage.tsx
+    ├── marketing/
+    │   └── LandingPage.tsx
+    └── app/
+        ├── DashboardPage.tsx
+        ├── CopilotPage.tsx
+        ├── NotificationsPage.tsx
+        ├── EmployeesPage.tsx
+        ├── RecruitmentPage.tsx
+        ├── PerformancePage.tsx
+        ├── TimeOffPage.tsx
+        ├── PayrollPage.tsx
+        ├── GeneratePage.tsx
+        ├── TemplatesPage.tsx
+        ├── HistoryPage.tsx
+        ├── AnalyticsPage.tsx
+        ├── AuditPage.tsx
+        ├── IntegrationsPage.tsx
+        ├── UsersPage.tsx
+        ├── SettingsPage.tsx
+        ├── HelpPage.tsx
+        └── SecurityPage.tsx
 ```
 
----
+## Backend — `backend/`
 
-## Backend — Stack Technique
+- **Framework**: FastAPI (Python)
+- **Database / Auth**: Supabase (PostgreSQL + Supabase Auth)
+- **AI**: Claude API (Anthropic) for document enhancement and AI Copilot
+- **Exports**: PDF (WeasyPrint) and DOCX (python-docx)
 
-| Technologie       | Version | Rôle                                  |
-|-------------------|---------|---------------------------------------|
-| Python            | 3.11+   | Langage                               |
-| FastAPI           | 0.115   | Framework API REST                    |
-| SQLAlchemy        | 2.0     | ORM (reflect Supabase tables)         |
-| Supabase PostgreSQL | —     | Base de données                       |
-| Pydantic v2       | 2.10    | Validation des données                |
-| python-jose       | 3.3     | JWT Auth                              |
-| passlib[bcrypt]   | 1.7     | Hash des mots de passe                |
-| WeasyPrint        | 62      | Génération PDF                        |
-| python-docx       | 1.1     | Génération Word                       |
-| Jinja2            | 3.1     | Moteur de templates HTML              |
-| OpenAI SDK        | 1.58    | Extraction CV par IA                  |
-| Anthropic SDK     | 0.40    | Fallback IA (Claude)                  |
-| pytesseract       | 0.3     | OCR (CVs scannés/images)              |
-| pdf2image         | 1.17    | Conversion PDF → images pour OCR      |
-| PyMuPDF (fitz)    | 1.25    | Extraction texte PDF robuste          |
-| pdfminer.six      | 2023    | Extraction texte PDF                  |
-| MinIO SDK         | 7.2     | Stockage objets S3                    |
-| Redis + Celery    | 7 / 5.4 | File de tâches async                  |
-| loguru            | 0.7     | Logging structuré                     |
+Key routes:
+- `POST /auth/login` — sign in, returns JWT
+- `POST /auth/signup` — create account
+- `GET  /auth/me` — current user profile + roles
+- `GET/POST/PATCH/DELETE /employees` — employee CRUD
+- `GET /templates` — list document templates
+- `POST /documents/generate` — generate a document
+- `GET /documents` — document history
+- `POST /documents/ai/enhance` — AI enhancement
 
----
+## Auth flow
 
-## Structure des fichiers
+1. User logs in → FastAPI validates with Supabase Auth → returns JWT
+2. Frontend stores JWT in `localStorage` as `wedy_token`
+3. Axios interceptor attaches `Authorization: Bearer <token>` to every request
+4. Backend uses `service_role` key to bypass Supabase RLS for server-side queries
 
-```
-backend/
-├── Dockerfile
-├── requirements.txt
-├── .env                          ← Variables d'environnement
-└── app/
-    ├── __init__.py
-    ├── main.py                   ← Point d'entrée FastAPI
-    ├── config.py                 ← Settings (Pydantic)
-    ├── database.py               ← Engine SQLAlchemy → Supabase
-    ├── dependencies.py           ← JWT + RBAC dependencies
-    ├── models/
-    │   ├── __init__.py
-    │   └── models.py             ← 14 modèles SQLAlchemy
-    ├── schemas/
-    │   ├── __init__.py
-    │   ├── auth.py               ← Login/Register/Token
-    │   ├── profile.py            ← Profile/Employee/Intern
-    │   ├── document.py           ← Document/Template/Generate
-    │   ├── hr_request.py         ← HR Request workflow
-    │   ├── cv.py                 ← CV Upload/Extraction
-    │   └── misc.py               ← Department/Position/Notification
-    ├── routers/
-    │   ├── __init__.py
-    │   ├── auth.py               ← POST /api/auth/login,register,me
-    │   ├── profiles.py           ← CRUD /api/profiles
-    │   ├── employees.py          ← CRUD /api/employees
-    │   ├── interns.py            ← CRUD /api/interns
-    │   ├── documents.py          ← /api/documents + /api/templates
-    │   ├── cv.py                 ← POST /api/cv/upload
-    │   ├── requests.py           ← /api/requests + approve
-    │   ├── departments.py        ← /api/departments + /api/positions
-    │   ├── notifications.py      ← /api/notifications + /api/audit
-    │   └── dashboard.py          ← GET /api/dashboard/metrics
-    ├── services/
-    │   ├── auth_service.py       ← JWT + bcrypt
-    │   ├── document_generator.py ← Template fill + PDF/DOCX export
-    │   ├── cv_parser.py          ← OCR + AI extraction pipeline
-    │   ├── storage.py            ← MinIO + local fallback
-    │   └── audit.py              ← Audit logs + notifications
-    └── templates/                ← HTML document templates
-        ├── attestation_travail.html
-        └── attestation_stage.html
-```
+## Running locally
 
----
-
-## Endpoints API — Référence complète
-
-### Auth — `/api/auth`
-| Méthode | Route               | Rôle requis | Description              |
-|---------|---------------------|-------------|--------------------------|
-| POST    | `/api/auth/login`   | Public      | Connexion → JWT token    |
-| POST    | `/api/auth/register`| Public      | Création de compte       |
-| GET     | `/api/auth/me`      | Tout        | Profil utilisateur       |
-
-### Profiles — `/api/profiles`
-| Méthode | Route                        | Rôle requis | Description           |
-|---------|------------------------------|-------------|-----------------------|
-| GET     | `/api/profiles`              | Tout        | Liste (filtre + search)|
-| GET     | `/api/profiles/{id}`         | Tout        | Détail profil         |
-| POST    | `/api/profiles`              | Admin/HR    | Créer profil          |
-| PATCH   | `/api/profiles/{id}`         | Tout        | Modifier profil       |
-| DELETE  | `/api/profiles/{id}`         | Admin       | Supprimer profil      |
-| POST    | `/api/profiles/{id}/photo`   | Tout        | Upload photo          |
-
-### Employees — `/api/employees`
-| Méthode | Route                    | Rôle requis | Description         |
-|---------|--------------------------|-------------|---------------------|
-| GET     | `/api/employees`         | Tout        | Liste employés      |
-| GET     | `/api/employees/{id}`    | Tout        | Détail employé      |
-| POST    | `/api/employees`         | Admin/HR    | Créer employé       |
-| PATCH   | `/api/employees/{id}`    | Admin/HR    | Modifier employé    |
-| DELETE  | `/api/employees/{id}`    | Admin       | Supprimer employé   |
-
-### Interns — `/api/interns`
-| Méthode | Route                | Rôle requis | Description       |
-|---------|----------------------|-------------|-------------------|
-| GET     | `/api/interns`       | Tout        | Liste stagiaires  |
-| POST    | `/api/interns`       | Admin/HR    | Créer stagiaire   |
-| PATCH   | `/api/interns/{id}`  | Admin/HR    | Modifier stagiaire|
-| DELETE  | `/api/interns/{id}`  | Admin       | Supprimer         |
-
-### CV — `/api/cv`
-| Méthode | Route                      | Rôle requis | Description            |
-|---------|----------------------------|-------------|------------------------|
-| POST    | `/api/cv/upload`           | Tout        | Upload + parse CV (AI) |
-| GET     | `/api/cv/uploads`          | Tout        | Liste des CVs uploadés |
-| GET     | `/api/cv/{id}/extraction`  | Tout        | Données extraites      |
-
-### Documents — `/api/documents`
-| Méthode | Route                              | Rôle requis | Description          |
-|---------|------------------------------------|-------------|----------------------|
-| GET     | `/api/documents`                   | Tout        | Liste documents      |
-| POST    | `/api/documents`                   | Admin/HR    | Upload document      |
-| GET     | `/api/documents/{id}/download`     | Tout        | Télécharger          |
-| DELETE  | `/api/documents/{id}`              | Admin/HR    | Supprimer            |
-| POST    | `/api/documents/generate`          | Admin/HR    | Générer PDF/DOCX     |
-| GET     | `/api/documents/generated`         | Tout        | Historique générés   |
-| GET     | `/api/documents/generated/{id}/download` | Tout | Télécharger généré  |
-
-### Templates — `/api/templates`
-| Méthode | Route                    | Rôle requis | Description    |
-|---------|--------------------------|-------------|----------------|
-| GET     | `/api/templates`         | Tout        | Liste templates|
-| POST    | `/api/templates`         | Admin/HR    | Créer template |
-| PATCH   | `/api/templates/{id}`    | Admin/HR    | Modifier       |
-| DELETE  | `/api/templates/{id}`    | Admin       | Supprimer      |
-
-### HR Requests — `/api/requests`
-| Méthode | Route                             | Rôle requis        | Description    |
-|---------|-----------------------------------|--------------------|----------------|
-| GET     | `/api/requests`                   | Tout               | Liste demandes |
-| POST    | `/api/requests`                   | Tout               | Créer demande  |
-| PATCH   | `/api/requests/{id}/approve`      | Admin/HR/Manager   | Approuver/Rejeter|
-| DELETE  | `/api/requests/{id}`              | Admin              | Supprimer      |
-
-### Dashboard & Misc
-| Méthode | Route                       | Rôle requis | Description             |
-|---------|-----------------------------|-------------|-------------------------|
-| GET     | `/api/dashboard/metrics`   | Admin/HR    | KPIs employés/demandes  |
-| GET     | `/api/notifications`        | Tout        | Mes notifications       |
-| PATCH   | `/api/notifications/{id}/read` | Tout     | Marquer comme lu        |
-| GET     | `/api/audit`                | Admin       | Journal d'audit         |
-| GET     | `/api/departments`          | Tout        | Liste départements      |
-| POST    | `/api/departments`          | Admin       | Créer département       |
-| GET     | `/api/positions`            | Tout        | Liste postes            |
-| POST    | `/api/positions`            | Admin       | Créer poste             |
-
----
-
-## Rôles & Permissions
-
-| Rôle         | Permissions                                               |
-|--------------|-----------------------------------------------------------|
-| **admin**    | Tout — CRUD complet, audit, gestion des rôles             |
-| **hr**       | Profiles, Employees, Interns, Documents, Requests, CVs    |
-| **manager**  | Lire + Approuver/Rejeter les demandes                     |
-| **employee** | Lire son profil, soumettre des demandes, voir ses docs    |
-| **intern**   | Lire son profil, soumettre des demandes                   |
-
----
-
-## Pipeline CV (OCR + AI)
-
-```
-Fichier uploadé
-     │
-     ▼
-Détection type
-  ├── PDF → pdfminer.six → (si <50 chars) → pdf2image + Tesseract OCR
-  ├── DOCX → python-docx
-  └── Image (PNG/JPG) → Tesseract OCR (fra+eng+ara)
-     │
-     ▼
-Texte brut extrait
-     │
-     ▼
-OpenAI GPT-4o-mini (JSON strucruré)
-  └── Si échec → Anthropic Claude (fallback)
-     │
-     ▼
-cv_extractions {
-  full_name, email, phone, skills[],
-  education, experience, languages[],
-  raw_json (JSONB complet)
-}
-     │
-     ▼
-profile_suggestion → Auto-create profile
-```
-
----
-
-## Démarrage
-
-### Avec Docker (recommandé)
 ```bash
-docker-compose up -d
-# API disponible : http://localhost:8000/docs
-```
-
-### Sans Docker (local)
-
-**1. Configurer `.env` :**
-```env
-DATABASE_URL=postgresql+psycopg2://postgres.[project-ref]:[password]@aws-0-eu-west-3.pooler.supabase.com:5432/postgres
-SECRET_KEY=votre_cle_secrete_32_chars_minimum
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-**2. Lancer le backend :**
-```bash
+# Backend
 cd backend
 pip install -r requirements.txt
-python -m uvicorn app.main:app --reload --port 8000
-# → http://localhost:8000/docs
-```
+uvicorn app.main:app --reload --port 8000
 
-**3. Lancer le frontend :**
-```bash
-cd frontend
+# Frontend
+cd wedy
 npm install
-npm run dev
-# → http://localhost:5173
-```
-
----
-
-## Variables d'environnement requises
-
-| Variable                  | Description                              |
-|---------------------------|------------------------------------------|
-| `DATABASE_URL`            | URL PostgreSQL Supabase (psycopg2)       |
-| `SECRET_KEY`              | Clé JWT (min 32 caractères)              |
-| `SUPABASE_URL`            | URL projet Supabase                      |
-| `SUPABASE_SERVICE_ROLE_KEY` | Clé service Supabase                  |
-| `OPENAI_API_KEY`          | Clé OpenAI (CV parsing AI)              |
-| `ANTHROPIC_API_KEY`       | Clé Anthropic (fallback AI)             |
-| `MINIO_ENDPOINT`          | Endpoint MinIO (ou S3)                  |
-
----
-
-## n8n Integration
-
-Tous les endpoints sont REST standards avec JSON.
-
-**Exemple workflow n8n — CV auto-processing:**
-```
-[HTTP Trigger] → POST /api/cv/upload (multipart) → [extraction JSON]
-→ [IF full_name] → POST /api/profiles (créer profil)
-→ POST /api/notifications (alerter RH)
+npm run dev   # → http://localhost:5173
 ```

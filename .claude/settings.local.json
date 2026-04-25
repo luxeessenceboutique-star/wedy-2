@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "Bash(curl -s \"http://localhost:8002/api/employees\" -H \"Authorization: Bearer eytest\")",
+      "Bash(curl -s http://localhost:8002/health)",
+      "Bash(curl -s http://localhost:8002/api/employees -H \"Authorization: Bearer bad\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Error format:', d.get\\('detail',''\\)[:50]\\)\")"
+    ]
+  }
+}

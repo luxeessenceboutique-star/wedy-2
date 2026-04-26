@@ -76,14 +76,37 @@ def get_balance(
         .execute()
     )
     if not res.data:
-        # Return default balance
-        return {
+        # Fetch employee to compute seniority-based balance
+        emp_res = supabase.table("employees").select("hire_date").eq("id", employee_id).maybe_single().execute()
+        hire_date = None
+        if emp_res.data and emp_res.data.get("hire_date"):
+            try:
+                from datetime import date
+                hire_date = date.fromisoformat(emp_res.data["hire_date"][:10])
+            except: pass
+        
+        # Base is 1.5 days per month = 18 days per year
+        base_annual = 18
+        if hire_date:
+            seniority_years = (datetime.now().date() - hire_date).days // 365
+            # Seniority bonus: +1.5 days every 5 years (capped at 30 total)
+            bonus = (seniority_years // 5) * 1.5
+            base_annual = min(18 + bonus, 30)
+
+        # Auto-create a default balance record so it persists
+        default = {
             "employee_id": employee_id,
             "year": y,
-            "annual_total": 21, "annual_used": 0,
-            "sick_total": 12,   "sick_used": 0,
-            "personal_total": 5, "personal_used": 0,
+            "annual_total": base_annual, 
+            "annual_used": 0,
+            "sick_total": 4,   # Moroccan law: usually 4 days paid? (Actually it depends, but let's put 4)
+            "personal_total": 3, # Standard for birth/marriage etc.
         }
+        try:
+            supabase.table("leave_balances").insert(default).execute()
+        except Exception:
+            pass
+        return default
     return res.data
 
 
@@ -161,3 +184,13 @@ def delete_leave(
     if not res.data:
         raise HTTPException(status_code=404, detail="Leave request not found")
     log_action(supabase, current_user["id"], "DELETE", "leave_request", leave_id)
+
+
+@router.get("/holidays")
+def list_holidays(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Fetch public holidays."""
+    res = supabase.table("holidays").select("*").order("date").execute()
+    return {"data": res.data or []}

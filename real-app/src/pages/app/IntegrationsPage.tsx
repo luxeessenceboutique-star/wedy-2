@@ -1,76 +1,243 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Plus, Trash2, Send, CheckCircle, Clock, X, ExternalLink, Zap } from 'lucide-react';
 import { PageHeader } from '../../components/layout/AppShell';
+import { Card, Button, Badge } from '../../components/ui';
+import { toast } from 'sonner';
+import { api } from '../../lib/api';
 
-interface Integration {
-  letter: string;
-  name: string;
-  description: string;
-  connected: boolean;
-  color: string;
-}
+// ── Static integrations catalog ───────────────────────────────────────────────
 
-const INTEGRATIONS: Integration[] = [
-  { letter: 'S', name: 'Slack', description: 'Notifications & approvals', connected: true, color: '#4a154b' },
-  { letter: 'M', name: 'Microsoft Teams', description: 'Notifications & calendar', connected: true, color: '#464eb8' },
-  { letter: 'G', name: 'Google Workspace', description: 'Calendar, Drive, Meet', connected: true, color: '#4285f4' },
-  { letter: 'S', name: 'Sage', description: 'Accounting & payroll', connected: false, color: '#00b04f' },
-  { letter: 'C', name: 'Cegid', description: 'HRIS sync', connected: false, color: '#0066cc' },
-  { letter: 'H', name: 'HiBob', description: 'HRIS sync', connected: false, color: '#ff5533' },
-  { letter: 'P', name: 'Personio', description: 'HRIS sync', connected: false, color: '#3d5a80' },
-  { letter: 'D', name: 'DocuSign', description: 'Digital signatures', connected: true, color: '#ffba08' },
-  { letter: 'Z', name: 'Zapier', description: '5,000+ app automations', connected: false, color: '#ff4a00' },
-  { letter: 'O', name: 'Okta', description: 'SSO & SCIM', connected: true, color: '#007dc1' },
-  { letter: 'N', name: 'Notion', description: 'Docs sync', connected: false, color: '#1a1a1a' },
-  { letter: 'W', name: 'Webhooks', description: 'Custom endpoints', connected: true, color: '#0891b2' },
+const CATALOG = [
+  { letter: 'S',  name: 'Slack',             desc: 'Notifications & approbations',  color: '#4a154b', coming: false },
+  { letter: 'M',  name: 'Microsoft Teams',   desc: 'Notifications & calendrier',    color: '#464eb8', coming: true  },
+  { letter: 'G',  name: 'Google Workspace',  desc: 'Calendar, Drive, Meet',         color: '#4285f4', coming: true  },
+  { letter: 'Sa', name: 'Sage',              desc: 'Comptabilité & paie',           color: '#00b04f', coming: true  },
+  { letter: 'D',  name: 'DocuSign',          desc: 'Signatures numériques',         color: '#ffba08', coming: true  },
+  { letter: 'Z',  name: 'Zapier',            desc: '5 000+ automatisations',        color: '#ff4a00', coming: true  },
+  { letter: 'O',  name: 'Okta',              desc: 'SSO & SCIM',                    color: '#007dc1', coming: true  },
 ];
 
-function IntegCard({ item }: { item: Integration }) {
+// ── Webhook types ─────────────────────────────────────────────────────────────
+
+interface Webhook {
+  id: string;
+  url: string;
+  events: string[];
+  active: boolean;
+  created_at: string;
+  last_triggered?: string;
+}
+
+const EVENT_OPTIONS = [
+  'employee.created', 'employee.updated',
+  'leave.approved',   'leave.rejected',
+  'document.generated',
+  'payroll.generated',
+  'contract.expiring',
+];
+
+// ── Webhook manager ───────────────────────────────────────────────────────────
+
+const STORAGE_KEY = 'wedy_webhooks';
+
+function loadWebhooks(): Webhook[] {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]'); }
+  catch { return []; }
+}
+function saveWebhooks(hooks: Webhook[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(hooks));
+}
+
+function WebhookForm({ onAdd }: { onAdd: (w: Webhook) => void }) {
+  const [url, setUrl]       = useState('');
+  const [events, setEvents] = useState<string[]>(['employee.created', 'leave.approved']);
+  const [testing, setTesting] = useState(false);
+
+  const toggle = (ev: string) =>
+    setEvents(prev => prev.includes(ev) ? prev.filter(e => e !== ev) : [...prev, ev]);
+
+  const handleTest = async () => {
+    if (!url.startsWith('http')) { toast.error('URL invalide'); return; }
+    setTesting(true);
+    try {
+      await fetch(url, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'ping', source: 'wedy-rh', timestamp: new Date().toISOString() }),
+      });
+      toast.success('Requête envoyée (vérifiez votre endpoint)');
+    } catch {
+      toast.warning('Requête envoyée en mode no-cors');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleAdd = () => {
+    if (!url.startsWith('http')) { toast.error('URL invalide (doit commencer par http/https)'); return; }
+    if (events.length === 0)     { toast.error('Sélectionnez au moins un événement'); return; }
+    const hook: Webhook = {
+      id: crypto.randomUUID(), url, events, active: true,
+      created_at: new Date().toISOString(),
+    };
+    onAdd(hook);
+    setUrl(''); setEvents(['employee.created']);
+    toast.success('Webhook ajouté');
+  };
+
   return (
-    <div style={{
-      background: '#fff', border: '1px solid var(--border)', borderRadius: 10,
-      padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14,
-    }}>
-      <div style={{
-        width: 40, height: 40, borderRadius: 8, background: item.color,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#fff', fontSize: 16, fontWeight: 700, flexShrink: 0,
-      }}>
-        {item.letter}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div>
+        <label className="label">URL de l'endpoint *</label>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input className="input" style={{ flex: 1 }}
+            value={url} onChange={e => setUrl(e.target.value)}
+            placeholder="https://votre-serveur.com/webhook" />
+          <Button variant="ghost" loading={testing} onClick={handleTest} disabled={!url}>
+            <Send size={13} /> Tester
+          </Button>
+        </div>
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{item.name}</div>
-        <div style={{ fontSize: 12, color: '#94a3b8' }}>{item.description}</div>
+      <div>
+        <label className="label">Événements à écouter</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+          {EVENT_OPTIONS.map(ev => (
+            <button key={ev} onClick={() => toggle(ev)}
+              style={{
+                fontSize: 11, padding: '3px 10px', borderRadius: 999,
+                border: `1px solid ${events.includes(ev) ? 'var(--primary)' : 'var(--border)'}`,
+                background: events.includes(ev) ? 'var(--primary-soft)' : 'var(--bg-muted)',
+                color: events.includes(ev) ? 'var(--primary)' : 'var(--fg-muted)',
+                cursor: 'pointer', fontWeight: events.includes(ev) ? 600 : 400,
+              }}>
+              {ev}
+            </button>
+          ))}
+        </div>
       </div>
-      {item.connected ? (
-        <span style={{
-          fontSize: 11, fontWeight: 500, padding: '3px 10px', borderRadius: 5,
-          background: '#d1fae5', color: '#065f46', border: '1px solid #6ee7b7',
-        }}>
-          ✓ Connected
-        </span>
-      ) : (
-        <button style={{
-          border: '1px solid var(--border)', background: '#fff', borderRadius: 6,
-          padding: '5px 14px', fontSize: 12, cursor: 'pointer', color: '#475569', fontWeight: 500,
-        }}>
-          Connect
-        </button>
-      )}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Button onClick={handleAdd}><Plus size={13} /> Ajouter le webhook</Button>
+      </div>
     </div>
   );
 }
 
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function IntegrationsPage() {
+  const [webhooks, setWebhooks] = useState<Webhook[]>(loadWebhooks);
+  const [showForm, setShowForm] = useState(false);
+
+  const addWebhook = (w: Webhook) => {
+    const updated = [...webhooks, w];
+    setWebhooks(updated);
+    saveWebhooks(updated);
+    setShowForm(false);
+  };
+
+  const removeWebhook = (id: string) => {
+    if (!confirm('Supprimer ce webhook ?')) return;
+    const updated = webhooks.filter(w => w.id !== id);
+    setWebhooks(updated);
+    saveWebhooks(updated);
+    toast.success('Webhook supprimé');
+  };
+
+  const toggleWebhook = (id: string) => {
+    const updated = webhooks.map(w => w.id === id ? { ...w, active: !w.active } : w);
+    setWebhooks(updated);
+    saveWebhooks(updated);
+  };
+
   return (
     <div style={{ padding: '24px 28px' }}>
-      <PageHeader title="Integrations" subtitle="Connect Wedy to the tools your team already uses" />
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 12,
-      }}>
-        {INTEGRATIONS.map(item => (
-          <IntegCard key={item.name} item={item} />
+      <PageHeader
+        title="Intégrations"
+        subtitle="Connectez Wedy aux outils de votre équipe"
+        action={
+          <Button onClick={() => setShowForm(s => !s)}>
+            {showForm ? <><X size={13} /> Annuler</> : <><Plus size={13} /> Nouveau webhook</>}
+          </Button>
+        }
+      />
+
+      {/* Webhook form */}
+      {showForm && (
+        <Card style={{ marginBottom: 20, border: '1px solid var(--primary-border)', background: 'var(--primary-soft)' }}>
+          <h3 style={{ fontWeight: 700, fontSize: 14, marginBottom: 16, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 7 }}>
+            <Zap size={15} /> Nouveau webhook
+          </h3>
+          <WebhookForm onAdd={addWebhook} />
+        </Card>
+      )}
+
+      {/* Active webhooks */}
+      <div style={{ marginBottom: 28 }}>
+        <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: 'var(--fg)', display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Zap size={15} style={{ color: 'var(--primary)' }} /> Webhooks actifs ({webhooks.length})
+        </h2>
+        {webhooks.length === 0 ? (
+          <div style={{ padding: '28px 20px', textAlign: 'center', color: 'var(--fg-muted)', background: 'var(--bg-elev)', border: '1px dashed var(--border)', borderRadius: 10, fontSize: 13 }}>
+            <Zap size={28} style={{ margin: '0 auto 10px', opacity: 0.15 }} />
+            <p style={{ fontWeight: 600 }}>Aucun webhook configuré</p>
+            <p style={{ fontSize: 12, marginTop: 4 }}>Ajoutez un endpoint pour recevoir des événements RH en temps réel.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {webhooks.map(w => (
+              <div key={w.id} style={{
+                background: 'var(--bg-elev)', border: `1px solid ${w.active ? 'var(--border)' : 'var(--border)'}`,
+                borderRadius: 10, padding: '12px 16px',
+                display: 'flex', alignItems: 'flex-start', gap: 12,
+                opacity: w.active ? 1 : 0.55,
+              }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', marginTop: 4, flexShrink: 0, background: w.active ? '#10b981' : '#94a3b8' }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 4px', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.url}</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {w.events.map(ev => (
+                      <span key={ev} style={{ fontSize: 10, padding: '1px 6px', background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 4, fontWeight: 600 }}>{ev}</span>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => toggleWebhook(w.id)}
+                    style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', background: 'var(--bg-muted)', color: 'var(--fg-muted)', fontWeight: 600 }}>
+                    {w.active ? 'Désactiver' : 'Activer'}
+                  </button>
+                  <button onClick={() => removeWebhook(w.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: '4px 6px', borderRadius: 6, display: 'flex' }}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Integration catalog */}
+      <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: 'var(--fg)' }}>Catalogue d'intégrations</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
+        {CATALOG.map(item => (
+          <div key={item.name} style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 8, background: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
+              {item.letter}
+            </div>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 2px' }}>{item.name}</p>
+              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{item.desc}</p>
+            </div>
+            {item.coming ? (
+              <span style={{ fontSize: 10, padding: '2px 8px', background: 'var(--bg-muted)', color: 'var(--fg-muted)', borderRadius: 999, border: '1px solid var(--border)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                Bientôt
+              </span>
+            ) : (
+              <span style={{ fontSize: 11, padding: '3px 10px', background: '#d1fae5', color: '#065f46', border: '1px solid #6ee7b7', borderRadius: 999, fontWeight: 600 }}>
+                ✓ Disponible
+              </span>
+            )}
+          </div>
         ))}
       </div>
     </div>

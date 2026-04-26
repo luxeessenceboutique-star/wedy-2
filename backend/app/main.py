@@ -7,11 +7,12 @@ import os
 
 from app.config import settings
 from app.routers import (
-    auth, profiles, employees, interns,
-    documents, cv, requests, departments,
-    notifications, dashboard, templates
+    auth, profiles, employees, interns, documents, cv, 
+    requests, departments, notifications, dashboard, 
+    templates, leaves, analytics, copilot, payroll, 
+    audit_log, generate, smartdb, performance, users, assets,
+    webhooks
 )
-from app.routers import leaves, analytics, copilot, payroll, audit_log
 
 from app.dependencies import get_current_user  # used in protected upload below
 
@@ -49,6 +50,12 @@ app.include_router(analytics.router, prefix="/api")
 app.include_router(copilot.router,   prefix="/api")
 app.include_router(payroll.router,   prefix="/api")
 app.include_router(audit_log.router, prefix="/api")
+app.include_router(generate.router,  prefix="/api")
+app.include_router(smartdb.router,   prefix="/api")
+app.include_router(performance.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
+app.include_router(assets.router, prefix="/api")
+app.include_router(webhooks.router, prefix="/api")
 
 
 # Protected Uploads Endpoint

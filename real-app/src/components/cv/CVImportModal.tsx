@@ -475,7 +475,7 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div style={{ width: 62, height: 62, borderRadius: '50%', border: '3px solid var(--primary-border)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-soft)' }}>
                       {photo
-                        ? <img src={`data:image/jpeg;base64,${photo}`} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ? <img src={photo.startsWith('data:') ? photo : `data:image/jpeg;base64,${photo}`} alt="Photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         : <User size={26} style={{ color: 'var(--primary)', opacity: 0.5 }} />}
                     </div>
                     <button onClick={() => photoRef.current?.click()}

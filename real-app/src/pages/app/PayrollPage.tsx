@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { DollarSign, Plus, Zap, CheckCircle } from 'lucide-react';
+import { DollarSign, Zap, CheckCircle, Printer } from 'lucide-react';
 import { listPayroll, generateBulkPayroll, updatePayroll, type PayrollRecord } from '../../lib/api';
 import { Card, Badge, Spinner, Button } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
@@ -17,6 +17,53 @@ const MONTHS_FR = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
 function fmt(n?: number) {
   if (n == null) return '—';
   return new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(n);
+}
+
+function printBulletin(r: PayrollRecord, monthLabel: string, year: number) {
+  const name = r.employees?.full_name ?? '—';
+  const dept = r.employees?.department ?? '—';
+  const pos  = r.employees?.position ?? '—';
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<title>Bulletin de paie — ${name}</title>
+<style>
+  body{font-family:'Times New Roman',serif;max-width:680px;margin:40px auto;color:#0f172a;font-size:13px}
+  h1{font-size:18px;text-align:center;margin-bottom:4px}
+  .sub{text-align:center;color:#64748b;font-size:12px;margin-bottom:24px}
+  table{width:100%;border-collapse:collapse;margin-bottom:20px}
+  th{background:#f1f5f9;padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#475569}
+  td{padding:8px 12px;border-bottom:1px solid #e2e8f0}
+  .right{text-align:right}
+  .total td{font-weight:700;font-size:15px;background:#f0fdf4;color:#15803d}
+  .info{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;padding:14px;background:#f8fafc;border-radius:8px}
+  .info p{margin:4px 0;font-size:12px} .info strong{font-size:13px}
+  .footer{margin-top:32px;font-size:11px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:12px}
+</style></head><body>
+<h1>TYTHON SARL — Bulletin de Paie</h1>
+<div class="sub">${monthLabel} ${year}</div>
+<div class="info">
+  <div><p>Employé</p><strong>${name}</strong><p style="margin-top:4px;color:#64748b">${pos} · ${dept}</p></div>
+  <div><p>Période</p><strong>${monthLabel} ${year}</strong><p style="margin-top:4px;color:#64748b">Statut : ${r.status}</p></div>
+</div>
+<table>
+  <tr><th>Rubrique</th><th class="right">Montant (MAD)</th></tr>
+  <tr><td>Salaire de base</td><td class="right">${fmt(r.base_salary)}</td></tr>
+  ${r.bonuses > 0 ? `<tr><td>Primes & avantages</td><td class="right">${fmt(r.bonuses)}</td></tr>` : ''}
+  <tr><td>Brut total</td><td class="right"><strong>${fmt(r.base_salary + r.bonuses)}</strong></td></tr>
+  <tr><td style="color:#ef4444">Cotisation CNSS (salarié)</td><td class="right" style="color:#ef4444">- ${fmt(r.cnss)}</td></tr>
+  <tr><td style="color:#ef4444">Impôt sur le Revenu (IR)</td><td class="right" style="color:#ef4444">- ${fmt(r.ir)}</td></tr>
+  ${r.deductions > 0 ? `<tr><td style="color:#ef4444">Autres retenues</td><td class="right" style="color:#ef4444">- ${fmt(r.deductions)}</td></tr>` : ''}
+  <tr class="total"><td>NET À PAYER</td><td class="right">${fmt(r.net_salary)}</td></tr>
+</table>
+${r.notes ? `<p style="font-size:12px;color:#64748b"><strong>Note :</strong> ${r.notes}</p>` : ''}
+<div class="footer">
+  TYTHON SARL · 55 Bd Zerktouni, Casablanca · RC 553131 · ICE 0003106377000035 · CNSS 4912448<br/>
+  Document généré automatiquement — Wedy RH Platform
+</div>
+</body></html>`;
+  const w = window.open('', '_blank')!;
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 400);
 }
 
 export default function PayrollPage() {
@@ -134,30 +181,25 @@ export default function PayrollPage() {
               <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{fmt(r.ir)}</span>
               <span style={{ fontSize: 12, color: r.bonuses > 0 ? 'var(--success)' : 'var(--fg-subtle)' }}>{fmt(r.bonuses)}</span>
               <Badge variant={STATUS_VARIANT[r.status] ?? 'default'}>{r.status}</Badge>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                 {r.status === 'draft' && (
-                  <button
-                    className="btn btn-sm btn-soft"
-                    onClick={() => validateMutation.mutate(r.id)}
-                    style={{ fontSize: 11, padding: '3px 8px' }}
-                  >
+                  <button className="btn btn-sm btn-soft" onClick={() => validateMutation.mutate(r.id)} style={{ fontSize: 11, padding: '3px 8px' }}>
                     Valider
                   </button>
                 )}
                 {r.status === 'validated' && (
-                  <button
-                    className="btn btn-sm"
-                    onClick={() => payMutation.mutate(r.id)}
-                    style={{ fontSize: 11, padding: '3px 8px', background: 'var(--success)', color: '#fff', border: 'none' }}
-                  >
+                  <button className="btn btn-sm" onClick={() => payMutation.mutate(r.id)} style={{ fontSize: 11, padding: '3px 8px', background: 'var(--success)', color: '#fff', border: 'none' }}>
                     <CheckCircle size={11} /> Payer
                   </button>
                 )}
                 {r.status === 'paid' && r.paid_at && (
-                  <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>
-                    {format(new Date(r.paid_at), 'dd/MM/yy')}
-                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{format(new Date(r.paid_at), 'dd/MM/yy')}</span>
                 )}
+                <button className="btn btn-ghost btn-sm" title="Imprimer le bulletin"
+                  onClick={() => printBulletin(r, MONTHS_FR[month], year)}
+                  style={{ padding: '3px 6px' }}>
+                  <Printer size={11} />
+                </button>
               </div>
             </div>
           ))

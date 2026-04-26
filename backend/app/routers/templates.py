@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile, File, Form
-import fitz
 import re
-from app.services.ai_service import convert_to_html_template
 from supabase import Client
 from app.database import get_db
-from app.dependencies import get_current_user, require_admin
+from app.dependencies import get_current_user, require_admin, require_hr_or_admin
 from app.models.document import TemplateCreate, TemplateUpdate
+from app.services.pdf_template_extractor import extract_pdf_template
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
@@ -42,7 +41,7 @@ async def get_template(
 async def create_template(
     body: TemplateCreate,
     db: Client = Depends(get_db),
-    current_user: dict = Depends(require_admin),
+    current_user: dict = Depends(require_hr_or_admin),
 ):
     payload = body.model_dump()
     result = db.table("document_templates").insert(payload).execute()
@@ -54,7 +53,7 @@ async def update_template(
     template_id: str,
     body: TemplateUpdate,
     db: Client = Depends(get_db),
-    current_user: dict = Depends(require_admin),
+    current_user: dict = Depends(require_hr_or_admin),
 ):
     payload = body.model_dump(exclude_none=True)
     if not payload:
@@ -69,7 +68,7 @@ async def update_template(
 async def delete_template(
     template_id: str,
     db: Client = Depends(get_db),
-    current_user: dict = Depends(require_admin),
+    current_user: dict = Depends(require_hr_or_admin),
 ):
     db.table("document_templates").delete().eq("id", template_id).execute()
 
@@ -81,39 +80,39 @@ async def import_template_from_file(
     name_ar: str = Form(""),
     category: str = Form("autre"),
     db: Client = Depends(get_db),
-    current_user: dict = Depends(require_admin),
+    current_user: dict = Depends(require_hr_or_admin),
 ):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported currently")
-    
+    filename = file.filename or "template.pdf"
+    if not filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Seuls les fichiers PDF sont acceptés")
+
     try:
         content = await file.read()
-        doc = fitz.open(stream=content, filetype="pdf")
-        text = ""
-        for page in doc:
-            text += page.get_text()
-        
-        if not text.strip():
-            raise HTTPException(status_code=400, detail="Could not extract text from PDF")
-            
-        html_template = convert_to_html_template(text)
-        
-        # Extract variables from the generated HTML
+        if not content:
+            raise HTTPException(status_code=400, detail="Fichier vide")
+
+        # Smart extraction: images + formatted text + variable substitution
+        html_template = extract_pdf_template(content, filename)
+
         variables = list(set(re.findall(r"\{\{(\w+)\}\}", html_template)))
-        
+
+        code = re.sub(r"[^a-z0-9_]", "", name_fr.lower().replace(" ", "_").replace("-", "_"))[:50]
+
         payload = {
-            "code": name_fr.lower().replace(" ", "_").replace("-", "_")[:50],
-            "name_fr": name_fr,
-            "name_en": name_en or name_fr,
-            "name_ar": name_ar or name_fr,
-            "category": category,
+            "code":          code,
+            "name_fr":       name_fr,
+            "name_en":       name_en or name_fr,
+            "name_ar":       name_ar or name_fr,
+            "category":      category,
             "body_template": html_template,
-            "variables": variables,
-            "is_active": True
+            "variables":     variables,
+            "is_active":     True,
         }
-        
+
         result = db.table("document_templates").insert(payload).execute()
         return result.data[0]
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

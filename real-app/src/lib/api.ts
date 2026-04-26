@@ -58,6 +58,24 @@ export type Template = {
 export const listTemplates = (params?: Record<string, string | boolean>) =>
   api.get<{ data: Template[]; count: number }>('/templates', { params }).then(r => r.data);
 
+export const getTemplate = (id: string) =>
+  api.get<Template>(`/templates/${id}`).then(r => r.data);
+
+export const createTemplate = (body: {
+  code: string; name_fr: string; name_en?: string; name_ar?: string;
+  category: string; body_template: string; variables?: string[]; is_active?: boolean;
+}) => api.post<Template>('/templates', body).then(r => r.data);
+
+export const updateTemplate = (id: string, body: Partial<Template> & { body_template?: string }) =>
+  api.patch<Template>(`/templates/${id}`, body).then(r => r.data);
+
+export const deleteTemplate = (id: string) => api.delete(`/templates/${id}`);
+
+export const importTemplateFromPdf = (form: FormData) =>
+  api.post<Template>('/templates/import', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
+
 // ── Documents ────────────────────────────────────────────────────────
 export type GeneratedDoc = {
   id: string; employee_id: string; template_id: string;
@@ -254,3 +272,66 @@ export const uploadAndParseCV = async (file: File): Promise<CVParseRes> => {
   });
   return res.data;
 };
+// ── Performance ────────────────────────────────────────────────────────
+export type PerformanceReview = {
+  id: string; employee_id: string; reviewer_id?: string;
+  period: string; score: number; feedback?: string;
+  objectives?: string; status: string; created_at: string;
+  employees?: { full_name: string; position: string; department: string };
+};
+
+export const listPerformanceReviews = (params?: Record<string, string>) =>
+  api.get<{ data: PerformanceReview[]; count: number }>('/performance', { params }).then(r => r.data);
+
+export const createPerformanceReview = (body: Partial<PerformanceReview>) =>
+  api.post<PerformanceReview>('/performance', body).then(r => r.data);
+
+export const updatePerformanceReview = (id: string, body: Partial<PerformanceReview>) =>
+  api.patch<PerformanceReview>(`/performance/${id}`, body).then(r => r.data);
+
+// ── Users ────────────────────────────────────────────────────────────
+export type UserProfile = {
+  id: string; user_id: string; full_name?: string; email?: string;
+  role: string; user?: { email: string };
+};
+
+export const listUsers = () =>
+  api.get<{ data: UserProfile[]; count: number }>('/users').then(r => r.data);
+
+export const updateUserRole = (userId: string, role: string) =>
+  api.patch(`/users/${userId}/role`, { role }).then(r => r.data);
+
+// ── Assets ───────────────────────────────────────────────────────────
+export type Asset = {
+  id: string; name: string; category?: string; serial_number?: string;
+  employee_id?: string; status: string; assigned_at?: string; notes?: string;
+  employees?: { full_name: string; department: string };
+};
+
+export const listAssets = (params?: Record<string, string>) =>
+  api.get<{ data: Asset[]; count: number }>('/assets', { params }).then(r => r.data);
+
+export const createAsset = (body: Partial<Asset>) =>
+  api.post<Asset>('/assets', body).then(r => r.data);
+
+export const updateAsset = (id: string, body: Partial<Asset>) =>
+  api.patch<Asset>(`/assets/${id}`, body).then(r => r.data);
+// ── Notifications ──────────────────────────────────────────────────
+export type Notification = {
+  id: string; title: string; message: string; type: string;
+  is_read: boolean; link?: string; created_at: string;
+};
+export const listNotifications = () => api.get<{ data: Notification[] }>('/notifications').then(r => r.data);
+export const markNotifRead = (id: string) => api.patch(`/notifications/${id}/read`);
+export const markAllNotifsRead = () => api.patch('/notifications/read-all');
+
+// ── Holidays ────────────────────────────────────────────────────────
+export const listHolidays = () => api.get<{ data: { name: string; date: string }[] }>('/leaves/holidays').then(r => r.data);
+
+// ── Webhooks ────────────────────────────────────────────────────────
+export const listWebhooks = () => api.get<{ data: any[] }>('/webhooks').then(r => r.data);
+export const createWebhook = (body: any) => api.post('/webhooks', body).then(r => r.data);
+export const deleteWebhook = (id: string) => api.delete(`/webhooks/${id}`);
+
+// ── Payroll PDF ─────────────────────────────────────────────────────
+export const getPayrollPdfUrl = (id: string) => `${api.defaults.baseURL}/payroll/${id}/pdf`;

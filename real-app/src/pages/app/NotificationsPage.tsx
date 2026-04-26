@@ -1,58 +1,187 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Bell, CheckCheck, RefreshCw, AlertTriangle, Calendar, FileText, Users } from 'lucide-react';
+import { api } from '../../lib/api';
 import { PageHeader } from '../../components/layout/AppShell';
+import { Spinner, Button } from '../../components/ui';
+import { toast } from 'sonner';
 
-const NOTIFS = [
-  { id: 1, initials: 'LH', color: '#0891b2', name: 'Leila Haddad', action: 'requested time off', detail: 'May 5–16', time: '2h ago', unread: true },
-  { id: 2, initials: 'AC', color: '#7c3aed', name: 'Ayra Copilot', action: 'generated Avenant for', detail: 'Youssef El Amrani', time: '4h ago', unread: true },
-  { id: 3, initials: 'S', color: '#64748b', name: 'System', action: "Sofia Alaoui's Stage contract ends in", detail: '8 days', time: 'Today', unread: true },
-  { id: 4, initials: 'OI', color: '#10b981', name: 'Omar Idrissi', action: 'submitted Q2 review for', detail: '4 reports', time: 'Yesterday', unread: false },
-  { id: 5, initials: 'S', color: '#f59e0b', name: 'Slack', action: 'integration refreshed ·', detail: '247 users synced', time: '2 days ago', unread: false },
-];
+// ── API ───────────────────────────────────────────────────────────────────────
 
-function Avatar({ initials, color }: { initials: string; color: string }) {
+interface SmartNotif {
+  id: string;
+  type: string;
+  icon: string;
+  color: string;
+  title: string;
+  body: string;
+  time: string;
+  unread: boolean;
+  priority: number;
+}
+
+const fetchNotifs = () =>
+  api.get<{ data: SmartNotif[]; unread_count: number; count: number }>('/notifications')
+    .then(r => r.data);
+
+const markAllRead = () =>
+  api.post('/notifications/mark-all-read').then(r => r.data);
+
+// ── Icon per type ─────────────────────────────────────────────────────────────
+
+function TypeIcon({ type, color }: { type: string; color: string }) {
+  const icons: Record<string, React.ReactNode> = {
+    contract_expiring: <AlertTriangle size={15} />,
+    leave_pending:     <Calendar size={15} />,
+    document_generated:<FileText size={15} />,
+    cdd_risk:          <AlertTriangle size={15} />,
+    new_employee:      <Users size={15} />,
+  };
   return (
     <div style={{
-      width: 36, height: 36, borderRadius: '50%', background: color,
+      width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+      background: color + '22', border: `1.5px solid ${color}44`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: '#fff', fontSize: 13, fontWeight: 600, flexShrink: 0,
+      color,
     }}>
-      {initials}
+      {icons[type] ?? <Bell size={15} />}
     </div>
   );
 }
 
-export default function NotificationsPage() {
+// ── Notification row ──────────────────────────────────────────────────────────
+
+function NotifRow({ n }: { n: SmartNotif }) {
   return (
-    <div style={{ padding: '24px 28px' }}>
-      <PageHeader title="Notifications" subtitle="3 unread" />
-      <div style={{ maxWidth: 640 }}>
-        {NOTIFS.map(n => (
-          <div key={n.id} style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '14px 16px',
-            background: n.unread ? '#f0fdff' : '#fff',
-            border: '1px solid var(--border)',
-            borderRadius: 8, marginBottom: 6,
-            position: 'relative',
-          }}>
-            {n.unread && (
-              <span style={{
-                position: 'absolute', left: -2, top: '50%', transform: 'translateY(-50%)',
-                width: 6, height: 6, borderRadius: '50%', background: '#0891b2',
-              }} />
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', gap: 12,
+      padding: '14px 18px',
+      background: n.unread ? `${n.color}08` : 'var(--bg-elev)',
+      borderBottom: '1px solid var(--border)',
+      position: 'relative',
+      transition: 'background 0.15s',
+    }}>
+      {n.unread && (
+        <span style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0,
+          width: 3, background: n.color, borderRadius: '0 2px 2px 0',
+        }} />
+      )}
+      <TypeIcon type={n.type} color={n.color} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13, fontWeight: n.unread ? 600 : 500, color: 'var(--fg)', margin: '0 0 2px', lineHeight: 1.4 }}>
+          {n.title}
+        </p>
+        <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0, lineHeight: 1.5 }}>
+          {n.body}
+        </p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+        <span style={{ fontSize: 11, color: 'var(--fg-subtle)', whiteSpace: 'nowrap' }}>{n.time}</span>
+        {n.unread && (
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: n.color, display: 'block' }} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
+const TYPE_LABELS: Record<string, string> = {
+  contract_expiring:  'Contrats',
+  cdd_risk:           'Contrats',
+  leave_pending:      'Congés',
+  document_generated: 'Documents',
+};
+
+export default function NotificationsPage() {
+  const qc = useQueryClient();
+  const [filter, setFilter] = useState('all');
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: fetchNotifs,
+    refetchInterval: 60_000, // refresh every minute
+  });
+
+  const markMut = useMutation({
+    mutationFn: markAllRead,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success('Toutes les notifications marquées comme lues');
+    },
+  });
+
+  const notifs   = data?.data ?? [];
+  const unread   = data?.unread_count ?? 0;
+  const filtered = filter === 'all' ? notifs
+    : filter === 'unread' ? notifs.filter(n => n.unread)
+    : notifs.filter(n => TYPE_LABELS[n.type] === filter);
+
+  const categories = ['all', 'unread', 'Contrats', 'Congés', 'Documents'];
+  const catLabel: Record<string, string> = {
+    all: 'Tout', unread: `Non lues (${unread})`,
+    Contrats: 'Contrats', Congés: 'Congés', Documents: 'Documents',
+  };
+
+  return (
+    <div style={{ padding: '24px 28px', maxWidth: 720, margin: '0 auto' }}>
+      <PageHeader
+        title="Notifications"
+        subtitle={unread > 0 ? `${unread} alerte${unread > 1 ? 's' : ''} non lue${unread > 1 ? 's' : ''}` : 'Aucune alerte non lue'}
+        action={
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button variant="ghost" onClick={() => refetch()}>
+              <RefreshCw size={13} /> Actualiser
+            </Button>
+            {unread > 0 && (
+              <Button variant="soft" loading={markMut.isPending} onClick={() => markMut.mutate()}>
+                <CheckCheck size={13} /> Tout marquer lu
+              </Button>
             )}
-            <Avatar initials={n.initials} color={n.color} />
-            <div style={{ flex: 1 }}>
-              <span style={{ fontSize: 13, color: '#0f172a' }}>
-                <strong>{n.name}</strong>{' '}
-                <span style={{ color: '#475569' }}>{n.action}</span>{' '}
-                <span style={{ color: '#0891b2' }}>{n.detail}</span>
-              </span>
-            </div>
-            <span style={{ fontSize: 12, color: '#94a3b8', whiteSpace: 'nowrap' }}>{n.time}</span>
           </div>
+        }
+      />
+
+      {/* Filter chips */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+        {categories.map(cat => (
+          <button key={cat} onClick={() => setFilter(cat)}
+            style={{
+              padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600,
+              border: '1px solid var(--border)', cursor: 'pointer',
+              background: filter === cat ? 'var(--primary)' : 'var(--bg-elev)',
+              color: filter === cat ? '#fff' : 'var(--fg-muted)',
+              transition: 'all 0.15s',
+            }}>
+            {catLabel[cat]}
+          </button>
         ))}
       </div>
+
+      {/* List */}
+      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spinner /></div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--fg-muted)' }}>
+            <Bell size={36} style={{ margin: '0 auto 14px', opacity: 0.15 }} />
+            <p style={{ fontWeight: 600, marginBottom: 4 }}>Aucune notification</p>
+            <p style={{ fontSize: 13 }}>
+              {filter === 'unread' ? 'Tout est à jour !' : 'Aucun élément dans cette catégorie.'}
+            </p>
+          </div>
+        ) : (
+          filtered.map(n => <NotifRow key={n.id} n={n} />)
+        )}
+      </div>
+
+      {notifs.length > 0 && (
+        <p style={{ fontSize: 12, color: 'var(--fg-subtle)', marginTop: 10, textAlign: 'center' }}>
+          Notifications générées en temps réel depuis les données RH · Actualisation auto. toutes les 60s
+        </p>
+      )}
     </div>
   );
 }

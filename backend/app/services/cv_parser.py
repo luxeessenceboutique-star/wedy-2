@@ -113,23 +113,58 @@ def extract_pages_as_images(file_bytes: bytes, filename: str, dpi: int = 150) ->
 # ── Profile photo extraction from PDF ────────────────────────────────────────
 
 def extract_photo(file_bytes: bytes, filename: str) -> Optional[str]:
-    """Try to find a portrait-like embedded image in the PDF. Returns base64 or None."""
-    ext = Path(filename).suffix.lower()
-    if ext != '.pdf':
+    """
+    Extract a profile photo from a PDF CV.
+    Returns a complete data-URL  (data:image/...;base64,...) or None.
+    Prefers portrait-oriented images; skips tiny icons and huge backgrounds.
+    """
+    file_ext = Path(filename).suffix.lower()
+    # For image files, the whole file IS the photo
+    if file_ext in ('.jpg', '.jpeg', '.png', '.webp'):
+        mime = 'jpeg' if file_ext in ('.jpg', '.jpeg') else file_ext.lstrip('.')
+        return f"data:image/{mime};base64,{base64.b64encode(file_bytes).decode()}"
+    if file_ext != '.pdf':
         return None
     try:
         import fitz
-        from PIL import Image
         doc = fitz.open(stream=file_bytes, filetype='pdf')
+
+        candidates = []
         for page in doc:
-            for img in page.get_images(full=True):
-                xref = img[0]
-                base_image = doc.extract_image(xref)
-                img_bytes = base_image['image']
-                w, h = base_image['width'], base_image['height']
-                # Portrait: square-ish, between 50px and 400px
-                if 50 < w < 400 and 50 < h < 400 and 0.5 < w / h < 2.0:
-                    return base64.b64encode(img_bytes).decode()
+            for img_tuple in page.get_images(full=True):
+                xref = img_tuple[0]
+                try:
+                    base_image = doc.extract_image(xref)
+                    img_bytes = base_image['image']
+                    w, h = base_image['width'], base_image['height']
+                    img_ext = base_image.get('ext', 'jpeg').lower()
+                    if img_ext == 'jpx':
+                        img_ext = 'jpeg'
+
+                    # Skip tiny icons (< 30px) and full-page backgrounds (> 900px)
+                    if w < 30 or h < 30 or w > 900 or h > 900:
+                        continue
+                    # Skip very wide images (banners, logos are wider than tall)
+                    aspect = w / h if h > 0 else 1
+                    if aspect > 1.5:  # too wide → likely a logo/header, not a face
+                        continue
+
+                    # Score: prefer portrait (aspect < 1), medium size
+                    portrait_bonus = 1.5 if aspect < 1.0 else 1.0
+                    size_score = min(w, h) * portrait_bonus
+                    candidates.append((size_score, img_bytes, img_ext))
+                except Exception:
+                    continue
+
+        if not candidates:
+            return None
+
+        # Best candidate = highest score
+        candidates.sort(key=lambda c: c[0], reverse=True)
+        _, best_bytes, best_ext = candidates[0]
+        b64 = base64.b64encode(best_bytes).decode()
+        return f"data:image/{best_ext};base64,{b64}"
+
     except Exception as e:
         logger.warning(f'Photo extraction failed: {e}')
     return None

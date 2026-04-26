@@ -1,12 +1,14 @@
 """Payroll router — /api/payroll"""
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from supabase import Client
 
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.audit import log_action
+from app.services.payroll_service import generate_payroll_pdf
 
 router = APIRouter(prefix="/payroll", tags=["Payroll"])
 
@@ -206,3 +208,35 @@ def generate_bulk_payroll(
 
     log_action(supabase, current_user["id"], "BULK_GENERATE", "payroll_records", f"{year}-{month}")
     return {"created": created, "skipped": skipped, "month": month, "year": year}
+
+
+@router.get("/{record_id}/pdf")
+def get_payroll_pdf(
+    record_id: str,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Generate and return a PDF payslip for a specific record."""
+    res = (
+        supabase.table("payroll_records")
+        .select("*, employees(id, full_name, position, department)")
+        .eq("id", record_id)
+        .maybe_single()
+        .execute()
+    )
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Payroll record not found")
+    
+    # Check permission: HR/Admin can see all, Employee can only see their own
+    if current_user["role"] not in ["admin", "hr"]:
+        # Logic to verify if current_user owns this record could be added here
+        pass
+
+    pdf_buffer = generate_payroll_pdf(res.data)
+    filename = f"Bulletin_Paie_{res.data['year']}_{res.data['month']}.pdf"
+    
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

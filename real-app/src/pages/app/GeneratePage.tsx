@@ -1,31 +1,84 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Wand2, Check, ChevronRight, Download, Sparkles, Loader2 } from 'lucide-react';
+import {
+  Wand2, Check, ChevronRight, Download, Sparkles,
+  Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
+  Printer, RotateCcw, Save, Eye, EyeOff, AlertCircle,
+} from 'lucide-react';
 import { listEmployees, listTemplates, generateDocument, getPdfUrl, getDocxUrl, aiEnhance } from '../../lib/api';
-import { Button, Badge, Card, Select, Spinner } from '../../components/ui';
+import type { Employee, Template } from '../../lib/api';
+import { Button, Badge, Card, Spinner } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';
 import { Avatar } from '../../components/ui';
 
-const LANG_OPTIONS = [{ value: 'fr', label: 'Français' }, { value: 'ar', label: 'العربية' }, { value: 'en', label: 'English' }];
+// ── Constants ────────────────────────────────────────────────────────────────
 
-function StepIndicator({ step, total }: { step: number; total: number }) {
+const LANG_OPTIONS = [
+  { value: 'fr', label: 'Français' },
+  { value: 'ar', label: 'العربية' },
+  { value: 'en', label: 'English' },
+];
+
+// Maps template variable names → employee field values
+const resolveVar = (varName: string, emp: Employee): string => {
+  const fmt = (d?: string | null) =>
+    d ? new Date(d).toLocaleDateString('fr-MA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+
+  const MAP: Record<string, () => string> = {
+    full_name:        () => emp.full_name || '',
+    cin:              () => emp.cin || '',
+    email:            () => emp.email || '',
+    phone:            () => emp.phone || '',
+    address:          () => emp.address || '',
+    city:             () => emp.city || '',
+    nationality:      () => emp.nationality || '',
+    position:         () => emp.position || '',
+    department:       () => emp.department || '',
+    manager:          () => emp.manager || '',
+    matricule:        () => emp.matricule || '',
+    contract_type:    () => emp.contract_type || '',
+    hire_date:        () => fmt(emp.hire_date),
+    contract_start:   () => fmt(emp.contract_start || emp.hire_date),
+    contract_end:     () => emp.contract_end ? fmt(emp.contract_end) : 'à ce jour',
+    internship_start: () => fmt(emp.internship_start),
+    internship_end:   () => emp.internship_end ? fmt(emp.internship_end) : 'à ce jour',
+    salary:           () => emp.salary ? `${Number(emp.salary).toLocaleString('fr-MA')} MAD` : '',
+    today:            () => new Date().toLocaleDateString('fr-MA', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+  };
+  return MAP[varName]?.() ?? '';
+};
+
+// Extract {{variables}} from a template body
+const extractVars = (body = ''): string[] =>
+  [...new Set((body.match(/\{\{(\w+)\}\}/g) ?? []).map(m => m.replace(/[{}]/g, '')))];
+
+// ── Step indicator ────────────────────────────────────────────────────────────
+
+function StepIndicator({ step, labels }: { step: number; labels: string[] }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 28 }}>
-      {Array.from({ length: total }, (_, i) => (
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 28 }}>
+      {labels.map((label, i) => (
         <React.Fragment key={i}>
-          <div style={{
-            width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, fontWeight: 600, flexShrink: 0,
-            background: i < step ? 'var(--primary)' : i === step ? 'var(--primary-soft)' : 'var(--bg-muted)',
-            color: i < step ? '#fff' : i === step ? 'var(--primary)' : 'var(--fg-muted)',
-            border: i === step ? '2px solid var(--primary)' : '2px solid transparent',
-          }}>
-            {i < step ? <Check size={13} /> : i + 1}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 700, flexShrink: 0,
+              background: i < step ? 'var(--primary)' : i === step ? 'var(--primary-soft)' : 'var(--bg-muted)',
+              color: i < step ? '#fff' : i === step ? 'var(--primary)' : 'var(--fg-muted)',
+              border: i === step ? '2px solid var(--primary)' : '2px solid transparent',
+              transition: 'all 0.2s',
+            }}>
+              {i < step ? <Check size={13} /> : i + 1}
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 600, color: i === step ? 'var(--primary)' : 'var(--fg-subtle)', whiteSpace: 'nowrap' }}>
+              {label}
+            </span>
           </div>
-          {i < total - 1 && (
-            <div style={{ flex: 1, height: 2, background: i < step ? 'var(--primary)' : 'var(--border)', margin: '0 4px' }} />
+          {i < labels.length - 1 && (
+            <div style={{ flex: 1, height: 2, background: i < step ? 'var(--primary)' : 'var(--border)', margin: '0 4px', marginBottom: 16 }} />
           )}
         </React.Fragment>
       ))}
@@ -33,175 +86,405 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
   );
 }
 
+// ── Variable badge ────────────────────────────────────────────────────────────
+
+function VarBadge({ name }: { name: string }) {
+  return (
+    <code style={{
+      fontSize: 11, padding: '2px 7px', borderRadius: 5,
+      background: '#f0f9ff', color: '#0369a1',
+      border: '1px solid #bae6fd', fontFamily: 'monospace',
+    }}>
+      {`{{${name}}}`}
+    </code>
+  );
+}
+
+// ── Inline editor toolbar ────────────────────────────────────────────────────
+
+function EditorToolbar({ onEdit, onOriginal, onPrint, modified }: {
+  onEdit: (cmd: string, val?: string) => void;
+  onOriginal: () => void;
+  onPrint: () => void;
+  modified: boolean;
+}) {
+  const btn = (onClick: () => void, icon: React.ReactNode, title: string, active = false) => (
+    <button
+      title={title}
+      onMouseDown={e => { e.preventDefault(); onClick(); }}
+      style={{
+        background: active ? 'var(--primary-soft)' : 'none',
+        border: '1px solid transparent', borderRadius: 5,
+        padding: '4px 7px', cursor: 'pointer',
+        color: active ? 'var(--primary)' : 'var(--fg-muted)',
+        display: 'flex', alignItems: 'center',
+        transition: 'all 0.1s',
+      }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-muted)'; }}
+      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'none'; }}
+    >
+      {icon}
+    </button>
+  );
+
+  const sep = <div style={{ width: 1, height: 20, background: 'var(--border)', margin: '0 4px' }} />;
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 2,
+      padding: '6px 12px', background: 'var(--bg-elev)',
+      border: '1px solid var(--border)', borderRadius: '8px 8px 0 0',
+      borderBottom: 'none', flexWrap: 'wrap',
+    }}>
+      {btn(() => onEdit('bold'),      <Bold size={13} />,        'Gras (Ctrl+B)')}
+      {btn(() => onEdit('italic'),    <Italic size={13} />,      'Italique (Ctrl+I)')}
+      {btn(() => onEdit('underline'), <Underline size={13} />,   'Souligné (Ctrl+U)')}
+      {sep}
+      {btn(() => onEdit('justifyLeft'),   <AlignLeft size={13} />,   'Aligner gauche')}
+      {btn(() => onEdit('justifyCenter'), <AlignCenter size={13} />, 'Centrer')}
+      {btn(() => onEdit('justifyRight'),  <AlignRight size={13} />,  'Aligner droite')}
+      {sep}
+      {btn(onOriginal, <RotateCcw size={13} />, 'Annuler les modifications')}
+      {btn(onPrint,    <Printer size={13} />,    'Imprimer')}
+      {sep}
+      <span style={{ fontSize: 11, color: modified ? '#d97706' : 'var(--fg-subtle)', display: 'flex', alignItems: 'center', gap: 4 }}>
+        {modified ? <><AlertCircle size={11} /> Modifié</> : <><Check size={11} /> Enregistré</>}
+      </span>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function GeneratePage() {
   const [params] = useSearchParams();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
 
-  const [step, setStep] = useState(0);
-  const [employeeId, setEmployeeId] = useState(params.get('employee_id') ?? '');
-  const [templateId, setTemplateId] = useState('');
-  const [language, setLanguage] = useState('fr');
-  const [useAI, setUseAI] = useState(true);
-  const [extraVars, setExtraVars] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<{ id: string; content: string; type: string } | null>(null);
-  const [enhancing, setEnhancing] = useState(false);
-  const [enhancedContent, setEnhancedContent] = useState('');
+  const [step, setStep]               = useState(0);
+  const [employeeId, setEmployeeId]   = useState(params.get('employee_id') ?? '');
+  const [templateId, setTemplateId]   = useState(params.get('template_id') ?? '');
+  const [language, setLanguage]       = useState('fr');
+  const [useAI, setUseAI]             = useState(false);
+  const [extraVars, setExtraVars]     = useState<Record<string, string>>({});
+  const [result, setResult]           = useState<{ id: string; content: string; type: string } | null>(null);
+  const [originalContent, setOriginalContent] = useState('');
+  const [modified, setModified]       = useState(false);
+  const [enhancing, setEnhancing]     = useState(false);
+  const [editMode, setEditMode]       = useState(true);
+
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const { data: empData } = useQuery({ queryKey: ['employees'], queryFn: () => listEmployees({ limit: 200 }) });
-  const { data: tplData } = useQuery({ queryKey: ['templates'], queryFn: () => listTemplates() });
+  const { data: tplData } = useQuery({ queryKey: ['templates'],  queryFn: () => listTemplates() });
 
   const employees = empData?.data ?? [];
-  const templates = tplData?.data ?? [];
+  const templates = tplData?.data  ?? [];
   const selectedEmp = employees.find(e => e.id === employeeId);
   const selectedTpl = templates.find(t => t.id === templateId);
 
+  // Variables detected in the chosen template
+  const templateVars = extractVars(selectedTpl?.body_template);
+
+  // For each variable: auto-resolved from employee or needs manual input
+  const autoFilled: Record<string, string> = {};
+  const missing: string[] = [];
+  if (selectedEmp) {
+    templateVars.forEach(v => {
+      const val = resolveVar(v, selectedEmp);
+      if (val) autoFilled[v] = val;
+      else if (!extraVars[v]) missing.push(v);
+    });
+  }
+
+  // ── Initialize editor when result arrives ──────────────────────────────────
+  useEffect(() => {
+    if (result?.content && editorRef.current) {
+      editorRef.current.innerHTML = result.content;
+      setOriginalContent(result.content);
+      setModified(false);
+    }
+  }, [result]);
+
+  // ── Generation ─────────────────────────────────────────────────────────────
   const genMut = useMutation({
-    mutationFn: () => generateDocument({ employee_id: employeeId, template_id: templateId, language, use_ai_enhancement: useAI, extra_variables: extraVars }),
-    onSuccess: (data) => {
+    mutationFn: () => generateDocument({
+      employee_id: employeeId,
+      template_id: templateId,
+      language,
+      use_ai_enhancement: useAI,
+      extra_variables: extraVars,
+    }),
+    onSuccess: data => {
       setResult({ id: data.document.id, content: data.content, type: data.document.document_type });
       setStep(3);
-      toast.success('Document generated!');
+      toast.success('Document généré !');
     },
-    onError: (e: unknown) => toast.error((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Generation failed'),
+    onError: (e: unknown) =>
+      toast.error((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Erreur de génération'),
   });
 
+  // ── AI enhance ─────────────────────────────────────────────────────────────
   const handleEnhance = async () => {
     if (!result) return;
     setEnhancing(true);
     try {
-      const res = await aiEnhance({ document_content: result.content, document_type: result.type, language, instructions: 'Improve clarity and professionalism' });
-      setEnhancedContent(res.enhanced_content);
-      toast.success('AI enhancement applied');
+      const current = editorRef.current?.innerHTML || result.content;
+      const res = await aiEnhance({
+        document_content: current,
+        document_type: result.type,
+        language,
+        instructions: 'Améliorer la clarté et le professionnalisme',
+      });
+      if (editorRef.current) {
+        editorRef.current.innerHTML = res.enhanced_content;
+        setModified(true);
+      }
+      toast.success('Document amélioré par IA');
     } catch {
-      toast.error('AI enhancement failed');
+      toast.error('Amélioration IA échouée');
     } finally {
       setEnhancing(false);
     }
   };
 
-  const displayContent = enhancedContent || result?.content || '';
+  // ── Editor commands ─────────────────────────────────────────────────────────
+  const execCmd = (cmd: string, val?: string) => {
+    document.execCommand(cmd, false, val);
+    editorRef.current?.focus();
+    setModified(true);
+  };
 
-  const STEPS = ['Employee', 'Template', 'Options', 'Result'];
+  const resetToOriginal = () => {
+    if (!editorRef.current) return;
+    editorRef.current.innerHTML = originalContent;
+    setModified(false);
+    toast.success('Document restauré');
+  };
+
+  const handlePrint = () => {
+    const content = editorRef.current?.innerHTML || '';
+    const w = window.open('', '_blank')!;
+    w.document.write(`<html><head><title>Document</title><style>body{margin:0;padding:0;}</style></head><body>${content}</body></html>`);
+    w.document.close();
+    w.print();
+  };
+
+  const STEPS = ['Employé', 'Template', 'Variables', 'Résultat'];
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 860, margin: '0 auto' }}>
-      <PageHeader title="Generate Document" subtitle="Create HR documents in seconds with AI assistance." />
+    <div style={{ padding: '24px 28px', maxWidth: 960, margin: '0 auto' }}>
+      <PageHeader title="Générer un document" subtitle="Créez des documents RH en quelques clics." />
 
-      <StepIndicator step={step} total={STEPS.length} />
+      <StepIndicator step={step} labels={STEPS} />
 
-      {/* Step 0: Select employee */}
+      {/* ── STEP 0: Select employee ── */}
       {step === 0 && (
         <Card>
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Select an employee</h2>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>Choose the employee for whom this document will be generated.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10, marginBottom: 20 }}>
-            {employees.length === 0 ? <Spinner /> : employees.slice(0, 20).map(emp => (
-              <div key={emp.id}
-                onClick={() => setEmployeeId(emp.id)}
-                style={{
-                  padding: '12px 14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                  border: employeeId === emp.id ? '2px solid var(--primary)' : '1px solid var(--border)',
-                  background: employeeId === emp.id ? 'var(--primary-soft)' : 'var(--bg-elev)',
-                  display: 'flex', alignItems: 'center', gap: 10, transition: 'border-color 0.15s',
-                }}>
-                <Avatar name={emp.full_name} size={32} />
-                <div>
-                  <p style={{ fontWeight: 500, fontSize: 13 }}>{emp.full_name}</p>
-                  <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{emp.position || emp.department || emp.cin}</p>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Sélectionner un employé</h2>
+          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>
+            Choisissez l'employé pour lequel le document sera généré.
+          </p>
+          {employees.length === 0 ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner /></div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10, marginBottom: 20 }}>
+              {employees.slice(0, 24).map(emp => (
+                <div key={emp.id} onClick={() => setEmployeeId(emp.id)}
+                  style={{
+                    padding: '12px 14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                    border: employeeId === emp.id ? '2px solid var(--primary)' : '1px solid var(--border)',
+                    background: employeeId === emp.id ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                    display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.15s',
+                  }}>
+                  <Avatar name={emp.full_name} size={32} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>{emp.full_name}</p>
+                    <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{emp.position || emp.department || emp.cin || '—'}</p>
+                  </div>
+                  {employeeId === emp.id && <Check size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />}
                 </div>
-                {employeeId === emp.id && <Check size={14} style={{ marginLeft: 'auto', color: 'var(--primary)' }} />}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button disabled={!employeeId} onClick={() => setStep(1)}>Next <ChevronRight size={14} /></Button>
-          </div>
-        </Card>
-      )}
-
-      {/* Step 1: Select template */}
-      {step === 1 && (
-        <Card>
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Select template</h2>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>Choose the document type to generate.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10, marginBottom: 20 }}>
-            {templates.map(tpl => (
-              <div key={tpl.id}
-                onClick={() => setTemplateId(tpl.id)}
-                style={{
-                  padding: '14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                  border: templateId === tpl.id ? '2px solid var(--primary)' : '1px solid var(--border)',
-                  background: templateId === tpl.id ? 'var(--primary-soft)' : 'var(--bg-elev)',
-                  transition: 'border-color 0.15s',
-                }}>
-                <p style={{ fontWeight: 500, fontSize: 13 }}>{tpl.name_fr}</p>
-                {tpl.name_en && <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 2 }}>{tpl.name_en}</p>}
-                <div style={{ marginTop: 8 }}><Badge>{tpl.category}</Badge></div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" onClick={() => setStep(0)}>Back</Button>
-            <Button disabled={!templateId} onClick={() => setStep(2)}>Next <ChevronRight size={14} /></Button>
-          </div>
-        </Card>
-      )}
-
-      {/* Step 2: Options */}
-      {step === 2 && (
-        <Card>
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Options</h2>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>Configure language and AI options before generating.</p>
-
-          {/* Summary */}
-          <div style={{ background: 'var(--bg-muted)', borderRadius: 'var(--radius-md)', padding: 14, marginBottom: 20, display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-            <div>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>Employee</p>
-              <p style={{ fontWeight: 500, fontSize: 13 }}>{selectedEmp?.full_name}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>Template</p>
-              <p style={{ fontWeight: 500, fontSize: 13 }}>{selectedTpl?.name_fr}</p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <Select label="Language" value={language} onChange={e => setLanguage(e.target.value)}>
-              {LANG_OPTIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-            </Select>
-
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
-              <input type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)} />
-              <Sparkles size={14} style={{ color: 'var(--accent)' }} />
-              Use Claude AI to enhance the document
-            </label>
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 24 }}>
-            <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
-            <Button loading={genMut.isPending} onClick={() => genMut.mutate()}>
-              <Wand2 size={14} /> Generate document
+            <Button disabled={!employeeId} onClick={() => setStep(1)}>
+              Suivant <ChevronRight size={14} />
             </Button>
           </div>
         </Card>
       )}
 
-      {/* Step 3: Result */}
-      {step === 3 && result && (
+      {/* ── STEP 1: Select template ── */}
+      {step === 1 && (
         <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Check size={13} style={{ color: '#fff' }} />
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Sélectionner un template</h2>
+          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>Choisissez le type de document à générer.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10, marginBottom: 20 }}>
+            {templates.map(tpl => {
+              const vars = extractVars(tpl.body_template);
+              return (
+                <div key={tpl.id} onClick={() => setTemplateId(tpl.id)}
+                  style={{
+                    padding: '14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                    border: templateId === tpl.id ? '2px solid var(--primary)' : '1px solid var(--border)',
+                    background: templateId === tpl.id ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                    transition: 'all 0.15s',
+                  }}>
+                  <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{tpl.name_fr}</p>
+                  {tpl.name_en && tpl.name_en !== tpl.name_fr && (
+                    <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 6 }}>{tpl.name_en}</p>
+                  )}
+                  <Badge>{tpl.category}</Badge>
+                  {vars.length > 0 && (
+                    <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 6 }}>
+                      {vars.length} variable{vars.length > 1 ? 's' : ''}
+                    </p>
+                  )}
                 </div>
-                <span style={{ fontWeight: 600, fontSize: 15 }}>Document generated</span>
-              </div>
-              <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>{result.type} • {LANG_OPTIONS.find(l => l.value === language)?.label}</p>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <Button variant="ghost" onClick={() => setStep(0)}>Retour</Button>
+            <Button disabled={!templateId} onClick={() => setStep(2)}>
+              Suivant <ChevronRight size={14} />
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* ── STEP 2: Variables + Options ── */}
+      {step === 2 && selectedEmp && selectedTpl && (
+        <Card>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Variables &amp; Options</h2>
+          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>
+            Vérifiez les données auto-remplies et complétez les champs manquants.
+          </p>
+
+          {/* Summary */}
+          <div style={{ background: 'var(--bg-muted)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 24, flexWrap: 'wrap', borderLeft: '3px solid var(--primary)' }}>
+            <div>
+              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: '0 0 2px' }}>Employé</p>
+              <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>{selectedEmp.full_name}</p>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div>
+              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: '0 0 2px' }}>Template</p>
+              <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>{selectedTpl.name_fr}</p>
+            </div>
+          </div>
+
+          {/* Variables */}
+          {templateVars.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: 'var(--fg)' }}>
+                Variables du template ({templateVars.length})
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {templateVars.map(v => {
+                  const auto = autoFilled[v];
+                  const manual = extraVars[v] ?? '';
+                  return (
+                    <div key={v} style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '10px 14px', borderRadius: 8,
+                      background: auto ? '#f0fdf4' : manual ? '#fffbeb' : 'var(--bg-muted)',
+                      border: `1px solid ${auto ? '#bbf7d0' : manual ? '#fde68a' : 'var(--border)'}`,
+                    }}>
+                      <VarBadge name={v} />
+                      <div style={{ flex: 1 }}>
+                        {auto ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Check size={12} style={{ color: '#16a34a' }} />
+                            <span style={{ fontSize: 13, color: '#166534', fontWeight: 500 }}>{auto}</span>
+                            <span style={{ fontSize: 10, color: '#86efac', fontWeight: 600, marginLeft: 4 }}>AUTO</span>
+                          </div>
+                        ) : (
+                          <input
+                            className="input"
+                            style={{ fontSize: 13, padding: '5px 10px', width: '100%', boxSizing: 'border-box' }}
+                            placeholder={`Valeur pour ${v}…`}
+                            value={manual}
+                            onChange={e => setExtraVars(ev => ({ ...ev, [v]: e.target.value }))}
+                          />
+                        )}
+                      </div>
+                      {auto && (
+                        <button
+                          onClick={() => setExtraVars(ev => ({ ...ev, [v]: auto }))}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#16a34a', padding: 2 }}
+                          title="Modifier la valeur"
+                        >
+                          ✎
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {missing.length > 0 && (
+                <p style={{ fontSize: 12, color: '#b45309', marginTop: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <AlertCircle size={13} />
+                  {missing.length} champ{missing.length > 1 ? 's' : ''} manquant{missing.length > 1 ? 's' : ''} — le document peut être incomplet.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Language + AI */}
+          <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 180 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>Langue</label>
+              <select className="select" value={language} onChange={e => setLanguage(e.target.value)}>
+                {LANG_OPTIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+                <input type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)} />
+                <Sparkles size={13} style={{ color: '#7c3aed' }} />
+                Amélioration IA (Claude)
+              </label>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <Button variant="ghost" onClick={() => setStep(1)}>Retour</Button>
+            <Button loading={genMut.isPending} onClick={() => genMut.mutate()}>
+              <Wand2 size={14} /> Générer le document
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* ── STEP 3: Result with inline editor ── */}
+      {step === 3 && result && (
+        <div>
+          {/* Status bar */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: 12, padding: '12px 18px',
+            background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 10,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Check size={15} style={{ color: '#16a34a' }} />
+              </div>
+              <div>
+                <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>Document généré</p>
+                <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>
+                  {result.type} · {LANG_OPTIONS.find(l => l.value === language)?.label}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Button variant="ghost" size="sm" onClick={handleEnhance} loading={enhancing}>
-                <Sparkles size={13} /> AI improve
+                <Sparkles size={13} /> IA
+              </Button>
+              <Button
+                variant="ghost" size="sm"
+                onClick={() => setEditMode(e => !e)}
+              >
+                {editMode ? <><EyeOff size={13} /> Lecture</> : <><Eye size={13} /> Éditer</>}
               </Button>
               <a href={getPdfUrl(result.id)} target="_blank" rel="noopener noreferrer">
                 <Button variant="soft" size="sm"><Download size={13} /> PDF</Button>
@@ -212,19 +495,56 @@ export default function GeneratePage() {
             </div>
           </div>
 
+          {/* Editor toolbar (only in edit mode) */}
+          {editMode && (
+            <EditorToolbar
+              onEdit={execCmd}
+              onOriginal={resetToOriginal}
+              onPrint={handlePrint}
+              modified={modified}
+            />
+          )}
+
+          {/* Document preview / editor */}
           <div style={{
-            background: 'var(--bg-muted)', borderRadius: 'var(--radius-md)', padding: '16px 20px',
-            fontFamily: 'Georgia, serif', lineHeight: 1.8, fontSize: 14, color: 'var(--fg)',
-            maxHeight: 480, overflowY: 'auto', whiteSpace: 'pre-wrap', border: '1px solid var(--border)',
+            border: '1px solid var(--border)',
+            borderRadius: editMode ? '0 0 10px 10px' : 10,
+            background: '#e5e7eb',
+            padding: 20,
+            maxHeight: 620,
+            overflowY: 'auto',
           }} className="scroll">
-            {displayContent}
+            <div
+              ref={editorRef}
+              contentEditable={editMode}
+              suppressContentEditableWarning
+              onInput={() => setModified(true)}
+              style={{
+                outline: editMode ? '2px dashed var(--primary)' : 'none',
+                minHeight: 400,
+                cursor: editMode ? 'text' : 'default',
+              }}
+              // Initial render (before ref effect kicks in)
+              dangerouslySetInnerHTML={result ? undefined : { __html: '' }}
+            />
           </div>
 
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
-            <Button variant="ghost" onClick={() => { setStep(0); setResult(null); setEnhancedContent(''); }}>Generate another</Button>
-            <Button onClick={() => navigate('/app/history')}>View history →</Button>
+          {editMode && (
+            <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 6, textAlign: 'center' }}>
+              Cliquez dans le document pour modifier · Utilisez la barre d'outils pour la mise en forme
+            </p>
+          )}
+
+          {/* Footer */}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', marginTop: 14 }}>
+            <Button variant="ghost" onClick={() => { setStep(0); setResult(null); setModified(false); setExtraVars({}); }}>
+              ← Nouveau document
+            </Button>
+            <Button onClick={() => navigate('/app/history')}>
+              Voir l'historique →
+            </Button>
           </div>
-        </Card>
+        </div>
       )}
     </div>
   );

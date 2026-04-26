@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
     ANTHROPIC_API_KEY: str = ""
+    TYBOTFLOW_API_KEY: str = ""
 
     # Email
     MAIL_USERNAME: str = ""

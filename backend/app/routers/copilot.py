@@ -103,3 +103,26 @@ Leave requests: {len(leaves_res.data or [])} total
         return {"summary": response.content[0].text, "employee": emp}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
+@router.post("/flow")
+async def tybot_flow_proxy(
+    payload: dict,
+    current_user: dict = Depends(get_current_user),
+):
+    """Proxy for TyBotFlow API to keep the API key secure on the backend."""
+    import httpx
+    
+    # We use the key from environment/settings
+    # If TYBOTFLOW_API_KEY is not set, we'll return an error
+    api_key = getattr(settings, "TYBOTFLOW_API_KEY", "missing_key")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.tybot.ma/flow/v1/execute",
+                json=payload,
+                headers={"Authorization": f"Bearer {api_key}"},
+                timeout=30.0
+            )
+            return response.json()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"TyBotFlow Proxy error: {str(e)}")

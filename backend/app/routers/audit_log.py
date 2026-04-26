@@ -21,7 +21,7 @@ def list_audit_logs(
 ):
     query = (
         supabase.table("audit_logs")
-        .select("*, profiles!audit_logs_user_id_fkey(full_name)")
+        .select("*, profiles(full_name)")
     )
     if user_id:
         query = query.eq("user_id", user_id)

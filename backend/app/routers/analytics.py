@@ -14,19 +14,23 @@ def get_overview(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    # Total active employees
-    emp_res = supabase.table("employees").select("id, contract_type, department, status, hire_date, gender", count="exact").execute()
-    all_emp = emp_res.data or []
+    try:
+        # Total active employees
+        emp_res = supabase.table("employees").select("id, full_name, position, contract_type, department, status, hire_date, contract_end").execute()
+        all_emp = emp_res.data or []
+    except Exception as e:
+        print(f"Error fetching employees for analytics: {e}")
+        all_emp = []
 
     active = [e for e in all_emp if e.get("status") == "active"]
     inactive = [e for e in all_emp if e.get("status") == "terminated"]
 
     # Contract type breakdown
     from collections import Counter
-    contract_counts = Counter(e.get("contract_type", "Unknown") for e in active)
+    contract_counts = Counter(e.get("contract_type", "Inconnu") for e in active)
 
     # Department breakdown
-    dept_counts = Counter(e.get("department") or "Unassigned" for e in active)
+    dept_counts = Counter(e.get("department") or "Non assign" for e in active)
 
     # Expiring contracts (next 30 days)
     today = date.today()
@@ -35,7 +39,8 @@ def get_overview(
         ce = e.get("contract_end")
         if ce:
             try:
-                d = date.fromisoformat(ce)
+                # Handle possible string formats
+                d = date.fromisoformat(ce[:10]) if isinstance(ce, str) else ce
                 days_left = (d - today).days
                 if 0 < days_left <= 30:
                     expiring.append({"employee": e, "days_left": days_left})
@@ -43,20 +48,32 @@ def get_overview(
                 pass
 
     # Documents generated this month
-    this_month = datetime.now().strftime("%Y-%m")
-    doc_res = supabase.table("generated_documents").select("id, created_at").execute()
-    docs_this_month = sum(
-        1 for d in (doc_res.data or [])
-        if (d.get("created_at") or "").startswith(this_month)
-    )
+    docs_this_month = 0
+    try:
+        this_month = datetime.now().strftime("%Y-%m")
+        doc_res = supabase.table("generated_documents").select("id, created_at").execute()
+        docs_this_month = sum(
+            1 for d in (doc_res.data or [])
+            if (d.get("created_at") or "").startswith(this_month)
+        )
+    except Exception as e:
+        print(f"Error fetching documents for analytics: {e}")
 
     # Pending leave requests
-    lr_res = supabase.table("leave_requests").select("id", count="exact").eq("status", "pending").execute()
-    pending_leaves = lr_res.count or 0
+    pending_leaves = 0
+    try:
+        lr_res = supabase.table("leave_requests").select("id", count="exact").eq("status", "pending").execute()
+        pending_leaves = lr_res.count or 0
+    except Exception as e:
+        print(f"Error fetching leaves for analytics: {e}")
 
     # Pending HR requests
-    hr_res = supabase.table("hr_requests").select("id", count="exact").eq("status", "pending").execute()
-    pending_hr = hr_res.count or 0
+    pending_hr = 0
+    try:
+        hr_res = supabase.table("hr_requests").select("id", count="exact").eq("status", "pending").execute()
+        pending_hr = hr_res.count or 0
+    except Exception as e:
+        print(f"Error fetching hr_requests for analytics: {e}")
 
     return {
         "total_employees": len(active),
@@ -78,9 +95,12 @@ def headcount_trend(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    """Return monthly headcount for the past 12 months based on hire_date."""
-    res = supabase.table("employees").select("hire_date, status").execute()
-    employees = res.data or []
+    try:
+        res = supabase.table("employees").select("hire_date, status").execute()
+        employees = res.data or []
+    except Exception as e:
+        print(f"Error fetching headcount trend: {e}")
+        return {"trend": []}
 
     from collections import defaultdict
     import calendar
@@ -95,16 +115,20 @@ def headcount_trend(
             y -= 1
         months.append((y, m))
 
-    # Count employees hired up to each month-end
     monthly_counts = []
     for y, m in months:
         last_day = calendar.monthrange(y, m)[1]
         cutoff = date(y, m, last_day)
-        count = sum(
-            1 for e in employees
-            if e.get("hire_date") and date.fromisoformat(e["hire_date"]) <= cutoff
-            and e.get("status") not in ("terminated",)
-        )
+        count = 0
+        for e in employees:
+            hd = e.get("hire_date")
+            if hd:
+                try:
+                    hdate = date.fromisoformat(hd[:10])
+                    if hdate <= cutoff and e.get("status") not in ("terminated",):
+                        count += 1
+                except:
+                    pass
         monthly_counts.append({
             "label": f"{y}-{str(m).zfill(2)}",
             "month": m,
@@ -120,12 +144,12 @@ def documents_trend(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    """Return monthly document generation count for the past 12 months."""
-    res = supabase.table("generated_documents").select("created_at").execute()
-    docs = res.data or []
-
-    from collections import defaultdict
-    import calendar
+    try:
+        res = supabase.table("generated_documents").select("created_at").execute()
+        docs = res.data or []
+    except Exception as e:
+        print(f"Error fetching documents trend: {e}")
+        return {"trend": []}
 
     today = date.today()
     months = []
@@ -151,9 +175,12 @@ def leave_stats(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    """Return leave request stats by type and status."""
-    res = supabase.table("leave_requests").select("type, status, days").execute()
-    leaves = res.data or []
+    try:
+        res = supabase.table("leave_requests").select("type, status, days").execute()
+        leaves = res.data or []
+    except Exception as e:
+        print(f"Error fetching leave stats: {e}")
+        return {"by_type": {}}
 
     from collections import defaultdict
     by_type: dict = defaultdict(lambda: {"pending": 0, "approved": 0, "rejected": 0, "total_days": 0})

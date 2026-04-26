@@ -60,7 +60,7 @@ class GenerateDocRequest(BaseModel):
 class GeneratedDocOut(BaseModel):
     id: UUID
     template_id: Optional[UUID] = None
-    profile_id: Optional[UUID] = None
+    employee_id: Optional[UUID] = None
     file_url: Optional[str] = None
     created_at: datetime
 

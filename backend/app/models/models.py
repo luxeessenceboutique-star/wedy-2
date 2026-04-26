@@ -141,6 +141,14 @@ class Employee(Base):
 
     profile = relationship("Profile", back_populates="employee")
     position = relationship("Position", back_populates="employees")
+    
+    # Hierarchy
+    manager_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="SET NULL"))
+    manager = relationship("Employee", remote_side=[id], backref="subordinates")
+    
+    # New relationships
+    performance_reviews = relationship("PerformanceReview", back_populates="employee")
+    assets = relationship("Asset", back_populates="employee")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -285,6 +293,46 @@ class Notification(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("User", back_populates="notifications")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PERFORMANCE REVIEWS
+# ──────────────────────────────────────────────────────────────────────────────
+class PerformanceReview(Base):
+    __tablename__ = "performance_reviews"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
+    reviewer_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    period = Column(Text, nullable=False)
+    score = Column(Numeric)
+    feedback = Column(Text)
+    objectives = Column(Text)
+    status = Column(Text, default="draft")
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    employee = relationship("Employee", back_populates="performance_reviews")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ASSETS (EQUIPMENT)
+# ──────────────────────────────────────────────────────────────────────────────
+class Asset(Base):
+    __tablename__ = "assets"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(Text, nullable=False)
+    category = Column(Text)
+    serial_number = Column(Text, unique=True)
+    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id", ondelete="SET NULL"))
+    status = Column(Text, default="available")
+    assigned_at = Column(DateTime)
+    notes = Column(Text)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    employee = relationship("Employee", back_populates="assets")
 
 
 # ──────────────────────────────────────────────────────────────────────────────

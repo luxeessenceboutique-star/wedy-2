@@ -48,6 +48,41 @@ def get_profile(
     return response.data[0]
 
 
+@router.get("/me")
+def get_my_profile(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Return the profile of the currently authenticated user."""
+    res = supabase.table("profiles").select("*").eq("user_id", current_user["id"]).maybe_single().execute()
+    if res.data:
+        return res.data
+    return {
+        "id": current_user["id"], "user_id": current_user["id"],
+        "full_name": current_user.get("full_name", ""),
+        "email": current_user.get("email", ""),
+    }
+
+
+@router.patch("/me")
+def update_my_profile(
+    body: dict,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Update profile fields for the current user."""
+    allowed = {"full_name", "phone", "company", "address", "bio", "gender", "cin", "birthday"}
+    payload = {k: v for k, v in body.items() if k in allowed}
+    if not payload:
+        return {"status": "no changes"}
+    try:
+        res = supabase.table("profiles").update(payload).eq("user_id", current_user["id"]).execute()
+        return res.data[0] if res.data else payload
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.post("", response_model=ProfileOut, status_code=201)
 def create_profile(
     payload: ProfileCreate,

@@ -11,9 +11,8 @@ from app.dependencies import get_current_user, require_role
 from app.schemas import (
     DocumentCreate, DocumentOut,
     TemplateCreate, TemplateUpdate, TemplateOut,
-    GenerateDocRequest, GeneratedDocOut,
+    GeneratedDocOut
 )
-from app.services.document_generator import generate_document
 from app.services.storage import store_file, retrieve_file
 from app.services.audit import log_action
 
@@ -88,49 +87,7 @@ def delete_document(
         raise HTTPException(status_code=404, detail="Document not found")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Document Generation
-# ─────────────────────────────────────────────────────────────────────────────
-
-@router.post("/documents/generate", response_model=GeneratedDocOut, status_code=201)
-def generate_doc(
-    payload: GenerateDocRequest,
-    supabase: Client = Depends(get_db),
-    current_user: dict = Depends(require_role("admin", "hr")),
-):
-    res_t = supabase.table("document_templates").select("*").eq("id", str(payload.template_id)).execute()
-    if not res_t.data:
-        raise HTTPException(status_code=404, detail="Template not found")
-    template = res_t.data[0]
-
-    res_p = supabase.table("profiles").select("*, employees(*, positions(*, departments(*))), interns(*)").eq("id", str(payload.profile_id)).execute()
-    if not res_p.data:
-        raise HTTPException(status_code=404, detail="Profile not found")
-    profile = res_p.data[0]
-
-    # Note: generate_document might need adaptation to handle raw dicts
-    file_bytes, media_type = generate_document(
-        supabase=supabase,
-        template=template,
-        profile=profile,
-        extra_vars=payload.extra_vars,
-        output_format=payload.output_format,
-    )
-
-    ext = "pdf" if payload.output_format == "pdf" else "docx"
-    filename = f"gen_{profile['id']}_{payload.template_id}.{ext}"
-    url = store_file(file_bytes, filename, subfolder="generated", content_type=media_type)
-
-    data = {
-        "template_id": str(payload.template_id),
-        "profile_id": str(payload.profile_id),
-        "file_url": url,
-    }
-    res_gen = supabase.table("generated_documents").insert(data).execute()
-    gen_doc = res_gen.data[0]
-    
-    log_action(supabase, current_user["id"], "GENERATE_DOCUMENT", "generated_document", gen_doc["id"])
-    return gen_doc
+# /documents/generate is handled by routers/generate.py (employee-based, returns {document, content})
 
 
 @router.get("/documents/generated", response_model=List[GeneratedDocOut])

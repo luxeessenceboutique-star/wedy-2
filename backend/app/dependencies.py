@@ -63,7 +63,18 @@ def require_role(*roles: str):
     return _check
 
 def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
-    return require_role("admin")(current_user)
+    if current_user.get("role_name") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permissions insuffisantes. Rôle requis: admin",
+        )
+    return current_user
 
 def require_hr_or_admin(current_user: dict = Depends(get_current_user)) -> dict:
-    return require_role("admin", "hr")(current_user)
+    role = current_user.get("role_name", "")
+    if role not in ("admin", "hr", "rh"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permissions insuffisantes. Rôle requis: admin ou hr",
+        )
+    return current_user

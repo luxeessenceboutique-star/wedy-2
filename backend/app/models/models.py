@@ -31,6 +31,7 @@ RequestStatusEnum = SAEnum(
 )
 DocumentTypeEnum = SAEnum(
     "contract", "certificate", "leave", "other",
+    "cin", "convention", "nda", "completion",
     name="document_type", create_type=False,
 )
 

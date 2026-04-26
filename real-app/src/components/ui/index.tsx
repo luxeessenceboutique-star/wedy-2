@@ -93,9 +93,20 @@ export function Modal({ open, onClose, title, children, width = 540 }:
 }
 
 // ── Avatar ────────────────────────────────────────────────────────────
-export function Avatar({ name, size = 32 }: { name: string; size?: number }) {
-  const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  const hue = name.charCodeAt(0) * 17 % 360;
+export function Avatar({ name = 'U', src, size = 32 }: { name?: string; src?: string; size?: number }) {
+  const safeName = name || 'U';
+  const initials = safeName.split(' ').map(w => w[0] || '').slice(0, 2).join('').toUpperCase();
+  const hue = safeName.charCodeAt(0) * 17 % 360;
+  
+  if (src) {
+    const fullSrc = src.startsWith('data:') ? src : `data:image/jpeg;base64,${src}`;
+    return (
+      <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--bg-muted)' }}>
+        <img src={fullSrc} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      </div>
+    );
+  }
+
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',

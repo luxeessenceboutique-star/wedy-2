@@ -40,17 +40,27 @@ def list_documents(
 
 @router.post("/documents", response_model=DocumentOut, status_code=201)
 async def upload_document(
-    profile_id: UUID,
     type: str,
     name: str,
+    profile_id: UUID = None,
+    employee_id: UUID = None,
     file: UploadFile = File(...),
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
+    if not profile_id and not employee_id:
+        raise HTTPException(status_code=400, detail="profile_id or employee_id is required")
+
     content = await file.read()
     url = store_file(content, file.filename, subfolder="documents", content_type=file.content_type)
     
-    data = {"profile_id": str(profile_id), "type": type, "name": name, "file_url": url}
+    data = {
+        "profile_id": str(profile_id) if profile_id else None,
+        "employee_id": str(employee_id) if employee_id else None,
+        "type": type, 
+        "name": name, 
+        "file_url": url
+    }
     response = supabase.table("documents").insert(data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not upload document")

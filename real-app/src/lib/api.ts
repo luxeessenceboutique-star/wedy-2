@@ -30,6 +30,14 @@ export type Employee = {
   birth_date?: string; address?: string; city?: string;
   nationality?: string; manager?: string; notes?: string;
   internship_start?: string; internship_end?: string;
+  remuneration?: number;
+  skills?: string[];
+  experience_summary?: string;
+  education_summary?: string;
+  certifications?: string[];
+  languages?: string[];
+  bio?: string;
+  photo_url?: string;
   created_at?: string;
 };
 
@@ -90,6 +98,19 @@ export const generateDocument = (body: {
 
 export const listDocuments = (params?: Record<string, string | number>) =>
   api.get<{ data: GeneratedDoc[]; count: number }>('/documents', { params }).then(r => r.data);
+
+export const uploadDocument = (id: string, type: string, name: string, file: File, isEmployee = false) => {
+  const form = new FormData();
+  form.append('file', file);
+  return api.post(`/documents`, form, {
+    params: { 
+      [isEmployee ? 'employee_id' : 'profile_id']: id, 
+      type, 
+      name 
+    },
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then(r => r.data);
+};
 
 export const deleteDocument = (id: string) => api.delete(`/documents/${id}`);
 

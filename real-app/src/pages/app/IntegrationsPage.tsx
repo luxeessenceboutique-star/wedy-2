@@ -163,12 +163,12 @@ export default function IntegrationsPage() {
 
       {/* Webhook form */}
       {showForm && (
-        <Card style={{ marginBottom: 20, border: '1px solid var(--primary-border)', background: 'var(--primary-soft)' }}>
+        <div className="card card-pad" style={{ marginBottom: 20, border: '1px solid var(--primary-border)', background: 'var(--primary-soft)' }}>
           <h3 style={{ fontWeight: 700, fontSize: 14, marginBottom: 16, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 7 }}>
             <Zap size={15} /> Nouveau webhook
           </h3>
           <WebhookForm onAdd={addWebhook} />
-        </Card>
+        </div>
       )}
 
       {/* Active webhooks */}

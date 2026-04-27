@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listUsers, updateUserRole, type UserProfile } from '../../lib/api';
-import { Spinner, Button, Badge } from '../../components/ui';
+import { Spinner, Button, Badge, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';
 import { UserPlus, MoreHorizontal, ShieldCheck } from 'lucide-react';

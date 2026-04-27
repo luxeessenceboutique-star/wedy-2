@@ -79,7 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
-  const fullName = (user?.full_name as string) || (user?.profile?.full_name as string) || user?.email?.split('@')[0] || 'User';
+  const fullName = ((user as any)?.full_name as string) || ((user as any)?.profile?.full_name as string) || user?.email?.split('@')[0] || 'User';
   const initials = fullName.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
 
   return (
@@ -224,7 +224,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {fullName}
               </div>
               <div style={{ fontSize: 11, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {((user?.role_name as string) === 'admin' || (user?.roles as string[] | undefined)?.includes('admin')) ? 'HR Admin' : 'HR Member'}
+                {(((user as any)?.role_name as string) === 'admin' || ((user as any)?.roles as string[] | undefined)?.includes('admin')) ? 'HR Admin' : 'HR Member'}
               </div>
             </div>
             <ChevronDown size={13} style={{ color: '#94a3b8', flexShrink: 0 }} />

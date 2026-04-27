@@ -88,7 +88,7 @@ export const importTemplateFromPdf = (form: FormData) =>
 export type GeneratedDoc = {
   id: string; employee_id: string; template_id: string;
   document_type: string; content: string; language: string;
-  created_at: string; employees?: { full_name: string; cin: string; department: string };
+  name?: string; created_at: string; employees?: { full_name: string; cin: string; department: string };
 };
 
 export const generateDocument = (body: {

@@ -18,9 +18,9 @@ const TABS = [
 function TabProfile() {
   const { user } = useAuth();
   const [form, setForm] = useState({
-    full_name: (user?.full_name as string) || (user?.profile?.full_name as string) || '',
-    company: (user?.profile?.company as string) || '',
-    phone: (user?.profile?.phone as string) || '',
+    full_name: ((user as any)?.full_name as string) || ((user as any)?.profile?.full_name as string) || '',
+    company: ((user as any)?.profile?.company as string) || '',
+    phone: ((user as any)?.profile?.phone as string) || '',
   });
 
   const mutation = useMutation({
@@ -66,7 +66,7 @@ function TabProfile() {
           <div style={{ background: 'var(--primary-soft)', border: '1px solid var(--primary-border)', borderRadius: 'var(--radius-md)', padding: '10px 16px', fontSize: 13 }}>
             <span style={{ color: 'var(--fg-muted)', marginRight: 8 }}>Rôle :</span>
             <span style={{ fontWeight: 600, color: 'var(--primary)' }}>
-              {(user?.role_name as string) || 'HR Member'}
+              {((user as any)?.role_name as string) || 'HR Member'}
             </span>
           </div>
         </div>

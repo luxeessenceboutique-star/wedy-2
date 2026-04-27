@@ -84,11 +84,36 @@ function InternForm({ initial, onSave, onCancel, loading }: {
       </div>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <Input label="Compétences (séparées par des virgules)" 
-          value={form.skills?.join(', ') ?? ''} 
-          onChange={setArr('skills')} 
-          placeholder="React, TypeScript, SQL..." />
-          
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <Input label="Compétences (séparées par des virgules)" 
+            value={form.skills?.join(', ') ?? ''} 
+            onChange={setArr('skills')} 
+            placeholder="React, TypeScript, SQL..." />
+          <Input label="Langues (séparées par des virgules)" 
+            value={form.languages?.join(', ') ?? ''} 
+            onChange={setArr('languages' as any)} 
+            placeholder="Français, Anglais..." />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label className="label">Résumé Expérience</label>
+            <textarea className="input" rows={2} 
+              style={{ resize: 'none', padding: '10px 12px' }}
+              value={form.experience_summary ?? ''} 
+              onChange={set('experience_summary')} 
+              placeholder="2 ans d'expérience..." />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label className="label">Résumé Formation</label>
+            <textarea className="input" rows={2} 
+              style={{ resize: 'none', padding: '10px 12px' }}
+              value={form.education_summary ?? ''} 
+              onChange={set('education_summary')} 
+              placeholder="Master en informatique..." />
+          </div>
+        </div>
+
         <Input label="Certifications (séparées par des virgules)" 
           value={form.certifications?.join(', ') ?? ''} 
           onChange={setArr('certifications')} 
@@ -179,7 +204,7 @@ export default function InternsPage() {
             <Button variant="soft" onClick={() => setShowCVImport(true)}>
               <FileUp size={14} /> Importer CV
             </Button>
-            <Button onClick={() => setEditing({})}>
+            <Button onClick={() => setEditing({} as Intern)}>
               <Plus size={14} /> Nouveau stagiaire
             </Button>
           </div>
@@ -202,14 +227,14 @@ export default function InternsPage() {
           <GraduationCap size={40} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
           <p style={{ fontWeight: 500, marginBottom: 8 }}>Aucun stagiaire</p>
           <p style={{ fontSize: 13, marginBottom: 20 }}>Ajoutez un stagiaire manuellement ou importez un CV.</p>
-          <Button onClick={() => setEditing({})}>
+          <Button onClick={() => setEditing({} as Intern)}>
             <Plus size={14} /> Ajouter un stagiaire
           </Button>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {interns.map(intern => (
-            <Card key={intern.id} className="hover-scale" style={{ cursor: 'pointer', transition: 'all 0.2s' }} 
+            <div key={intern.id} className="card card-pad hover-scale" style={{ cursor: 'pointer', transition: 'all 0.2s' }} 
               onClick={() => { 
                 console.log('Opening dossier for:', intern.full_name);
                 setViewingIntern(intern); 
@@ -272,7 +297,7 @@ export default function InternsPage() {
                   </div>
                 )}
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}
@@ -340,10 +365,34 @@ export default function InternsPage() {
                       <p style={{ fontSize: 12, color: 'var(--fg-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 8 }}>Résumé professionnel</p>
                       <p style={{ fontSize: 14, lineHeight: 1.6 }}>{viewingIntern.bio || 'Aucun résumé disponible.'}</p>
                     </div>
+                    
                     <div className="card card-pad" style={{ background: 'var(--bg-elev)' }}>
-                      <p style={{ fontSize: 12, color: 'var(--fg-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 8 }}>Compétences</p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {viewingIntern.skills?.map((s, i) => <Badge key={i} variant="primary">{s}</Badge>) || 'Non renseigné'}
+                      <p style={{ fontSize: 12, color: 'var(--fg-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 8 }}>Expérience & Formation</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div>
+                          <span style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Expérience :</span>
+                          <p style={{ fontSize: 14, margin: '2px 0 0' }}>{viewingIntern.experience_summary || 'Non renseigné'}</p>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Formation :</span>
+                          <p style={{ fontSize: 14, margin: '2px 0 0' }}>{viewingIntern.education_summary || 'Non renseigné'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="card card-pad" style={{ background: 'var(--bg-elev)' }}>
+                      <p style={{ fontSize: 12, color: 'var(--fg-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 8 }}>Compétences & Langues</p>
+                      <div style={{ marginBottom: 10 }}>
+                        <span style={{ fontSize: 13, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>Compétences :</span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {viewingIntern.skills && viewingIntern.skills.length > 0 ? viewingIntern.skills.map((s, i) => <Badge key={i} variant="primary">{s}</Badge>) : <span style={{fontSize: 13}}>Non renseigné</span>}
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: 13, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>Langues :</span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {viewingIntern.languages && viewingIntern.languages.length > 0 ? viewingIntern.languages.map((s, i) => <Badge key={i} variant="default">{s}</Badge>) : <span style={{fontSize: 13}}>Non renseigné</span>}
+                        </div>
                       </div>
                     </div>
                   </div>

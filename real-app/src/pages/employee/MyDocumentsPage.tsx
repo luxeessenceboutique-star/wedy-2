@@ -1,0 +1,155 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { FileText, Plus, Clock, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { api } from '../../lib/api';
+import { Button, Spinner, Modal } from '../../components/ui';
+import { toast } from 'sonner';
+import { format, isValid } from 'date-fns';
+
+const getDocRequests = () => api.get('/portal/me/document-requests').then(r => r.data).catch(() => []);
+const submitDocRequest = (body: any) => api.post('/portal/me/document-requests', body).then(r => r.data);
+
+const safeFormat = (d: any) => {
+  if (!d) return '—'; const dt = new Date(d);
+  return isValid(dt) ? format(dt, 'dd/MM/yyyy HH:mm') : d;
+};
+
+const DOC_TYPES = [
+  { value: 'attestation_travail',  label: 'Attestation de travail' },
+  { value: 'bulletin_paie',        label: 'Bulletin de paie' },
+  { value: 'attestation_conge',    label: 'Attestation de congé' },
+  { value: 'certificat_presence',  label: 'Certificat de présence' },
+  { value: 'lettre_recommandation',label: 'Lettre de recommandation' },
+  { value: 'autre',                label: 'Autre (préciser dans le commentaire)' },
+];
+
+const STATUS_META: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
+  pending:     { label: 'En attente',   color: '#f59e0b', bg: '#fffbeb', icon: <Clock size={13} /> },
+  in_progress: { label: 'En cours',     color: '#3b82f6', bg: '#eff6ff', icon: <Clock size={13} /> },
+  completed:   { label: 'Complété',     color: '#10b981', bg: '#ecfdf5', icon: <CheckCircle size={13} /> },
+  rejected:    { label: 'Refusé',       color: '#ef4444', bg: '#fef2f2', icon: <XCircle size={13} /> },
+};
+
+export default function MyDocumentsPage() {
+  const qc = useQueryClient();
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ doc_type: 'attestation_travail', comment: '' });
+
+  const { data: requests = [], isLoading } = useQuery({
+    queryKey: ['portal-doc-requests'], queryFn: getDocRequests, retry: false,
+  });
+
+  const submitMut = useMutation({
+    mutationFn: () => submitDocRequest(form),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['portal-doc-requests'] });
+      qc.invalidateQueries({ queryKey: ['portal-stats'] });
+      setShowForm(false);
+      setForm({ doc_type: 'attestation_travail', comment: '' });
+      toast.success('Demande envoyée — votre RH a été notifié');
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.detail || 'Erreur'),
+  });
+
+  return (
+    <div style={{ padding: '24px 28px', maxWidth: 780, margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>Mes Documents</h1>
+          <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: 0 }}>Demandez vos documents RH et suivez leur statut</p>
+        </div>
+        <Button onClick={() => setShowForm(true)}>
+          <Plus size={14} /> Demander un document
+        </Button>
+      </div>
+
+      {/* Counters */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 24 }}>
+        {Object.entries(STATUS_META).map(([key, meta]) => (
+          <div key={key} className="card card-pad" style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: 22, fontWeight: 800, margin: '0 0 2px', color: meta.color }}>
+              {(requests as any[]).filter((r: any) => r.status === key).length}
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{meta.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* List */}
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
+      ) : (requests as any[]).length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+          <FileText size={40} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
+          <p style={{ fontWeight: 500 }}>Aucune demande de document.</p>
+          <Button onClick={() => setShowForm(true)} style={{ marginTop: 8 }}>
+            <Plus size={13} /> Faire une demande
+          </Button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {(requests as any[]).map((r: any) => {
+            const sm = STATUS_META[r.status] ?? STATUS_META.pending;
+            const docLabel = DOC_TYPES.find(d => d.value === r.doc_type)?.label ?? r.doc_type;
+            return (
+              <div key={r.id} style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '14px 18px', border: '1px solid var(--border)',
+                borderLeft: `4px solid ${sm.color}`,
+                borderRadius: 12, background: 'var(--bg-elev)',
+              }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                  background: sm.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', color: sm.color,
+                }}>
+                  <FileText size={18} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontWeight: 700, fontSize: 14, margin: '0 0 3px' }}>{docLabel}</p>
+                  <div style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', gap: 14 }}>
+                    {r.comment && <span>{r.comment}</span>}
+                    <span>Demandé le {safeFormat(r.created_at)}</span>
+                  </div>
+                  {r.hr_note && (
+                    <p style={{ fontSize: 12, color: '#0891b2', marginTop: 4, padding: '4px 8px', background: '#ecfeff', borderRadius: 6, margin: '6px 0 0' }}>
+                      Note RH : {r.hr_note}
+                    </p>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px',
+                  borderRadius: 20, background: sm.bg, color: sm.color, fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
+                  {sm.icon}
+                  <span>{sm.label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal */}
+      <Modal open={showForm} onClose={() => setShowForm(false)} title="Demander un document" width={460}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label className="label">Type de document *</label>
+            <select className="input" value={form.doc_type} onChange={e => setForm(f => ({ ...f, doc_type: e.target.value }))}>
+              {DOC_TYPES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Commentaire (optionnel)</label>
+            <textarea className="input" rows={3} style={{ resize: 'none', padding: '8px 12px' }}
+              value={form.comment} onChange={e => setForm(f => ({ ...f, comment: e.target.value }))}
+              placeholder="Précisions, urgence, destination du document..." />
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
+            <Button variant="ghost" onClick={() => setShowForm(false)}>Annuler</Button>
+            <Button onClick={() => submitMut.mutate()} loading={submitMut.isPending}>
+              Envoyer la demande
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}

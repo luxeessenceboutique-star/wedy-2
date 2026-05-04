@@ -4,7 +4,7 @@ from typing import List
 
 class Settings(BaseSettings):
     # App
-    APP_NAME: str = "YODABOT RH Platform"
+    APP_NAME: str = "WEDY RH Platform"
     APP_ENV: str = "development"
     SECRET_KEY: str = "change_me"
     ALGORITHM: str = "HS256"
@@ -33,6 +33,7 @@ class Settings(BaseSettings):
 
     # AI
     OPENAI_API_KEY: str = ""
+    OPENAI_BASE_URL: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
     ANTHROPIC_API_KEY: str = ""
     TYBOTFLOW_API_KEY: str = ""
@@ -41,7 +42,7 @@ class Settings(BaseSettings):
     MAIL_USERNAME: str = ""
     MAIL_PASSWORD: str = ""
     MAIL_FROM: str = "noreply@tython.ma"
-    MAIL_FROM_NAME: str = "YODABOT RH"
+    MAIL_FROM_NAME: str = "WEDY RH"
     MAIL_PORT: int = 587
     MAIL_SERVER: str = "smtp.gmail.com"
     MAIL_STARTTLS: bool = True

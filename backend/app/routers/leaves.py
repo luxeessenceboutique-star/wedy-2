@@ -65,49 +65,66 @@ def get_balance(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from datetime import datetime
+    from datetime import datetime, date as _date
     y = year or datetime.now().year
-    res = (
-        supabase.table("leave_balances")
-        .select("*")
-        .eq("employee_id", employee_id)
-        .eq("year", y)
-        .maybe_single()
-        .execute()
-    )
-    if not res.data:
-        # Fetch employee to compute seniority-based balance
-        emp_res = supabase.table("employees").select("hire_date").eq("id", employee_id).maybe_single().execute()
-        hire_date = None
-        if emp_res.data and emp_res.data.get("hire_date"):
-            try:
-                from datetime import date
-                hire_date = date.fromisoformat(emp_res.data["hire_date"][:10])
-            except: pass
-        
-        # Base is 1.5 days per month = 18 days per year
-        base_annual = 18
-        if hire_date:
-            seniority_years = (datetime.now().date() - hire_date).days // 365
-            # Seniority bonus: +1.5 days every 5 years (capped at 30 total)
-            bonus = (seniority_years // 5) * 1.5
-            base_annual = min(18 + bonus, 30)
 
-        # Auto-create a default balance record so it persists
-        default = {
-            "employee_id": employee_id,
-            "year": y,
-            "annual_total": base_annual, 
-            "annual_used": 0,
-            "sick_total": 4,   # Moroccan law: usually 4 days paid? (Actually it depends, but let's put 4)
-            "personal_total": 3, # Standard for birth/marriage etc.
-        }
+    def _safe_default() -> dict:
+        base = 21
         try:
-            supabase.table("leave_balances").insert(default).execute()
+            emp = supabase.table("employees").select("hire_date").eq("id", employee_id).maybe_single().execute()
+            if emp.data and emp.data.get("hire_date"):
+                hd = _date.fromisoformat(emp.data["hire_date"][:10])
+                seniority = (datetime.now().date() - hd).days // 365
+                base = min(21 + (seniority // 5) * 1, 30)
         except Exception:
             pass
-        return default
-    return res.data
+        return {
+            "employee_id": employee_id,
+            "year": y,
+            "annual_total": int(base),
+            "annual_used": 0,
+            "sick_total": 12,
+            "sick_used": 0,
+            "personal_total": 5,
+            "personal_used": 0,
+        }
+
+    try:
+        res = (
+            supabase.table("leave_balances")
+            .select("*")
+            .eq("employee_id", employee_id)
+            .eq("year", y)
+            .maybe_single()
+            .execute()
+        )
+        if res.data:
+            return res.data
+    except Exception:
+        pass
+
+    # No record found — create and return default
+    default = _safe_default()
+    try:
+        ins = supabase.table("leave_balances").insert(default).execute()
+        if ins.data:
+            return ins.data[0]
+    except Exception:
+        # Duplicate or table error — try fetching again
+        try:
+            res2 = (
+                supabase.table("leave_balances")
+                .select("*")
+                .eq("employee_id", employee_id)
+                .eq("year", y)
+                .maybe_single()
+                .execute()
+            )
+            if res2.data:
+                return res2.data
+        except Exception:
+            pass
+    return default
 
 
 # ── Create ────────────────────────────────────────────────────
@@ -121,10 +138,12 @@ def create_leave(
     data = payload.model_dump()
     data["start_date"] = str(data["start_date"])
     data["end_date"] = str(data["end_date"])
-    data["created_by"] = current_user["id"]
     data["status"] = "pending"
 
-    res = supabase.table("leave_requests").insert(data).execute()
+    try:
+        res = supabase.table("leave_requests").insert(data).execute()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
     if not res.data:
         raise HTTPException(status_code=400, detail="Could not create leave request")
 

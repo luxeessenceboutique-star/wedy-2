@@ -81,44 +81,6 @@ _VAR_SUBS = [
     (r"\[nationalit[ée]\]",                     "{{nationality}}"),
 ]
 
-# Variable → display label (for the blue pill in template preview)
-_VAR_LABELS = {
-    "full_name":       "Nom complet",
-    "cin":             "CIN",
-    "hire_date":       "Date d'embauche",
-    "contract_start":  "Début contrat",
-    "contract_end":    "Fin contrat",
-    "today":           "Date du jour",
-    "position":        "Poste",
-    "salary":          "Salaire",
-    "address":         "Adresse",
-    "email":           "Email",
-    "phone":           "Téléphone",
-    "department":      "Département",
-    "manager":         "Manager",
-    "matricule":       "Matricule",
-    "nationality":     "Nationalité",
-}
-
-# Pill colors for each variable type
-_VAR_COLORS = {
-    "full_name":      ("#1e40af", "#dbeafe"),
-    "cin":            ("#5b21b6", "#ede9fe"),
-    "hire_date":      ("#92400e", "#fef3c7"),
-    "contract_start": ("#92400e", "#fef3c7"),
-    "contract_end":   ("#92400e", "#fef3c7"),
-    "today":          ("#92400e", "#fef3c7"),
-    "position":       ("#065f46", "#d1fae5"),
-    "salary":         ("#065f46", "#d1fae5"),
-    "address":        ("#7c2d12", "#ffedd5"),
-    "email":          ("#7c2d12", "#ffedd5"),
-    "phone":          ("#7c2d12", "#ffedd5"),
-    "department":     ("#1e3a5f", "#e0f2fe"),
-    "manager":        ("#1e3a5f", "#e0f2fe"),
-    "matricule":      ("#4a1d96", "#f5f3ff"),
-    "nationality":    ("#4a1d96", "#f5f3ff"),
-}
-
 
 def _apply_vars(text: str) -> str:
     """Apply all variable substitution patterns to a plain-text string."""
@@ -263,21 +225,19 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
             fw = "700" if vr["bold"] else "400"
             fs = max(11, vr["font_size"])
 
-            # Build pill badges for each variable in the line
-            pills_html = ""
-            for var_name in vr["vars"]:
-                label  = _VAR_LABELS.get(var_name, var_name)
-                fc, bg = _VAR_COLORS.get(var_name, ("#1e40af", "#dbeafe"))
-                pills_html += (
-                    f'<span style="display:inline-flex;align-items:center;gap:3px;'
-                    f'font-size:10px;font-weight:700;padding:2px 7px;'
-                    f'background:{bg};color:{fc};border:1px solid {fc}44;'
-                    f'border-radius:999px;font-family:Inter,Arial,sans-serif;'
-                    f'white-space:nowrap;margin-right:3px;">'
-                    f'<svg width="8" height="8" viewBox="0 0 8 8" style="flex-shrink:0;">'
-                    f'<circle cx="4" cy="4" r="3" fill="{fc}" opacity="0.7"/></svg>'
-                    f'{label}: {{{{{var_name}}}}}</span>'
-                )
+            # Render the entire substituted line text (including static text around variables)
+            # using the exact extracted styles so it matches the original document perfectly.
+            text_html = (
+                f'<span style="'
+                f'font-size:{fs:.1f}px;'
+                f'font-weight:{fw};'
+                f'color:{vr["color"]};'
+                f'font-family:Arial, Helvetica, sans-serif;'
+                f'white-space:nowrap;'
+                f'">'
+                f'{vr["text"]}'
+                f'</span>'
+            )
 
             overlays += (
                 f'<div style="position:absolute;'
@@ -285,7 +245,7 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
                 f'min-width:{width:.1f}px;height:{height + 6:.1f}px;'
                 f'display:flex;align-items:center;flex-wrap:wrap;gap:2px;'
                 f'z-index:3;padding:1px 0;">'
-                f'{pills_html}'
+                f'{text_html}'
                 f'</div>\n'
             )
 
@@ -302,7 +262,7 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
             f'border-radius:3px;'
             f'">\n'
             f'  <img '
-            f'src="data:image/{img_mime};base64,{img_b64}" '
+            f'src="data:{img_mime};base64,{img_b64}" '
             f'style="position:absolute;top:0;left:0;width:{DISPLAY_W}px;height:{display_h}px;'
             f'display:block;z-index:1;" '
             f'alt="Page {page_num + 1}" />\n'

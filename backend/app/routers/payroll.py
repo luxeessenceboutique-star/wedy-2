@@ -180,20 +180,21 @@ def generate_bulk_payroll(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     """Auto-generate draft payroll for all active employees for a given month/year."""
-    emp_res = supabase.table("employees").select("id, salary").eq("status", "active").execute()
+    emp_res = supabase.table("employees").select("id, full_name, salary").eq("status", "active").execute()
     employees = emp_res.data or []
 
-    created, skipped = 0, 0
+    created, skipped_existing, no_salary_names = 0, 0, []
     for emp in employees:
-        if not emp.get("salary"):
-            skipped += 1
-            continue
-        calcs = compute_moroccan_payroll(float(emp["salary"]))
+        salary = float(emp["salary"]) if emp.get("salary") else 0.0
+        if salary == 0:
+            no_salary_names.append(emp.get("full_name", emp["id"]))
+
+        calcs = compute_moroccan_payroll(salary)
         record = {
             "employee_id": emp["id"],
             "month": month,
             "year": year,
-            "base_salary": float(emp["salary"]),
+            "base_salary": salary,
             "bonuses": 0,
             "deductions": 0,
             **calcs,
@@ -204,10 +205,16 @@ def generate_bulk_payroll(
             supabase.table("payroll_records").insert(record).execute()
             created += 1
         except Exception:
-            skipped += 1  # Already exists for this month/year
+            skipped_existing += 1  # Already exists for this month/year
 
     log_action(supabase, current_user["id"], "BULK_GENERATE", "payroll_records", f"{year}-{month}")
-    return {"created": created, "skipped": skipped, "month": month, "year": year}
+    return {
+        "created": created,
+        "skipped": skipped_existing,
+        "no_salary": no_salary_names,
+        "month": month,
+        "year": year,
+    }
 
 
 @router.get("/{record_id}/pdf")

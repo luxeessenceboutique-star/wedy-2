@@ -43,29 +43,83 @@ class ProfileOut(ProfileBase):
 
 # ── Employee ─────────────────────────────────────────────────────────────────
 class EmployeeCreate(BaseModel):
-    profile_id: UUID
-    position_id: Optional[UUID] = None
-    hire_date: Optional[date] = None
-    salary: Optional[float] = None
+    full_name: str
+    cin: Optional[str] = None
+    matricule: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    position: Optional[str] = None
+    department: Optional[str] = None
     status: Optional[str] = "active"
+    hire_date: Optional[date] = None
+    contract_type: Optional[str] = None
+    contract_start: Optional[date] = None
+    contract_end: Optional[date] = None
+    salary: Optional[float] = None
+    birth_date: Optional[date] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    nationality: Optional[str] = None
+    manager: Optional[str] = None
+    cnss_number: Optional[str] = None
+    bank_account: Optional[str] = None
+    notes: Optional[str] = None
+    internship_start: Optional[date] = None
+    internship_end: Optional[date] = None
 
 
 class EmployeeUpdate(BaseModel):
-    position_id: Optional[UUID] = None
-    hire_date: Optional[date] = None
-    salary: Optional[float] = None
+    full_name: Optional[str] = None
+    cin: Optional[str] = None
+    matricule: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    position: Optional[str] = None
+    department: Optional[str] = None
     status: Optional[str] = None
+    hire_date: Optional[date] = None
+    contract_type: Optional[str] = None
+    contract_start: Optional[date] = None
+    contract_end: Optional[date] = None
+    salary: Optional[float] = None
+    birth_date: Optional[date] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    nationality: Optional[str] = None
+    manager: Optional[str] = None
+    cnss_number: Optional[str] = None
+    bank_account: Optional[str] = None
+    notes: Optional[str] = None
+    internship_start: Optional[date] = None
+    internship_end: Optional[date] = None
 
 
 class EmployeeOut(BaseModel):
     id: UUID
-    profile_id: UUID
-    position_id: Optional[UUID] = None
+    full_name: str
+    cin: Optional[str] = None
+    matricule: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    position: Optional[str] = None
+    department: Optional[str] = None
+    status: Optional[str] = "active"
     hire_date: Optional[date] = None
+    contract_type: Optional[str] = None
+    contract_start: Optional[date] = None
+    contract_end: Optional[date] = None
     salary: Optional[float] = None
-    status: Optional[str] = None
-    created_at: datetime
-    profile: Optional[ProfileOut] = None
+    birth_date: Optional[date] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    nationality: Optional[str] = None
+    manager: Optional[str] = None
+    cnss_number: Optional[str] = None
+    bank_account: Optional[str] = None
+    notes: Optional[str] = None
+    internship_start: Optional[date] = None
+    internship_end: Optional[date] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -73,29 +127,50 @@ class EmployeeOut(BaseModel):
 
 # ── Intern ───────────────────────────────────────────────────────────────────
 class InternCreate(BaseModel):
-    profile_id: UUID
+    full_name: str
+    cin: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     school: Optional[str] = None
+    position: Optional[str] = None
+    department: Optional[str] = None
+    supervisor: Optional[str] = None
     internship_start: Optional[date] = None
     internship_end: Optional[date] = None
-    supervisor: Optional[str] = None
+    status: Optional[str] = "active"
+    notes: Optional[str] = None
 
 
 class InternUpdate(BaseModel):
+    full_name: Optional[str] = None
+    cin: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     school: Optional[str] = None
+    position: Optional[str] = None
+    department: Optional[str] = None
+    supervisor: Optional[str] = None
     internship_start: Optional[date] = None
     internship_end: Optional[date] = None
-    supervisor: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class InternOut(BaseModel):
     id: UUID
-    profile_id: UUID
+    full_name: str
+    cin: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     school: Optional[str] = None
+    position: Optional[str] = None
+    department: Optional[str] = None
+    supervisor: Optional[str] = None
     internship_start: Optional[date] = None
     internship_end: Optional[date] = None
-    supervisor: Optional[str] = None
-    created_at: datetime
-    profile: Optional[ProfileOut] = None
+    status: Optional[str] = "active"
+    notes: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

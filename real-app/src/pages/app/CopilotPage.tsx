@@ -70,7 +70,7 @@ function TypingIndicator() {
 
 const INIT: ChatMessage = {
   role: 'assistant',
-  content: "Bonjour ! Je suis YODABOT Copilot, votre assistant RH alimenté par Claude. Je peux vous aider avec le droit du travail marocain, la gestion des RH, la rédaction de documents, et bien plus. Comment puis-je vous aider aujourd'hui ?",
+  content: "Bonjour ! Je suis WEDY Copilot, votre assistant RH alimenté par Claude. Je peux vous aider avec le droit du travail marocain, la gestion des RH, la rédaction de documents, et bien plus. Comment puis-je vous aider aujourd'hui ?",
 };
 
 export default function CopilotPage() {
@@ -104,8 +104,10 @@ export default function CopilotPage() {
       const contextMsgs = history.slice(-10);
       const res = await sendCopilotMessage(contextMsgs);
       setMessages(prev => [...prev, { role: 'assistant', content: res.reply }]);
-    } catch {
-      toast.error('Impossible de contacter l\'assistant. Vérifiez que le backend est démarré.');
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      const msg = detail || (err as { message?: string })?.message || 'Impossible de contacter le backend.';
+      toast.error(msg);
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
@@ -186,7 +188,7 @@ export default function CopilotPage() {
           </Button>
         </div>
         <p style={{ fontSize: 11, color: 'var(--fg-subtle)', marginTop: 6, textAlign: 'center' }}>
-          YODABOT peut faire des erreurs. Consultez un expert juridique pour les décisions importantes.
+          WEDY peut faire des erreurs. Consultez un expert juridique pour les décisions importantes.
         </p>
       </div>
 

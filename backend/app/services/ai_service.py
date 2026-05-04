@@ -6,9 +6,10 @@ _client: anthropic.Anthropic | None = None
 
 def get_client() -> anthropic.Anthropic:
     global _client
+    if not settings.ANTHROPIC_API_KEY:
+        raise RuntimeError("ANTHROPIC_API_KEY n'est pas configurée dans .env")
     if _client is None:
         _client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-
     return _client
 
 
@@ -166,33 +167,217 @@ def _local_convert_template(raw_text: str) -> str:
     return header + body + footer
 
 
-def convert_to_html_template(raw_text: str) -> str:
-    """Use Claude to convert raw text from a document into a well-formatted HTML template."""
+def convert_document_to_template(raw_text: str) -> str:
+    """Public alias for the local regex+HTML template converter."""
+    return _local_convert_template(raw_text)
+
+
+FOLDER_ANALYSIS_SYSTEM = """You are an expert HR data extractor for a Moroccan company.
+You receive text extracted from documents in an employee's folder (CV, diplomas, certificates, contracts, payslips, etc.).
+Extract ALL employee information and return it as a single valid JSON object.
+
+Return ONLY a JSON object with these keys (omit any key you cannot find with confidence):
+{
+  "full_name": "string",
+  "cin": "string - Moroccan national ID",
+  "birth_date": "YYYY-MM-DD",
+  "nationality": "string",
+  "email": "string",
+  "phone": "string",
+  "address": "string",
+  "city": "string",
+  "position": "string - job title",
+  "department": "string",
+  "hire_date": "YYYY-MM-DD",
+  "contract_type": "CDI|CDD|Stage|ANAPEC|Consultant|Freelance",
+  "contract_start": "YYYY-MM-DD",
+  "contract_end": "YYYY-MM-DD",
+  "salary": number,
+  "manager": "string",
+  "cnss_number": "string",
+  "bank_account": "string - RIB",
+  "matricule": "string",
+  "education": [{"degree": "string", "field": "string", "school": "string", "year": "string"}],
+  "certifications": [{"name": "string", "issuer": "string", "year": "string"}],
+  "skills": ["string"],
+  "languages": ["string"],
+  "notes": "string - any extra relevant info"
+}
+
+Rules:
+- Return ONLY the raw JSON, no markdown, no explanation
+- Only include fields you found explicitly in the documents
+- Dates must be in YYYY-MM-DD format; convert from French formats (ex: 15/03/1995 → 1995-03-15)
+- salary must be a number (MAD/month)"""
+
+
+def analyze_employee_folder(file_contents: list[dict]) -> dict:
+    """
+    Send all extracted file content to AI and get structured employee data.
+    file_contents: [{"filename": str, "file_type": str, "text": str, "images": [b64_str], "mime": str}]
+    Tries Anthropic Claude first, falls back to OpenAI.
+    """
+    import json
+    import os
+
+    # Build shared text and collect images
+    text_parts = ["Analyze these HR documents and extract all employee data:\n"]
+    images_data: list[dict] = []
+
+    for i, fc in enumerate(file_contents, 1):
+        text_parts.append(f"\n=== Document {i}: {fc['filename']} ({fc['file_type']}) ===")
+        if fc.get("text", "").strip():
+            text_parts.append(fc["text"][:4000])
+        for b64 in fc.get("images", [])[:3]:
+            images_data.append({"b64": b64, "mime": fc.get("mime", "image/jpeg")})
+
+    combined_text = "\n".join(text_parts)
+    raw = ""
+
+    # ── Anthropic Claude (primary) ────────────────────────────────
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY") or getattr(settings, "ANTHROPIC_API_KEY", "")
+    if anthropic_key:
+        import anthropic as _anthropic
+        ac = _anthropic.Anthropic(api_key=anthropic_key)
+
+        content: list[dict] = [{"type": "text", "text": combined_text}]
+        for img in images_data[:5]:
+            content.append({
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": img["mime"],
+                    "data": img["b64"],
+                },
+            })
+
+        try:
+            resp = ac.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=2048,
+                system=FOLDER_ANALYSIS_SYSTEM,
+                messages=[{"role": "user", "content": content}],
+            )
+            raw = resp.content[0].text.strip()
+        except Exception as e:
+            raise RuntimeError(f"Analyse IA (Anthropic) échouée : {e}")
+
+    # ── OpenAI fallback ───────────────────────────────────────────
+    else:
+        openai_key = os.getenv("OPENAI_API_KEY") or getattr(settings, "OPENAI_API_KEY", "")
+        if not openai_key:
+            raise RuntimeError(
+                "Aucune clé API configurée. Ajoutez ANTHROPIC_API_KEY ou OPENAI_API_KEY dans .env"
+            )
+        from openai import OpenAI as _OpenAI
+        base = os.getenv("OPENAI_BASE_URL") or getattr(settings, "OPENAI_BASE_URL", "") or None
+        if base and not base.rstrip("/").endswith("/v1"):
+            base = base.rstrip("/") + "/v1"
+        oa = _OpenAI(api_key=openai_key, base_url=base)
+
+        oa_content: list[dict] = [{"type": "text", "text": combined_text}]
+        for img in images_data[:5]:
+            oa_content.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:{img['mime']};base64,{img['b64']}"},
+            })
+
+        try:
+            model = os.getenv("OPENAI_MODEL") or getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+            resp = oa.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": FOLDER_ANALYSIS_SYSTEM},
+                    {"role": "user",   "content": oa_content},
+                ],
+                max_tokens=2048,
+                temperature=0.0,
+            )
+            raw = resp.choices[0].message.content.strip()
+        except Exception as e:
+            raise RuntimeError(f"Analyse IA (OpenAI) échouée : {e}")
+
+    # ── Parse JSON ────────────────────────────────────────────────
+    if "```" in raw:
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
     try:
-        if not settings.ANTHROPIC_API_KEY:
-            raise ValueError("ANTHROPIC_API_KEY is not set")
-            
-        message = get_client().messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=4096,
-            system=SYSTEM_PROMPT,
+        return json.loads(raw.strip())
+    except json.JSONDecodeError:
+        return {}
+
+
+def convert_to_html_template(raw_text: str) -> str:
+    """Legacy: convert raw text to HTML template (fallback only)."""
+    return _local_convert_template(raw_text)
+
+
+_CLEAN_SYSTEM = """You are an expert HR document formatter for TYTHON, a Moroccan company.
+
+Your task is to take HTML extracted from a PDF or DOCX and return a CLEAN, PROFESSIONAL version that:
+1. PRESERVES all original styling: fonts, sizes, bold, italic, alignment, colors, images, logos
+2. REMOVES extraction artifacts: stray single letters (like lone "g", "f", etc.), duplicate blank lines, junk characters from PDF font encoding
+3. REPLACES all data placeholders with {{variable_name}} format:
+   - [Nom et prénom...] / [Nom complet] / (Nom Prénom) → {{full_name}}
+   - [CIN...] / (CIN) → {{cin}}
+   - [date d'embauche] / [date de début] → {{hire_date}} or {{contract_start}}
+   - [date de fin...] → {{contract_end}}
+   - [poste occupé] / [poste] / [fonction] → {{position}}
+   - [département] / [service] → {{department}}
+   - [salaire] / [montant...] / [rémunération] → {{salary}}
+   - [adresse] / (adresse) → {{address}}
+   - [ville] → {{city}}
+   - [email] → {{email}}
+   - [téléphone] / [tél] → {{phone}}
+   - [matricule] → {{matricule}}
+   - [type de contrat] / [nature du contrat] → {{contract_type}}
+   - [nationalité] → {{nationality}}
+   - [manager] / [responsable] → {{manager}}
+   - [Date] / [date du jour] / [Date du jour] → {{today}}
+   - [Nom et prénom du stagiaire] → {{full_name}}
+   - Blank underscores "______" next to a known field → replace with the appropriate {{variable}}
+4. DO NOT change any wording, paragraph structure, or visual layout
+5. Return ONLY the raw HTML — no markdown, no explanation, no ```html wrapper"""
+
+
+def clean_template_html(styled_html: str) -> str:
+    """Use OpenAI (TybotFlow) to clean extraction artifacts and detect {{variables}}."""
+    import os
+    from openai import OpenAI as _OpenAI
+
+    openai_key = os.getenv("OPENAI_API_KEY") or getattr(settings, "OPENAI_API_KEY", "")
+    if not openai_key:
+        return styled_html
+
+    base = os.getenv("OPENAI_BASE_URL") or getattr(settings, "OPENAI_BASE_URL", "") or None
+    if base and not base.rstrip("/").endswith("/v1"):
+        base = base.rstrip("/") + "/v1"
+    model = os.getenv("OPENAI_MODEL") or getattr(settings, "OPENAI_MODEL", "gpt-4.1-mini")
+
+    prompt = (
+        "Here is HTML extracted from an HR document. Clean it and replace all data fields "
+        "with {{variable_name}} placeholders. Return only the cleaned HTML.\n\n"
+        f"HTML:\n{styled_html[:12000]}"
+    )
+
+    try:
+        oa = _OpenAI(api_key=openai_key, base_url=base)
+        resp = oa.chat.completions.create(
+            model=model,
             messages=[
-                {
-                    "role": "user",
-                    "content": (
-                        "Convert the following raw text from an HR document into a clean, professional, and well-structured HTML template. "
-                        "Identify specific employee or document details (like names, dates, job titles, salaries, ID numbers, etc.) "
-                        "and replace them with template variables in the format {{variable_name}}. "
-                        "Use common variable names like: full_name, cin, cnss, job_title, department, hire_date, today, salary, address. "
-                        "The HTML should only contain the content to be placed inside a <body> tag, no <html> or <head> tags. "
-                        "Use inline CSS for styling (like text-align: center, font-weight: bold, margins, etc.) to make it look like a formal document. "
-                        "Return ONLY the raw HTML string, without any markdown formatting or explanations.\n\n"
-                        f"Raw Text:\n{raw_text}"
-                    ),
-                }
+                {"role": "system", "content": _CLEAN_SYSTEM},
+                {"role": "user",   "content": prompt},
             ],
+            max_tokens=4096,
+            temperature=0.0,
         )
-        return message.content[0].text
+        result = resp.choices[0].message.content.strip()
+        if result.startswith("```"):
+            result = result.split("```")[1]
+            if result.startswith("html"):
+                result = result[4:]
+        return result.strip()
     except Exception:
-        return _local_convert_template(raw_text)
+        return styled_html
 

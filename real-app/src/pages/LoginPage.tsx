@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../lib/auth';
+import { useAuth, isHRRole } from '../lib/auth';
 import { Button, Input } from '../components/ui';
 import { WedyLogo } from '../components/WedyLogo';
 import { Sparkles } from 'lucide-react';
@@ -22,8 +22,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (tab === 'login') {
-        await login(email, password);
-        navigate('/app');
+        const { role } = await login(email, password);
+        navigate(isHRRole(role) ? '/app' : '/employee');
       } else {
         await signup(email, password, name);
         setSignupDone(true);

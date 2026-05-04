@@ -36,17 +36,25 @@ def get_current_user(
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalide: sub manquant")
 
-    try:
-        # Validate user exists + get role
-        role_res = supabase.table("user_roles").select("role").eq("user_id", user_id).maybe_single().execute()
-        profile_res = supabase.table("profiles").select("full_name").eq("user_id", user_id).maybe_single().execute()
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Erreur base de données: {e}")
+    raw_role = "employee"
+    full_name = email
 
-    raw_role = role_res.data.get("role") if role_res.data else "hr"
-    # Normalize legacy "rh" role to "hr" so all require_role checks pass
+    try:
+        role_res = supabase.table("user_roles").select("role").eq("user_id", user_id).maybe_single().execute()
+        if role_res.data:
+            raw_role = role_res.data.get("role", "employee")
+    except Exception:
+        pass  # table may not exist yet — default to employee
+
+    try:
+        profile_res = supabase.table("profiles").select("full_name").eq("user_id", user_id).maybe_single().execute()
+        if profile_res.data:
+            full_name = profile_res.data.get("full_name") or email
+    except Exception:
+        pass  # table may not exist yet — use email as name
+
+    # Normalize legacy "rh" → "hr"
     role_name = "hr" if raw_role == "rh" else raw_role
-    full_name = (profile_res.data or {}).get("full_name") or email
 
     print(f"[AUTH] user={email} role={role_name}")
     return {"id": user_id, "email": email, "role_name": role_name, "full_name": full_name}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, FileUp } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, FileUp, FolderOpen } from 'lucide-react';
 import { listEmployees, createEmployee, updateEmployee, deleteEmployee } from '../../lib/api';
 import type { Employee } from '../../lib/api';
 import { Button, Badge, Card, Input, Select, Modal, Spinner, Empty, Avatar } from '../../components/ui';
@@ -179,6 +179,9 @@ export default function EmployeesPage() {
                     </td>
                     <td style={{ padding: '10px 16px' }}>
                       <div style={{ display: 'flex', gap: 4 }}>
+                        <Link to={`/app/employees/${emp.id}`}>
+                          <button className="btn btn-ghost btn-sm" title="Dossier employé"><FolderOpen size={13} /></button>
+                        </Link>
                         <Link to={`/app/generate?employee_id=${emp.id}`}>
                           <button className="btn btn-ghost btn-sm" title="Generate document"><FileText size={13} /></button>
                         </Link>

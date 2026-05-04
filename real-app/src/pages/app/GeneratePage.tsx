@@ -2,11 +2,11 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
-  Wand2, Check, ChevronRight, Download, Sparkles,
+  Wand2, Check, ChevronRight, Download, Sparkles, CheckCircle2,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  Printer, RotateCcw, Save, Eye, EyeOff, AlertCircle,
+  Printer, RotateCcw, AlertCircle, Eye, EyeOff
 } from 'lucide-react';
-import { listEmployees, listTemplates, generateDocument, getPdfUrl, getDocxUrl, aiEnhance } from '../../lib/api';
+import { listEmployees, listTemplates, generateDocument, downloadDoc, aiEnhance } from '../../lib/api';
 import type { Employee, Template } from '../../lib/api';
 import { Button, Badge, Card, Spinner } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
@@ -21,7 +21,9 @@ const LANG_OPTIONS = [
   { value: 'en', label: 'English' },
 ];
 
-// Maps template variable names → employee field values
+const TODAY = new Date().toLocaleDateString('fr-FR');
+
+// Maps template variable names → employee field values (for auto-fill)
 const resolveVar = (varName: string, emp: Employee): string => {
   const fmt = (d?: string | null) =>
     d ? new Date(d).toLocaleDateString('fr-MA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
@@ -46,8 +48,30 @@ const resolveVar = (varName: string, emp: Employee): string => {
     internship_end:   () => emp.internship_end ? fmt(emp.internship_end) : 'à ce jour',
     salary:           () => emp.salary ? `${Number(emp.salary).toLocaleString('fr-MA')} MAD` : '',
     today:            () => new Date().toLocaleDateString('fr-MA', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+    company:          () => 'TYTHON',
   };
   return MAP[varName]?.() ?? '';
+};
+
+// All non-empty employee fields as selectable dropdown options
+const empOptions = (emp: Employee) => {
+  const entries: { label: string; value: string }[] = [
+    { label: `Nom complet — ${emp.full_name}`, value: emp.full_name },
+  ];
+  const add = (label: string, v: string | number | undefined | null) => {
+    if (v != null && v !== '') entries.push({ label: `${label} — ${v}`, value: String(v) });
+  };
+  add('CIN', emp.cin); add('Matricule', emp.matricule); add('Email', emp.email);
+  add('Téléphone', emp.phone); add('Poste', emp.position); add('Département', emp.department);
+  add('Date embauche', emp.hire_date); add('Type contrat', emp.contract_type);
+  add('Début contrat', emp.contract_start); add('Fin contrat', emp.contract_end);
+  add('Salaire', emp.salary); add('Manager', emp.manager);
+  add('Date naissance', emp.birth_date); add('Adresse', emp.address);
+  add('Ville', emp.city); add('Nationalité', emp.nationality);
+  add('Début stage', emp.internship_start); add('Fin stage', emp.internship_end);
+  entries.push({ label: `Société — TYTHON`, value: 'TYTHON' });
+  entries.push({ label: `Date du jour — ${TODAY}`, value: TODAY });
+  return entries;
 };
 
 // Extract {{variables}} from a template body
@@ -263,10 +287,19 @@ export default function GeneratePage() {
 
   const handlePrint = () => {
     const content = editorRef.current?.innerHTML || '';
+    const title = result?.document_type ?? 'Document';
     const w = window.open('', '_blank')!;
-    w.document.write(`<html><head><title>Document</title><style>body{margin:0;padding:0;}</style></head><body>${content}</body></html>`);
+    w.document.write(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>` +
+      `<style>` +
+      `@page{size:A4;margin:2.5cm 2.8cm;}` +
+      `body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.8;margin:0;color:#1a1a1a;}` +
+      `img{max-width:100%;height:auto;}` +
+      `h1,h2,h3{text-align:center;}p{margin:4px 0;}` +
+      `</style></head><body>${content}</body></html>`
+    );
     w.document.close();
-    w.print();
+    setTimeout(() => { w.focus(); w.print(); }, 350);
   };
 
   const STEPS = ['Employé', 'Template', 'Variables', 'Résultat'];
@@ -382,41 +415,37 @@ export default function GeneratePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {templateVars.map(v => {
                   const auto = autoFilled[v];
-                  const manual = extraVars[v] ?? '';
+                  const current = extraVars[v] ?? auto ?? '';
+                  const isAuto = !!auto && current === auto;
+                  const opts = selectedEmp ? empOptions(selectedEmp) : [];
                   return (
                     <div key={v} style={{
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '10px 14px', borderRadius: 8,
-                      background: auto ? '#f0fdf4' : manual ? '#fffbeb' : 'var(--bg-muted)',
-                      border: `1px solid ${auto ? '#bbf7d0' : manual ? '#fde68a' : 'var(--border)'}`,
+                      background: isAuto ? '#f0fdf4' : current ? '#fffbeb' : 'var(--bg-muted)',
+                      border: `1px solid ${isAuto ? '#bbf7d0' : current ? '#fde68a' : 'var(--border)'}`,
                     }}>
                       <VarBadge name={v} />
-                      <div style={{ flex: 1 }}>
-                        {auto ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <Check size={12} style={{ color: '#16a34a' }} />
-                            <span style={{ fontSize: 13, color: '#166534', fontWeight: 500 }}>{auto}</span>
-                            <span style={{ fontSize: 10, color: '#86efac', fontWeight: 600, marginLeft: 4 }}>AUTO</span>
-                          </div>
-                        ) : (
-                          <input
-                            className="input"
-                            style={{ fontSize: 13, padding: '5px 10px', width: '100%', boxSizing: 'border-box' }}
-                            placeholder={`Valeur pour ${v}…`}
-                            value={manual}
-                            onChange={e => setExtraVars(ev => ({ ...ev, [v]: e.target.value }))}
-                          />
-                        )}
-                      </div>
-                      {auto && (
-                        <button
-                          onClick={() => setExtraVars(ev => ({ ...ev, [v]: auto }))}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#16a34a', padding: 2 }}
-                          title="Modifier la valeur"
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {isAuto && <CheckCircle2 size={13} style={{ color: '#16a34a', flexShrink: 0 }} />}
+                        <select
+                          value={current}
+                          onChange={e => setExtraVars(ev => ({ ...ev, [v]: e.target.value }))}
+                          style={{
+                            flex: 1, padding: '5px 10px', fontSize: 13,
+                            border: `1px solid ${isAuto ? '#86efac' : current ? '#fdba74' : 'var(--border)'}`,
+                            borderRadius: 6,
+                            background: isAuto ? '#f0fdf4' : current ? '#fff7ed' : '#fff',
+                            color: isAuto ? '#15803d' : current ? '#92400e' : 'var(--fg)',
+                            fontWeight: 500, cursor: 'pointer', outline: 'none',
+                          }}
                         >
-                          ✎
-                        </button>
-                      )}
+                          {!auto && <option value="">— choisir —</option>}
+                          {opts.map(o => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   );
                 })}
@@ -486,12 +515,12 @@ export default function GeneratePage() {
               >
                 {editMode ? <><EyeOff size={13} /> Lecture</> : <><Eye size={13} /> Éditer</>}
               </Button>
-              <a href={getPdfUrl(result.id)} target="_blank" rel="noopener noreferrer">
-                <Button variant="soft" size="sm"><Download size={13} /> PDF</Button>
-              </a>
-              <a href={getDocxUrl(result.id)} target="_blank" rel="noopener noreferrer">
-                <Button variant="soft" size="sm"><Download size={13} /> DOCX</Button>
-              </a>
+              <Button variant="soft" size="sm" onClick={handlePrint}>
+                <Download size={13} /> PDF
+              </Button>
+              <Button variant="soft" size="sm" onClick={() => downloadDoc(result.id, 'docx', `${result.document_type ?? 'document'}.docx`).catch(e => toast.error(e.message))}>
+                <Download size={13} /> DOCX
+              </Button>
             </div>
           </div>
 

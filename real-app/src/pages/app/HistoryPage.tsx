@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Download, Trash2, FileText } from 'lucide-react';
-import { listDocuments, deleteDocument, getPdfUrl, getDocxUrl } from '../../lib/api';
+import { listDocuments, deleteDocument, downloadDoc, printDocument } from '../../lib/api';
 import { Card, Badge, Spinner, Empty, Button } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';
@@ -61,12 +61,14 @@ export default function HistoryPage() {
                   <td style={{ padding: '10px 16px', color: 'var(--fg-muted)' }}>{new Date(doc.created_at).toLocaleDateString()}</td>
                   <td style={{ padding: '10px 16px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <a href={getPdfUrl(doc.id)} target="_blank" rel="noopener noreferrer">
-                        <button className="btn btn-soft btn-sm"><Download size={12} /> PDF</button>
-                      </a>
-                      <a href={getDocxUrl(doc.id)} target="_blank" rel="noopener noreferrer">
-                        <button className="btn btn-ghost btn-sm"><Download size={12} /> DOCX</button>
-                      </a>
+                      <button className="btn btn-soft btn-sm"
+                        onClick={() => printDocument(doc.id, doc.document_type).catch(e => toast.error(e.message))}>
+                        <Download size={12} /> PDF
+                      </button>
+                      <button className="btn btn-ghost btn-sm"
+                        onClick={() => downloadDoc(doc.id, 'docx', `${doc.document_type}.docx`).catch(e => toast.error(e.message))}>
+                        <Download size={12} /> DOCX
+                      </button>
                     </div>
                   </td>
                   <td style={{ padding: '10px 16px' }}>

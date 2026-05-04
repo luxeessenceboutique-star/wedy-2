@@ -1,17 +1,30 @@
-"""Main entry point for YODABOT RH Platform v2.0 (Supabase SDK Version)"""
-from fastapi import FastAPI, Depends
+"""Main entry point for WEDY RH Platform v2.0 (Supabase SDK Version)"""
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from loguru import logger
+import traceback
 import os
+import json
+from datetime import date, datetime
+
+
+class _DateSafeResponse(JSONResponse):
+    """JSONResponse that serializes date/datetime objects as ISO strings."""
+    def render(self, content) -> bytes:
+        return json.dumps(
+            content,
+            default=lambda o: o.isoformat() if isinstance(o, (date, datetime)) else str(o),
+            allow_nan=False,
+        ).encode("utf-8")
 
 from app.config import settings
 from app.routers import (
-    auth, profiles, employees, interns, documents, cv, 
-    requests, departments, notifications, dashboard, 
-    templates, leaves, analytics, copilot, payroll, 
+    auth, profiles, employees, interns, documents, cv,
+    requests, departments, notifications, dashboard,
+    templates, leaves, analytics, copilot, payroll,
     audit_log, generate, smartdb, performance, users, assets,
-    webhooks
+    webhooks, employee_onboarding, training, talents, portal
 )
 
 from app.dependencies import get_current_user  # used in protected upload below
@@ -21,6 +34,7 @@ app = FastAPI(
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    default_response_class=_DateSafeResponse,
 )
 
 # CORS
@@ -56,6 +70,10 @@ app.include_router(performance.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(assets.router, prefix="/api")
 app.include_router(webhooks.router, prefix="/api")
+app.include_router(employee_onboarding.router, prefix="/api")
+app.include_router(training.router, prefix="/api")
+app.include_router(talents.router, prefix="/api")
+app.include_router(portal.router, prefix="/api")
 
 
 # Protected Uploads Endpoint
@@ -71,11 +89,20 @@ async def get_protected_upload(
         raise HTTPException(status_code=404, detail="Fichier non trouvé")
     return FileResponse(full_path)
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    tb = traceback.format_exc()
+    logger.error(f"Unhandled exception on {request.method} {request.url.path}:\n{tb}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "type": type(exc).__name__},
+    )
+
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "service": "backend", "db_mode": "supabase_sdk"}
 
 @app.on_event("startup")
 async def on_startup():
-    logger.info(f"YODABOT RH Platform started (SDK Mode)")
+    logger.info(f"WEDY RH Platform started (SDK Mode)")
     logger.info(f"   URL: {settings.SUPABASE_URL}")

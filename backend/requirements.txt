@@ -26,3 +26,5 @@ aiofiles
 loguru
 email-validator
 supabase
+reportlab
+httpx

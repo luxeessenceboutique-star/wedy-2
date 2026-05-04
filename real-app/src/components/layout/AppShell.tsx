@@ -5,7 +5,7 @@ import {
   BarChart3, Clock, DollarSign, UserPlus, TrendingUp,
   Puzzle, Bell, Settings, HelpCircle, LogOut,
   ChevronDown, ExternalLink, Search, ClipboardList,
-  UserCog, Moon, Sun, GraduationCap
+  UserCog, Moon, Sun, GraduationCap, UserCheck, BookOpen, Star,
 } from 'lucide-react';
 import { WedyLogo } from '../WedyLogo';
 import { Avatar } from '../ui';
@@ -32,12 +32,20 @@ const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
   {
     heading: 'People',
     items: [
-      { label: 'Employees',   icon: <Users size={15} />,      to: '/app/employees' },
+      { label: 'Employees',   icon: <Users size={15} />,         to: '/app/employees' },
       { label: 'Interns',     icon: <GraduationCap size={15} />, to: '/app/interns' },
-      { label: 'Recruitment', icon: <UserPlus size={15} />,   to: '/app/recruitment' },
-      { label: 'Performance', icon: <TrendingUp size={15} />, to: '/app/performance' },
-      { label: 'Time off',    icon: <Clock size={15} />,      to: '/app/timeoff' },
-      { label: 'Payroll',     icon: <DollarSign size={15} />, to: '/app/payroll' },
+      { label: 'Recruitment', icon: <UserPlus size={15} />,      to: '/app/recruitment' },
+      { label: 'Performance', icon: <TrendingUp size={15} />,    to: '/app/performance' },
+      { label: 'Time off',    icon: <Clock size={15} />,         to: '/app/timeoff' },
+      { label: 'Payroll',     icon: <DollarSign size={15} />,    to: '/app/payroll' },
+    ],
+  },
+  {
+    heading: 'Développement RH',
+    items: [
+      { label: 'Onboarding RH', icon: <UserCheck size={15} />, to: '/app/onboarding' },
+      { label: 'Formation',     icon: <BookOpen size={15} />,   to: '/app/training' },
+      { label: 'Talents',       icon: <Star size={15} />,       to: '/app/talents' },
     ],
   },
   {

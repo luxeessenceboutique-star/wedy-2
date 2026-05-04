@@ -478,10 +478,13 @@ export default function RecruitmentPage() {
     setLoadTables(true); setErr(null);
     try {
       const data = await dbGet(`/bases/${BASE_ID}/tables`);
-      const list: DBTable[] = Array.isArray(data) ? data : (data.list ?? data.tables ?? []);
+      const list: DBTable[] = pickArray(data);
       setTables(list);
       if (list.length && !active) setActive(list[0]);
-    } catch (e: any) { const msg = e?.response?.data?.msg || e?.message || 'Erreur'; setErr(msg); }
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail || e?.response?.data?.msg || e?.message || 'Erreur';
+      setErr(`Tables: ${detail}`);
+    }
     finally { setLoadTables(false); }
   };
 
@@ -547,6 +550,17 @@ export default function RecruitmentPage() {
         {/* Table list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '6px 6px' }}>
           {loadTables ? <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><Spinner /></div>
+            : err && tables.length === 0 ? (
+              <div style={{ margin: '10px 6px', padding: '10px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 7, marginBottom: 8 }}>
+                  <AlertTriangle size={13} style={{ color: '#b91c1c', flexShrink: 0, marginTop: 1 }} />
+                  <span style={{ fontSize: 11, color: '#b91c1c', lineHeight: 1.4, wordBreak: 'break-all' }}>{err}</span>
+                </div>
+                <button onClick={fetchTables} style={{ fontSize: 11, color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600 }}>
+                  Réessayer
+                </button>
+              </div>
+            )
             : filteredTables.map(t => {
               const idx = tables.findIndex(x => x.id === t.id);
               const isActive = active?.id === t.id;

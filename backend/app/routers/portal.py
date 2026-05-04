@@ -1,0 +1,238 @@
+"""Employee self-service portal — /api/portal"""
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException
+from supabase import Client
+
+from app.database import get_db
+from app.dependencies import get_current_user
+
+router = APIRouter(prefix="/portal", tags=["Employee Portal"])
+
+
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+def _get_my_employee(supabase: Client, current_user: dict) -> dict:
+    """Find the employee record linked to the authenticated user by email."""
+    email = current_user["email"]
+    try:
+        res = supabase.table("employees").select("*").eq("email", email).limit(1).execute()
+        rows = res.data or []
+        if rows:
+            return rows[0]
+    except Exception:
+        pass
+    raise HTTPException(
+        status_code=404,
+        detail="Aucun profil employé lié à ce compte. Contactez votre responsable RH.",
+    )
+
+
+def _notify_hr(supabase: Client, title: str, body: str, notif_type: str = "employee_request") -> None:
+    """Create a notification for every HR/admin user."""
+    try:
+        hr_users = (
+            supabase.table("user_roles")
+            .select("user_id")
+            .in_("role", ["hr", "admin", "rh"])
+            .execute()
+            .data or []
+        )
+        if not hr_users:
+            return
+        records = [
+            {
+                "user_id": u["user_id"],
+                "type": notif_type,
+                "title": title,
+                "body": body,
+                "read": False,
+            }
+            for u in hr_users
+        ]
+        supabase.table("notifications").insert(records).execute()
+    except Exception:
+        pass  # non-critical
+
+
+# ── My profile ─────────────────────────────────────────────────────────────────
+
+@router.get("/me")
+def get_my_profile(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    return _get_my_employee(supabase, current_user)
+
+
+# ── Dashboard stats ────────────────────────────────────────────────────────────
+
+@router.get("/me/stats")
+def get_my_stats(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    emp = _get_my_employee(supabase, current_user)
+    emp_id = emp["id"]
+    stats: dict = {}
+
+    try:
+        leaves = supabase.table("leave_requests").select("status").eq("employee_id", emp_id).execute().data or []
+        stats["leaves_pending"]  = sum(1 for l in leaves if l.get("status") == "pending")
+        stats["leaves_approved"] = sum(1 for l in leaves if l.get("status") == "approved")
+        stats["leaves_total"]    = len(leaves)
+    except Exception:
+        stats.update({"leaves_pending": 0, "leaves_approved": 0, "leaves_total": 0})
+
+    try:
+        training = supabase.table("employee_trainings").select("status").eq("employee_id", emp_id).execute().data or []
+        stats["training_total"]     = len(training)
+        stats["training_completed"] = sum(1 for t in training if t.get("status") == "completed")
+        stats["training_planned"]   = sum(1 for t in training if t.get("status") in ("planned", "in_progress"))
+    except Exception:
+        stats.update({"training_total": 0, "training_completed": 0, "training_planned": 0})
+
+    try:
+        doc_reqs = supabase.table("document_requests").select("status").eq("employee_id", emp_id).execute().data or []
+        stats["doc_requests_pending"] = sum(1 for d in doc_reqs if d.get("status") == "pending")
+        stats["doc_requests_total"]   = len(doc_reqs)
+    except Exception:
+        stats.update({"doc_requests_pending": 0, "doc_requests_total": 0})
+
+    return stats
+
+
+# ── Leave requests ─────────────────────────────────────────────────────────────
+
+@router.get("/me/leaves")
+def get_my_leaves(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    emp = _get_my_employee(supabase, current_user)
+    try:
+        res = (
+            supabase.table("leave_requests")
+            .select("*")
+            .eq("employee_id", emp["id"])
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return res.data or []
+    except Exception:
+        return []
+
+
+@router.post("/me/leaves", status_code=201)
+def submit_leave(
+    payload: dict,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    emp = _get_my_employee(supabase, current_user)
+    payload["employee_id"] = emp["id"]
+    payload.setdefault("status", "pending")
+    try:
+        res = supabase.table("leave_requests").insert(payload).execute()
+        leave = (res.data or [{}])[0]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    _notify_hr(
+        supabase,
+        title=f"Demande de congé — {emp['full_name']}",
+        body=(
+            f"{emp['full_name']} a soumis une demande de congé "
+            f"({payload.get('type', '')}) "
+            f"du {payload.get('start_date', '')} au {payload.get('end_date', '')}"
+        ),
+        notif_type="leave_pending",
+    )
+    return leave
+
+
+# ── Document requests ──────────────────────────────────────────────────────────
+
+@router.get("/me/document-requests")
+def get_my_doc_requests(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    emp = _get_my_employee(supabase, current_user)
+    try:
+        res = (
+            supabase.table("document_requests")
+            .select("*")
+            .eq("employee_id", emp["id"])
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return res.data or []
+    except Exception:
+        return []
+
+
+@router.post("/me/document-requests", status_code=201)
+def submit_doc_request(
+    payload: dict,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    emp = _get_my_employee(supabase, current_user)
+    payload["employee_id"] = emp["id"]
+    payload.setdefault("status", "pending")
+    try:
+        res = supabase.table("document_requests").insert(payload).execute()
+        doc_req = (res.data or [{}])[0]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    _notify_hr(
+        supabase,
+        title=f"Demande de document — {emp['full_name']}",
+        body=f"{emp['full_name']} a demandé : {payload.get('doc_type', 'document')}",
+        notif_type="document_request",
+    )
+    return doc_req
+
+
+# ── Training ───────────────────────────────────────────────────────────────────
+
+@router.get("/me/training")
+def get_my_training(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    emp = _get_my_employee(supabase, current_user)
+    try:
+        res = (
+            supabase.table("employee_trainings")
+            .select("*, training_catalog(id,title,category,duration_hours,provider,description)")
+            .eq("employee_id", emp["id"])
+            .order("assigned_at", desc=True)
+            .execute()
+        )
+        return res.data or []
+    except Exception:
+        return []
+
+
+# ── OKRs ───────────────────────────────────────────────────────────────────────
+
+@router.get("/me/okrs")
+def get_my_okrs(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    emp = _get_my_employee(supabase, current_user)
+    try:
+        res = (
+            supabase.table("employee_okrs")
+            .select("*")
+            .eq("employee_id", emp["id"])
+            .neq("status", "cancelled")
+            .order("created_at", desc=True)
+            .execute()
+        )
+        return res.data or []
+    except Exception:
+        return []

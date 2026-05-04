@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const BASE = '/api';
 
-export const api = axios.create({ baseURL: BASE });
+export const api = axios.create({ baseURL: BASE, timeout: 15000 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('wedy_token');
@@ -56,6 +56,65 @@ export const updateEmployee = (id: string, body: Partial<Employee>) =>
 export const deleteEmployee = (id: string) =>
   api.delete(`/employees/${id}`);
 
+// ── Employee Files ────────────────────────────────────────────────────────────
+
+export type EmployeeFile = {
+  id: string;
+  employee_id: string;
+  name: string;
+  file_type: 'cv' | 'certificat' | 'diplome' | 'contrat' | 'autre';
+  file_path: string;
+  file_size?: number;
+  mime_type?: string;
+  uploaded_by?: string;
+  created_at: string;
+};
+
+export const listEmployeeFiles = (employee_id: string) =>
+  api.get<EmployeeFile[]>(`/employees/${employee_id}/files`).then(r => r.data);
+
+export const uploadEmployeeFile = (employee_id: string, file: File, file_type: string) => {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('file_type', file_type);
+  return api.post<EmployeeFile>(`/employees/${employee_id}/files`, form).then(r => r.data);
+};
+
+export const deleteEmployeeFile = (employee_id: string, file_id: string) =>
+  api.delete(`/employees/${employee_id}/files/${file_id}`);
+
+export const getEmployeeFileUrl = (file_path: string) => `${BASE}/uploads/${file_path}`;
+
+export type AnalysisResult = {
+  files_analyzed: number;
+  extracted: {
+    full_name?: string; cin?: string; matricule?: string;
+    birth_date?: string; nationality?: string; email?: string;
+    phone?: string; address?: string; city?: string;
+    position?: string; department?: string; hire_date?: string;
+    contract_type?: string; contract_start?: string; contract_end?: string;
+    salary?: number; manager?: string; cnss_number?: string;
+    bank_account?: string; notes?: string;
+    education?: { degree: string; field: string; school: string; year: string }[];
+    certifications?: { name: string; issuer: string; year: string }[];
+    skills?: string[];
+    languages?: string[];
+  };
+};
+
+export const analyzeEmployeeFolder = (employee_id: string) =>
+  api.post<AnalysisResult>(`/employees/${employee_id}/analyze`, null, { timeout: 120000 }).then(r => r.data);
+
+export const applyAnalysis = (employee_id: string, fields: Record<string, unknown>) =>
+  api.post<Employee>(`/employees/${employee_id}/apply-analysis`, fields).then(r => r.data);
+
+// ── Departments & Positions ───────────────────────────────────────────────────
+
+export type Department = { id: string; name: string; description?: string };
+
+export const listDepartments = () =>
+  api.get<Department[]>('/departments').then(r => r.data);
+
 // ── Templates ────────────────────────────────────────────────────────
 export type Template = {
   id: string; name_fr: string; name_ar?: string; name_en?: string;
@@ -80,9 +139,10 @@ export const updateTemplate = (id: string, body: Partial<Template> & { body_temp
 export const deleteTemplate = (id: string) => api.delete(`/templates/${id}`);
 
 export const importTemplateFromPdf = (form: FormData) =>
-  api.post<Template>('/templates/import', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }).then(r => r.data);
+  api.post<Template>('/templates/import', form, { timeout: 120000 }).then(r => r.data);
+
+export const seedDefaultTemplates = () =>
+  api.post<{ created: string[]; skipped: string[] }>('/templates/seed-defaults').then(r => r.data);
 
 // ── Documents ────────────────────────────────────────────────────────
 export type GeneratedDoc = {
@@ -107,15 +167,67 @@ export const uploadDocument = (id: string, type: string, name: string, file: Fil
       [isEmployee ? 'employee_id' : 'profile_id']: id, 
       type, 
       name 
-    },
-    headers: { 'Content-Type': 'multipart/form-data' },
+    }
   }).then(r => r.data);
 };
 
 export const deleteDocument = (id: string) => api.delete(`/documents/${id}`);
 
-export const getPdfUrl = (docId: string) => `${BASE}/documents/generate/${docId}/pdf`;
+export const getPdfUrl  = (docId: string) => `${BASE}/documents/generate/${docId}/pdf`;
 export const getDocxUrl = (docId: string) => `${BASE}/documents/generate/${docId}/docx`;
+
+/** Open a print-to-PDF window with proper A4 CSS — renders exactly like the on-screen preview. */
+function _openPrintWindow(html: string, title: string) {
+  const w = window.open('', '_blank')!;
+  w.document.write(
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>` +
+    `<style>` +
+    `@page{size:A4;margin:2.5cm 2.8cm;}` +
+    `body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.8;margin:0;color:#1a1a1a;}` +
+    `img{max-width:100%;height:auto;}` +
+    `h1,h2,h3{text-align:center;}` +
+    `p{margin:4px 0;}` +
+    `</style></head><body>${html}</body></html>`
+  );
+  w.document.close();
+  setTimeout(() => { w.focus(); w.print(); }, 350);
+}
+
+/** Fetch a generated document's HTML and open the browser print dialog (→ Save as PDF). */
+export async function printDocument(docId: string, title = 'Document'): Promise<void> {
+  const token = localStorage.getItem('wedy_token');
+  const res = await fetch(`/api/documents/generate/${docId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.detail ?? `Erreur ${res.status}`);
+  }
+  const data = await res.json();
+  _openPrintWindow(data.content ?? '', title);
+}
+
+/** Authenticated file download — fetches with Bearer token, triggers browser save-dialog. */
+export async function downloadDoc(docId: string, format: 'pdf' | 'docx', filename?: string): Promise<void> {
+  const token = localStorage.getItem('wedy_token');
+  const url = format === 'pdf' ? getPdfUrl(docId) : getDocxUrl(docId);
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.detail ?? `Erreur ${res.status}`);
+  }
+  const blob = await res.blob();
+  const href = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = filename ?? `document.${format}`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(href);
+}
 
 export const aiEnhance = (body: { document_content: string; document_type: string; language: string; instructions?: string }) =>
   api.post<{ enhanced_content: string }>('/documents/ai/enhance', body).then(r => r.data);
@@ -202,7 +314,7 @@ export type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
 export const sendCopilotMessage = (messages: ChatMessage[], context?: string) =>
   api.post<{ reply: string; usage: { input_tokens: number; output_tokens: number } }>(
-    '/copilot/chat', { messages, context }
+    '/copilot/chat', { messages, context }, { timeout: 60000 }
   ).then(r => r.data);
 
 export const summarizeEmployee = (employeeId: string) =>
@@ -258,6 +370,39 @@ export const updateIntern = (id: string, body: Partial<Intern>) =>
 export const deleteIntern = (id: string) =>
   api.delete(`/interns/${id}`);
 
+// ── Intern Onboarding ────────────────────────────────────────────────
+export interface ChecklistItem {
+  id: string; label: string; phase: 'pre' | 'integration' | 'evaluation'; done: boolean; done_at?: string | null;
+}
+export interface Objective { id: string; label: string; done: boolean; }
+export interface InternOnboarding {
+  id: string; intern_id: string; phase: 'pre' | 'integration' | 'evaluation' | 'completed';
+  mentor_name?: string; mentor_email?: string;
+  checklist: ChecklistItem[]; objectives: Objective[];
+  created_at: string; updated_at: string;
+}
+export interface InternEvaluation {
+  id: string; intern_id: string; evaluation_type: 'weekly' | 'final' | 'self';
+  week_number?: number; evaluator_name?: string;
+  amana_score: number; itkan_score: number; iltizam_score: number; ibdaa_score: number; nama_score: number;
+  comment?: string; created_at: string;
+}
+
+export const getInternOnboarding = (internId: string) =>
+  api.get<InternOnboarding>(`/interns/${internId}/onboarding`).then(r => r.data);
+
+export const updateInternOnboarding = (internId: string, body: Partial<InternOnboarding>) =>
+  api.patch<InternOnboarding>(`/interns/${internId}/onboarding`, body).then(r => r.data);
+
+export const listInternEvaluations = (internId: string) =>
+  api.get<InternEvaluation[]>(`/interns/${internId}/evaluations`).then(r => r.data);
+
+export const createInternEvaluation = (internId: string, body: Partial<InternEvaluation>) =>
+  api.post<InternEvaluation>(`/interns/${internId}/evaluations`, body).then(r => r.data);
+
+export const deleteInternEvaluation = (internId: string, evalId: string) =>
+  api.delete(`/interns/${internId}/evaluations/${evalId}`);
+
 // ── CV Parsing ───────────────────────────────────────────────────────
 export interface CVParseRes {
   cv_upload: { id: string; file_url: string };
@@ -288,9 +433,7 @@ export interface CVParseRes {
 export const uploadAndParseCV = async (file: File): Promise<CVParseRes> => {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await api.post<CVParseRes>('/cv/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const res = await api.post<CVParseRes>('/cv/upload', formData);
   return res.data;
 };
 // ── Performance ────────────────────────────────────────────────────────
@@ -356,3 +499,43 @@ export const deleteWebhook = (id: string) => api.delete(`/webhooks/${id}`);
 
 // ── Payroll PDF ─────────────────────────────────────────────────────
 export const getPayrollPdfUrl = (id: string) => `${api.defaults.baseURL}/payroll/${id}/pdf`;
+
+// ── EmployeeFolder compatibility helpers ─────────────────────────────────────
+
+export const listLeaveRequests = (params?: Record<string, string | number>) =>
+  listLeaves(params).then(r => r.data);
+
+export const listEmployeeDocuments = (employee_id: string) =>
+  listDocuments({ employee_id }).then(r => r.data);
+
+export type Payslip = {
+  id: string; employee_id: string;
+  period_month: number; period_year: number;
+  net_salary: number; gross_salary: number;
+  cnss_deduction: number; amo_deduction: number; ir_deduction: number;
+  created_at: string;
+};
+
+export const listPayslips = (params?: Record<string, string | number>) =>
+  listPayroll(params).then(r => r.data.map(p => ({
+    id: p.id, employee_id: p.employee_id,
+    period_month: p.month, period_year: p.year,
+    net_salary: p.net_salary, gross_salary: p.base_salary,
+    cnss_deduction: p.cnss, amo_deduction: 0, ir_deduction: p.ir,
+    created_at: p.created_at,
+  } as Payslip)));
+
+export type PerformanceGoal = {
+  id: string; employee_id: string; title: string; status: string; progress: number; created_at: string;
+};
+
+export const listGoals = (_params?: Record<string, string | number>): Promise<PerformanceGoal[]> =>
+  Promise.resolve([]);
+
+export const listReviews = (params?: Record<string, string>) =>
+  listPerformanceReviews(params).then(r => r.data.map(rev => ({
+    ...rev,
+    cycle: rev.period,
+    overall_score: rev.score,
+    comments: rev.feedback,
+  })));

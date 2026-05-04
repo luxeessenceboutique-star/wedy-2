@@ -23,19 +23,24 @@ router = APIRouter(tags=["Documents"])
 # Documents
 # ─────────────────────────────────────────────────────────────────────────────
 
-@router.get("/documents", response_model=List[DocumentOut])
+@router.get("/documents")
 def list_documents(
     profile_id: UUID = None,
+    employee_id: UUID = None,
     skip: int = 0,
     limit: int = 50,
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    query = supabase.table("documents").select("*")
-    if profile_id:
+    # Generated documents (from the generate flow) are stored in generated_documents
+    query = supabase.table("generated_documents").select("*").order("created_at", desc=True)
+    if employee_id:
+        query = query.eq("employee_id", str(employee_id))
+    elif profile_id:
         query = query.eq("profile_id", str(profile_id))
     response = query.range(skip, skip + limit - 1).execute()
-    return response.data
+    rows = response.data or []
+    return {"data": rows, "count": len(rows)}
 
 
 @router.post("/documents", response_model=DocumentOut, status_code=201)
@@ -53,18 +58,18 @@ async def upload_document(
 
     content = await file.read()
     url = store_file(content, file.filename, subfolder="documents", content_type=file.content_type)
-    
+
     data = {
         "profile_id": str(profile_id) if profile_id else None,
         "employee_id": str(employee_id) if employee_id else None,
-        "type": type, 
-        "name": name, 
-        "file_url": url
+        "type": type,
+        "name": name,
+        "file_url": url,
     }
     response = supabase.table("documents").insert(data).execute()
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not upload document")
-    
+
     doc = response.data[0]
     log_action(supabase, current_user["id"], "UPLOAD_DOCUMENT", "document", doc["id"])
     return doc
@@ -79,7 +84,7 @@ def download_document(
     response = supabase.table("documents").select("*").eq("id", str(doc_id)).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Document not found")
-    
+
     doc = response.data[0]
     data = retrieve_file(doc["file_url"])
     return Response(content=data, media_type="application/octet-stream",
@@ -95,9 +100,6 @@ def delete_document(
     response = supabase.table("documents").delete().eq("id", str(doc_id)).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Document not found")
-
-
-# /documents/generate is handled by routers/generate.py (employee-based, returns {document, content})
 
 
 @router.get("/documents/generated", response_model=List[GeneratedDocOut])

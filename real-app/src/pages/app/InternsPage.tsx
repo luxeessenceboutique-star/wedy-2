@@ -623,7 +623,7 @@ export default function InternsPage() {
 
   const { data: docsData, refetch: refetchDocs } = useQuery({
     queryKey: ['intern-docs', viewingIntern?.id],
-    queryFn: () => viewingIntern?.id ? listDocuments({ profile_id: viewingIntern.id }) : Promise.resolve({ data: [], count: 0 }),
+    queryFn: () => viewingIntern?.id ? listDocuments({ employee_id: viewingIntern.id }) : Promise.resolve({ data: [], count: 0 }),
     enabled: !!viewingIntern?.id,
   });
   const internDocs = docsData?.data ?? [];
@@ -842,7 +842,28 @@ export default function InternsPage() {
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: 4 }}>
-                            <a href={d.content} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm"><Eye size={12} /></a>
+                            {(!d.signature_status || d.signature_status === 'pending') && (
+                              <button
+                                className="btn btn-ghost btn-sm"
+                                style={{ color: 'var(--primary)' }}
+                                onClick={async () => {
+                                  try {
+                                    const { sendForSignature } = await import('../../lib/api');
+                                    const res = await sendForSignature(d.id);
+                                    toast.success("Demande de signature envoyée");
+                                    const link = `${window.location.origin}/sign/${res.token}`;
+                                    navigator.clipboard.writeText(link);
+                                    toast.info(`Lien copié: ${link}`);
+                                    refetchDocs();
+                                  } catch (e: any) { toast.error(e.response?.data?.detail || "Erreur"); }
+                                }}
+                              >
+                                {d.signature_status === 'pending' ? 'Renvoyer' : 'Signer'}
+                              </button>
+                            )}
+                            {d.signature_status === 'signed' && (
+                              <Badge variant="success" style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28 }}><CheckCircle size={10} /> Signé</Badge>
+                            )}
                             <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}
                               onClick={() => { if (confirm('Supprimer ?')) deleteDocument(d.id).then(() => refetchDocs()); }}>
                               <Trash2 size={12} />

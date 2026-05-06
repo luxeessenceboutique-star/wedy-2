@@ -24,52 +24,52 @@ const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
   {
     heading: 'Overview',
     items: [
-      { label: 'Dashboard',     icon: <LayoutDashboard size={15} />, to: '/app' },
-      { label: 'AI Copilot',    icon: <Bot size={15} />,             to: '/app/copilot',       badge: 'New' },
-      { label: 'Notifications', icon: <Bell size={15} />,            to: '/app/notifications', badgeCount: 3 },
+      { label: 'Dashboard', icon: <LayoutDashboard size={15} />, to: '/app' },
+      { label: 'AI Copilot', icon: <Bot size={15} />, to: '/app/copilot', badge: 'New' },
+      { label: 'Notifications', icon: <Bell size={15} />, to: '/app/notifications', badgeCount: 3 },
     ],
   },
   {
     heading: 'People',
     items: [
-      { label: 'Employees',   icon: <Users size={15} />,         to: '/app/employees' },
-      { label: 'Interns',     icon: <GraduationCap size={15} />, to: '/app/interns' },
-      { label: 'Recruitment', icon: <UserPlus size={15} />,      to: '/app/recruitment' },
-      { label: 'Performance', icon: <TrendingUp size={15} />,    to: '/app/performance' },
-      { label: 'Time off',    icon: <Clock size={15} />,         to: '/app/timeoff' },
-      { label: 'Payroll',     icon: <DollarSign size={15} />,    to: '/app/payroll' },
+      { label: 'Employees', icon: <Users size={15} />, to: '/app/employees' },
+      { label: 'Interns', icon: <GraduationCap size={15} />, to: '/app/interns' },
+      { label: 'Recruitment', icon: <UserPlus size={15} />, to: '/app/recruitment' },
+      { label: 'Performance', icon: <TrendingUp size={15} />, to: '/app/performance' },
+      { label: 'Time off', icon: <Clock size={15} />, to: '/app/timeoff' },
+      { label: 'Payroll', icon: <DollarSign size={15} />, to: '/app/payroll' },
     ],
   },
   {
     heading: 'Développement RH',
     items: [
       { label: 'Onboarding RH', icon: <UserCheck size={15} />, to: '/app/onboarding' },
-      { label: 'Formation',     icon: <BookOpen size={15} />,   to: '/app/training' },
-      { label: 'Talents',       icon: <Star size={15} />,       to: '/app/talents' },
+      { label: 'Formation', icon: <BookOpen size={15} />, to: '/app/training' },
+      { label: 'Talents', icon: <Star size={15} />, to: '/app/talents' },
     ],
   },
   {
     heading: 'Documents',
     items: [
-      { label: 'Generate',  icon: <Wand2 size={15} />,    to: '/app/generate' },
+      { label: 'Generate', icon: <Wand2 size={15} />, to: '/app/generate' },
       { label: 'Templates', icon: <FileText size={15} />, to: '/app/templates' },
-      { label: 'History',   icon: <History size={15} />,  to: '/app/history' },
+      { label: 'History', icon: <History size={15} />, to: '/app/history' },
     ],
   },
   {
     heading: 'Insights',
     items: [
-      { label: 'Analytics',  icon: <BarChart3 size={15} />,     to: '/app/analytics' },
-      { label: 'Audit log',  icon: <ClipboardList size={15} />, to: '/app/audit' },
+      { label: 'Analytics', icon: <BarChart3 size={15} />, to: '/app/analytics' },
+      { label: 'Audit log', icon: <ClipboardList size={15} />, to: '/app/audit' },
     ],
   },
   {
     heading: 'Workspace',
     items: [
-      { label: 'Integrations', icon: <Puzzle size={15} />,   to: '/app/integrations' },
-      { label: 'Users & roles',icon: <UserCog size={15} />,  to: '/app/users' },
-      { label: 'Settings',     icon: <Settings size={15} />, to: '/app/settings' },
-      { label: 'Help',         icon: <HelpCircle size={15}/>, to: '/app/help' },
+      { label: 'Integrations', icon: <Puzzle size={15} />, to: '/app/integrations' },
+      { label: 'Users & roles', icon: <UserCog size={15} />, to: '/app/users' },
+      { label: 'Settings', icon: <Settings size={15} />, to: '/app/settings' },
+      { label: 'Help', icon: <HelpCircle size={15} />, to: '/app/help' },
     ],
   },
 ];

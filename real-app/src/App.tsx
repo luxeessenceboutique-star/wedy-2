@@ -37,6 +37,7 @@ import TrainingPage from './pages/app/TrainingPage';
 import TalentsPage from './pages/app/TalentsPage';
 import OrgChartPage from './pages/app/OrgChartPage';
 import MeetingsPage from './pages/app/MeetingsPage';
+import TendersPage from './pages/app/TendersPage';
 
 // Employee portal pages
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
@@ -116,6 +117,7 @@ export default function App() {
                 <Route path="/app/talents" element={<RequireHR><TalentsPage /></RequireHR>} />
                 <Route path="/app/orgchart" element={<RequireHR><OrgChartPage /></RequireHR>} />
                 <Route path="/app/meetings" element={<RequireHR><MeetingsPage /></RequireHR>} />
+                <Route path="/app/tenders" element={<RequireHR><TendersPage /></RequireHR>} />
 
                 {/* ── Employee Portal ── */}
                 <Route path="/employee" element={<RequireEmployee><EmployeeDashboard /></RequireEmployee>} />

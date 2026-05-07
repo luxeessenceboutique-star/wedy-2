@@ -36,13 +36,13 @@ def get_current_user(
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalide: sub manquant")
 
-    raw_role = "employee"
+    raw_role = "hr"
     full_name = email
 
     try:
         role_res = supabase.table("user_roles").select("role").eq("user_id", user_id).maybe_single().execute()
         if role_res.data:
-            raw_role = role_res.data.get("role", "employee")
+            raw_role = role_res.data.get("role", "hr")
     except Exception:
         pass  # table may not exist yet — default to employee
 

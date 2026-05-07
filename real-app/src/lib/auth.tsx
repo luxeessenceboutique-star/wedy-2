@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn('Initial /auth/me failed, trying Supabase recovery:', err);
         const { data: { user: sbUser } } = await supabase.auth.getUser();
         if (sbUser) {
-          let role = 'employee';
+          let role = 'hr';
           try {
             const { data: roleData } = await supabase
               .from('user_roles')
@@ -80,11 +80,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const me = await getMe();
       setUser(me);
-      return { role: me.role_name ?? 'employee' };
+      return { role: me.role_name ?? 'hr' };
     } catch (err) {
       console.warn('Backend /auth/me unreachable, fetching role from Supabase directly:', err);
       // Fallback: fetch role directly from Supabase user_roles table
-      let role = 'employee';
+      let role = 'hr';
       try {
         const { data: roleData } = await supabase
           .from('user_roles')

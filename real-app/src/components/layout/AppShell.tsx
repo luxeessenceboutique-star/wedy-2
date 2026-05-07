@@ -6,7 +6,7 @@ import {
   Puzzle, Bell, Settings, HelpCircle, LogOut,
   ChevronDown, ExternalLink, Search, ClipboardList,
   UserCog, Moon, Sun, GraduationCap, UserCheck, BookOpen, Star,
-  Network, Video,
+  Network, Video, Briefcase,
 } from 'lucide-react';
 import { WedyLogo } from '../WedyLogo';
 import { Avatar } from '../ui';
@@ -75,6 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         { label: t('onboarding'), icon: <UserCheck size={15} />, to: '/app/onboarding' },
         { label: t('training'),   icon: <BookOpen size={15} />,   to: '/app/training' },
         { label: t('talents'),    icon: <Star size={15} />,       to: '/app/talents' },
+        { label: t('tenders'),    icon: <Briefcase size={15} />,  to: '/app/tenders', badge: 'AI' },
       ],
     },
     {

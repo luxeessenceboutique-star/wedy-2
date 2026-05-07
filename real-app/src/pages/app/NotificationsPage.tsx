@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck, RefreshCw, AlertTriangle, Calendar, FileText, Users } from 'lucide-react';
 import { api } from '../../lib/api';
 import { PageHeader } from '../../components/layout/AppShell';
@@ -19,6 +20,7 @@ interface SmartNotif {
   time: string;
   unread: boolean;
   priority: number;
+  link?: string;
 }
 
 const fetchNotifs = () =>
@@ -27,6 +29,27 @@ const fetchNotifs = () =>
 
 const markAllRead = () =>
   api.post('/notifications/mark-all-read').then(r => r.data);
+
+const markOneRead = (id: string) =>
+  api.patch(`/notifications/${id}/read`).then(r => r.data);
+
+// ── Safe route whitelist ──────────────────────────────────────────────────────
+
+const VALID_APP_ROUTES = new Set([
+  '/app', '/app/employees', '/app/interns', '/app/timeoff', '/app/history',
+  '/app/analytics', '/app/recruitment', '/app/candidats', '/app/annonces',
+  '/app/calendrier-rh', '/app/creneaux-rh', '/app/tenders', '/app/payroll',
+  '/app/performance', '/app/orgchart', '/app/meetings', '/app/notifications',
+  '/app/generate', '/app/templates', '/app/audit', '/app/settings',
+]);
+
+const TYPE_ROUTES: Record<string, string> = {
+  contract_expiring:  '/app/employees',
+  cdd_risk:           '/app/employees',
+  leave_pending:      '/app/timeoff',
+  document_generated: '/app/history',
+  new_employee:       '/app/employees',
+};
 
 // ── Icon per type ─────────────────────────────────────────────────────────────
 
@@ -52,16 +75,34 @@ function TypeIcon({ type, color }: { type: string; color: string }) {
 
 // ── Notification row ──────────────────────────────────────────────────────────
 
-function NotifRow({ n }: { n: SmartNotif }) {
+function NotifRow({ n, onRead }: { n: SmartNotif; onRead: (id: string) => void }) {
+  const navigate = useNavigate();
+  const [hovered, setHovered] = useState(false);
+
+  const handleClick = () => {
+    if (n.unread) onRead(n.id);
+    const linkDest = n.link && VALID_APP_ROUTES.has(n.link) ? n.link : undefined;
+    const dest = linkDest || TYPE_ROUTES[n.type];
+    if (dest) navigate(dest);
+  };
+
   return (
-    <div style={{
-      display: 'flex', alignItems: 'flex-start', gap: 12,
-      padding: '14px 18px',
-      background: n.unread ? `${n.color}08` : 'var(--bg-elev)',
-      borderBottom: '1px solid var(--border)',
-      position: 'relative',
-      transition: 'background 0.15s',
-    }}>
+    <div
+      onClick={handleClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', alignItems: 'flex-start', gap: 12,
+        padding: '14px 18px',
+        background: hovered
+          ? `${n.color}14`
+          : n.unread ? `${n.color}08` : 'var(--bg-elev)',
+        borderBottom: '1px solid var(--border)',
+        position: 'relative',
+        transition: 'background 0.15s',
+        cursor: 'pointer',
+      }}
+    >
       {n.unread && (
         <span style={{
           position: 'absolute', left: 0, top: 0, bottom: 0,
@@ -97,7 +138,7 @@ export default function NotificationsPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: fetchNotifs,
-    refetchInterval: 60_000, // refresh every minute
+    refetchInterval: 60_000,
   });
 
   const markMut = useMutation({
@@ -105,6 +146,13 @@ export default function NotificationsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('notif_all_marked'));
+    },
+  });
+
+  const markOneMut = useMutation({
+    mutationFn: markOneRead,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 
@@ -179,7 +227,9 @@ export default function NotificationsPage() {
             </p>
           </div>
         ) : (
-          filtered.map(n => <NotifRow key={n.id} n={n} />)
+          filtered.map(n => (
+            <NotifRow key={n.id} n={n} onRead={id => markOneMut.mutate(id)} />
+          ))
         )}
       </div>
 

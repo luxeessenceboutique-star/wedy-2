@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .from('user_roles')
               .select('role')
               .eq('user_id', sbUser.id)
-              .maybe_single();
+              .maybeSingle();
             if (roleData?.role) {
               role = roleData.role === 'rh' ? 'hr' : roleData.role;
             }
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from('user_roles')
           .select('role')
           .eq('user_id', data.user!.id)
-          .maybe_single();
+          .maybeSingle();
         
         if (roleData?.role) {
           role = roleData.role === 'rh' ? 'hr' : roleData.role;

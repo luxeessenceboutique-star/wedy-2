@@ -5,6 +5,7 @@ import { ClipboardList, Search } from 'lucide-react';
 import { listAuditLogs, type AuditLog } from '../../lib/api';
 import { Card, Badge, Spinner } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
+import { useLang } from '../../lib/lang';
 
 const ACTION_VARIANT: Record<string, 'success' | 'danger' | 'warning' | 'default'> = {
   CREATE: 'success', DELETE: 'danger', UPDATE: 'default',
@@ -17,6 +18,7 @@ const ENTITY_LABEL: Record<string, string> = {
 };
 
 export default function AuditPage() {
+  const { t } = useLang();
   const [skip, setSkip] = useState(0);
   const [search, setSearch] = useState('');
   const LIMIT = 25;
@@ -40,8 +42,8 @@ export default function AuditPage() {
   return (
     <div style={{ padding: '24px 28px' }}>
       <PageHeader
-        title="Journal d'audit"
-        subtitle={`${total} entrée(s) · traçabilité de toutes les actions`}
+        title={t('audit_log')}
+        subtitle={`${total} ${t('col_actions').toLowerCase()} · ${t('audit_subtitle')}`}
       />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -50,7 +52,7 @@ export default function AuditPage() {
           <input
             className="input"
             style={{ paddingLeft: 32 }}
-            placeholder="Rechercher action, entité, utilisateur…"
+            placeholder={t('audit_search_ph')}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -59,7 +61,7 @@ export default function AuditPage() {
 
       <Card pad={false}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '180px 110px 110px 1fr 140px', gap: 12, fontSize: 11, fontWeight: 600, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          <span>Date</span><span>Action</span><span>Entité</span><span>ID ressource</span><span>Utilisateur</span>
+          <span>{t('col_date')}</span><span>{t('col_action')}</span><span>{t('col_entity')}</span><span>{t('col_resource_id')}</span><span>{t('col_user')}</span>
         </div>
 
         {isLoading ? (
@@ -67,7 +69,7 @@ export default function AuditPage() {
         ) : filtered.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13 }}>
             <ClipboardList size={32} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-            <p>Aucune entrée d'audit pour l'instant.</p>
+            <p>{t('audit_no_entries')}</p>
           </div>
         ) : (
           filtered.map((log: AuditLog, i) => (
@@ -98,13 +100,13 @@ export default function AuditPage() {
       {total > LIMIT && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
           <button className="btn btn-ghost btn-sm" disabled={skip === 0} onClick={() => setSkip(s => Math.max(0, s - LIMIT))}>
-            ← Précédent
+            ← {t('prev_page')}
           </button>
           <span style={{ fontSize: 13, color: 'var(--fg-muted)', alignSelf: 'center' }}>
             {skip + 1}–{Math.min(skip + LIMIT, total)} / {total}
           </span>
           <button className="btn btn-ghost btn-sm" disabled={skip + LIMIT >= total} onClick={() => setSkip(s => s + LIMIT)}>
-            Suivant →
+            {t('next_page')} →
           </button>
         </div>
       )}

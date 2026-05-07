@@ -1,18 +1,21 @@
 import React from 'react';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Shield, Lock, FileCheck, Globe } from 'lucide-react';
-
-const ITEMS = [
-  { icon: <Shield size={18} />, title: 'GDPR compliance', desc: 'Data processing agreements, right to erasure, and consent management.', status: 'Active' },
-  { icon: <FileCheck size={18} />, title: 'Moroccan Labor Law 2026', desc: 'Templates and workflows aligned with the latest Code du Travail.', status: 'Active' },
-  { icon: <Lock size={18} />, title: 'Data encryption', desc: 'All data encrypted at rest (AES-256) and in transit (TLS 1.3).', status: 'Active' },
-  { icon: <Globe size={18} />, title: 'Data residency', desc: 'Choose where your HR data is stored — EU or Morocco region.', status: 'Configured' },
-];
+import { useLang } from '../../lib/lang';
 
 export default function SecurityPage() {
+  const { t } = useLang();
+
+  const ITEMS = [
+    { icon: <Shield size={18} />, title: t('sec_gdpr_title'), desc: t('sec_gdpr_desc'), status: t('status_active_item') },
+    { icon: <FileCheck size={18} />, title: t('sec_labor_title'), desc: t('sec_labor_desc'), status: t('status_active_item') },
+    { icon: <Lock size={18} />, title: t('sec_encryption_title'), desc: t('sec_encryption_desc'), status: t('status_active_item') },
+    { icon: <Globe size={18} />, title: t('sec_residency_title'), desc: t('sec_residency_desc'), status: t('status_configured') },
+  ];
+
   return (
     <div style={{ padding: '24px 28px' }}>
-      <PageHeader title="Security & Compliance" subtitle="GDPR, Moroccan labor law compliance settings." />
+      <PageHeader title={t('security_title')} subtitle={t('security_subtitle')} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, maxWidth: 800 }}>
         {ITEMS.map(item => (
           <div key={item.title} style={{

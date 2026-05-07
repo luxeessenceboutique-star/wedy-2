@@ -32,10 +32,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('wedy_token');
     if (!token) { setLoading(false); return; }
-    getMe()
-      .then(me => setUser(me))
-      .catch(() => localStorage.removeItem('wedy_token'))
-      .finally(() => setLoading(false));
+    
+    const initAuth = async () => {
+      try {
+        const me = await getMe();
+        setUser(me);
+      } catch (err) {
+        console.warn('Initial /auth/me failed, trying Supabase recovery:', err);
+        const { data: { user: sbUser } } = await supabase.auth.getUser();
+        if (sbUser) {
+          let role = 'employee';
+          try {
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', sbUser.id)
+              .maybe_single();
+            if (roleData?.role) {
+              role = roleData.role === 'rh' ? 'hr' : roleData.role;
+            }
+          } catch (dbErr) {
+            console.error('Failed to fetch role from Supabase during init:', dbErr);
+          }
+          
+          setUser({
+            id: sbUser.id,
+            email: sbUser.email!,
+            role_name: role,
+            full_name: sbUser.user_metadata?.full_name || sbUser.email?.split('@')[0]
+          });
+        } else {
+          localStorage.removeItem('wedy_token');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<{ role: string }> => {
@@ -47,10 +81,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const me = await getMe();
       setUser(me);
       return { role: me.role_name ?? 'employee' };
-    } catch {
-      const fallback: User = { id: data.user!.id, email: data.user!.email!, role_name: 'employee' };
+    } catch (err) {
+      console.warn('Backend /auth/me unreachable, fetching role from Supabase directly:', err);
+      // Fallback: fetch role directly from Supabase user_roles table
+      let role = 'employee';
+      try {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user!.id)
+          .maybe_single();
+        
+        if (roleData?.role) {
+          role = roleData.role === 'rh' ? 'hr' : roleData.role;
+        }
+      } catch (dbErr) {
+        console.error('Failed to fetch role from Supabase:', dbErr);
+      }
+
+      const fallback: User = { 
+        id: data.user!.id, 
+        email: data.user!.email!, 
+        role_name: role,
+        full_name: data.user!.user_metadata?.full_name || data.user!.email?.split('@')[0]
+      };
       setUser(fallback);
-      return { role: 'employee' };
+      return { role };
     }
   };
 

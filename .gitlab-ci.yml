@@ -1,0 +1,95 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+
+# =========================
+# BUILD BACKEND
+# =========================
+build_backend:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+
+  tags:
+    - runner2
+
+  only:
+    - main
+
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" --password-stdin
+
+  script:
+    - |
+      BACKEND_IMAGE="$CI_REGISTRY_IMAGE/backend:latest"
+      BACKEND_IMAGE_VERSION="$CI_REGISTRY_IMAGE/backend:$CI_PIPELINE_ID"
+
+      echo "Build Backend..."
+
+      docker build \
+        -t "$BACKEND_IMAGE" \
+        -t "$BACKEND_IMAGE_VERSION" \
+        ./backend
+
+      docker push "$BACKEND_IMAGE"
+      docker push "$BACKEND_IMAGE_VERSION"
+
+# =========================
+# BUILD FRONTEND
+# =========================
+build_frontend:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+
+  tags:
+    - runner2
+
+  only:
+    - main
+
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" --password-stdin
+
+  script:
+    - |
+      FRONTEND_IMAGE="$CI_REGISTRY_IMAGE/frontend:latest"
+      FRONTEND_IMAGE_VERSION="$CI_REGISTRY_IMAGE/frontend:$CI_PIPELINE_ID"
+
+      echo "Build Frontend..."
+
+      docker build \
+        --build-arg VITE_API_URL=/api \
+        --build-arg VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
+        --build-arg VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
+        -t "$FRONTEND_IMAGE" \
+        -t "$FRONTEND_IMAGE_VERSION" \
+        ./real-app
+      docker push "$FRONTEND_IMAGE"
+      docker push "$FRONTEND_IMAGE_VERSION"
+
+# =========================
+# DEPLOY
+# =========================
+deploy:
+  stage: deploy
+
+  tags:
+    - runner-vm.58
+
+  only:
+    - main
+
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u "$CI_REGISTRY_USER" --password-stdin
+
+  script:
+    - cd /home/tython/wedy
+    - docker compose pull
+    - docker compose up -d
+    - docker image prune -af

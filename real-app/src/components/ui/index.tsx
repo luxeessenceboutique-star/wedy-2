@@ -26,8 +26,8 @@ export function Badge({ variant = 'default', children, className = '', ...rest }
 }
 
 // ── Card ──────────────────────────────────────────────────────────────
-export function Card({ children, className = '', pad = true }: { children: React.ReactNode; className?: string; pad?: boolean }) {
-  return <div className={`card ${pad ? 'card-pad' : ''} ${className}`}>{children}</div>;
+export function Card({ children, className = '', pad = true, ...rest }: { children: React.ReactNode; className?: string; pad?: boolean } & React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={`card ${pad ? 'card-pad' : ''} ${className}`} {...rest}>{children}</div>;
 }
 
 // ── Input ─────────────────────────────────────────────────────────────

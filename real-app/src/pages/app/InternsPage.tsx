@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, Search, Pencil, Trash2, FileUp, GraduationCap, User, Calendar, Mail, Phone,
-  Camera, X, FileText, CheckCircle, TrendingUp, Eye, Settings, ClipboardList,
+  Camera, X, FileText, CheckCircle2, TrendingUp, Eye, Settings, ClipboardList,
   Star, ChevronDown, ChevronUp, Target, UserCheck, Zap, Shield, Flame, BookOpen, Award,
 } from 'lucide-react';
 import {
   listInterns, createIntern, updateIntern, deleteIntern, uploadDocument, listDocuments, deleteDocument,
   getInternOnboarding, updateInternOnboarding, listInternEvaluations, createInternEvaluation, deleteInternEvaluation,
+  sendForSignature,
 } from '../../lib/api';
 import type { Intern, InternOnboarding, InternEvaluation, ChecklistItem, Objective } from '../../lib/api';
 import { CVImportModal } from '../../components/cv/CVImportModal';
@@ -359,7 +360,7 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
                 fontWeight: active ? 700 : 500, fontSize: 12,
                 borderRight: i < PHASES.length - 1 ? '1px solid var(--border)' : 'none',
               }}>
-              {passed && !active && <CheckCircle size={12} style={{ display: 'inline', marginRight: 4 }} />}
+              {passed && !active && <CheckCircle2 size={12} style={{ display: 'inline', marginRight: 4 }} />}
               {p.label}
             </button>
           );
@@ -848,7 +849,6 @@ export default function InternsPage() {
                                 style={{ color: 'var(--primary)' }}
                                 onClick={async () => {
                                   try {
-                                    const { sendForSignature } = await import('../../lib/api');
                                     const res = await sendForSignature(d.id);
                                     toast.success("Demande de signature envoyée");
                                     const link = `${window.location.origin}/sign/${res.token}`;
@@ -862,7 +862,7 @@ export default function InternsPage() {
                               </button>
                             )}
                             {d.signature_status === 'signed' && (
-                              <Badge variant="success" style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28 }}><CheckCircle size={10} /> Signé</Badge>
+                              <Badge variant="success" style={{ display: 'flex', alignItems: 'center', gap: 4, height: 28 }}><CheckCircle2 size={10} /> Signé</Badge>
                             )}
                             <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}
                               onClick={() => { if (confirm('Supprimer ?')) deleteDocument(d.id).then(() => refetchDocs()); }}>
@@ -915,7 +915,7 @@ export default function InternsPage() {
                     </p>
                     <Button variant="primary" disabled={viewingIntern.status === 'active'}
                       onClick={() => { if (confirm(`Convertir ${viewingIntern.full_name} en employé permanent ?`)) updateMut.mutate({ id: viewingIntern.id, data: { status: 'active', contract_type: 'CDI' } }); }}>
-                      <CheckCircle size={14} /> Confirmer l'embauche
+                      <CheckCircle2 size={14} /> Confirmer l'embauche
                     </Button>
                   </div>
                   <div style={{ display: 'flex', gap: 12 }}>

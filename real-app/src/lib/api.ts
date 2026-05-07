@@ -151,6 +151,7 @@ export type GeneratedDoc = {
   id: string; employee_id: string; template_id: string;
   document_type: string; content: string; language: string;
   name?: string; created_at: string; employees?: { full_name: string; cin: string; department: string };
+  signature_status?: 'pending' | 'signed' | 'declined';
 };
 
 export const generateDocument = (body: {
@@ -177,6 +178,9 @@ export const deleteDocument = (id: string) => api.delete(`/documents/${id}`);
 
 export const getPdfUrl = (docId: string) => `${BASE}/documents/generate/${docId}/pdf`;
 export const getDocxUrl = (docId: string) => `${BASE}/documents/generate/${docId}/docx`;
+
+export const sendForSignature = (docId: string) =>
+  api.post(`/documents/generate/${docId}/send-for-signature`).then(r => r.data);
 
 /** Open a print-to-PDF window with proper A4 CSS — renders exactly like the on-screen preview. */
 function _openPrintWindow(html: string, title: string) {
@@ -468,6 +472,7 @@ export type PerformanceReview = {
   period: string; score: number; feedback?: string;
   objectives?: string; status: string; created_at: string;
   employees?: { full_name: string; position: string; department: string };
+  cycle?: string; overall_score?: number; comments?: string;
 };
 
 export const listPerformanceReviews = (params?: Record<string, string>) =>

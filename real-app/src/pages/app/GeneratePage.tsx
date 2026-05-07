@@ -216,7 +216,7 @@ export default function GeneratePage() {
   const [language, setLanguage]       = useState('fr');
   const [useAI, setUseAI]             = useState(false);
   const [extraVars, setExtraVars]     = useState<Record<string, string>>({});
-  const [result, setResult]           = useState<{ id: string; content: string; type: string } | null>(null);
+  const [result, setResult]           = useState<{ id: string; content: string; document_type: string } | null>(null);
   const [originalContent, setOriginalContent] = useState('');
   const [modified, setModified] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
@@ -279,7 +279,7 @@ export default function GeneratePage() {
       extra_variables: extraVars,
     }),
     onSuccess: data => {
-      setResult({ id: data.document.id, content: data.content, type: data.document.document_type });
+      setResult({ id: data.document.id, content: data.content, document_type: data.document.document_type });
       setStep(3);
       toast.success('Document généré !');
     },
@@ -295,7 +295,7 @@ export default function GeneratePage() {
       const current = editorRef.current?.innerHTML || result.content;
       const res = await aiEnhance({
         document_content: current,
-        document_type: result.type,
+        document_type: result.document_type,
         language,
         instructions: 'Améliorer la clarté et le professionnalisme',
       });

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Pencil, Wand2, Upload, Trash2, Download, FileText,
   User, Briefcase, MapPin, AlertTriangle, X, Sparkles,
-  CheckCircle2, Circle, ChevronDown, ChevronUp, GraduationCap,
+  CheckCircle2, Circle, ChevronDown, ChevronUp, GraduationCap, FileSignature,
 } from 'lucide-react';
 import {
   getEmployee, updateEmployee, listEmployeeDocuments, listEmployeeFiles,
@@ -481,7 +481,7 @@ export default function EmployeeFolderPage() {
 
   const { data: departments = [] } = useQuery({ queryKey: ['departments'], queryFn: listDepartments });
 
-  const { data: docs = [], isLoading: docsLoading } = useQuery({
+  const { data: docs = [], isLoading: docsLoading, refetch: refetchDocs } = useQuery({
     queryKey: ['employee-docs', id],
     queryFn: () => listEmployeeDocuments(id!),
     enabled: tab === 'documents' && !!id,
@@ -489,25 +489,25 @@ export default function EmployeeFolderPage() {
 
   const { data: leaves = [], isLoading: leavesLoading } = useQuery({
     queryKey: ['employee-leaves', id],
-    queryFn: () => listLeaveRequests({ employee_id: id }),
+    queryFn: () => listLeaveRequests({ employee_id: id! }),
     enabled: tab === 'conges' && !!id,
   });
 
   const { data: payslips = [], isLoading: payLoading } = useQuery({
     queryKey: ['employee-payslips', id],
-    queryFn: () => listPayslips({ employee_id: id }),
+    queryFn: () => listPayslips({ employee_id: id! }),
     enabled: tab === 'paie' && !!id,
   });
 
   const { data: goals = [], isLoading: goalsLoading } = useQuery({
     queryKey: ['employee-goals', id],
-    queryFn: () => listGoals({ employee_id: id }),
+    queryFn: () => listGoals({ employee_id: id! }),
     enabled: tab === 'performance' && !!id,
   });
 
   const { data: reviews = [], isLoading: reviewsLoading } = useQuery({
     queryKey: ['employee-reviews', id],
-    queryFn: () => listReviews({ employee_id: id }),
+    queryFn: () => listReviews({ employee_id: id! }),
     enabled: tab === 'performance' && !!id,
   });
 
@@ -757,7 +757,6 @@ export default function EmployeeFolderPage() {
                         style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--primary)', background: 'var(--primary)', color: '#fff', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
                         onClick={async () => {
                           try {
-                            const { sendForSignature } = await import('../../lib/api');
                             const res = await sendForSignature(doc.id);
                             toast.success("Demande de signature envoyée");
 
@@ -774,7 +773,7 @@ export default function EmployeeFolderPage() {
                       </button>
                     )}
                     {doc.signature_status === 'signed' && (
-                      <Badge variant="success" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><CheckCircle size={10} /> Signé</Badge>
+                      <Badge variant="success" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><CheckCircle2 size={10} /> Signé</Badge>
                     )}
                   </div>
                 </div>

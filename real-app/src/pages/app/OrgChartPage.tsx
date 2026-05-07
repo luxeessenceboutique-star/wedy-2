@@ -294,8 +294,8 @@ function buildGraph(
 
 export default function OrgChartPage() {
   const qc = useQueryClient();
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   // Modals
   const [newProjectModal, setNewProjectModal] = useState(false);

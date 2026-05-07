@@ -205,7 +205,7 @@ export default function PayrollPage() {
   const [allMonths, setAllMonths] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
 
-  const queryParams = allMonths ? {} : { month, year };
+  const queryParams = allMonths ? undefined : { month, year };
 
   const { data, isLoading } = useQuery({
     queryKey: ['payroll', allMonths ? 'all' : `${month}-${year}`],

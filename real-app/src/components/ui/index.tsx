@@ -20,9 +20,9 @@ export function Button({ variant = 'primary', size = 'md', loading, children, cl
 
 // ── Badge ─────────────────────────────────────────────────────────────
 type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'danger';
-export function Badge({ variant = 'default', children, className = '' }: { variant?: BadgeVariant; children: React.ReactNode; className?: string }) {
+export function Badge({ variant = 'default', children, className = '', ...rest }: { variant?: BadgeVariant; children: React.ReactNode; className?: string } & React.HTMLAttributes<HTMLSpanElement>) {
   const v = variant === 'primary' ? 'badge-primary' : variant === 'success' ? 'badge-success' : variant === 'warning' ? 'badge-warning' : variant === 'danger' ? 'badge-danger' : '';
-  return <span className={`badge ${v} ${className}`}>{children}</span>;
+  return <span className={`badge ${v} ${className}`} {...rest}>{children}</span>;
 }
 
 // ── Card ──────────────────────────────────────────────────────────────

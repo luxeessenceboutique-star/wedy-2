@@ -587,24 +587,8 @@ export type OrgProject = {
   members: OrgMember[];
 };
 
-export const getOrgChart = async (): Promise<{ projects: OrgProject[]; unassigned: Employee[] }> => {
-  const [projRes, empRes] = await Promise.all([
-    api.get<{ data: any[] }>('/orgchart/projects').then(r => r.data.data ?? []),
-    listEmployees({ limit: 500 }).then(r => r.data),
-  ]);
-
-  const projects: OrgProject[] = await Promise.all(
-    projRes.map(async (p: any) => {
-      const membersRes = await api.get<{ data: OrgMember[] }>(`/orgchart/projects/${p.id}/members`).then(r => r.data.data ?? []);
-      return { ...p, members: membersRes } as OrgProject;
-    })
-  );
-
-  const assignedIds = new Set(projects.flatMap(p => p.members.map(m => m.employee_id)));
-  const unassigned = empRes.filter(e => !assignedIds.has(e.id));
-
-  return { projects, unassigned };
-};
+export const getOrgChart = () =>
+  api.get<{ projects: OrgProject[]; unassigned: Employee[] }>('/orgchart').then(r => r.data);
 
 export const createOrgProject = (body: { name: string; color: string; description?: string }) =>
   api.post<OrgProject>('/orgchart/projects', body).then(r => r.data);
@@ -626,4 +610,4 @@ export const removeOrgMember = (projectId: string, employeeId: string) =>
   api.delete(`/orgchart/projects/${projectId}/members/${employeeId}`);
 
 export const updateOrgMemberRole = (projectId: string, employeeId: string, role: string) =>
-  api.patch(`/orgchart/projects/${projectId}/members/${employeeId}`, null, { params: { role_in_team: role } }).then(r => r.data);
+  api.patch(`/orgchart/projects/${projectId}/members/${employeeId}`, { role_in_team: role }).then(r => r.data);

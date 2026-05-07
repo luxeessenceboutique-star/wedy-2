@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Download, Trash2, FileText, Eye } from 'lucide-react';
 import { listDocuments, deleteDocument, downloadDoc, printDocument, viewDocument } from '../../lib/api';
-import { Card, Badge, Spinner, Empty, Button } from '../../components/ui';
+import { Card, Badge, Spinner, Empty } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { useLang } from '../../lib/lang';
 import { toast } from 'sonner';
@@ -15,8 +15,8 @@ export default function HistoryPage() {
 
   const deleteMut = useMutation({
     mutationFn: deleteDocument,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['documents'] }); toast.success('Deleted'); },
-    onError: () => toast.error('Delete failed (admin required)'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['documents'] }); toast.success(t('save')); },
+    onError: () => toast.error('Delete failed'),
   });
 
   const docs = (data?.data ?? []).filter(d =>
@@ -65,7 +65,7 @@ export default function HistoryPage() {
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button className="btn btn-ghost btn-sm" title={t('preview')}
                         onClick={() => viewDocument(doc.id, doc.document_type).catch(e => toast.error(e.message))}>
-                        <Eye size={12} /> {t('save')}
+                        <Eye size={12} /> {t('preview')}
                       </button>
                       <button className="btn btn-soft btn-sm"
                         onClick={() => printDocument(doc.id, doc.document_type).catch(e => toast.error(e.message))}>
@@ -79,7 +79,7 @@ export default function HistoryPage() {
                   </td>
                   <td style={{ padding: '10px 16px' }}>
                     <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}
-                      onClick={() => { if (confirm('Delete this document?')) deleteMut.mutate(doc.id); }}>
+                      onClick={() => { if (confirm(t('confirm_delete'))) deleteMut.mutate(doc.id); }}>
                       <Trash2 size={13} />
                     </button>
                   </td>

@@ -27,6 +27,7 @@ import {
   type OrgProject, type Employee,
 } from '../../lib/api';
 import { toast } from 'sonner';
+import { useLang } from '../../lib/lang';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,8 @@ const HandlersCtx = React.createContext<Handlers>({
 
 // ── Project (Team) Node ───────────────────────────────────────────────────────
 
-function ProjectNode({ data, id }: NodeProps) {
+function ProjectNode({ data }: NodeProps) {
+  const { t } = useLang();
   const { onDeleteProject, onAddMember, onRenameProject } = React.useContext(HandlersCtx);
   const d = data as { projectId: string; name: string; color: string; memberCount: number };
 
@@ -112,7 +114,7 @@ function ProjectNode({ data, id }: NodeProps) {
         ) : (
           <span
             onDoubleClick={() => { setEditing(true); setNameVal(d.name); }}
-            title="Double-cliquer pour renommer"
+            title={t('org_node_edit_hint')}
             style={{ flex: 1, color: 'white', fontWeight: 600, fontSize: 13, cursor: 'text', lineHeight: 1.3 }}
           >
             {d.name}
@@ -120,12 +122,12 @@ function ProjectNode({ data, id }: NodeProps) {
         )}
         <button
           onClick={() => onAddMember(d.projectId)}
-          title="Ajouter un membre"
+          title={t('add_member')}
           style={iconBtn}
         ><UserPlus size={13} color="white" /></button>
         <button
           onClick={() => onDeleteProject(d.projectId)}
-          title="Supprimer l'équipe"
+          title={t('delete')}
           style={iconBtn}
         ><Trash2 size={13} color="white" /></button>
       </div>
@@ -133,9 +135,9 @@ function ProjectNode({ data, id }: NodeProps) {
       {/* Footer */}
       <div style={{ padding: '7px 12px', background: '#f8fafc' }}>
         <span style={{ fontSize: 11, color: '#94a3b8' }}>
-          {d.memberCount} membre{d.memberCount !== 1 ? 's' : ''}
+          {d.memberCount} {t('members_label')}
           {d.memberCount === 0 && (
-            <span style={{ marginLeft: 6, color: '#cbd5e1' }}>· Double-clic pour renommer</span>
+            <span style={{ marginLeft: 6, color: '#cbd5e1' }}>· {t('org_node_edit_hint')}</span>
           )}
         </span>
       </div>
@@ -157,6 +159,7 @@ const iconBtn: React.CSSProperties = {
 // ── Person (Employee) Node ────────────────────────────────────────────────────
 
 function PersonNode({ data }: NodeProps) {
+  const { t } = useLang();
   const { onRemoveMember, onEditMemberRole } = React.useContext(HandlersCtx);
   const d = data as {
     employeeId: string; projectId: string;
@@ -205,14 +208,14 @@ function PersonNode({ data }: NodeProps) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flexShrink: 0 }}>
           <button
             onClick={() => onEditMemberRole(d.projectId, d.employeeId, d.roleInTeam || '')}
-            title="Modifier le rôle"
+            title={t('edit_role')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2, borderRadius: 4, display: 'flex', alignItems: 'center' }}
             onMouseEnter={e => (e.currentTarget.style.color = d.color)}
             onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
           ><Pencil size={11} /></button>
           <button
             onClick={() => onRemoveMember(d.projectId, d.employeeId)}
-            title="Retirer du projet"
+            title={t('remove')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2, borderRadius: 4, display: 'flex', alignItems: 'center' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
             onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
@@ -293,6 +296,7 @@ function buildGraph(
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function OrgChartPage() {
+  const { t } = useLang();
   const qc = useQueryClient();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -315,13 +319,13 @@ export default function OrgChartPage() {
   // ── Mutations ──────────────────────────────────────────────────────
   const createProject = useMutation({
     mutationFn: (b: { name: string; color: string; description?: string }) => createOrgProject(b),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orgchart'] }); toast.success('Équipe créée'); setNewProjectModal(false); setNewName(''); setNewDesc(''); },
-    onError: () => toast.error('Erreur création équipe'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orgchart'] }); toast.success(t('save')); setNewProjectModal(false); setNewName(''); setNewDesc(''); },
+    onError: () => toast.error('Error'),
   });
 
   const delProject = useMutation({
     mutationFn: (id: string) => deleteOrgProject(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orgchart'] }); toast.success('Équipe supprimée'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orgchart'] }); toast.success(t('save')); },
   });
 
   const renameProject = useMutation({
@@ -332,13 +336,13 @@ export default function OrgChartPage() {
   const addMember = useMutation({
     mutationFn: ({ pid, empId, role }: { pid: string; empId: string; role?: string }) =>
       addOrgMember(pid, { employee_id: empId, role_in_team: role }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orgchart'] }); toast.success('Membre ajouté'); setAddMemberModal(null); setSelectedEmpId(''); setMemberRole(''); },
-    onError: () => toast.error('Erreur ajout membre'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orgchart'] }); toast.success(t('save')); setAddMemberModal(null); setSelectedEmpId(''); setMemberRole(''); },
+    onError: () => toast.error('Error'),
   });
 
   const removeMember = useMutation({
     mutationFn: ({ pid, empId }: { pid: string; empId: string }) => removeOrgMember(pid, empId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orgchart'] }); toast.success('Membre retiré'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['orgchart'] }); toast.success(t('save')); },
   });
 
   const editRole = useMutation({
@@ -354,7 +358,7 @@ export default function OrgChartPage() {
     onRenameProject: (id, name) => renameProject.mutate({ id, name }),
     onRemoveMember: (pid, empId) => removeMember.mutate({ pid, empId }),
     onEditMemberRole: (pid, empId, current) => { setEditRoleModal({ projectId: pid, employeeId: empId, current }); setEditRoleVal(current); },
-  }), [delProject, renameProject, removeMember]);
+  }), [delProject, renameProject, removeMember, editRole]);
 
   // ── Sync API data → ReactFlow nodes ───────────────────────────────
   useEffect(() => {
@@ -362,7 +366,7 @@ export default function OrgChartPage() {
     const { nodes: n, edges: e } = buildGraph(data.projects, loadPositions());
     setNodes(n);
     setEdges(e);
-  }, [data]);
+  }, [data, setNodes, setEdges]);
 
   const onNodeDragStop = useCallback((_: React.MouseEvent, node: Node) => {
     persistPosition(node.id, node.position);
@@ -374,11 +378,11 @@ export default function OrgChartPage() {
     <HandlersCtx.Provider value={handlers}>
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <PageHeader
-          title="Organigramme"
-          subtitle="Organisez vos équipes par projet — glissez les nœuds pour repositionner"
+          title={t('nav_orgchart')}
+          subtitle={t('org_subtitle')}
           action={
             <Button variant="primary" onClick={() => setNewProjectModal(true)}>
-              <Plus size={14} style={{ marginRight: 6 }} /> Nouvelle équipe
+              <Plus size={14} style={{ marginRight: 6 }} /> {t('org_new_team')}
             </Button>
           }
         />
@@ -395,14 +399,14 @@ export default function OrgChartPage() {
           }}>
             <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid var(--border)' }}>
               <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Non assignés ({unassigned.length})
+                {t('org_unassigned')} ({unassigned.length})
               </p>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }} className="scroll">
               {isLoading && <div style={{ padding: 16, textAlign: 'center' }}><Spinner /></div>}
               {!isLoading && unassigned.length === 0 && (
                 <p style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', padding: '20px 8px' }}>
-                  Tous les employés sont assignés
+                  {t('org_all_assigned')}
                 </p>
               )}
               {unassigned.map((emp) => (
@@ -468,12 +472,12 @@ export default function OrgChartPage() {
                       boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
                     }}>
                       <Network size={44} style={{ color: '#cbd5e1', marginBottom: 14 }} />
-                      <p style={{ fontWeight: 600, fontSize: 16, marginBottom: 6, color: '#0f172a' }}>Aucune équipe projet</p>
+                      <p style={{ fontWeight: 600, fontSize: 16, marginBottom: 6, color: '#0f172a' }}>{t('org_empty_title')}</p>
                       <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>
-                        Créez votre première équipe et assignez des collaborateurs
+                        {t('org_empty_desc')}
                       </p>
                       <Button variant="primary" onClick={() => setNewProjectModal(true)}>
-                        <Plus size={14} style={{ marginRight: 6 }} /> Créer une équipe
+                        <Plus size={14} style={{ marginRight: 6 }} /> {t('org_new_team')}
                       </Button>
                     </div>
                   </Panel>
@@ -484,22 +488,22 @@ export default function OrgChartPage() {
         </div>
 
         {/* ── Modal: New Project ── */}
-        <Modal open={newProjectModal} onClose={() => setNewProjectModal(false)} title="Nouvelle équipe projet">
+        <Modal open={newProjectModal} onClose={() => setNewProjectModal(false)} title={t('org_new_team')}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '4px 0 8px' }}>
             <Input
-              label="Nom de l'équipe / projet"
+              label={t('org_team_name')}
               value={newName}
               onChange={e => setNewName(e.target.value)}
               placeholder="Ex: Projet Alpha, Équipe Backend..."
             />
             <Input
-              label="Description (optionnel)"
+              label={t('description_label')}
               value={newDesc}
               onChange={e => setNewDesc(e.target.value)}
-              placeholder="Courte description..."
+              placeholder={t('description_label') + "..."}
             />
             <div>
-              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500, color: '#475569' }}>Couleur</p>
+              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500, color: '#475569' }}>{t('color')}</p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {COLORS.map(c => (
                   <button key={c} onClick={() => setNewColor(c)} style={{
@@ -516,21 +520,21 @@ export default function OrgChartPage() {
             <div style={{ borderRadius: 10, overflow: 'hidden', border: `2px solid ${newColor}` }}>
               <div style={{ background: newColor, padding: '9px 14px' }}>
                 <span style={{ color: 'white', fontWeight: 600, fontSize: 13 }}>
-                  {newName || 'Nom de l\'équipe'}
+                  {newName || t('org_team_name')}
                 </span>
               </div>
               <div style={{ padding: '7px 14px', background: '#f8fafc' }}>
-                <span style={{ fontSize: 11, color: '#94a3b8' }}>0 membre</span>
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>0 {t('members_label')}</span>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <Button variant="ghost" onClick={() => setNewProjectModal(false)}>Annuler</Button>
+              <Button variant="ghost" onClick={() => setNewProjectModal(false)}>{t('cancel')}</Button>
               <Button
                 variant="primary"
                 onClick={() => { if (newName.trim()) createProject.mutate({ name: newName.trim(), color: newColor, description: newDesc || undefined }); }}
                 disabled={!newName.trim() || createProject.isPending}
               >
-                {createProject.isPending ? 'Création...' : 'Créer'}
+                {createProject.isPending ? '...' : t('save')}
               </Button>
             </div>
           </div>
@@ -540,11 +544,11 @@ export default function OrgChartPage() {
         <Modal
           open={!!addMemberModal}
           onClose={() => { setAddMemberModal(null); setSelectedEmpId(''); setMemberRole(''); }}
-          title="Ajouter un membre"
+          title={t('add_member')}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '4px 0 8px' }}>
             <div>
-              <p style={{ margin: '0 0 7px', fontSize: 12, fontWeight: 500, color: '#475569' }}>Employé</p>
+              <p style={{ margin: '0 0 7px', fontSize: 12, fontWeight: 500, color: '#475569' }}>{t('employee')}</p>
               <select
                 value={selectedEmpId}
                 onChange={e => setSelectedEmpId(e.target.value)}
@@ -554,7 +558,7 @@ export default function OrgChartPage() {
                   background: 'var(--bg)', color: 'var(--fg)', outline: 'none',
                 }}
               >
-                <option value="">— Sélectionner un employé —</option>
+                <option value="">— {t('select')} —</option>
                 {unassigned.map(e => (
                   <option key={e.id} value={e.id}>
                     {e.full_name}{e.position ? ` — ${e.position}` : ''}
@@ -563,19 +567,19 @@ export default function OrgChartPage() {
               </select>
               {unassigned.length === 0 && (
                 <p style={{ margin: '6px 0 0', fontSize: 11, color: '#f59e0b' }}>
-                  Tous les employés sont déjà assignés à une équipe.
+                  {t('org_all_assigned')}
                 </p>
               )}
             </div>
             <Input
-              label="Rôle dans l'équipe (optionnel)"
+              label={t('position_label')}
               value={memberRole}
               onChange={e => setMemberRole(e.target.value)}
               placeholder="Ex: Tech Lead, Designer, Chef de projet..."
             />
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <Button variant="ghost" onClick={() => { setAddMemberModal(null); setSelectedEmpId(''); setMemberRole(''); }}>
-                Annuler
+                {t('cancel')}
               </Button>
               <Button
                 variant="primary"
@@ -585,7 +589,7 @@ export default function OrgChartPage() {
                 }}
                 disabled={!selectedEmpId || addMember.isPending}
               >
-                {addMember.isPending ? 'Ajout...' : 'Ajouter'}
+                {addMember.isPending ? '...' : t('save')}
               </Button>
             </div>
           </div>
@@ -595,17 +599,17 @@ export default function OrgChartPage() {
         <Modal
           open={!!editRoleModal}
           onClose={() => setEditRoleModal(null)}
-          title="Modifier le rôle"
+          title={t('edit_role')}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '4px 0 8px' }}>
             <Input
-              label="Rôle dans l'équipe"
+              label={t('position_label')}
               value={editRoleVal}
               onChange={e => setEditRoleVal(e.target.value)}
               placeholder="Ex: Tech Lead, Designer..."
             />
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <Button variant="ghost" onClick={() => setEditRoleModal(null)}>Annuler</Button>
+              <Button variant="ghost" onClick={() => setEditRoleModal(null)}>{t('cancel')}</Button>
               <Button
                 variant="primary"
                 onClick={() => {
@@ -614,7 +618,7 @@ export default function OrgChartPage() {
                 }}
                 disabled={editRole.isPending}
               >
-                {editRole.isPending ? 'Enregistrement...' : 'Enregistrer'}
+                {editRole.isPending ? '...' : t('save')}
               </Button>
             </div>
           </div>

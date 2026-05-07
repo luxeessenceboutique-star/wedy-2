@@ -18,6 +18,7 @@ import {
 } from '../../lib/api';
 import { Avatar, Badge, Button, Card, Modal, Input, Select, Spinner } from '../../components/ui';
 import { toast } from 'sonner';
+import { useLang } from '../../lib/lang';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -25,35 +26,12 @@ const STATUS_COLORS: Record<string, 'success' | 'warning' | 'danger' | 'default'
   active: 'success', inactive: 'danger', 'on-leave': 'warning', terminated: 'danger',
 };
 
-const FILE_TYPES = [
-  { value: 'cv', label: 'CV', color: '#0891b2', bg: '#ecfeff' },
-  { value: 'diplome', label: 'Diplôme', color: '#7c3aed', bg: '#f5f3ff' },
-  { value: 'certificat', label: 'Certificat', color: '#059669', bg: '#ecfdf5' },
-  { value: 'contrat', label: 'Contrat', color: '#d97706', bg: '#fffbeb' },
-  { value: 'autre', label: 'Autre', color: '#64748b', bg: '#f8fafc' },
-];
-
 const CONTRACT_TYPES = ['CDI', 'CDD', 'Stage', 'ANAPEC', 'Consultant', 'Freelance'];
-
-const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-
-const LEAVE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  pending: { bg: '#fef3c7', color: '#92400e', label: 'En attente' },
-  approved: { bg: '#d1fae5', color: '#065f46', label: 'Approuvé' },
-  rejected: { bg: '#fee2e2', color: '#991b1b', label: 'Rejeté' },
-};
-
-const GOAL_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  pending: { bg: '#f1f5f9', color: '#475569', label: 'À faire' },
-  in_progress: { bg: '#eff6ff', color: '#1d4ed8', label: 'En cours' },
-  completed: { bg: '#d1fae5', color: '#065f46', label: 'Terminé' },
-  cancelled: { bg: '#fee2e2', color: '#991b1b', label: 'Annulé' },
-};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function fmt(d?: string) {
-  return d ? new Date(d).toLocaleDateString('fr-FR') : '—';
+  return d ? new Date(d).toLocaleDateString() : '—';
 }
 
 function fmtSize(bytes?: number) {
@@ -108,54 +86,55 @@ function EditForm({ employee, departments, onSave, onCancel, loading }: {
   onCancel: () => void;
   loading: boolean;
 }) {
+  const { t } = useLang();
   const [form, setForm] = useState<Partial<Employee>>(employee);
   const set = (k: keyof Employee) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
 
   return (
     <form onSubmit={ev => { ev.preventDefault(); onSave(form); }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Identité</p>
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{t('identity')}</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <Input label="Nom complet *" value={form.full_name ?? ''} onChange={set('full_name')} required />
+        <Input label={`${t('full_name_label')} *`} value={form.full_name ?? ''} onChange={set('full_name')} required />
         <Input label="CIN" value={form.cin ?? ''} onChange={set('cin')} />
         <Input label="Matricule" value={form.matricule ?? ''} onChange={set('matricule')} />
-        <Input label="Date naissance" type="date" value={form.birth_date ?? ''} onChange={set('birth_date')} />
+        <Input label={t('birth_date_label')} type="date" value={form.birth_date ?? ''} onChange={set('birth_date')} />
         <Input label="Email" type="email" value={form.email ?? ''} onChange={set('email')} />
-        <Input label="Téléphone" value={form.phone ?? ''} onChange={set('phone')} />
+        <Input label={t('phone_label')} value={form.phone ?? ''} onChange={set('phone')} />
       </div>
 
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Poste & Contrat</p>
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{t('contract_section')}</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <Input label="Poste" value={form.position ?? ''} onChange={set('position')} />
-        <Select label="Département" value={form.department ?? ''} onChange={set('department')}>
-          <option value="">— Sélectionner —</option>
+        <Input label={t('position_label')} value={form.position ?? ''} onChange={set('position')} />
+        <Select label={t('department_label')} value={form.department ?? ''} onChange={set('department')}>
+          <option value="">— {t('select')} —</option>
           {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
         </Select>
-        <Input label="Manager (N+1)" value={form.manager ?? ''} onChange={set('manager')} />
-        <Input label="Salaire (MAD)" type="number" value={form.salary ?? ''} onChange={set('salary')} />
-        <Select label="Type de contrat" value={form.contract_type ?? ''} onChange={set('contract_type')}>
+        <Input label={t('manager_label')} value={form.manager ?? ''} onChange={set('manager')} />
+        <Input label={`${t('salary_label')} (MAD)`} type="number" value={form.salary ?? ''} onChange={set('salary')} />
+        <Select label={t('contract_type_label')} value={form.contract_type ?? ''} onChange={set('contract_type')}>
           {CONTRACT_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
         </Select>
-        <Select label="Statut" value={form.status ?? 'active'} onChange={set('status')}>
-          <option value="active">Actif</option>
-          <option value="inactive">Inactif</option>
-          <option value="on-leave">En congé</option>
-          <option value="terminated">Résilié</option>
+        <Select label={t('status_label')} value={form.status ?? 'active'} onChange={set('status')}>
+          <option value="active">{t('status_active_item')}</option>
+          <option value="inactive">{t('status_inactive_item')}</option>
+          <option value="on-leave">{t('status_on_leave_item')}</option>
+          <option value="terminated">{t('status_terminated_item')}</option>
         </Select>
-        <Input label="Date d'embauche" type="date" value={form.hire_date ?? ''} onChange={set('hire_date')} />
-        <Input label="Début contrat" type="date" value={form.contract_start ?? ''} onChange={set('contract_start')} />
-        <Input label="Fin contrat" type="date" value={form.contract_end ?? ''} onChange={set('contract_end')} />
+        <Input label={t('hire_date_label')} type="date" value={form.hire_date ?? ''} onChange={set('hire_date')} />
+        <Input label={t('contract_start_label')} type="date" value={form.contract_start ?? ''} onChange={set('contract_start')} />
+        <Input label={t('contract_end_label')} type="date" value={form.contract_end ?? ''} onChange={set('contract_end')} />
       </div>
 
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Adresse</p>
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{t('address')}</p>
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
-        <Input label="Adresse" value={form.address ?? ''} onChange={set('address')} />
-        <Input label="Ville" value={form.city ?? ''} onChange={set('city')} />
+        <Input label={t('address')} value={form.address ?? ''} onChange={set('address')} />
+        <Input label={t('city')} value={form.city ?? ''} onChange={set('city')} />
       </div>
 
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
-        <Button variant="ghost" type="button" onClick={onCancel}>Annuler</Button>
-        <Button type="submit" loading={loading}>Enregistrer</Button>
+        <Button variant="ghost" type="button" onClick={onCancel}>{t('cancel')}</Button>
+        <Button type="submit" loading={loading}>{t('save')}</Button>
       </div>
     </form>
   );
@@ -164,10 +143,19 @@ function EditForm({ employee, departments, onSave, onCancel, loading }: {
 // ── Files tab ─────────────────────────────────────────────────────────────────
 
 function FilesTab({ employeeId }: { employeeId: string }) {
+  const { t } = useLang();
   const qc = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploadType, setUploadType] = useState('cv');
   const [dragging, setDragging] = useState(false);
+
+  const FILE_TYPES = [
+    { value: 'cv', label: 'CV', color: '#0891b2', bg: '#ecfeff' },
+    { value: 'diplome', label: t('file_diploma'), color: '#7c3aed', bg: '#f5f3ff' },
+    { value: 'certificat', label: t('file_cert'), color: '#059669', bg: '#ecfdf5' },
+    { value: 'contrat', label: t('file_contract'), color: '#d97706', bg: '#fffbeb' },
+    { value: 'autre', label: t('file_other'), color: '#64748b', bg: '#f8fafc' },
+  ];
 
   const { data: files = [], isLoading } = useQuery({
     queryKey: ['employee-files', employeeId],
@@ -176,13 +164,13 @@ function FilesTab({ employeeId }: { employeeId: string }) {
 
   const uploadMut = useMutation({
     mutationFn: (file: File) => uploadEmployeeFile(employeeId, file, uploadType),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['employee-files', employeeId] }); toast.success('Fichier ajouté'); },
-    onError: () => toast.error('Échec du téléversement'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['employee-files', employeeId] }); toast.success(t('save')); },
+    onError: () => toast.error('Error'),
   });
 
   const deleteMut = useMutation({
     mutationFn: (fileId: string) => deleteEmployeeFile(employeeId, fileId),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['employee-files', employeeId] }); toast.success('Fichier supprimé'); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['employee-files', employeeId] }); toast.success(t('delete')); },
   });
 
   const handleFiles = (fileList: FileList | null) => {
@@ -213,8 +201,8 @@ function FilesTab({ employeeId }: { employeeId: string }) {
       >
         <Upload size={28} style={{ color: dragging ? 'var(--primary)' : '#94a3b8' }} />
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontWeight: 600, color: '#334155', margin: 0 }}>Déposer des fichiers ici</p>
-          <p style={{ fontSize: 12, color: '#64748b', margin: '4px 0 0' }}>PDF, DOCX, JPG, PNG — cliquez pour sélectionner</p>
+          <p style={{ fontWeight: 600, color: '#334155', margin: 0 }}>{t('file_drop_here')}</p>
+          <p style={{ fontSize: 12, color: '#64748b', margin: '4px 0 0' }}>PDF, DOCX, JPG, PNG — {t('file_click_select')}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 12, color: '#64748b' }}>Type :</span>
@@ -233,7 +221,7 @@ function FilesTab({ employeeId }: { employeeId: string }) {
 
       {/* File list */}
       {isLoading ? <MiniSpinner /> : files.length === 0 ? (
-        <Empty text="Aucun fichier — ajoutez un CV, diplôme ou certificat." />
+        <Empty text={t('file_no_files')} />
       ) : (
         grouped.map(group => (
           <div key={group.value}>
@@ -261,11 +249,11 @@ function FilesTab({ employeeId }: { employeeId: string }) {
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                     <a href={getEmployeeFileUrl(f.file_path)} target="_blank" rel="noreferrer">
                       <button style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Download size={12} /> Télécharger
+                        <Download size={12} /> {t('download')}
                       </button>
                     </a>
                     <button
-                      onClick={() => { if (confirm(`Supprimer "${f.name}" ?`)) deleteMut.mutate(f.id); }}
+                      onClick={() => { if (confirm(`${t('delete')} "${f.name}" ?`)) deleteMut.mutate(f.id); }}
                       style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #fecaca', background: 'none', cursor: 'pointer', color: '#dc2626' }}
                     >
                       <Trash2 size={12} />
@@ -285,29 +273,6 @@ function FilesTab({ employeeId }: { employeeId: string }) {
 
 type ExtractedData = AnalysisResult['extracted'];
 
-const APPLY_FIELDS: { key: keyof ExtractedData; label: string; emp?: keyof Employee }[] = [
-  { key: 'full_name', label: 'Nom complet', emp: 'full_name' },
-  { key: 'cin', label: 'CIN', emp: 'cin' },
-  { key: 'matricule', label: 'Matricule', emp: 'matricule' },
-  { key: 'email', label: 'Email', emp: 'email' },
-  { key: 'phone', label: 'Téléphone', emp: 'phone' },
-  { key: 'birth_date', label: 'Date naissance', emp: 'birth_date' },
-  { key: 'nationality', label: 'Nationalité', emp: 'nationality' },
-  { key: 'position', label: 'Poste', emp: 'position' },
-  { key: 'department', label: 'Département', emp: 'department' },
-  { key: 'salary', label: 'Salaire (MAD)', emp: 'salary' },
-  { key: 'hire_date', label: "Date d'embauche", emp: 'hire_date' },
-  { key: 'contract_type', label: 'Type contrat', emp: 'contract_type' },
-  { key: 'contract_start', label: 'Début contrat', emp: 'contract_start' },
-  { key: 'contract_end', label: 'Fin contrat', emp: 'contract_end' },
-  { key: 'manager', label: 'Manager', emp: 'manager' },
-  { key: 'address', label: 'Adresse', emp: 'address' },
-  { key: 'city', label: 'Ville', emp: 'city' },
-  { key: 'cnss_number', label: 'N° CNSS' },
-  { key: 'bank_account', label: 'RIB' },
-  { key: 'notes', label: 'Notes', emp: 'notes' },
-];
-
 function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
   employee: Employee;
   result: ExtractedData;
@@ -315,6 +280,31 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
   onClose: () => void;
   applying: boolean;
 }) {
+  const { t } = useLang();
+  
+  const APPLY_FIELDS: { key: keyof ExtractedData; label: string; emp?: keyof Employee }[] = [
+    { key: 'full_name', label: t('full_name_label'), emp: 'full_name' },
+    { key: 'cin', label: 'CIN', emp: 'cin' },
+    { key: 'matricule', label: 'Matricule', emp: 'matricule' },
+    { key: 'email', label: 'Email', emp: 'email' },
+    { key: 'phone', label: t('phone_label'), emp: 'phone' },
+    { key: 'birth_date', label: t('birth_date_label'), emp: 'birth_date' },
+    { key: 'nationality', label: t('nationality_label'), emp: 'nationality' },
+    { key: 'position', label: t('position_label'), emp: 'position' },
+    { key: 'department', label: t('department_label'), emp: 'department' },
+    { key: 'salary', label: t('salary_label'), emp: 'salary' },
+    { key: 'hire_date', label: t('hire_date_label'), emp: 'hire_date' },
+    { key: 'contract_type', label: t('contract_type_label'), emp: 'contract_type' },
+    { key: 'contract_start', label: t('contract_start_label'), emp: 'contract_start' },
+    { key: 'contract_end', label: t('contract_end_label'), emp: 'contract_end' },
+    { key: 'manager', label: t('manager_label'), emp: 'manager' },
+    { key: 'address', label: t('address'), emp: 'address' },
+    { key: 'city', label: t('city'), emp: 'city' },
+    { key: 'cnss_number', label: 'N° CNSS' },
+    { key: 'bank_account', label: 'RIB' },
+    { key: 'notes', label: 'Notes', emp: 'notes' },
+  ];
+
   const initialSelected = new Set<string>(
     APPLY_FIELDS.filter(f => {
       const extracted = result[f.key];
@@ -346,16 +336,16 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
       {applicableFields.length === 0 ? (
-        <p style={{ textAlign: 'center', color: 'var(--fg-muted)', padding: '24px 0' }}>Aucune donnée extractible trouvée dans les fichiers.</p>
+        <p style={{ textAlign: 'center', color: 'var(--fg-muted)', padding: '24px 0' }}>{t('no_data_extracted')}</p>
       ) : (
         <>
           <p style={{ fontSize: 12, color: 'var(--fg-muted)', marginBottom: 10 }}>
-            {selected.size} champ{selected.size !== 1 ? 's' : ''} sélectionné{selected.size !== 1 ? 's' : ''} — cochez les champs à appliquer au profil.
+            {selected.size} {t('fields_selected')} — {t('fields_apply_desc')}
           </p>
           {/* Header */}
           <div style={{ display: 'grid', gridTemplateColumns: '24px 110px 1fr 1fr', gap: 8, padding: '6px 6px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
             <div />
-            {['Champ', 'Valeur actuelle', 'Valeur extraite'].map(h => (
+            {[t('field'), t('current_value'), t('extracted_value')].map(h => (
               <span key={h} style={{ fontSize: 10, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
             ))}
           </div>
@@ -401,13 +391,13 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
       {(result.education?.length || result.certifications?.length || result.skills?.length || result.languages?.length) ? (
         <div style={{ marginTop: 18, padding: '14px 0 0', borderTop: '1px solid var(--border)' }}>
           <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--fg-muted)', marginBottom: 10 }}>
-            Informations supplémentaires (lecture seule)
+            {t('extra_info')} ({t('read_only')})
           </p>
           {result.education?.length ? (
             <div style={{ marginBottom: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <GraduationCap size={13} style={{ color: '#7c3aed' }} />
-                <span style={{ fontSize: 12, fontWeight: 600 }}>Formation</span>
+                <span style={{ fontSize: 12, fontWeight: 600 }}>{t('education')}</span>
               </div>
               {result.education.map((e, i) => (
                 <p key={i} style={{ margin: 0, fontSize: 12, color: '#475569', paddingLeft: 20, lineHeight: 1.7 }}>
@@ -428,7 +418,7 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
           ) : null}
           {result.skills?.length ? (
             <div style={{ marginBottom: 10 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Compétences</p>
+              <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>{t('skills')}</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, paddingLeft: 20 }}>
                 {result.skills.map((s, i) => (
                   <span key={i} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: '#f1f5f9', color: '#475569' }}>{s}</span>
@@ -438,7 +428,7 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
           ) : null}
           {result.languages?.length ? (
             <div>
-              <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Langues</p>
+              <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>{t('languages')}</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, paddingLeft: 20 }}>
                 {result.languages.map((l, i) => (
                   <span key={i} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: '#eff6ff', color: '#1d4ed8' }}>{l}</span>
@@ -451,9 +441,9 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
 
       {/* Footer */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
-        <Button variant="ghost" onClick={onClose}>Fermer</Button>
+        <Button variant="ghost" onClick={onClose}>{t('cancel')}</Button>
         <Button onClick={handleApply} loading={applying} disabled={selected.size === 0}>
-          <CheckCircle2 size={13} /> Appliquer les champs sélectionnés
+          <CheckCircle2 size={13} /> {t('apply_selected_fields')}
         </Button>
       </div>
     </div>
@@ -468,6 +458,7 @@ export default function EmployeeFolderPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { t } = useLang();
   const [tab, setTab] = useState<Tab>('profil');
   const [editing, setEditing] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
@@ -517,9 +508,9 @@ export default function EmployeeFolderPage() {
       qc.invalidateQueries({ queryKey: ['employee', id] });
       qc.invalidateQueries({ queryKey: ['employees'] });
       setEditing(false);
-      toast.success('Profil mis à jour');
+      toast.success(t('save'));
     },
-    onError: () => toast.error('Erreur lors de la mise à jour'),
+    onError: () => toast.error('Error'),
   });
 
   const analyzeMut = useMutation({
@@ -528,7 +519,7 @@ export default function EmployeeFolderPage() {
       setAnalysisResult(data.extracted);
       setAnalysisOpen(true);
     },
-    onError: (e: Error) => toast.error(`Analyse échouée : ${e.message}`),
+    onError: (e: Error) => toast.error(`Error : ${e.message}`),
   });
 
   const applyMut = useMutation({
@@ -537,9 +528,9 @@ export default function EmployeeFolderPage() {
       qc.invalidateQueries({ queryKey: ['employee', id] });
       qc.invalidateQueries({ queryKey: ['employees'] });
       setAnalysisOpen(false);
-      toast.success('Profil mis à jour avec les données extraites');
+      toast.success(t('save'));
     },
-    onError: () => toast.error("Erreur lors de l'application des données"),
+    onError: () => toast.error("Error"),
   });
 
   if (isLoading) return (
@@ -547,8 +538,8 @@ export default function EmployeeFolderPage() {
   );
   if (isError || !employee) return (
     <div style={{ padding: 40, textAlign: 'center', color: 'var(--fg-muted)' }}>
-      <p>Employé introuvable.</p>
-      <Button variant="ghost" onClick={() => navigate('/app/employees')}>← Retour</Button>
+      <p>{t('employee_not_found')}</p>
+      <Button variant="ghost" onClick={() => navigate('/app/employees')}>← {t('cancel')}</Button>
     </div>
   );
 
@@ -556,13 +547,26 @@ export default function EmployeeFolderPage() {
   const expiryWarn = days !== null && days <= 30;
 
   const TABS: { key: Tab; label: string }[] = [
-    { key: 'profil', label: 'Profil' },
-    { key: 'fichiers', label: 'Fichiers' },
-    { key: 'documents', label: 'Documents' },
-    { key: 'conges', label: 'Congés' },
-    { key: 'paie', label: 'Paie' },
-    { key: 'performance', label: 'Performance' },
+    { key: 'profil', label: t('tab_profile') },
+    { key: 'fichiers', label: t('tab_files') },
+    { key: 'documents', label: t('tab_docs') },
+    { key: 'conges', label: t('tab_leaves') },
+    { key: 'paie', label: t('tab_payroll') },
+    { key: 'performance', label: t('tab_performance') },
   ];
+
+  const LEAVE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+    pending: { bg: '#fef3c7', color: '#92400e', label: t('status_pending_item') },
+    approved: { bg: '#d1fae5', color: '#065f46', label: t('status_approved_item') },
+    rejected: { bg: '#fee2e2', color: '#991b1b', label: t('status_rejected_item') },
+  };
+
+  const GOAL_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+    pending: { bg: '#f1f5f9', color: '#475569', label: t('status_pending_item') },
+    in_progress: { bg: '#eff6ff', color: '#1d4ed8', label: t('status_active_item') },
+    completed: { bg: '#d1fae5', color: '#065f46', label: t('status_completed_item') },
+    cancelled: { bg: '#fee2e2', color: '#991b1b', label: t('status_rejected_item') },
+  };
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 900, margin: '0 auto' }}>
@@ -571,7 +575,7 @@ export default function EmployeeFolderPage() {
         onClick={() => navigate('/app/employees')}
         style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', fontSize: 13, marginBottom: 20, padding: 0 }}
       >
-        <ArrowLeft size={14} /> Retour aux employés
+        <ArrowLeft size={14} /> {t('nav_people')}
       </button>
 
       {/* Header card */}
@@ -585,7 +589,7 @@ export default function EmployeeFolderPage() {
               {expiryWarn && (
                 <Badge variant={days! < 0 ? 'danger' : 'warning'}>
                   <AlertTriangle size={10} />
-                  {days! < 0 ? `Contrat expiré` : `Expire dans ${days}j`}
+                  {days! < 0 ? t('contract_expired') : `${t('expiring_soon')} : ${days}j`}
                 </Badge>
               )}
             </div>
@@ -595,13 +599,13 @@ export default function EmployeeFolderPage() {
             <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
               {employee.cin && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}><strong>CIN:</strong> {employee.cin}</span>}
               {employee.matricule && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}><strong>Matricule:</strong> {employee.matricule}</span>}
-              {employee.hire_date && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}><strong>Embauche:</strong> {fmt(employee.hire_date)}</span>}
+              {employee.hire_date && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}><strong>{t('hire_date_label')}:</strong> {fmt(employee.hire_date)}</span>}
               {employee.contract_type && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}><strong>Contrat:</strong> {employee.contract_type}</span>}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
             <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
-              <Pencil size={13} /> Modifier
+              <Pencil size={13} /> {t('edit')}
             </Button>
             <Button
               variant="ghost" size="sm"
@@ -609,10 +613,10 @@ export default function EmployeeFolderPage() {
               loading={analyzeMut.isPending}
               style={{ color: '#7c3aed', borderColor: '#ddd8fe' }}
             >
-              <Sparkles size={13} /> Analyser le dossier
+              <Sparkles size={13} /> {t('analyze_folder')}
             </Button>
             <Link to={`/app/generate?employee_id=${employee.id}`}>
-              <Button size="sm"><Wand2 size={13} /> Générer doc</Button>
+              <Button size="sm"><Wand2 size={13} /> {t('generate_document')}</Button>
             </Link>
           </div>
         </div>
@@ -629,23 +633,23 @@ export default function EmployeeFolderPage() {
         }}>
           <AlertTriangle size={15} />
           {days! < 0
-            ? `Le contrat de ${employee.full_name} a expiré depuis ${Math.abs(days!)} jours.`
-            : `Le contrat de ${employee.full_name} expire dans ${days} jour${days !== 1 ? 's' : ''}.`
+            ? t('contract_expired_desc').replace('{name}', employee.full_name).replace('{days}', Math.abs(days!).toString())
+            : t('contract_expiring_desc').replace('{name}', employee.full_name).replace('{days}', days.toString())
           }
         </div>
       )}
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 20, gap: 0, overflowX: 'auto' }}>
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
+        {TABS.map(t_item => (
+          <button key={t_item.key} onClick={() => setTab(t_item.key)} style={{
             padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer',
-            fontSize: 13, fontWeight: tab === t.key ? 600 : 400, whiteSpace: 'nowrap',
-            color: tab === t.key ? 'var(--primary)' : 'var(--fg-muted)',
-            borderBottom: tab === t.key ? '2px solid var(--primary)' : '2px solid transparent',
+            fontSize: 13, fontWeight: tab === t_item.key ? 600 : 400, whiteSpace: 'nowrap',
+            color: tab === t_item.key ? 'var(--primary)' : 'var(--fg-muted)',
+            borderBottom: tab === t_item.key ? '2px solid var(--primary)' : '2px solid transparent',
             marginBottom: -1,
           }}>
-            {t.label}
+            {t_item.label}
           </button>
         ))}
       </div>
@@ -656,41 +660,41 @@ export default function EmployeeFolderPage() {
           <Card>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <User size={14} style={{ color: 'var(--primary)' }} />
-              <span style={{ fontWeight: 600, fontSize: 14 }}>Identité</span>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{t('identity')}</span>
             </div>
-            <InfoRow label="Nom complet" value={employee.full_name} />
+            <InfoRow label={t('full_name_label')} value={employee.full_name} />
             <InfoRow label="CIN" value={employee.cin} />
             <InfoRow label="Matricule" value={employee.matricule} />
             <InfoRow label="Email" value={employee.email} />
-            <InfoRow label="Téléphone" value={employee.phone} />
-            <InfoRow label="Date naissance" value={fmt(employee.birth_date)} />
-            <InfoRow label="Nationalité" value={employee.nationality} />
+            <InfoRow label={t('phone_label')} value={employee.phone} />
+            <InfoRow label={t('birth_date_label')} value={fmt(employee.birth_date)} />
+            <InfoRow label={t('nationality_label')} value={employee.nationality} />
           </Card>
 
           <Card>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
               <Briefcase size={14} style={{ color: 'var(--primary)' }} />
-              <span style={{ fontWeight: 600, fontSize: 14 }}>Poste & Contrat</span>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{t('contract_section')}</span>
             </div>
-            <InfoRow label="Poste" value={employee.position} />
-            <InfoRow label="Département" value={employee.department} />
-            <InfoRow label="Manager" value={employee.manager} />
-            <InfoRow label="Type contrat" value={employee.contract_type} />
-            <InfoRow label="Statut" value={employee.status} />
-            <InfoRow label="Date embauche" value={fmt(employee.hire_date)} />
-            <InfoRow label="Début contrat" value={fmt(employee.contract_start)} />
-            <InfoRow label="Fin contrat" value={fmt(employee.contract_end)} />
-            <InfoRow label="Salaire" value={employee.salary ? `${Number(employee.salary).toLocaleString('fr-FR')} MAD` : undefined} />
+            <InfoRow label={t('position_label')} value={employee.position} />
+            <InfoRow label={t('department_label')} value={employee.department} />
+            <InfoRow label={t('manager_label')} value={employee.manager} />
+            <InfoRow label={t('contract_type_label')} value={employee.contract_type} />
+            <InfoRow label={t('status_label')} value={employee.status} />
+            <InfoRow label={t('hire_date_label')} value={fmt(employee.hire_date)} />
+            <InfoRow label={t('contract_start_label')} value={fmt(employee.contract_start)} />
+            <InfoRow label={t('contract_end_label')} value={fmt(employee.contract_end)} />
+            <InfoRow label={t('salary_label')} value={employee.salary ? `${Number(employee.salary).toLocaleString()} MAD` : undefined} />
           </Card>
 
           {(employee.address || employee.city) && (
             <Card>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <MapPin size={14} style={{ color: 'var(--primary)' }} />
-                <span style={{ fontWeight: 600, fontSize: 14 }}>Adresse</span>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{t('address')}</span>
               </div>
-              <InfoRow label="Adresse" value={employee.address} />
-              <InfoRow label="Ville" value={employee.city} />
+              <InfoRow label={t('address')} value={employee.address} />
+              <InfoRow label={t('city')} value={employee.city} />
             </Card>
           )}
 
@@ -703,7 +707,7 @@ export default function EmployeeFolderPage() {
 
           {employee.custom_fields && Object.keys(employee.custom_fields).length > 0 && (
             <Card>
-              <span style={{ fontWeight: 600, fontSize: 14 }}>Champs personnalisés</span>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{t('custom_fields')}</span>
               <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {Object.entries(employee.custom_fields).map(([key, value]) => (
                   <div key={key} style={{ padding: '10px 12px', borderRadius: 8, background: 'var(--bg-muted)', border: '1px solid var(--border)' }}>
@@ -725,11 +729,11 @@ export default function EmployeeFolderPage() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
             <Link to={`/app/generate?employee_id=${employee.id}`}>
-              <Button size="sm"><Wand2 size={13} /> Générer un document</Button>
+              <Button size="sm"><Wand2 size={13} /> {t('generate_document')}</Button>
             </Link>
           </div>
           {docsLoading ? <MiniSpinner /> : docs.length === 0 ? (
-            <Empty text="Aucun document généré pour cet employé." />
+            <Empty text={t('no_documents')} />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(docs as GeneratedDoc[]).map(doc => (
@@ -742,7 +746,7 @@ export default function EmployeeFolderPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontWeight: 500, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.document_type}</p>
                     <p style={{ margin: 0, fontSize: 11, color: 'var(--fg-muted)' }}>
-                      {new Date(doc.created_at).toLocaleDateString('fr-FR')} · {doc.language.toUpperCase()}
+                      {new Date(doc.created_at).toLocaleDateString()} · {doc.language.toUpperCase()}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -758,22 +762,21 @@ export default function EmployeeFolderPage() {
                         onClick={async () => {
                           try {
                             const res = await sendForSignature(doc.id);
-                            toast.success("Demande de signature envoyée");
+                            toast.success(t('save'));
 
-                            // Mocking the copy to clipboard for the demo
                             const link = `${window.location.origin}/sign/${res.token}`;
                             navigator.clipboard.writeText(link);
                             toast.info(`Lien copié: ${link}`);
 
                             refetchDocs();
-                          } catch (e: any) { toast.error(e.response?.data?.detail || "Erreur"); }
+                          } catch (e: any) { toast.error(e.response?.data?.detail || "Error"); }
                         }}
                       >
-                        <FileSignature size={11} /> {doc.signature_status === 'pending' ? 'Renvoyer' : 'Signer'}
+                        <FileSignature size={11} /> {doc.signature_status === 'pending' ? t('resend') : t('sign')}
                       </button>
                     )}
                     {doc.signature_status === 'signed' && (
-                      <Badge variant="success" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><CheckCircle2 size={10} /> Signé</Badge>
+                      <Badge variant="success" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><CheckCircle2 size={10} /> {t('status_signed')}</Badge>
                     )}
                   </div>
                 </div>
@@ -786,7 +789,7 @@ export default function EmployeeFolderPage() {
       {/* ── Congés tab ─────────────────────────────────────────────────── */}
       {tab === 'conges' && (
         leavesLoading ? <MiniSpinner /> : leaves.length === 0 ? (
-          <Empty text="Aucune demande de congé." />
+          <Empty text={t('no_pending_requests')} />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {(leaves as LeaveRequest[]).map(l => {
@@ -810,20 +813,20 @@ export default function EmployeeFolderPage() {
       {/* ── Paie tab ───────────────────────────────────────────────────── */}
       {tab === 'paie' && (
         payLoading ? <MiniSpinner /> : payslips.length === 0 ? (
-          <Empty text="Aucun bulletin de paie." />
+          <Empty text={t('no_payslips')} />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {(payslips as Payslip[]).map(p => (
               <div key={p.id} style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>{MONTHS_FR[p.period_month - 1]} {p.period_year}</p>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--primary)' }}>{p.net_salary.toLocaleString('fr-FR')} MAD</p>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Mois {p.period_month} / {p.period_year}</p>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--primary)' }}>{p.net_salary.toLocaleString()} MAD</p>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                   {[['Brut', p.gross_salary], ['CNSS', p.cnss_deduction], ['AMO', p.amo_deduction], ['IR', p.ir_deduction]].map(([l, v]) => (
                     <div key={String(l)} style={{ background: 'var(--bg-muted)', borderRadius: 6, padding: '6px 10px', textAlign: 'center' as const }}>
                       <p style={{ margin: 0, fontSize: 10, color: 'var(--fg-subtle)', textTransform: 'uppercase' as const }}>{l}</p>
-                      <p style={{ margin: 0, fontSize: 12, fontWeight: 500 }}>{Number(v).toLocaleString('fr-FR')}</p>
+                      <p style={{ margin: 0, fontSize: 12, fontWeight: 500 }}>{Number(v).toLocaleString()}</p>
                     </div>
                   ))}
                 </div>
@@ -837,9 +840,9 @@ export default function EmployeeFolderPage() {
       {tab === 'performance' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--fg-muted)', marginBottom: 10 }}>Objectifs</p>
+            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--fg-muted)', marginBottom: 10 }}>{t('goals')}</p>
             {goalsLoading ? <MiniSpinner /> : goals.length === 0 ? (
-              <Empty text="Aucun objectif assigné." />
+              <Empty text={t('no_goals')} />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {(goals as PerformanceGoal[]).map(g => {
@@ -862,9 +865,9 @@ export default function EmployeeFolderPage() {
           </div>
 
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--fg-muted)', marginBottom: 10 }}>Évaluations</p>
+            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--fg-muted)', marginBottom: 10 }}>{t('reviews')}</p>
             {reviewsLoading ? <MiniSpinner /> : reviews.length === 0 ? (
-              <Empty text="Aucune évaluation enregistrée." />
+              <Empty text={t('no_reviews')} />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {(reviews as PerformanceReview[]).map(r => (
@@ -873,7 +876,7 @@ export default function EmployeeFolderPage() {
                       <p style={{ margin: 0, fontWeight: 500, fontSize: 13 }}>Cycle {r.cycle}</p>
                       {r.overall_score
                         ? <span style={{ display: 'flex', gap: 2 }}>{[1, 2, 3, 4, 5].map(i => <span key={i} style={{ fontSize: 14, color: i <= r.overall_score! ? '#f59e0b' : '#e2e8f0' }}>★</span>)}</span>
-                        : <span style={{ fontSize: 11, color: 'var(--fg-muted)', fontStyle: 'italic' }}>En attente</span>
+                        : <span style={{ fontSize: 11, color: 'var(--fg-muted)', fontStyle: 'italic' }}>{t('status_pending_item')}</span>
                       }
                     </div>
                     {r.comments && <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--fg-muted)', lineHeight: 1.5 }}>{r.comments}</p>}
@@ -886,7 +889,7 @@ export default function EmployeeFolderPage() {
       )}
 
       {/* Edit modal */}
-      <Modal open={editing} onClose={() => setEditing(false)} title="Modifier le profil" width={740}>
+      <Modal open={editing} onClose={() => setEditing(false)} title={t('edit_profile')} width={740}>
         <EditForm
           employee={employee}
           departments={departments}
@@ -897,7 +900,7 @@ export default function EmployeeFolderPage() {
       </Modal>
 
       {/* Analysis modal */}
-      <Modal open={analysisOpen} onClose={() => setAnalysisOpen(false)} title="Analyse IA du dossier" width={820}>
+      <Modal open={analysisOpen} onClose={() => setAnalysisOpen(false)} title={t('analyze_folder')} width={820}>
         {analysisResult && (
           <AnalysisPanel
             employee={employee}

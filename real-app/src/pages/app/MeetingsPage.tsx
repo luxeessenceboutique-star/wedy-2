@@ -40,6 +40,7 @@ function ProjectMeetingCard({
   onStop: () => void;
   onCopy: () => void;
 }) {
+  const { t } = useLang();
   const room = projectRoom(project);
 
   return (
@@ -81,12 +82,12 @@ function ProjectMeetingCard({
                     width: 6, height: 6, borderRadius: '50%', background: '#fff',
                     animation: 'pulse 1.5s infinite',
                   }} />
-                  EN COURS
+                  {t('meeting_ongoing')}
                 </span>
               )}
             </div>
             <p style={{ margin: '3px 0 0', fontSize: 12, color: '#94a3b8' }}>
-              {project.description || 'Salle dédiée à l\'équipe'}
+              {project.description || t('meeting_dedicated_room')}
             </p>
           </div>
         </div>
@@ -103,13 +104,13 @@ function ProjectMeetingCard({
               ))}
             </div>
             <span style={{ fontSize: 12, color: '#64748b' }}>
-              {project.members.length} membre{project.members.length !== 1 ? 's' : ''}
+              {project.members.length} {t('members_label')}
             </span>
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <Users size={13} style={{ color: '#cbd5e1' }} />
-            <span style={{ fontSize: 12, color: '#94a3b8' }}>Aucun membre assigné</span>
+            <span style={{ fontSize: 12, color: '#94a3b8' }}>{t('org_all_assigned')}</span>
           </div>
         )}
 
@@ -139,11 +140,11 @@ function ProjectMeetingCard({
                 onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.88)')}
                 onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
               >
-                <ExternalLink size={14} /> Rejoindre
+                <ExternalLink size={14} /> {t('meeting_join')}
               </button>
               <button
                 onClick={onStop}
-                title="Marquer comme terminée"
+                title={t('meeting_mark_done')}
                 style={{
                   width: 40, height: 40,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -165,17 +166,17 @@ function ProjectMeetingCard({
               onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.88)')}
               onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
             >
-              <Video size={14} /> Démarrer
+              <Video size={14} /> {t('meeting_start')}
             </button>
           )}
 
-          <button onClick={onCopy} title="Copier le lien" style={iconBtn}>
+          <button onClick={onCopy} title={t('meeting_copy_link')} style={iconBtn}>
             <Copy size={14} />
           </button>
 
           <a
             href={meetUrl(room)} target="_blank" rel="noopener noreferrer"
-            title="Ouvrir dans un nouvel onglet"
+            title={t('preview')}
             style={{ ...iconBtn, textDecoration: 'none' }}
           >
             <ExternalLink size={14} />
@@ -211,22 +212,22 @@ export default function MeetingsPage() {
     || user?.email?.split('@')[0]
     || 'Utilisateur';
 
-  const launchMeeting = (roomName: string, title: string, color: string) => {
+  const launchMeeting = (roomName: string, title: string, _color: string) => {
     // Open Jitsi in a new window — WebRTC works perfectly outside an iframe
     const url = `${meetUrl(roomName)}#userInfo.displayName="${encodeURIComponent(displayName)}"&config.startWithAudioMuted=true&config.disableDeepLinking=true`;
     window.open(url, `jitsi-${roomName}`, 'width=1280,height=800,toolbar=no,menubar=no,location=no');
     setActiveRooms(prev => new Set(prev).add(roomName));
-    toast.success(`Réunion "${title}" ouverte dans un nouvel onglet`, { icon: '🎥' });
+    toast.success(t('meeting_started_toast').replace('{title}', title), { icon: '🎥' });
   };
 
   const stopMeeting = (roomName: string) => {
     setActiveRooms(prev => { const s = new Set(prev); s.delete(roomName); return s; });
-    toast.info('Réunion marquée comme terminée');
+    toast.info(t('meeting_stopped_toast'));
   };
 
   const copyLink = (roomName: string) => {
     navigator.clipboard.writeText(meetUrl(roomName));
-    toast.success('Lien copié !');
+    toast.success(t('save'));
   };
 
   const startQuickMeeting = () => {
@@ -246,7 +247,7 @@ export default function MeetingsPage() {
         subtitle={t('meetings_subtitle')}
         action={
           <Button variant="soft" onClick={() => setQuickModal(true)}>
-            <Zap size={14} style={{ marginRight: 6 }} /> Réunion rapide
+            <Zap size={14} style={{ marginRight: 6 }} /> {t('meeting_quick')}
           </Button>
         }
       />
@@ -268,10 +269,10 @@ export default function MeetingsPage() {
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ margin: 0, fontWeight: 600, fontSize: 13, color: '#0c4a6e' }}>
-              Chaque équipe projet a une salle de réunion permanente
+              {t('meeting_banner_title')}
             </p>
             <p style={{ margin: '2px 0 0', fontSize: 12, color: '#0891b2' }}>
-              Cliquez <strong>Démarrer</strong> — la réunion s'ouvre dans un nouvel onglet avec caméra et micro
+              {t('meeting_banner_desc')}
             </p>
           </div>
           <button
@@ -284,7 +285,7 @@ export default function MeetingsPage() {
             onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.9)')}
             onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
           >
-            <Plus size={13} /> Réunion rapide
+            <Plus size={13} /> {t('meeting_quick')}
           </button>
         </div>
 
@@ -297,8 +298,7 @@ export default function MeetingsPage() {
           }}>
             <CheckCircle2 size={18} style={{ color: '#22c55e', flexShrink: 0 }} />
             <p style={{ margin: 0, fontSize: 13, color: '#14532d' }}>
-              <strong>{activeRooms.size} réunion{activeRooms.size > 1 ? 's' : ''} en cours</strong> — l'onglet Jitsi est ouvert dans votre navigateur.
-              Cliquez <strong>Rejoindre</strong> pour y retourner.
+              <strong>{activeRooms.size} {t('meeting_active_count')}</strong> — {t('meeting_active_desc')}
             </p>
           </div>
         )}
@@ -312,12 +312,12 @@ export default function MeetingsPage() {
             background: '#fff', borderRadius: 16, border: '1px dashed #e2e8f0',
           }}>
             <Users size={40} style={{ color: '#cbd5e1', marginBottom: 14 }} />
-            <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>Aucune équipe projet</p>
+            <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>{t('org_empty_title')}</p>
             <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>
-              Créez des équipes dans l'<strong>Organigramme</strong> pour leur associer une salle de réunion.
+              {t('meeting_empty_desc')}
             </p>
             <Button variant="soft" onClick={() => setQuickModal(true)}>
-              <Zap size={14} style={{ marginRight: 6 }} /> Réunion rapide quand même
+              <Zap size={14} style={{ marginRight: 6 }} /> {t('meeting_quick')}
             </Button>
           </div>
         ) : (
@@ -344,17 +344,17 @@ export default function MeetingsPage() {
       </div>
 
       {/* ── Quick Meeting Modal ── */}
-      <Modal open={quickModal} onClose={() => setQuickModal(false)} title="Réunion rapide">
+      <Modal open={quickModal} onClose={() => setQuickModal(false)} title={t('meeting_quick')}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '4px 0 8px' }}>
           <div style={{
             padding: '12px 14px', borderRadius: 10,
             background: '#f8fafc', border: '1px solid #e2e8f0',
             fontSize: 12, color: '#64748b', lineHeight: 1.6,
           }}>
-            Une salle Jitsi Meet s'ouvrira dans un nouvel onglet. Partagez le lien pour inviter vos collègues.
+            {t('meeting_quick_desc')}
           </div>
           <Input
-            label="Nom de la réunion"
+            label={t('meeting_name')}
             value={quickName}
             onChange={e => setQuickName(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && startQuickMeeting()}
@@ -362,9 +362,9 @@ export default function MeetingsPage() {
             autoFocus
           />
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" onClick={() => setQuickModal(false)}>Annuler</Button>
+            <Button variant="ghost" onClick={() => setQuickModal(false)}>{t('cancel')}</Button>
             <Button variant="primary" onClick={startQuickMeeting} disabled={!quickName.trim()}>
-              <Video size={14} style={{ marginRight: 6 }} /> Ouvrir la réunion
+              <Video size={14} style={{ marginRight: 6 }} /> {t('meeting_start')}
             </Button>
           </div>
         </div>

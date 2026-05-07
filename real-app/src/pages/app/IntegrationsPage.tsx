@@ -4,6 +4,7 @@ import { PageHeader } from '../../components/layout/AppShell';
 import { Card, Button, Badge } from '../../components/ui';
 import { toast } from 'sonner';
 import { api } from '../../lib/api';
+import { useLang } from '../../lib/lang';
 
 // ── Static integrations catalog ───────────────────────────────────────────────
 
@@ -49,6 +50,7 @@ function saveWebhooks(hooks: Webhook[]) {
 }
 
 function WebhookForm({ onAdd }: { onAdd: (w: Webhook) => void }) {
+  const { t } = useLang();
   const [url, setUrl]       = useState('');
   const [events, setEvents] = useState<string[]>(['employee.created', 'leave.approved']);
   const [testing, setTesting] = useState(false);
@@ -65,7 +67,7 @@ function WebhookForm({ onAdd }: { onAdd: (w: Webhook) => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ event: 'ping', source: 'wedy-rh', timestamp: new Date().toISOString() }),
       });
-      toast.success('Requête envoyée (vérifiez votre endpoint)');
+      toast.success(t('webhook_ping_sent'));
     } catch {
       toast.warning('Requête envoyée en mode no-cors');
     } finally {
@@ -88,18 +90,18 @@ function WebhookForm({ onAdd }: { onAdd: (w: Webhook) => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div>
-        <label className="label">URL de l'endpoint *</label>
+        <label className="label">{t('webhook_endpoint')} *</label>
         <div style={{ display: 'flex', gap: 8 }}>
           <input className="input" style={{ flex: 1 }}
             value={url} onChange={e => setUrl(e.target.value)}
             placeholder="https://votre-serveur.com/webhook" />
           <Button variant="ghost" loading={testing} onClick={handleTest} disabled={!url}>
-            <Send size={13} /> Tester
+            <Send size={13} /> {t('webhook_test')}
           </Button>
         </div>
       </div>
       <div>
-        <label className="label">Événements à écouter</label>
+        <label className="label">{t('webhook_events')}</label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
           {EVENT_OPTIONS.map(ev => (
             <button key={ev} onClick={() => toggle(ev)}
@@ -116,7 +118,7 @@ function WebhookForm({ onAdd }: { onAdd: (w: Webhook) => void }) {
         </div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button onClick={handleAdd}><Plus size={13} /> Ajouter le webhook</Button>
+        <Button onClick={handleAdd}><Plus size={13} /> {t('add')}</Button>
       </div>
     </div>
   );
@@ -125,6 +127,7 @@ function WebhookForm({ onAdd }: { onAdd: (w: Webhook) => void }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function IntegrationsPage() {
+  const { t } = useLang();
   const [webhooks, setWebhooks] = useState<Webhook[]>(loadWebhooks);
   const [showForm, setShowForm] = useState(false);
 
@@ -152,11 +155,11 @@ export default function IntegrationsPage() {
   return (
     <div style={{ padding: '24px 28px' }}>
       <PageHeader
-        title="Intégrations"
-        subtitle="Connectez Wedy aux outils de votre équipe"
+        title={t('integrations')}
+        subtitle={t('integrations_subtitle')}
         action={
           <Button onClick={() => setShowForm(s => !s)}>
-            {showForm ? <><X size={13} /> Annuler</> : <><Plus size={13} /> Nouveau webhook</>}
+            {showForm ? <><X size={13} /> {t('cancel')}</> : <><Plus size={13} /> {t('webhook_add')}</>}
           </Button>
         }
       />
@@ -165,7 +168,7 @@ export default function IntegrationsPage() {
       {showForm && (
         <div className="card card-pad" style={{ marginBottom: 20, border: '1px solid var(--primary-border)', background: 'var(--primary-soft)' }}>
           <h3 style={{ fontWeight: 700, fontSize: 14, marginBottom: 16, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 7 }}>
-            <Zap size={15} /> Nouveau webhook
+            <Zap size={15} /> {t('webhook_add')}
           </h3>
           <WebhookForm onAdd={addWebhook} />
         </div>
@@ -174,12 +177,12 @@ export default function IntegrationsPage() {
       {/* Active webhooks */}
       <div style={{ marginBottom: 28 }}>
         <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: 'var(--fg)', display: 'flex', alignItems: 'center', gap: 7 }}>
-          <Zap size={15} style={{ color: 'var(--primary)' }} /> Webhooks actifs ({webhooks.length})
+          <Zap size={15} style={{ color: 'var(--primary)' }} /> {t('webhooks_active')} ({webhooks.length})
         </h2>
         {webhooks.length === 0 ? (
           <div style={{ padding: '28px 20px', textAlign: 'center', color: 'var(--fg-muted)', background: 'var(--bg-elev)', border: '1px dashed var(--border)', borderRadius: 10, fontSize: 13 }}>
             <Zap size={28} style={{ margin: '0 auto 10px', opacity: 0.15 }} />
-            <p style={{ fontWeight: 600 }}>Aucun webhook configuré</p>
+            <p style={{ fontWeight: 600 }}>{t('webhooks_none')}</p>
             <p style={{ fontSize: 12, marginTop: 4 }}>Ajoutez un endpoint pour recevoir des événements RH en temps réel.</p>
           </div>
         ) : (
@@ -217,7 +220,7 @@ export default function IntegrationsPage() {
       </div>
 
       {/* Integration catalog */}
-      <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: 'var(--fg)' }}>Catalogue d'intégrations</h2>
+      <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: 'var(--fg)' }}>{t('integrations_catalog')}</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
         {CATALOG.map(item => (
           <div key={item.name} style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -230,11 +233,11 @@ export default function IntegrationsPage() {
             </div>
             {item.coming ? (
               <span style={{ fontSize: 10, padding: '2px 8px', background: 'var(--bg-muted)', color: 'var(--fg-muted)', borderRadius: 999, border: '1px solid var(--border)', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                Bientôt
+                {t('status_coming_soon')}
               </span>
             ) : (
               <span style={{ fontSize: 11, padding: '3px 10px', background: '#d1fae5', color: '#065f46', border: '1px solid #6ee7b7', borderRadius: 999, fontWeight: 600 }}>
-                ✓ Disponible
+                ✓ {t('status_available')}
               </span>
             )}
           </div>

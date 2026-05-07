@@ -12,94 +12,9 @@ import { Button, Badge, Card, Spinner } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';
 import { Avatar } from '../../components/ui';
+import { useLang } from '../../lib/lang';
 
 // ── Constants ────────────────────────────────────────────────────────────────
-
-const LANG_OPTIONS = [
-  { value: 'fr', label: 'Français' },
-  { value: 'ar', label: 'العربية' },
-  { value: 'en', label: 'English' },
-];
-
-const TODAY = new Date().toLocaleDateString('fr-FR');
-
-// Maps template variable names → employee field values (for auto-fill)
-const resolveVar = (varName: string, emp: Employee): string => {
-  const fmt = (d?: string | null) =>
-    d ? new Date(d).toLocaleDateString('fr-MA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
-
-  const MAP: Record<string, () => string> = {
-    full_name: () => emp.full_name || '',
-    cin: () => emp.cin || '',
-    email: () => emp.email || '',
-    phone: () => emp.phone || '',
-    address: () => emp.address || '',
-    city: () => emp.city || '',
-    nationality: () => emp.nationality || '',
-    position: () => emp.position || '',
-    department: () => emp.department || '',
-    manager: () => emp.manager || '',
-    matricule: () => emp.matricule || '',
-    contract_type: () => emp.contract_type || '',
-    hire_date: () => fmt(emp.hire_date),
-    contract_start: () => fmt(emp.contract_start || emp.hire_date),
-    contract_end: () => emp.contract_end ? fmt(emp.contract_end) : 'à ce jour',
-    internship_start: () => fmt(emp.internship_start),
-    internship_end: () => emp.internship_end ? fmt(emp.internship_end) : 'à ce jour',
-    salary: () => emp.salary ? `${Number(emp.salary).toLocaleString('fr-MA')} MAD` : '',
-    today: () => new Date().toLocaleDateString('fr-MA', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-    company: () => 'TYTHON',
-  };
-  return MAP[varName]?.() ?? '';
-};
-
-// All non-empty employee fields as selectable dropdown options
-const empOptions = (emp: Employee) => {
-  const entries: { label: string; value: string }[] = [
-    { label: `Nom complet — ${emp.full_name}`, value: emp.full_name },
-  ];
-  const add = (label: string, v: string | number | undefined | null) => {
-    if (v != null && v !== '') entries.push({ label: `${label} — ${v}`, value: String(v) });
-  };
-  add('CIN', emp.cin); add('Matricule', emp.matricule); add('Email', emp.email);
-  add('Téléphone', emp.phone); add('Poste', emp.position); add('Département', emp.department);
-  add('Date embauche', emp.hire_date); add('Type contrat', emp.contract_type);
-  add('Début contrat', emp.contract_start); add('Fin contrat', emp.contract_end);
-  add('Salaire', emp.salary); add('Manager', emp.manager);
-  add('Date naissance', emp.birth_date); add('Adresse', emp.address);
-  add('Ville', emp.city); add('Nationalité', emp.nationality);
-  add('Début stage', emp.internship_start); add('Fin stage', emp.internship_end);
-  entries.push({ label: `Société — TYTHON`, value: 'TYTHON' });
-  entries.push({ label: `Date du jour — ${TODAY}`, value: TODAY });
-  return entries;
-};
-
-// Extract {{variables}} from a template body
-const extractVars = (body = ''): string[] =>
-  [...new Set((body.match(/\{\{(\w+)\}\}/g) ?? []).map(m => m.replace(/[{}]/g, '')))];
-
-const isInternTemplate = (tpl: Template) => {
-  // Use explicit target_type if set, fall back to keyword detection
-  if (tpl.target_type === 'intern') return true;
-  if (tpl.target_type === 'both') return false; // shown for both
-  if (tpl.target_type === 'employee') return false;
-  const INTERN_KEYWORDS = ['stage', 'stagiaire', 'convention'];
-  return INTERN_KEYWORDS.some(kw =>
-    tpl.name_fr.toLowerCase().includes(kw) ||
-    (tpl.name_en ?? '').toLowerCase().includes(kw)
-  );
-};
-const isEmployeeTemplate = (tpl: Template) =>
-  tpl.target_type === 'both' || !isInternTemplate(tpl);
-
-const TPL_CATEGORIES = [
-  { value: '',            label: 'Tous' },
-  { value: 'attestation', label: 'Attestation' },
-  { value: 'contrat',     label: 'Contrat' },
-  { value: 'lettre',      label: 'Lettre' },
-  { value: 'avenant',     label: 'Avenant' },
-  { value: 'autre',       label: 'Autre' },
-];
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 
@@ -155,6 +70,7 @@ function EditorToolbar({ onEdit, onOriginal, onPrint, modified }: {
   onPrint: () => void;
   modified: boolean;
 }) {
+  const { t } = useLang();
   const btn = (onClick: () => void, icon: React.ReactNode, title: string, active = false) => (
     <button
       title={title}
@@ -191,11 +107,11 @@ function EditorToolbar({ onEdit, onOriginal, onPrint, modified }: {
       {btn(() => onEdit('justifyCenter'), <AlignCenter size={13} />, 'Centrer')}
       {btn(() => onEdit('justifyRight'), <AlignRight size={13} />, 'Aligner droite')}
       {sep}
-      {btn(onOriginal, <RotateCcw size={13} />, 'Annuler les modifications')}
-      {btn(onPrint, <Printer size={13} />, 'Imprimer')}
+      {btn(onOriginal, <RotateCcw size={13} />, t('resend'))}
+      {btn(onPrint, <Printer size={13} />, 'Print')}
       {sep}
       <span style={{ fontSize: 11, color: modified ? '#d97706' : 'var(--fg-subtle)', display: 'flex', alignItems: 'center', gap: 4 }}>
-        {modified ? <><AlertCircle size={11} /> Modifié</> : <><Check size={11} /> Enregistré</>}
+        {modified ? <><AlertCircle size={11} /> {t('status_pending_item')}</> : <><Check size={11} /> {t('status_active_item')}</>}
       </span>
     </div>
   );
@@ -204,6 +120,7 @@ function EditorToolbar({ onEdit, onOriginal, onPrint, modified }: {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function GeneratePage() {
+  const { t } = useLang();
   const [params] = useSearchParams();
   const navigate = useNavigate();
 
@@ -234,22 +151,102 @@ export default function GeneratePage() {
 
   const persons = personType === 'intern' ? interns : employees;
   const selectedEmp = persons.find(e => e.id === employeeId) ?? employees.find(e => e.id === employeeId);
-  const selectedTpl = templates.find(t => t.id === templateId);
+  const selectedTpl = templates.find(t_item => t_item.id === templateId);
 
-  // Filtered templates for Step 1
+  const LANG_OPTIONS = [
+    { value: 'fr', label: 'Français' },
+    { value: 'ar', label: 'العربية' },
+    { value: 'en', label: 'English' },
+  ];
+
+  const TODAY = new Date().toLocaleDateString();
+
+  // Maps template variable names → employee field values (for auto-fill)
+  const resolveVar = (varName: string, emp: Employee): string => {
+    const fmt = (d?: string | null) =>
+      d ? new Date(d).toLocaleDateString() : '';
+
+    const MAP: Record<string, () => string> = {
+      full_name: () => emp.full_name || '',
+      cin: () => emp.cin || '',
+      email: () => emp.email || '',
+      phone: () => emp.phone || '',
+      address: () => emp.address || '',
+      city: () => emp.city || '',
+      nationality: () => emp.nationality || '',
+      position: () => emp.position || '',
+      department: () => emp.department || '',
+      manager: () => emp.manager || '',
+      matricule: () => emp.matricule || '',
+      contract_type: () => emp.contract_type || '',
+      hire_date: () => fmt(emp.hire_date),
+      contract_start: () => fmt(emp.contract_start || emp.hire_date),
+      contract_end: () => emp.contract_end ? fmt(emp.contract_end) : 'à ce jour',
+      internship_start: () => fmt(emp.internship_start),
+      internship_end: () => emp.internship_end ? fmt(emp.internship_end) : 'à ce jour',
+      salary: () => emp.salary ? `${Number(emp.salary).toLocaleString()} MAD` : '',
+      today: () => new Date().toLocaleDateString(),
+      company: () => 'TYTHON',
+    };
+    return MAP[varName]?.() ?? '';
+  };
+
+  const empOptions = (emp: Employee) => {
+    const entries: { label: string; value: string }[] = [
+      { label: `${t('full_name_label')} — ${emp.full_name}`, value: emp.full_name },
+    ];
+    const add = (label: string, v: string | number | undefined | null) => {
+      if (v != null && v !== '') entries.push({ label: `${label} — ${v}`, value: String(v) });
+    };
+    add('CIN', emp.cin); add('Matricule', emp.matricule); add('Email', emp.email);
+    add(t('phone_label'), emp.phone); add(t('position_label'), emp.position); add(t('department_label'), emp.department);
+    add(t('hire_date_label'), emp.hire_date); add(t('contract_type_label'), emp.contract_type);
+    add(t('contract_start_label'), emp.contract_start); add(t('contract_end_label'), emp.contract_end);
+    add(t('salary_label'), emp.salary); add(t('manager_label'), emp.manager);
+    add(t('birth_date_label'), emp.birth_date); add(t('address'), emp.address);
+    add(t('city'), emp.city); add(t('nationality_label'), emp.nationality);
+    add(t('intern_start'), emp.internship_start); add(t('intern_end'), emp.internship_end);
+    entries.push({ label: `${t('company')} — TYTHON`, value: 'TYTHON' });
+    entries.push({ label: `${t('date')} — ${TODAY}`, value: TODAY });
+    return entries;
+  };
+
+  const extractVars = (body = ''): string[] =>
+    [...new Set((body.match(/\{\{(\w+)\}\}/g) ?? []).map(m => m.replace(/[{}]/g, '')))];
+
+  const isInternTemplate = (tpl: Template) => {
+    if (tpl.target_type === 'intern') return true;
+    if (tpl.target_type === 'both') return false;
+    if (tpl.target_type === 'employee') return false;
+    const INTERN_KEYWORDS = ['stage', 'stagiaire', 'convention'];
+    return INTERN_KEYWORDS.some(kw =>
+      tpl.name_fr.toLowerCase().includes(kw) ||
+      (tpl.name_en ?? '').toLowerCase().includes(kw)
+    );
+  };
+  const isEmployeeTemplate = (tpl: Template) =>
+    tpl.target_type === 'both' || !isInternTemplate(tpl);
+
+  const TPL_CATEGORIES = [
+    { value: '',            label: t('all') },
+    { value: 'attestation', label: 'Attestation' },
+    { value: 'contrat',     label: t('file_contract') },
+    { value: 'lettre',      label: 'Lettre' },
+    { value: 'avenant',     label: 'Avenant' },
+    { value: 'autre',       label: t('file_other') },
+  ];
+
   const filteredTemplates = templates
-    .filter(t => t.is_active !== false)
-    .filter(t => !tplCategory || t.category === tplCategory)
-    .filter(t => !tplSearch ||
-      t.name_fr.toLowerCase().includes(tplSearch.toLowerCase()) ||
-      (t.name_en ?? '').toLowerCase().includes(tplSearch.toLowerCase())
+    .filter(t_item => t_item.is_active !== false)
+    .filter(t_item => !tplCategory || t_item.category === tplCategory)
+    .filter(t_item => !tplSearch ||
+      t_item.name_fr.toLowerCase().includes(tplSearch.toLowerCase()) ||
+      (t_item.name_en ?? '').toLowerCase().includes(tplSearch.toLowerCase())
     )
-    .filter(t => personType === 'intern' ? isInternTemplate(t) : isEmployeeTemplate(t));
+    .filter(t_item => personType === 'intern' ? isInternTemplate(t_item) : isEmployeeTemplate(t_item));
 
-  // Variables detected in the chosen template
   const templateVars = extractVars(selectedTpl?.body_template);
 
-  // For each variable: auto-resolved from employee or needs manual input
   const autoFilled: Record<string, string> = {};
   const missing: string[] = [];
   if (selectedEmp) {
@@ -260,7 +257,6 @@ export default function GeneratePage() {
     });
   }
 
-  // ── Initialize editor when result arrives ──────────────────────────────────
   useEffect(() => {
     if (result?.content && editorRef.current) {
       editorRef.current.innerHTML = result.content;
@@ -269,7 +265,6 @@ export default function GeneratePage() {
     }
   }, [result]);
 
-  // ── Generation ─────────────────────────────────────────────────────────────
   const genMut = useMutation({
     mutationFn: () => generateDocument({
       employee_id: employeeId,
@@ -281,13 +276,12 @@ export default function GeneratePage() {
     onSuccess: data => {
       setResult({ id: data.document.id, content: data.content, document_type: data.document.document_type });
       setStep(3);
-      toast.success('Document généré !');
+      toast.success(t('save'));
     },
     onError: (e: unknown) =>
-      toast.error((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Erreur de génération'),
+      toast.error('Error'),
   });
 
-  // ── AI enhance ─────────────────────────────────────────────────────────────
   const handleEnhance = async () => {
     if (!result) return;
     setEnhancing(true);
@@ -297,21 +291,20 @@ export default function GeneratePage() {
         document_content: current,
         document_type: result.document_type,
         language,
-        instructions: 'Améliorer la clarté et le professionnalisme',
+        instructions: 'Improve clarity and professionalism',
       });
       if (editorRef.current) {
         editorRef.current.innerHTML = res.enhanced_content;
         setModified(true);
       }
-      toast.success('Document amélioré par IA');
+      toast.success(t('save'));
     } catch {
-      toast.error('Amélioration IA échouée');
+      toast.error('AI Error');
     } finally {
       setEnhancing(false);
     }
   };
 
-  // ── Editor commands ─────────────────────────────────────────────────────────
   const execCmd = (cmd: string, val?: string) => {
     document.execCommand(cmd, false, val);
     editorRef.current?.focus();
@@ -322,7 +315,7 @@ export default function GeneratePage() {
     if (!editorRef.current) return;
     editorRef.current.innerHTML = originalContent;
     setModified(false);
-    toast.success('Document restauré');
+    toast.success(t('save'));
   };
 
   const handlePrint = () => {
@@ -342,27 +335,27 @@ export default function GeneratePage() {
     setTimeout(() => { w.focus(); w.print(); }, 350);
   };
 
-  const STEPS = ['Employé', 'Template', 'Variables', 'Résultat'];
+  const STEPS = [t('employee'), t('tab_docs'), 'Variables', 'Result'];
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 960, margin: '0 auto' }}>
-      <PageHeader title="Générer un document" subtitle="Créez des documents RH en quelques clics." />
+      <PageHeader title={t('generate_document')} subtitle={t('generate_doc_subtitle')} />
 
       <StepIndicator step={step} labels={STEPS} />
 
       {/* ── STEP 0: Type selector + person ── */}
       {step === 0 && (
         <Card>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Type &amp; Personne</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Type &amp; {t('employee')}</h2>
           <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 18 }}>
-            Choisissez d'abord le type, puis sélectionnez la personne concernée.
+            {t('generate_step0_desc')}
           </p>
 
           {/* Type toggle */}
           <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
             {([
-              { value: 'employee', label: 'Employé',   Icon: Users },
-              { value: 'intern',   label: 'Stagiaire',  Icon: GraduationCap },
+              { value: 'employee', label: t('employee'),   Icon: Users },
+              { value: 'intern',   label: t('intern'),  Icon: GraduationCap },
             ] as const).map(({ value, label, Icon }) => (
               <button
                 key={value}
@@ -412,7 +405,7 @@ export default function GeneratePage() {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button disabled={!employeeId} onClick={() => setStep(1)}>
-              Suivant <ChevronRight size={14} />
+              {t('next')} <ChevronRight size={14} />
             </Button>
           </div>
         </Card>
@@ -422,13 +415,13 @@ export default function GeneratePage() {
       {step === 1 && (
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Sélectionner un modèle</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{t('select_template')}</h2>
             <span style={{ fontSize: 12, color: 'var(--fg-muted)', background: 'var(--bg-muted)', padding: '3px 10px', borderRadius: 20 }}>
-              {personType === 'intern' ? '🎓 Stagiaire' : '👤 Employé'} · {filteredTemplates.length} modèle{filteredTemplates.length !== 1 ? 's' : ''}
+              {personType === 'intern' ? '🎓 '+t('intern') : '👤 '+t('employee')} · {filteredTemplates.length} {t('tab_docs')}
             </span>
           </div>
           <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 16 }}>
-            Choisissez le type de document à générer.
+            {t('generate_step1_desc')}
           </p>
 
           {/* Search */}
@@ -436,7 +429,7 @@ export default function GeneratePage() {
             <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)', pointerEvents: 'none' }} />
             <input
               className="input"
-              placeholder="Rechercher un modèle…"
+              placeholder={`${t('search')}...`}
               value={tplSearch}
               onChange={e => setTplSearch(e.target.value)}
               style={{ paddingLeft: 34 }}
@@ -466,7 +459,7 @@ export default function GeneratePage() {
           {/* Template grid */}
           {filteredTemplates.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--fg-muted)', fontSize: 13 }}>
-              Aucun modèle trouvé.{tplSearch && <> Essayez un autre terme de recherche.</>}
+              {t('no_results')}
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10, marginBottom: 20 }}>
@@ -490,7 +483,7 @@ export default function GeneratePage() {
                     </div>
                     {vars.length > 0 && (
                       <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 6 }}>
-                        {vars.length} variable{vars.length > 1 ? 's' : ''}
+                        {vars.length} variables
                       </p>
                     )}
                   </div>
@@ -500,9 +493,9 @@ export default function GeneratePage() {
           )}
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" onClick={() => setStep(0)}>Retour</Button>
+            <Button variant="ghost" onClick={() => setStep(0)}>{t('cancel')}</Button>
             <Button disabled={!templateId} onClick={() => setStep(2)}>
-              Suivant <ChevronRight size={14} />
+              {t('next')} <ChevronRight size={14} />
             </Button>
           </div>
         </Card>
@@ -513,13 +506,13 @@ export default function GeneratePage() {
         <Card>
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Variables &amp; Options</h2>
           <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>
-            Vérifiez les données auto-remplies et complétez les champs manquants.
+            {t('generate_step2_desc')}
           </p>
 
           {/* Summary */}
           <div style={{ background: 'var(--bg-muted)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 24, flexWrap: 'wrap', borderLeft: '3px solid var(--primary)' }}>
             <div>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: '0 0 2px' }}>Employé</p>
+              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: '0 0 2px' }}>{t('employee')}</p>
               <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>{selectedEmp.full_name}</p>
             </div>
             <div>
@@ -532,7 +525,7 @@ export default function GeneratePage() {
           {templateVars.length > 0 && (
             <div style={{ marginBottom: 20 }}>
               <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: 'var(--fg)' }}>
-                Variables du template ({templateVars.length})
+                Variables ({templateVars.length})
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {templateVars.map(v => {
@@ -562,7 +555,7 @@ export default function GeneratePage() {
                             fontWeight: 500, cursor: 'pointer', outline: 'none',
                           }}
                         >
-                          {!auto && <option value="">— choisir —</option>}
+                          {!auto && <option value="">— {t('select')} —</option>}
                           {opts.map(o => (
                             <option key={o.value} value={o.value}>{o.label}</option>
                           ))}
@@ -575,7 +568,7 @@ export default function GeneratePage() {
               {missing.length > 0 && (
                 <p style={{ fontSize: 12, color: '#b45309', marginTop: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <AlertCircle size={13} />
-                  {missing.length} champ{missing.length > 1 ? 's' : ''} manquant{missing.length > 1 ? 's' : ''} — le document peut être incomplet.
+                  {missing.length} fields missing
                 </p>
               )}
             </div>
@@ -584,7 +577,7 @@ export default function GeneratePage() {
           {/* Language + AI */}
           <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 180 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>Langue</label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>{t('languages')}</label>
               <select className="select" value={language} onChange={e => setLanguage(e.target.value)}>
                 {LANG_OPTIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
               </select>
@@ -593,15 +586,15 @@ export default function GeneratePage() {
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
                 <input type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)} />
                 <Sparkles size={13} style={{ color: '#7c3aed' }} />
-                Amélioration IA (Claude)
+                AI Enhancement
               </label>
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" onClick={() => setStep(1)}>Retour</Button>
+            <Button variant="ghost" onClick={() => setStep(1)}>{t('cancel')}</Button>
             <Button loading={genMut.isPending} onClick={() => genMut.mutate()}>
-              <Wand2 size={14} /> Générer le document
+              <Wand2 size={14} /> {t('generate_document')}
             </Button>
           </div>
         </Card>
@@ -621,7 +614,7 @@ export default function GeneratePage() {
                 <Check size={15} style={{ color: '#16a34a' }} />
               </div>
               <div>
-                <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>Document généré</p>
+                <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>{t('status_active_item')}</p>
                 <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>
                   {result.document_type} · {LANG_OPTIONS.find(l => l.value === language)?.label}
                 </p>
@@ -629,13 +622,13 @@ export default function GeneratePage() {
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Button variant="ghost" size="sm" onClick={handleEnhance} loading={enhancing}>
-                <Sparkles size={13} /> IA
+                <Sparkles size={13} /> AI
               </Button>
               <Button
                 variant="ghost" size="sm"
                 onClick={() => setEditMode(e => !e)}
               >
-                {editMode ? <><EyeOff size={13} /> Lecture</> : <><Eye size={13} /> Éditer</>}
+                {editMode ? <><EyeOff size={13} /> {t('read_only')}</> : <><Eye size={13} /> {t('edit')}</>}
               </Button>
               <Button variant="soft" size="sm" onClick={handlePrint}>
                 <Download size={13} /> PDF
@@ -682,17 +675,17 @@ export default function GeneratePage() {
 
           {editMode && (
             <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 6, textAlign: 'center' }}>
-              Cliquez dans le document pour modifier · Utilisez la barre d'outils pour la mise en forme
+              {t('edit_instruction')}
             </p>
           )}
 
           {/* Footer */}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', marginTop: 14 }}>
             <Button variant="ghost" onClick={() => { setStep(0); setResult(null); setModified(false); setExtraVars({}); }}>
-              ← Nouveau document
+              ← {t('new_document')}
             </Button>
             <Button onClick={() => navigate('/app/history')}>
-              Sauvegarder →
+              {t('save')} →
             </Button>
           </div>
         </div>

@@ -3,21 +3,15 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Moon, Sun, Monitor, Palette, User, Bell, Shield, Database } from 'lucide-react';
 import { PageHeader } from '../../components/layout/AppShell';
-import { Card, Button } from '../../components/ui';
+import { Card, Button, Badge } from '../../components/ui';
 import { useTheme } from '../../lib/theme';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
 import { useLang } from '../../lib/lang';
 
-const TABS = [
-  { key: 'profile', label: 'Profil', icon: <User size={14} /> },
-  { key: 'appearance', label: 'Apparence', icon: <Palette size={14} /> },
-  { key: 'notifications', label: 'Notifications', icon: <Bell size={14} /> },
-  { key: 'security', label: 'Sécurité', icon: <Shield size={14} /> },
-];
-
 function TabProfile() {
   const { user } = useAuth();
+  const { t } = useLang();
   const [form, setForm] = useState({
     full_name: ((user as any)?.full_name as string) || ((user as any)?.profile?.full_name as string) || '',
     company: ((user as any)?.profile?.company as string) || '',
@@ -26,8 +20,8 @@ function TabProfile() {
 
   const mutation = useMutation({
     mutationFn: () => api.patch('/profiles/me', form).then(r => r.data),
-    onSuccess: () => toast.success('Profil mis à jour'),
-    onError: () => toast.error('Erreur lors de la mise à jour'),
+    onSuccess: () => toast.success(t('save')),
+    onError: () => toast.error('Error'),
   });
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -35,10 +29,10 @@ function TabProfile() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>Informations personnelles</h3>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>{t('personal_info')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div>
-            <label className="label">Nom complet</label>
+            <label className="label">{t('full_name_label')}</label>
             <input className="input" value={form.full_name} onChange={e => set('full_name', e.target.value)} />
           </div>
           <div>
@@ -46,28 +40,28 @@ function TabProfile() {
             <input className="input" value={user?.email || ''} disabled style={{ opacity: 0.6, cursor: 'not-allowed' }} />
           </div>
           <div>
-            <label className="label">Entreprise</label>
-            <input className="input" value={form.company} onChange={e => set('company', e.target.value)} placeholder="Nom de l'entreprise" />
+            <label className="label">{t('company_label')}</label>
+            <input className="input" value={form.company} onChange={e => set('company', e.target.value)} placeholder={t('company_label')} />
           </div>
           <div>
-            <label className="label">Téléphone</label>
+            <label className="label">{t('phone_label')}</label>
             <input className="input" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+212 6 00 00 00 00" />
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
           <Button onClick={() => mutation.mutate()} loading={mutation.isPending}>
-            Enregistrer
+            {t('save')}
           </Button>
         </div>
       </Card>
 
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>Rôle & accès</h3>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>{t('role_access')}</h3>
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ background: 'var(--primary-soft)', border: '1px solid var(--primary-border)', borderRadius: 'var(--radius-md)', padding: '10px 16px', fontSize: 13 }}>
-            <span style={{ color: 'var(--fg-muted)', marginRight: 8 }}>Rôle :</span>
+            <span style={{ color: 'var(--fg-muted)', marginRight: 8 }}>{t('role_access')} :</span>
             <span style={{ fontWeight: 600, color: 'var(--primary)' }}>
-              {((user as any)?.role_name as string) || 'HR Member'}
+              {user?.role_name === 'hr' ? t('hr_admin') : t('hr_member')}
             </span>
           </div>
         </div>
@@ -78,71 +72,66 @@ function TabProfile() {
 
 function TabAppearance() {
   const { theme, setTheme } = useTheme();
+  const { t, lang, setLang } = useLang();
 
   const THEMES = [
-    { key: 'light' as const, label: 'Clair', icon: <Sun size={20} />, desc: 'Interface lumineuse' },
-    { key: 'dark'  as const, label: 'Sombre', icon: <Moon size={20} />, desc: 'Réduit la fatigue oculaire' },
+    { key: 'light' as const, label: t('light_mode'), icon: <Sun size={20} />, desc: t('light_desc') },
+    { key: 'dark'  as const, label: t('dark_mode'), icon: <Moon size={20} />, desc: t('dark_desc') },
   ];
-
-  const DIRECTIONS = [
-    { key: 'A', label: 'Clinical', desc: 'Épuré, Linear-like' },
-    { key: 'B', label: 'Cyan Bold', desc: 'Couleurs vives, marque forte' },
-    { key: 'C', label: 'Editorial', desc: 'Serif élégant, style européen' },
-  ];
-
-  const [dir, setDir] = useState(document.documentElement.getAttribute('data-direction') || 'A');
-
-  const applyDir = (d: string) => {
-    document.documentElement.setAttribute('data-direction', d);
-    setDir(d);
-    localStorage.setItem('wedy_direction', d);
-    toast.success('Thème appliqué');
-  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>Mode d'affichage</h3>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>{t('display_mode')}</h3>
         <div style={{ display: 'flex', gap: 12 }}>
-          {THEMES.map(t => (
+          {THEMES.map(t_item => (
             <button
-              key={t.key}
-              onClick={() => setTheme(t.key)}
+              key={t_item.key}
+              onClick={() => setTheme(t_item.key)}
               style={{
                 flex: 1, padding: 20, borderRadius: 'var(--radius-lg)', cursor: 'pointer', textAlign: 'center',
-                border: theme === t.key ? '2px solid var(--primary)' : '2px solid var(--border)',
-                background: theme === t.key ? 'var(--primary-soft)' : 'var(--bg-muted)',
+                border: theme === t_item.key ? '2px solid var(--primary)' : '2px solid var(--border)',
+                background: theme === t_item.key ? 'var(--primary-soft)' : 'var(--bg-muted)',
                 transition: 'all 0.15s',
               }}
             >
-              <div style={{ color: theme === t.key ? 'var(--primary)' : 'var(--fg-muted)', marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
-                {t.icon}
+              <div style={{ color: theme === t_item.key ? 'var(--primary)' : 'var(--fg-muted)', marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
+                {t_item.icon}
               </div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: theme === t.key ? 'var(--primary)' : 'var(--fg)', marginBottom: 2 }}>{t.label}</p>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{t.desc}</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: theme === t_item.key ? 'var(--primary)' : 'var(--fg)', marginBottom: 2 }}>{t_item.label}</p>
+              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{t_item.desc}</p>
             </button>
           ))}
         </div>
       </Card>
 
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>Style visuel</h3>
-        <div style={{ display: 'flex', gap: 12 }}>
-          {DIRECTIONS.map(d => (
-            <button
-              key={d.key}
-              onClick={() => applyDir(d.key)}
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>Language (Langue)</h3>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {(['fr', 'ar', 'en'] as const).map(l => (
+            <button key={l}
+              onClick={() => setLang(l)}
               style={{
-                flex: 1, padding: 16, borderRadius: 'var(--radius-lg)', cursor: 'pointer', textAlign: 'left',
-                border: dir === d.key ? '2px solid var(--primary)' : '2px solid var(--border)',
-                background: dir === d.key ? 'var(--primary-soft)' : 'var(--bg-muted)',
-                transition: 'all 0.15s',
-              }}
-            >
-              <p style={{ fontSize: 13, fontWeight: 600, color: dir === d.key ? 'var(--primary)' : 'var(--fg)', marginBottom: 4 }}>{d.key} · {d.label}</p>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{d.desc}</p>
+                padding: '8px 16px', borderRadius: 8, border: lang === l ? '2px solid var(--primary)' : '1px solid var(--border)',
+                background: lang === l ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                color: lang === l ? 'var(--primary)' : 'var(--fg)',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', textTransform: 'uppercase'
+              }}>
+              {l}
             </button>
           ))}
+        </div>
+      </Card>
+
+      <Card>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>{t('visual_style')}</h3>
+        <div style={{ display: 'flex', gap: 14 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+            <input type="checkbox" checked readOnly /> Animations
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+            <input type="checkbox" checked readOnly /> Glassmorphism
+          </label>
         </div>
       </Card>
     </div>
@@ -150,6 +139,7 @@ function TabAppearance() {
 }
 
 function TabNotifications() {
+  const { t } = useLang();
   const [prefs, setPrefs] = useState({
     contracts_expiring: true, leave_requests: true,
     new_employee: true, payroll_ready: false,
@@ -159,16 +149,16 @@ function TabNotifications() {
   const toggle = (k: keyof typeof prefs) => setPrefs(p => ({ ...p, [k]: !p[k] }));
 
   const items = [
-    { key: 'contracts_expiring' as const, label: 'Contrats expirant bientôt', desc: 'Alerte 30 jours avant expiration' },
-    { key: 'leave_requests' as const, label: 'Nouvelles demandes de congé', desc: 'Chaque fois qu\'une demande est soumise' },
-    { key: 'new_employee' as const, label: 'Nouvel employé ajouté', desc: 'Confirmation à la création d\'un profil' },
-    { key: 'payroll_ready' as const, label: 'Fiches de paie prêtes', desc: 'Notification de génération mensuelle' },
-    { key: 'email_notifications' as const, label: 'Notifications par email', desc: 'Recevoir un récapitulatif hebdomadaire' },
+    { key: 'contracts_expiring' as const, label: t('cat_contracts'), desc: t('notif_contracts_desc') },
+    { key: 'leave_requests' as const, label: t('cat_leaves'), desc: t('notif_leaves_desc') },
+    { key: 'new_employee' as const, label: t('nav_people'), desc: t('notif_new_emp_desc') },
+    { key: 'payroll_ready' as const, label: t('payroll'), desc: t('notif_payroll_desc') },
+    { key: 'email_notifications' as const, label: t('email_notifs'), desc: t('email_notifs_desc') },
   ];
 
   return (
     <Card>
-      <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>Préférences de notification</h3>
+      <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>{t('notif_prefs')}</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
         {items.map((item, i) => (
           <div key={item.key} style={{
@@ -198,55 +188,56 @@ function TabNotifications() {
         ))}
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
-        <Button onClick={() => toast.success('Préférences enregistrées')}>Enregistrer</Button>
+        <Button onClick={() => toast.success(t('save'))}>{t('save')}</Button>
       </div>
     </Card>
   );
 }
 
 function TabSecurity() {
+  const { t } = useLang();
   const [form, setForm] = useState({ current: '', next: '', confirm: '' });
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>Changer le mot de passe</h3>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>{t('change_password')}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 360 }}>
           <div>
-            <label className="label">Mot de passe actuel</label>
+            <label className="label">{t('current_pass')}</label>
             <input className="input" type="password" value={form.current} onChange={e => set('current', e.target.value)} />
           </div>
           <div>
-            <label className="label">Nouveau mot de passe</label>
+            <label className="label">{t('new_pass')}</label>
             <input className="input" type="password" value={form.next} onChange={e => set('next', e.target.value)} />
           </div>
           <div>
-            <label className="label">Confirmer</label>
+            <label className="label">{t('confirm_pass')}</label>
             <input className="input" type="password" value={form.confirm} onChange={e => set('confirm', e.target.value)} />
           </div>
         </div>
         <div style={{ marginTop: 20 }}>
           <Button
             onClick={() => {
-              if (form.next !== form.confirm) { toast.error('Les mots de passe ne correspondent pas'); return; }
-              toast.success('Mot de passe mis à jour');
+              if (form.next !== form.confirm) { toast.error(t('confirm_pass')); return; }
+              toast.success(t('save'));
               setForm({ current: '', next: '', confirm: '' });
             }}
           >
-            Mettre à jour
+            {t('save')}
           </Button>
         </div>
       </Card>
 
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>Sessions actives</h3>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>{t('active_sessions')}</h3>
         <div style={{ background: 'var(--bg-muted)', borderRadius: 'var(--radius-md)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p style={{ fontSize: 13, fontWeight: 500 }}>Session actuelle</p>
-            <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>Navigateur web · Maintenant</p>
+            <p style={{ fontSize: 13, fontWeight: 500 }}>{t('current_session')}</p>
+            <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{t('browser_web')} · Maintenant</p>
           </div>
-          <span style={{ fontSize: 11, background: 'var(--success)', color: '#fff', padding: '2px 8px', borderRadius: 999 }}>Active</span>
+          <span style={{ fontSize: 11, background: 'var(--success)', color: '#fff', padding: '2px 8px', borderRadius: 999 }}>{t('status_active_item')}</span>
         </div>
       </Card>
     </div>
@@ -257,6 +248,13 @@ export default function SettingsPage() {
   const { t } = useLang();
   const [tab, setTab] = useState('profile');
 
+  const TABS = [
+    { key: 'profile', label: t('tab_profile'), icon: <User size={14} /> },
+    { key: 'appearance', label: t('tab_appearance'), icon: <Palette size={14} /> },
+    { key: 'notifications', label: t('tab_notifications'), icon: <Bell size={14} /> },
+    { key: 'security', label: t('tab_security'), icon: <Shield size={14} /> },
+  ];
+
   return (
     <div style={{ padding: '24px 28px' }}>
       <PageHeader title={t('settings')} subtitle={t('settings_subtitle')} />
@@ -265,22 +263,22 @@ export default function SettingsPage() {
         {/* Sidebar nav */}
         <div style={{ width: 180, flexShrink: 0 }}>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {TABS.map(t => (
+            {TABS.map(t_item => (
               <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
+                key={t_item.key}
+                onClick={() => setTab(t_item.key)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '8px 12px', borderRadius: 'var(--radius-md)',
                   border: 'none', cursor: 'pointer', fontSize: 13,
-                  background: tab === t.key ? 'var(--primary-soft)' : 'transparent',
-                  color: tab === t.key ? 'var(--primary)' : 'var(--fg-muted)',
-                  fontWeight: tab === t.key ? 500 : 400,
+                  background: tab === t_item.key ? 'var(--primary-soft)' : 'transparent',
+                  color: tab === t_item.key ? 'var(--primary)' : 'var(--fg-muted)',
+                  fontWeight: tab === t_item.key ? 500 : 400,
                   textAlign: 'left',
                 }}
               >
-                <span style={{ color: tab === t.key ? 'var(--primary)' : 'var(--fg-muted)' }}>{t.icon}</span>
-                {t.label}
+                <span style={{ color: tab === t_item.key ? 'var(--primary)' : 'var(--fg-muted)' }}>{t_item.icon}</span>
+                {t_item.label}
               </button>
             ))}
           </nav>

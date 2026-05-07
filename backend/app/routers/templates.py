@@ -340,7 +340,8 @@ async def create_template(
     data.setdefault("name_ar", name_fr)
     data.setdefault("is_active", True)
     data.setdefault("category", "autre")
-    data.setdefault("target_type", "employee")
+    if "target_type" in payload:
+        data["target_type"] = payload["target_type"]
     data.setdefault("variables", [])
     try:
         result = db.table("document_templates").insert(data).execute()

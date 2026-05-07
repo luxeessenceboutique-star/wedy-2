@@ -42,7 +42,7 @@ function DonutChart({ segments, size = 110 }: {
 }
 
 // ── Print Bulletin ────────────────────────────────────────────────
-function printBulletin(r: PayrollRecord, monthLabel: string, year: number, t: (k: string) => string) {
+function printBulletin(r: PayrollRecord, monthLabel: string, year: number, t: any) {
   const name = r.employees?.full_name ?? '—';
   const dept = r.employees?.department ?? '—';
   const pos  = r.employees?.position  ?? '—';
@@ -67,7 +67,7 @@ ${r.notes?`<p style="font-size:12px;color:#64748b;padding:10px 14px;background:#
 }
 
 // ── Export CSV ────────────────────────────────────────────────────
-function exportCSV(records: PayrollRecord[], month: number, year: number, t: (k: string) => string) {
+function exportCSV(records: PayrollRecord[], month: number, year: number, t: any) {
   const headers = [t('employee'),'Département','Poste','Brut','Primes','CNSS','IR','Retenues','Net',t('status')];
   const rows = records.map(r => [r.employees?.full_name||'',r.employees?.department||'',r.employees?.position||'',r.base_salary,r.bonuses||0,r.cnss,r.ir,r.deductions||0,r.net_salary,r.status].map(v=>`"${v}"`));
   const csv = [headers.map(h=>`"${h}"`), ...rows].map(r=>r.join(',')).join('\n');

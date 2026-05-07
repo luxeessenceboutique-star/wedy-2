@@ -11,7 +11,7 @@ import {
   uploadEmployeeFile, deleteEmployeeFile, getEmployeeFileUrl,
   listLeaveRequests, listPayslips, listGoals, listReviews,
   downloadDoc, printDocument, listDepartments,
-  analyzeEmployeeFolder, applyAnalysis,
+  analyzeEmployeeFolder, applyAnalysis, sendForSignature,
   type Employee, type GeneratedDoc, type EmployeeFile,
   type LeaveRequest, type Payslip, type PerformanceGoal, type PerformanceReview,
   type AnalysisResult,

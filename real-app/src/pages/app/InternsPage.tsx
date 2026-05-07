@@ -102,7 +102,7 @@ function ChecklistPhaseSection({
               textDecoration: item.done ? 'line-through' : 'none',
               color: item.done ? 'var(--fg-muted)' : 'var(--fg)',
             }}>{item.label}</span>
-            {item.done && <CheckCircle size={14} style={{ color: phase.color, flexShrink: 0 }} />}
+            {item.done && <CheckCircle2 size={14} style={{ color: phase.color, flexShrink: 0 }} />}
           </label>
         ))}
       </div>

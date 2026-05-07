@@ -623,7 +623,7 @@ export default function GeneratePage() {
               <div>
                 <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>Document généré</p>
                 <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>
-                  {result.type} · {LANG_OPTIONS.find(l => l.value === language)?.label}
+                  {result.document_type} · {LANG_OPTIONS.find(l => l.value === language)?.label}
                 </p>
               </div>
             </div>

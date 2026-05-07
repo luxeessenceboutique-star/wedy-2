@@ -134,6 +134,42 @@ def generate_doc(
     except Exception:
         doc = {**doc_data, "id": "local", "created_at": str(date.today())}
 
+    # 6. Save as physical file in employee's folder (like uploaded files)
+    try:
+        import os, uuid
+        from weasyprint import HTML
+        from app.config import settings
+        
+        # Convert HTML to PDF bytes
+        pdf_bytes = HTML(string=content).write_pdf()
+        
+        # Determine paths
+        safe_name = f"{uuid.uuid4().hex}.pdf"
+        emp_dir = os.path.join(settings.UPLOAD_DIR, "employees", str(payload.employee_id))
+        os.makedirs(emp_dir, exist_ok=True)
+        file_path_rel = os.path.join("employees", str(payload.employee_id), safe_name)
+        full_path = os.path.join(settings.UPLOAD_DIR, file_path_rel)
+        
+        # Write to disk
+        with open(full_path, "wb") as f:
+            f.write(pdf_bytes)
+            
+        # Record in employee_files
+        record = {
+            "employee_id": str(payload.employee_id),
+            "name": f"{doc_data['document_type']}_{date.today().isoformat()}.pdf",
+            "file_type": "autre",  # Generic type for generated docs
+            "file_path": file_path_rel.replace("\\", "/"),
+            "file_size": len(pdf_bytes),
+            "mime_type": "application/pdf",
+            "uploaded_by": current_user["id"],
+        }
+        res = supabase.table("employee_files").insert(record).execute()
+        if res.data:
+            log_action(supabase, current_user["id"], "UPLOAD_FILE_GENERATED", "employee_file", res.data[0]["id"])
+    except Exception as e:
+        print(f"Failed to save physical file to employee folder: {e}")
+
     log_action(supabase, current_user["id"], "GENERATE_DOCUMENT", "generated_documents",
                doc.get("id", ""))
 

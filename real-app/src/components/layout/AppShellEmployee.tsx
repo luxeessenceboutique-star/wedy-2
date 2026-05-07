@@ -12,10 +12,10 @@ import { Moon, Sun } from 'lucide-react';
 
 const NAV = [
   { label: 'Tableau de bord', icon: <LayoutDashboard size={15} />, to: '/employee' },
-  { label: 'Mes Congés',      icon: <Calendar size={15} />,        to: '/employee/conges' },
-  { label: 'Mes Documents',   icon: <FileText size={15} />,        to: '/employee/documents' },
-  { label: 'Ma Formation',    icon: <BookOpen size={15} />,        to: '/employee/formation' },
-  { label: 'Mon Profil',      icon: <User size={15} />,            to: '/employee/profil' },
+  { label: 'Mes Congés', icon: <Calendar size={15} />, to: '/employee/conges' },
+  { label: 'Mes Documents', icon: <FileText size={15} />, to: '/employee/documents' },
+  { label: 'Ma Formation', icon: <BookOpen size={15} />, to: '/employee/formation' },
+  { label: 'Mon Profil', icon: <User size={15} />, to: '/employee/profil' },
 ];
 
 export function AppShellEmployee({ children }: { children: React.ReactNode }) {

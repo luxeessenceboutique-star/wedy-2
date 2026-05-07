@@ -29,26 +29,26 @@ const resolveVar = (varName: string, emp: Employee): string => {
     d ? new Date(d).toLocaleDateString('fr-MA', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
 
   const MAP: Record<string, () => string> = {
-    full_name:        () => emp.full_name || '',
-    cin:              () => emp.cin || '',
-    email:            () => emp.email || '',
-    phone:            () => emp.phone || '',
-    address:          () => emp.address || '',
-    city:             () => emp.city || '',
-    nationality:      () => emp.nationality || '',
-    position:         () => emp.position || '',
-    department:       () => emp.department || '',
-    manager:          () => emp.manager || '',
-    matricule:        () => emp.matricule || '',
-    contract_type:    () => emp.contract_type || '',
-    hire_date:        () => fmt(emp.hire_date),
-    contract_start:   () => fmt(emp.contract_start || emp.hire_date),
-    contract_end:     () => emp.contract_end ? fmt(emp.contract_end) : 'à ce jour',
+    full_name: () => emp.full_name || '',
+    cin: () => emp.cin || '',
+    email: () => emp.email || '',
+    phone: () => emp.phone || '',
+    address: () => emp.address || '',
+    city: () => emp.city || '',
+    nationality: () => emp.nationality || '',
+    position: () => emp.position || '',
+    department: () => emp.department || '',
+    manager: () => emp.manager || '',
+    matricule: () => emp.matricule || '',
+    contract_type: () => emp.contract_type || '',
+    hire_date: () => fmt(emp.hire_date),
+    contract_start: () => fmt(emp.contract_start || emp.hire_date),
+    contract_end: () => emp.contract_end ? fmt(emp.contract_end) : 'à ce jour',
     internship_start: () => fmt(emp.internship_start),
-    internship_end:   () => emp.internship_end ? fmt(emp.internship_end) : 'à ce jour',
-    salary:           () => emp.salary ? `${Number(emp.salary).toLocaleString('fr-MA')} MAD` : '',
-    today:            () => new Date().toLocaleDateString('fr-MA', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-    company:          () => 'TYTHON',
+    internship_end: () => emp.internship_end ? fmt(emp.internship_end) : 'à ce jour',
+    salary: () => emp.salary ? `${Number(emp.salary).toLocaleString('fr-MA')} MAD` : '',
+    today: () => new Date().toLocaleDateString('fr-MA', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+    company: () => 'TYTHON',
   };
   return MAP[varName]?.() ?? '';
 };
@@ -183,16 +183,16 @@ function EditorToolbar({ onEdit, onOriginal, onPrint, modified }: {
       border: '1px solid var(--border)', borderRadius: '8px 8px 0 0',
       borderBottom: 'none', flexWrap: 'wrap',
     }}>
-      {btn(() => onEdit('bold'),      <Bold size={13} />,        'Gras (Ctrl+B)')}
-      {btn(() => onEdit('italic'),    <Italic size={13} />,      'Italique (Ctrl+I)')}
-      {btn(() => onEdit('underline'), <Underline size={13} />,   'Souligné (Ctrl+U)')}
+      {btn(() => onEdit('bold'), <Bold size={13} />, 'Gras (Ctrl+B)')}
+      {btn(() => onEdit('italic'), <Italic size={13} />, 'Italique (Ctrl+I)')}
+      {btn(() => onEdit('underline'), <Underline size={13} />, 'Souligné (Ctrl+U)')}
       {sep}
-      {btn(() => onEdit('justifyLeft'),   <AlignLeft size={13} />,   'Aligner gauche')}
+      {btn(() => onEdit('justifyLeft'), <AlignLeft size={13} />, 'Aligner gauche')}
       {btn(() => onEdit('justifyCenter'), <AlignCenter size={13} />, 'Centrer')}
-      {btn(() => onEdit('justifyRight'),  <AlignRight size={13} />,  'Aligner droite')}
+      {btn(() => onEdit('justifyRight'), <AlignRight size={13} />, 'Aligner droite')}
       {sep}
       {btn(onOriginal, <RotateCcw size={13} />, 'Annuler les modifications')}
-      {btn(onPrint,    <Printer size={13} />,    'Imprimer')}
+      {btn(onPrint, <Printer size={13} />, 'Imprimer')}
       {sep}
       <span style={{ fontSize: 11, color: modified ? '#d97706' : 'var(--fg-subtle)', display: 'flex', alignItems: 'center', gap: 4 }}>
         {modified ? <><AlertCircle size={11} /> Modifié</> : <><Check size={11} /> Enregistré</>}
@@ -205,7 +205,7 @@ function EditorToolbar({ onEdit, onOriginal, onPrint, modified }: {
 
 export default function GeneratePage() {
   const [params] = useSearchParams();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
 
   const [step, setStep]               = useState(0);
   const [personType, setPersonType]   = useState<'employee' | 'intern'>('employee');
@@ -218,9 +218,9 @@ export default function GeneratePage() {
   const [extraVars, setExtraVars]     = useState<Record<string, string>>({});
   const [result, setResult]           = useState<{ id: string; content: string; type: string } | null>(null);
   const [originalContent, setOriginalContent] = useState('');
-  const [modified, setModified]       = useState(false);
-  const [enhancing, setEnhancing]     = useState(false);
-  const [editMode, setEditMode]       = useState(true);
+  const [modified, setModified] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
+  const [editMode, setEditMode] = useState(true);
 
   const editorRef = useRef<HTMLDivElement>(null);
 

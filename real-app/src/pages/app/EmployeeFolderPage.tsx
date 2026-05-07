@@ -26,28 +26,28 @@ const STATUS_COLORS: Record<string, 'success' | 'warning' | 'danger' | 'default'
 };
 
 const FILE_TYPES = [
-  { value: 'cv',         label: 'CV',            color: '#0891b2', bg: '#ecfeff' },
-  { value: 'diplome',    label: 'Diplôme',        color: '#7c3aed', bg: '#f5f3ff' },
-  { value: 'certificat', label: 'Certificat',     color: '#059669', bg: '#ecfdf5' },
-  { value: 'contrat',    label: 'Contrat',        color: '#d97706', bg: '#fffbeb' },
-  { value: 'autre',      label: 'Autre',          color: '#64748b', bg: '#f8fafc' },
+  { value: 'cv', label: 'CV', color: '#0891b2', bg: '#ecfeff' },
+  { value: 'diplome', label: 'Diplôme', color: '#7c3aed', bg: '#f5f3ff' },
+  { value: 'certificat', label: 'Certificat', color: '#059669', bg: '#ecfdf5' },
+  { value: 'contrat', label: 'Contrat', color: '#d97706', bg: '#fffbeb' },
+  { value: 'autre', label: 'Autre', color: '#64748b', bg: '#f8fafc' },
 ];
 
 const CONTRACT_TYPES = ['CDI', 'CDD', 'Stage', 'ANAPEC', 'Consultant', 'Freelance'];
 
-const MONTHS_FR = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
 const LEAVE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  pending:  { bg: '#fef3c7', color: '#92400e', label: 'En attente' },
+  pending: { bg: '#fef3c7', color: '#92400e', label: 'En attente' },
   approved: { bg: '#d1fae5', color: '#065f46', label: 'Approuvé' },
   rejected: { bg: '#fee2e2', color: '#991b1b', label: 'Rejeté' },
 };
 
 const GOAL_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  pending:     { bg: '#f1f5f9', color: '#475569', label: 'À faire' },
+  pending: { bg: '#f1f5f9', color: '#475569', label: 'À faire' },
   in_progress: { bg: '#eff6ff', color: '#1d4ed8', label: 'En cours' },
-  completed:   { bg: '#d1fae5', color: '#065f46', label: 'Terminé' },
-  cancelled:   { bg: '#fee2e2', color: '#991b1b', label: 'Annulé' },
+  completed: { bg: '#d1fae5', color: '#065f46', label: 'Terminé' },
+  cancelled: { bg: '#fee2e2', color: '#991b1b', label: 'Annulé' },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -286,26 +286,26 @@ function FilesTab({ employeeId }: { employeeId: string }) {
 type ExtractedData = AnalysisResult['extracted'];
 
 const APPLY_FIELDS: { key: keyof ExtractedData; label: string; emp?: keyof Employee }[] = [
-  { key: 'full_name',      label: 'Nom complet',     emp: 'full_name' },
-  { key: 'cin',            label: 'CIN',              emp: 'cin' },
-  { key: 'matricule',      label: 'Matricule',        emp: 'matricule' },
-  { key: 'email',          label: 'Email',            emp: 'email' },
-  { key: 'phone',          label: 'Téléphone',        emp: 'phone' },
-  { key: 'birth_date',     label: 'Date naissance',   emp: 'birth_date' },
-  { key: 'nationality',    label: 'Nationalité',      emp: 'nationality' },
-  { key: 'position',       label: 'Poste',            emp: 'position' },
-  { key: 'department',     label: 'Département',      emp: 'department' },
-  { key: 'salary',         label: 'Salaire (MAD)',    emp: 'salary' },
-  { key: 'hire_date',      label: "Date d'embauche",  emp: 'hire_date' },
-  { key: 'contract_type',  label: 'Type contrat',     emp: 'contract_type' },
-  { key: 'contract_start', label: 'Début contrat',    emp: 'contract_start' },
-  { key: 'contract_end',   label: 'Fin contrat',      emp: 'contract_end' },
-  { key: 'manager',        label: 'Manager',          emp: 'manager' },
-  { key: 'address',        label: 'Adresse',          emp: 'address' },
-  { key: 'city',           label: 'Ville',            emp: 'city' },
-  { key: 'cnss_number',    label: 'N° CNSS' },
-  { key: 'bank_account',   label: 'RIB' },
-  { key: 'notes',          label: 'Notes',            emp: 'notes' },
+  { key: 'full_name', label: 'Nom complet', emp: 'full_name' },
+  { key: 'cin', label: 'CIN', emp: 'cin' },
+  { key: 'matricule', label: 'Matricule', emp: 'matricule' },
+  { key: 'email', label: 'Email', emp: 'email' },
+  { key: 'phone', label: 'Téléphone', emp: 'phone' },
+  { key: 'birth_date', label: 'Date naissance', emp: 'birth_date' },
+  { key: 'nationality', label: 'Nationalité', emp: 'nationality' },
+  { key: 'position', label: 'Poste', emp: 'position' },
+  { key: 'department', label: 'Département', emp: 'department' },
+  { key: 'salary', label: 'Salaire (MAD)', emp: 'salary' },
+  { key: 'hire_date', label: "Date d'embauche", emp: 'hire_date' },
+  { key: 'contract_type', label: 'Type contrat', emp: 'contract_type' },
+  { key: 'contract_start', label: 'Début contrat', emp: 'contract_start' },
+  { key: 'contract_end', label: 'Fin contrat', emp: 'contract_end' },
+  { key: 'manager', label: 'Manager', emp: 'manager' },
+  { key: 'address', label: 'Adresse', emp: 'address' },
+  { key: 'city', label: 'Ville', emp: 'city' },
+  { key: 'cnss_number', label: 'N° CNSS' },
+  { key: 'bank_account', label: 'RIB' },
+  { key: 'notes', label: 'Notes', emp: 'notes' },
 ];
 
 function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
@@ -556,11 +556,11 @@ export default function EmployeeFolderPage() {
   const expiryWarn = days !== null && days <= 30;
 
   const TABS: { key: Tab; label: string }[] = [
-    { key: 'profil',      label: 'Profil' },
-    { key: 'fichiers',    label: 'Fichiers' },
-    { key: 'documents',   label: 'Documents' },
-    { key: 'conges',      label: 'Congés' },
-    { key: 'paie',        label: 'Paie' },
+    { key: 'profil', label: 'Profil' },
+    { key: 'fichiers', label: 'Fichiers' },
+    { key: 'documents', label: 'Documents' },
+    { key: 'conges', label: 'Congés' },
+    { key: 'paie', label: 'Paie' },
     { key: 'performance', label: 'Performance' },
   ];
 
@@ -752,12 +752,30 @@ export default function EmployeeFolderPage() {
                     >
                       <Download size={11} /> PDF
                     </button>
-                    <button
-                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
-                      onClick={() => downloadDoc(doc.id, 'docx', `${doc.document_type}.docx`).catch(e => toast.error(e.message))}
-                    >
-                      <Download size={11} /> DOCX
-                    </button>
+                    {(!doc.signature_status || doc.signature_status === 'pending') && (
+                      <button
+                        style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--primary)', background: 'var(--primary)', color: '#fff', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
+                        onClick={async () => {
+                          try {
+                            const { sendForSignature } = await import('../../lib/api');
+                            const res = await sendForSignature(doc.id);
+                            toast.success("Demande de signature envoyée");
+
+                            // Mocking the copy to clipboard for the demo
+                            const link = `${window.location.origin}/sign/${res.token}`;
+                            navigator.clipboard.writeText(link);
+                            toast.info(`Lien copié: ${link}`);
+
+                            refetchDocs();
+                          } catch (e: any) { toast.error(e.response?.data?.detail || "Erreur"); }
+                        }}
+                      >
+                        <FileSignature size={11} /> {doc.signature_status === 'pending' ? 'Renvoyer' : 'Signer'}
+                      </button>
+                    )}
+                    {doc.signature_status === 'signed' && (
+                      <Badge variant="success" style={{ display: 'flex', alignItems: 'center', gap: 4 }}><CheckCircle size={10} /> Signé</Badge>
+                    )}
                   </div>
                 </div>
               ))}
@@ -855,7 +873,7 @@ export default function EmployeeFolderPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <p style={{ margin: 0, fontWeight: 500, fontSize: 13 }}>Cycle {r.cycle}</p>
                       {r.overall_score
-                        ? <span style={{ display: 'flex', gap: 2 }}>{[1,2,3,4,5].map(i => <span key={i} style={{ fontSize: 14, color: i <= r.overall_score! ? '#f59e0b' : '#e2e8f0' }}>★</span>)}</span>
+                        ? <span style={{ display: 'flex', gap: 2 }}>{[1, 2, 3, 4, 5].map(i => <span key={i} style={{ fontSize: 14, color: i <= r.overall_score! ? '#f59e0b' : '#e2e8f0' }}>★</span>)}</span>
                         : <span style={{ fontSize: 11, color: 'var(--fg-muted)', fontStyle: 'italic' }}>En attente</span>
                       }
                     </div>

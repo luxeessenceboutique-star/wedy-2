@@ -165,17 +165,17 @@ export const uploadDocument = (id: string, type: string, name: string, file: Fil
   const form = new FormData();
   form.append('file', file);
   return api.post(`/documents`, form, {
-    params: { 
-      [isEmployee ? 'employee_id' : 'profile_id']: id, 
-      type, 
-      name 
+    params: {
+      [isEmployee ? 'employee_id' : 'profile_id']: id,
+      type,
+      name
     }
   }).then(r => r.data);
 };
 
 export const deleteDocument = (id: string) => api.delete(`/documents/${id}`);
 
-export const getPdfUrl  = (docId: string) => `${BASE}/documents/generate/${docId}/pdf`;
+export const getPdfUrl = (docId: string) => `${BASE}/documents/generate/${docId}/pdf`;
 export const getDocxUrl = (docId: string) => `${BASE}/documents/generate/${docId}/docx`;
 
 /** Open a print-to-PDF window with proper A4 CSS — renders exactly like the on-screen preview. */
@@ -293,7 +293,7 @@ export type LeaveRequest = {
 export type LeaveBalance = {
   employee_id: string; year: number;
   annual_total: number; annual_used: number;
-  sick_total: number;   sick_used: number;
+  sick_total: number; sick_used: number;
   personal_total: number; personal_used: number;
 };
 

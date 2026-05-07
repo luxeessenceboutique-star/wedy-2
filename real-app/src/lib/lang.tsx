@@ -298,6 +298,7 @@ export const TRANSLATIONS = {
     // Integrations page
     integrations_subtitle: 'Connectez Wedy aux outils de votre équipe',
     webhooks_active: 'Webhooks actifs',
+    webhook_add: 'Nouveau webhook',
     webhooks_none: 'Aucun webhook configuré',
     webhook_endpoint: 'URL de l\'endpoint',
     webhook_events: 'Événements à écouter',
@@ -380,6 +381,7 @@ export const TRANSLATIONS = {
     payroll_payslip: 'Bulletin de paie',
     payroll_export_success: 'Export CSV réussi',
     // Onboarding page
+    onboarding_title: 'Onboarding RH',
     onboarding_subtitle: 'Suivez l\'intégration de vos nouveaux collaborateurs.',
     week_label: 'Semaine',
     pulse_sat: 'Satisfaction',
@@ -722,6 +724,7 @@ export const TRANSLATIONS = {
     // Integrations page
     integrations_subtitle: 'ربط Wedy بأدوات فريقك',
     webhooks_active: 'Webhooks النشطة',
+    webhook_add: 'Webhook جديد',
     webhooks_none: 'لا يوجد webhooks مجهزة',
     webhook_endpoint: 'رابط Endpoint',
     webhook_events: 'الأحداث المراقبة',
@@ -804,6 +807,7 @@ export const TRANSLATIONS = {
     payroll_payslip: 'قسيمة الراتب',
     payroll_export_success: 'تم التصدير بنجاح',
     // Onboarding page
+    onboarding_title: 'التأهيل الوظيفي',
     onboarding_subtitle: 'تتبع اندماج موظفيك الجدد.',
     week_label: 'الأسبوع',
     pulse_sat: 'الرضا',
@@ -1146,6 +1150,7 @@ export const TRANSLATIONS = {
     // Integrations page
     integrations_subtitle: 'Connect Wedy to your team\'s tools',
     webhooks_active: 'Active Webhooks',
+    webhook_add: 'New Webhook',
     webhooks_none: 'No webhooks configured',
     webhook_endpoint: 'Endpoint URL',
     webhook_events: 'Events to Listen',
@@ -1228,6 +1233,7 @@ export const TRANSLATIONS = {
     payroll_payslip: 'Pay slip',
     payroll_export_success: 'CSV Export successful',
     // Onboarding page
+    onboarding_title: 'HR Onboarding',
     onboarding_subtitle: 'Track the integration of your new employees.',
     week_label: 'Week',
     pulse_sat: 'Satisfaction',

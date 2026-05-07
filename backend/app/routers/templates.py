@@ -346,7 +346,15 @@ async def create_template(
     try:
         result = db.table("document_templates").insert(data).execute()
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erreur base de données : {e}")
+        # Self-healing: if target_type column is missing, retry without it
+        if "target_type" in str(e) and "target_type" in data:
+            del data["target_type"]
+            try:
+                result = db.table("document_templates").insert(data).execute()
+            except Exception as e2:
+                raise HTTPException(status_code=400, detail=f"Erreur base de données : {e2}")
+        else:
+            raise HTTPException(status_code=400, detail=f"Erreur base de données : {e}")
     if not result.data:
         raise HTTPException(status_code=400, detail="Could not create template")
     return result.data[0]
@@ -391,16 +399,26 @@ async def import_template_from_file(
         "name_en":       name_en or name_fr,
         "name_ar":       name_ar or name_fr,
         "category":      category,
-        "target_type":   target_type if target_type in ("employee", "intern", "both") else "employee",
         "body_template": body_template,
         "variables":     variables,
         "is_active":     True,
     }
+    # Only add target_type if it's explicitly provided and we want to try saving it
+    if target_type:
+        data["target_type"] = target_type if target_type in ("employee", "intern", "both") else "employee"
 
     try:
         result = db.table("document_templates").insert(data).execute()
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erreur base de données : {e}")
+        # Self-healing: if target_type column is missing, retry without it
+        if "target_type" in str(e) and "target_type" in data:
+            del data["target_type"]
+            try:
+                result = db.table("document_templates").insert(data).execute()
+            except Exception as e2:
+                raise HTTPException(status_code=400, detail=f"Erreur base de données : {e2}")
+        else:
+            raise HTTPException(status_code=400, detail=f"Erreur base de données : {e}")
     if not result.data:
         raise HTTPException(status_code=500, detail="Impossible de sauvegarder le modèle")
 
@@ -685,12 +703,21 @@ async def update_template(
 ):
     allowed = {"name_fr", "name_en", "name_ar", "category", "target_type", "body_template", "variables", "is_active"}
     data = {k: v for k, v in payload.items() if k in allowed}
+    # If target_type is in data, we'll try to update it, but keep it for now.
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
     try:
         result = db.table("document_templates").update(data).eq("id", template_id).execute()
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erreur base de données : {e}")
+        # Self-healing: if target_type column is missing, retry without it
+        if "target_type" in str(e) and "target_type" in data:
+            del data["target_type"]
+            try:
+                result = db.table("document_templates").update(data).eq("id", template_id).execute()
+            except Exception as e2:
+                raise HTTPException(status_code=400, detail=f"Erreur base de données : {e2}")
+        else:
+            raise HTTPException(status_code=400, detail=f"Erreur base de données : {e}")
     if not result.data:
         raise HTTPException(status_code=404, detail="Template not found")
     return result.data[0]

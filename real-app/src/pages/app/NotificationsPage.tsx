@@ -5,6 +5,7 @@ import { api } from '../../lib/api';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Spinner, Button } from '../../components/ui';
 import { toast } from 'sonner';
+import { useLang } from '../../lib/lang';
 
 // ── API ───────────────────────────────────────────────────────────────────────
 
@@ -88,15 +89,9 @@ function NotifRow({ n }: { n: SmartNotif }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-const TYPE_LABELS: Record<string, string> = {
-  contract_expiring:  'Contrats',
-  cdd_risk:           'Contrats',
-  leave_pending:      'Congés',
-  document_generated: 'Documents',
-};
-
 export default function NotificationsPage() {
   const qc = useQueryClient();
+  const { t } = useLang();
   const [filter, setFilter] = useState('all');
 
   const { data, isLoading, refetch } = useQuery({
@@ -109,35 +104,46 @@ export default function NotificationsPage() {
     mutationFn: markAllRead,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('Toutes les notifications marquées comme lues');
+      toast.success(t('notif_all_marked'));
     },
   });
 
   const notifs   = data?.data ?? [];
   const unread   = data?.unread_count ?? 0;
+
+  const TYPE_LABELS: Record<string, string> = {
+    contract_expiring:  t('cat_contracts'),
+    cdd_risk:           t('cat_contracts'),
+    leave_pending:      t('cat_leaves'),
+    document_generated: t('nav_documents'),
+  };
+
   const filtered = filter === 'all' ? notifs
     : filter === 'unread' ? notifs.filter(n => n.unread)
     : notifs.filter(n => TYPE_LABELS[n.type] === filter);
 
-  const categories = ['all', 'unread', 'Contrats', 'Congés', 'Documents'];
+  const categories = ['all', 'unread', t('cat_contracts'), t('cat_leaves'), t('nav_documents')];
   const catLabel: Record<string, string> = {
-    all: 'Tout', unread: `Non lues (${unread})`,
-    Contrats: 'Contrats', Congés: 'Congés', Documents: 'Documents',
+    all: t('filter_all_label'),
+    unread: `${t('filter_unread_label')} (${unread})`,
+    [t('cat_contracts')]: t('cat_contracts'),
+    [t('cat_leaves')]: t('cat_leaves'),
+    [t('nav_documents')]: t('nav_documents'),
   };
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 720, margin: '0 auto' }}>
       <PageHeader
-        title="Notifications"
-        subtitle={unread > 0 ? `${unread} alerte${unread > 1 ? 's' : ''} non lue${unread > 1 ? 's' : ''}` : 'Aucune alerte non lue'}
+        title={t('notifications')}
+        subtitle={unread > 0 ? `${unread} ${t('unread_alerts')}` : t('no_unread')}
         action={
           <div style={{ display: 'flex', gap: 8 }}>
             <Button variant="ghost" onClick={() => refetch()}>
-              <RefreshCw size={13} /> Actualiser
+              <RefreshCw size={13} /> {t('notif_refresh')}
             </Button>
             {unread > 0 && (
               <Button variant="soft" loading={markMut.isPending} onClick={() => markMut.mutate()}>
-                <CheckCheck size={13} /> Tout marquer lu
+                <CheckCheck size={13} /> {t('notif_mark_all_read')}
               </Button>
             )}
           </div>
@@ -167,9 +173,9 @@ export default function NotificationsPage() {
         ) : filtered.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--fg-muted)' }}>
             <Bell size={36} style={{ margin: '0 auto 14px', opacity: 0.15 }} />
-            <p style={{ fontWeight: 600, marginBottom: 4 }}>Aucune notification</p>
+            <p style={{ fontWeight: 600, marginBottom: 4 }}>{t('notif_none_title')}</p>
             <p style={{ fontSize: 13 }}>
-              {filter === 'unread' ? 'Tout est à jour !' : 'Aucun élément dans cette catégorie.'}
+              {filter === 'unread' ? t('notif_up_to_date') : t('notif_empty_cat')}
             </p>
           </div>
         ) : (
@@ -179,7 +185,7 @@ export default function NotificationsPage() {
 
       {notifs.length > 0 && (
         <p style={{ fontSize: 12, color: 'var(--fg-subtle)', marginTop: 10, textAlign: 'center' }}>
-          Notifications générées en temps réel depuis les données RH · Actualisation auto. toutes les 60s
+          {t('notif_footer')}
         </p>
       )}
     </div>

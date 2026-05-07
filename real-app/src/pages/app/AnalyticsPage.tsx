@@ -50,9 +50,9 @@ function BarChart({ data, color }: { data: { label: string; count: number }[]; c
   );
 }
 
-function DonutChart({ data, colors }: { data: { label: string; value: number }[]; colors: string[] }) {
+function DonutChart({ data, colors, noDataText }: { data: { label: string; value: number }[]; colors: string[]; noDataText: string }) {
   const total = data.reduce((s, d) => s + d.value, 0);
-  if (total === 0) return <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Aucune donnée</p>;
+  if (total === 0) return <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>{noDataText}</p>;
 
   let offset = 0;
   const r = 40, cx = 50, cy = 50, stroke = 18;
@@ -135,25 +135,25 @@ export default function AnalyticsPage() {
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 24 }}>
-        <StatCard label="Effectif actif" value={ov?.total_employees ?? 0} icon={<Users size={17} />} color="var(--primary)" />
-        <StatCard label="Stagiaires" value={ov?.total_interns ?? 0} icon={<Users size={17} />} color="var(--accent)" />
-        <StatCard label="En congé" value={ov?.on_leave ?? 0} icon={<Clock size={17} />} color="var(--warning)" />
-        <StatCard label="Contrats exp." value={ov?.expiring_contracts ?? 0} sub="dans 30 jours" icon={<AlertTriangle size={17} />} color="var(--danger)" />
-        <StatCard label="Docs ce mois" value={ov?.docs_this_month ?? 0} icon={<FileText size={17} />} color="var(--success)" />
-        <StatCard label="Congés en att." value={ov?.pending_leaves ?? 0} icon={<TrendingUp size={17} />} color="var(--warning)" />
+        <StatCard label={t('stat_active_workforce')} value={ov?.total_employees ?? 0} icon={<Users size={17} />} color="var(--primary)" />
+        <StatCard label={t('stat_interns_label')} value={ov?.total_interns ?? 0} icon={<Users size={17} />} color="var(--accent)" />
+        <StatCard label={t('stat_on_leave')} value={ov?.on_leave ?? 0} icon={<Clock size={17} />} color="var(--warning)" />
+        <StatCard label={t('stat_expiring_30')} value={ov?.expiring_contracts ?? 0} sub={t('in_30_days')} icon={<AlertTriangle size={17} />} color="var(--danger)" />
+        <StatCard label={t('stat_docs_month')} value={ov?.docs_this_month ?? 0} icon={<FileText size={17} />} color="var(--success)" />
+        <StatCard label={t('stat_pending_leaves_label')} value={ov?.pending_leaves ?? 0} icon={<TrendingUp size={17} />} color="var(--warning)" />
       </div>
 
       {/* Charts row 1 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <Card>
-          <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 20 }}>Évolution des effectifs (12 mois)</p>
+          <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 20 }}>{t('chart_headcount')}</p>
           {headcount?.trend ? (
             <BarChart data={headcount.trend} color="var(--primary)" />
           ) : <Spinner />}
         </Card>
 
         <Card>
-          <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 20 }}>Documents générés (12 mois)</p>
+          <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 20 }}>{t('chart_docs')}</p>
           {docsT?.trend ? (
             <BarChart data={docsT.trend} color="var(--accent)" />
           ) : <Spinner />}
@@ -163,14 +163,14 @@ export default function AnalyticsPage() {
       {/* Charts row 2 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <Card>
-          <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 20 }}>Répartition par type de contrat</p>
+          <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 20 }}>{t('chart_contracts')}</p>
           {contractData.length > 0 ? (
-            <DonutChart data={contractData} colors={contractColors} />
-          ) : <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Aucune donnée</p>}
+            <DonutChart data={contractData} colors={contractColors} noDataText={t('chart_no_data')} />
+          ) : <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>{t('chart_no_data')}</p>}
         </Card>
 
         <Card>
-          <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 20 }}>Top départements</p>
+          <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 20 }}>{t('chart_top_depts')}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {deptData.map((d, i) => {
               const pct = ov?.total_employees ? Math.round((d.value / ov.total_employees) * 100) : 0;
@@ -195,7 +195,7 @@ export default function AnalyticsPage() {
         <Card pad={false}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <AlertTriangle size={14} style={{ color: 'var(--warning)' }} />
-            <span style={{ fontWeight: 600, fontSize: 13 }}>Contrats expirant dans 30 jours</span>
+            <span style={{ fontWeight: 600, fontSize: 13 }}>{t('chart_expiring_30_')}</span>
           </div>
           <div>
             {ov.expiring_list.map((item, i) => (

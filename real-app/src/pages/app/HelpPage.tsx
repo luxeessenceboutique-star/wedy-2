@@ -1,36 +1,38 @@
 import React, { useState } from 'react';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Search } from 'lucide-react';
-
-const SECTIONS = [
-  {
-    title: 'Getting started',
-    color: '#0891b2',
-    links: ['Create your first document', 'Import your employees', 'Invite your team'],
-  },
-  {
-    title: 'Documents',
-    color: '#0891b2',
-    links: ['Customizing templates', 'Using variables', 'Signing & sealing'],
-  },
-  {
-    title: 'AI Copilot',
-    color: '#0891b2',
-    links: ['How Claude helps with HR', 'Translation quality', 'Data privacy & AI'],
-  },
-  {
-    title: 'Compliance',
-    color: '#0891b2',
-    links: ['Moroccan Labor Code 2026', 'GDPR checklist', 'Exporting audit logs'],
-  },
-];
+import { useLang } from '../../lib/lang';
 
 export default function HelpPage() {
+  const { t } = useLang();
   const [query, setQuery] = useState('');
+
+  const SECTIONS = [
+    {
+      title: t('help_getting_started'),
+      color: '#0891b2',
+      links: [t('help_create_doc'), t('help_import_employees'), t('help_invite_team')],
+    },
+    {
+      title: t('help_docs_cat'),
+      color: '#0891b2',
+      links: [t('help_custom_templates'), t('help_variables'), t('help_signing')],
+    },
+    {
+      title: t('help_ai_cat'),
+      color: '#0891b2',
+      links: [t('help_claude_hr'), t('help_translation_q'), t('help_data_privacy')],
+    },
+    {
+      title: t('help_compliance_cat'),
+      color: '#0891b2',
+      links: [t('help_labor_code'), t('help_gdpr_check'), t('help_audit_export')],
+    },
+  ];
 
   return (
     <div style={{ padding: '24px 28px' }}>
-      <PageHeader title="Help center" subtitle="Docs · tutorials · API reference" />
+      <PageHeader title={t('help_center_title')} subtitle={t('help_subtitle')} />
 
       {/* Search */}
       <div style={{ maxWidth: 560, margin: '0 auto 32px' }}>
@@ -44,7 +46,7 @@ export default function HelpPage() {
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search the docs..."
+            placeholder={t('help_search_ph')}
             style={{
               flex: 1, border: 'none', outline: 'none',
               fontSize: 14, color: '#0f172a', background: 'transparent',
@@ -66,11 +68,11 @@ export default function HelpPage() {
             <div style={{ fontSize: 14, fontWeight: 600, color: '#0891b2', marginBottom: 14 }}>
               {section.title}
             </div>
-            {section.links.map(link => (
-              <div key={link} style={{
+            {section.links.map((link, idx) => (
+              <div key={idx} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '8px 0',
-                borderBottom: section.links.indexOf(link) < section.links.length - 1
+                borderBottom: idx < section.links.length - 1
                   ? '1px solid var(--border)' : 'none',
                 cursor: 'pointer',
               }}>

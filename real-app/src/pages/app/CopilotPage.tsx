@@ -4,15 +4,7 @@ import { Button } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { sendCopilotMessage, type ChatMessage } from '../../lib/api';
 import { toast } from 'sonner';
-
-const SUGGESTIONS = [
-  'Combien d\'employés ont des contrats expirant ce mois-ci ?',
-  'Quels documents sont requis pour l\'embauche au Maroc ?',
-  'Explique-moi la période d\'essai selon le Code du Travail marocain',
-  'Comment calculer le préavis de licenciement ?',
-  'Quelles sont les règles de congé maternité au Maroc ?',
-  'Génère une politique de télétravail',
-];
+import { useLang } from '../../lib/lang';
 
 function MsgBubble({ msg }: { msg: ChatMessage }) {
   const isUser = msg.role === 'user';
@@ -68,12 +60,23 @@ function TypingIndicator() {
   );
 }
 
-const INIT: ChatMessage = {
-  role: 'assistant',
-  content: "Bonjour ! Je suis WEDY Copilot, votre assistant RH alimenté par Claude. Je peux vous aider avec le droit du travail marocain, la gestion des RH, la rédaction de documents, et bien plus. Comment puis-je vous aider aujourd'hui ?",
-};
-
 export default function CopilotPage() {
+  const { t } = useLang();
+
+  const SUGGESTIONS = [
+    t('copilot_sugg_1'),
+    t('copilot_sugg_2'),
+    t('copilot_sugg_3'),
+    t('copilot_sugg_4'),
+    t('copilot_sugg_5'),
+    t('copilot_sugg_6'),
+  ];
+
+  const INIT: ChatMessage = {
+    role: 'assistant',
+    content: t('copilot_init_msg'),
+  };
+
   const [messages, setMessages] = useState<ChatMessage[]>([INIT]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -134,15 +137,15 @@ export default function CopilotPage() {
       <div style={{ padding: '20px 28px 0', borderBottom: '1px solid var(--border)', background: 'var(--bg-elev)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
-            <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 2 }}>AI Copilot</h1>
-            <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Assistant RH intelligent · droit du travail marocain · Claude AI</p>
+            <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 2 }}>{t('ai_copilot')}</h1>
+            <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>{t('copilot_subtitle_full')}</p>
           </div>
           <button
             onClick={reset}
-            title="Nouvelle conversation"
+            title={t('copilot_new_chat')}
             style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--fg-muted)', background: 'var(--bg-muted)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '6px 12px', cursor: 'pointer' }}
           >
-            <RefreshCw size={12} /> Nouvelle conversation
+            <RefreshCw size={12} /> {t('copilot_new_chat')}
           </button>
         </div>
       </div>
@@ -172,7 +175,7 @@ export default function CopilotPage() {
             ref={textareaRef}
             className="input"
             style={{ flex: 1, resize: 'none', minHeight: 28, maxHeight: 120, border: 'none', padding: 0, background: 'transparent', boxShadow: 'none', outline: 'none' }}
-            placeholder="Posez une question sur le droit du travail, les documents RH…  (Entrée pour envoyer)"
+            placeholder={t('copilot_ph')}
             value={input}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
@@ -188,7 +191,7 @@ export default function CopilotPage() {
           </Button>
         </div>
         <p style={{ fontSize: 11, color: 'var(--fg-subtle)', marginTop: 6, textAlign: 'center' }}>
-          WEDY peut faire des erreurs. Consultez un expert juridique pour les décisions importantes.
+          {t('copilot_disclaimer')}
         </p>
       </div>
 

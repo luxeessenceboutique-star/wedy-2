@@ -6,6 +6,7 @@ import { Plus, Check, X, Calendar, Clock, ChevronLeft, ChevronRight, Users, List
 import { PageHeader } from '../../components/layout/AppShell';
 import { Card, Badge, Spinner, Button } from '../../components/ui';
 import { listLeaves, reviewLeave, createLeave, listEmployees, getLeaveBalance, type LeaveRequest } from '../../lib/api';
+import { useLang } from '../../lib/lang';
 
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const WEEK_DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
@@ -265,6 +266,7 @@ function NewLeaveModal({ onClose, onCreated }: { onClose: () => void; onCreated:
 // ── Main Page ─────────────────────────────────────────────────────
 export default function TimeOffPage() {
   const qc = useQueryClient();
+  const { t } = useLang();
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState('all');
   const [view, setView] = useState<'list' | 'calendar'>('list');
@@ -303,23 +305,36 @@ export default function TimeOffPage() {
 
   const leaves = data?.data ?? [];
   const allLeaves = allData?.data ?? [];
-  const pendingCount = allLeaves.filter(l => l.status === 'pending').length;
-  const approvedCount = allLeaves.filter(l => l.status === 'approved').length;
-  const totalDays = allLeaves.filter(l => l.status === 'approved').reduce((s, l) => s + (l.days || 0), 0);
+
+  const selectedEmployee = useMemo(() => employees.find(e => e.id === selectedEmpId) ?? null, [employees, selectedEmpId]);
+
+  const filteredByEmployee = useMemo(() =>
+    allLeaves.filter(l => !selectedEmpId || l.employee_id === selectedEmpId),
+    [allLeaves, selectedEmpId],
+  );
+
+  const displayLeaves = useMemo(() =>
+    leaves.filter(l => !selectedEmpId || l.employee_id === selectedEmpId),
+    [leaves, selectedEmpId],
+  );
+
+  const pendingCount = filteredByEmployee.filter(l => l.status === 'pending').length;
+  const approvedCount = filteredByEmployee.filter(l => l.status === 'approved').length;
+  const totalDays = filteredByEmployee.filter(l => l.status === 'approved').reduce((s, l) => s + (l.days || 0), 0);
 
   const FILTERS = [
-    { key: 'all', label: 'Toutes', count: allLeaves.length },
-    { key: 'pending', label: 'En attente', count: pendingCount },
-    { key: 'approved', label: 'Approuvées', count: approvedCount },
-    { key: 'rejected', label: 'Rejetées', count: allLeaves.filter(l => l.status === 'rejected').length },
+    { key: 'all', label: t('all_status'), count: filteredByEmployee.length },
+    { key: 'pending', label: t('pending_leaves'), count: pendingCount },
+    { key: 'approved', label: t('approved_leaves'), count: approvedCount },
+    { key: 'rejected', label: t('rejected_leaves'), count: filteredByEmployee.filter(l => l.status === 'rejected').length },
   ];
 
   return (
     <div style={{ padding: '24px 28px' }}>
       <PageHeader
-        title="Congés & Absences"
-        subtitle="Gérez les demandes de congé et les absences de votre équipe"
-        action={<Button onClick={() => setShowModal(true)}><Plus size={14} /> Nouvelle demande</Button>}
+        title={t('time_off')}
+        subtitle={t('timeoff_subtitle')}
+        action={<Button onClick={() => setShowModal(true)}><Plus size={14} /> {t('request_leave')}</Button>}
       />
 
       {showModal && <NewLeaveModal onClose={() => setShowModal(false)} onCreated={() => { qc.invalidateQueries({ queryKey: ['leaves'] }); qc.invalidateQueries({ queryKey: ['leaves-all'] }); }} />}
@@ -327,10 +342,10 @@ export default function TimeOffPage() {
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Total demandes', value: allLeaves.length, color: 'var(--primary)', icon: <Calendar size={16} /> },
-          { label: 'En attente', value: pendingCount, color: '#F59E0B', icon: <Clock size={16} /> },
-          { label: 'Approuvées', value: approvedCount, color: '#22C55E', icon: <Check size={16} /> },
-          { label: 'Jours d\'absence (équipe)', value: totalDays, color: 'var(--fg)', icon: <Users size={16} /> },
+          { label: t('total_leaves'), value: allLeaves.length, color: 'var(--primary)', icon: <Calendar size={16} /> },
+          { label: t('pending_leaves'), value: pendingCount, color: '#F59E0B', icon: <Clock size={16} /> },
+          { label: t('approved_leaves'), value: approvedCount, color: '#22C55E', icon: <Check size={16} /> },
+          { label: t('col_days'), value: totalDays, color: 'var(--fg)', icon: selectedEmpId ? <User size={16} /> : <Users size={16} /> },
         ].map(stat => (
           <div key={stat.label} style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 10, background: stat.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color, flexShrink: 0 }}>
@@ -343,6 +358,25 @@ export default function TimeOffPage() {
           </div>
         ))}
       </div>
+
+      {selectedEmployee && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
+          padding: '10px 16px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10,
+        }}>
+          <User size={14} style={{ color: '#3b82f6', flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: '#1d4ed8' }}>
+            {t('filtered_for')} <strong>{selectedEmployee.full_name}</strong>
+          </span>
+          <button
+            onClick={() => setSelectedEmpId('')}
+            title="Afficher tous les employés"
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 4 }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
         {/* Main content */}
@@ -368,8 +402,8 @@ export default function TimeOffPage() {
 
             <div style={{ display: 'flex', background: 'var(--bg-muted)', borderRadius: 9, padding: 3 }}>
               {[
-                { key: 'list', icon: <List size={13} />, label: 'Liste' },
-                { key: 'calendar', icon: <Calendar size={13} />, label: 'Calendrier' },
+                { key: 'list', icon: <List size={13} />, label: t('leave_requests_title') },
+                { key: 'calendar', icon: <Calendar size={13} />, label: t('leave_calendar_title') },
               ].map(v => (
                 <button key={v.key} onClick={() => setView(v.key as 'list' | 'calendar')} style={{
                   padding: '5px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500,
@@ -386,7 +420,7 @@ export default function TimeOffPage() {
 
           {view === 'calendar' ? (
             <CalendarView
-              leaves={allLeaves}
+              leaves={filteredByEmployee}
               calDate={calDate}
               onPrev={() => setCalDate(subMonths(calDate, 1))}
               onNext={() => setCalDate(addMonths(calDate, 1))}
@@ -395,19 +429,19 @@ export default function TimeOffPage() {
             <Card pad={false}>
               {isLoading ? (
                 <div style={{ padding: 48, textAlign: 'center' }}><Spinner /></div>
-              ) : leaves.length === 0 ? (
+              ) : displayLeaves.length === 0 ? (
                 <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--fg-muted)' }}>
                   <Calendar size={36} style={{ margin: '0 auto 12px', opacity: 0.2 }} />
-                  <p style={{ fontSize: 14 }}>Aucune demande trouvée.</p>
+                  <p style={{ fontSize: 14 }}>{t('no_leaves')}</p>
                 </div>
               ) : (
-                leaves.map((req: LeaveRequest, i) => {
+                displayLeaves.map((req: LeaveRequest, i) => {
                   const color = TYPE_COLORS[req.type] || '#6B7280';
                   let startFmt = req.start_date, endFmt = req.end_date;
                   try { startFmt = format(parseISO(req.start_date), 'dd MMM'); } catch { /* keep raw */ }
                   try { endFmt = format(parseISO(req.end_date), 'dd MMM yyyy'); } catch { /* keep raw */ }
                   return (
-                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: i < leaves.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: i < displayLeaves.length - 1 ? '1px solid var(--border)' : 'none' }}>
                       <div style={{ width: 4, height: 44, borderRadius: 2, background: color, flexShrink: 0 }} />
                       <div style={{ width: 38, height: 38, borderRadius: '50%', background: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 700, color }}>
                         {(req.employees?.full_name || '?')[0]}
@@ -431,16 +465,16 @@ export default function TimeOffPage() {
                           <>
                             <button onClick={() => reviewMutation.mutate({ id: req.id, status: 'rejected' })}
                               style={{ border: '1px solid var(--border)', background: 'var(--bg-elev)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--fg-muted)' }}>
-                              <X size={12} /> Rejeter
+                              <X size={12} /> {t('reject')}
                             </button>
                             <button onClick={() => reviewMutation.mutate({ id: req.id, status: 'approved' })}
                               style={{ border: 'none', background: '#22C55E', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#fff', fontWeight: 500 }}>
-                              <Check size={12} /> Approuver
+                              <Check size={12} /> {t('approve')}
                             </button>
                           </>
                         ) : (
                           <Badge variant={STATUS_VARIANT[req.status] ?? 'default'}>
-                            {req.status === 'approved' ? 'Approuvée' : req.status === 'rejected' ? 'Rejetée' : req.status}
+                            {req.status === 'approved' ? t('approved_leaves') : req.status === 'rejected' ? t('rejected_leaves') : req.status}
                           </Badge>
                         )}
                       </div>
@@ -458,7 +492,7 @@ export default function TimeOffPage() {
           <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '18px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <User size={14} style={{ color: 'var(--primary)' }} />
-              <span style={{ fontWeight: 600, fontSize: 13 }}>Solde de congés</span>
+              <span style={{ fontWeight: 600, fontSize: 13 }}>{t('leave_balance')}</span>
             </div>
             <select className="select" value={selectedEmpId} onChange={e => setSelectedEmpId(e.target.value)} style={{ marginBottom: 16, fontSize: 12 }}>
               <option value="">Choisir un employé…</option>
@@ -493,8 +527,8 @@ export default function TimeOffPage() {
           <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '18px 16px' }}>
             <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 14 }}>Répartition par type</p>
             {Object.entries(TYPE_LABELS).map(([key, label]) => {
-              const count = allLeaves.filter(l => l.type === key).length;
-              const total = allLeaves.length || 1;
+              const count = filteredByEmployee.filter(l => l.type === key).length;
+              const total = filteredByEmployee.length || 1;
               return (
                 <div key={key} style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>

@@ -1,6 +1,6 @@
 """Pydantic schemas — Profiles, Employees, Interns"""
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Literal
+from typing import Optional, Literal, Dict, Any
 from uuid import UUID
 from datetime import date, datetime
 
@@ -66,6 +66,7 @@ class EmployeeCreate(BaseModel):
     notes: Optional[str] = None
     internship_start: Optional[date] = None
     internship_end: Optional[date] = None
+    custom_fields: Optional[Dict[str, Any]] = None
 
 
 class EmployeeUpdate(BaseModel):
@@ -92,6 +93,7 @@ class EmployeeUpdate(BaseModel):
     notes: Optional[str] = None
     internship_start: Optional[date] = None
     internship_end: Optional[date] = None
+    custom_fields: Optional[Dict[str, Any]] = None
 
 
 class EmployeeOut(BaseModel):
@@ -119,6 +121,7 @@ class EmployeeOut(BaseModel):
     notes: Optional[str] = None
     internship_start: Optional[date] = None
     internship_end: Optional[date] = None
+    custom_fields: Optional[Dict[str, Any]] = None
     created_at: Optional[datetime] = None
 
     class Config:

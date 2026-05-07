@@ -4,6 +4,7 @@ import { getAnalyticsOverview, getHeadcountTrend, getDocumentsTrend, getLeaveSta
 import { Card, Spinner } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Users, FileText, Clock, TrendingUp, AlertTriangle, UserX } from 'lucide-react';
+import { useLang } from '../../lib/lang';
 
 function StatCard({ label, value, sub, icon, color = 'var(--primary)' }: {
   label: string; value: string | number; sub?: string; icon: React.ReactNode; color?: string;
@@ -100,6 +101,7 @@ const CONTRACT_COLORS: Record<string, string> = {
 const DEPT_COLORS = ['#0891b2','#7c3aed','#f59e0b','#10b981','#ec4899','#64748b','#ef4444','#06b6d4'];
 
 export default function AnalyticsPage() {
+  const { t } = useLang();
   const { data: overview, isLoading: ovLoading } = useQuery({
     queryKey: ['analytics-overview'], queryFn: getAnalyticsOverview,
   });
@@ -112,7 +114,7 @@ export default function AnalyticsPage() {
 
   if (ovLoading) return (
     <div style={{ padding: '24px 28px' }}>
-      <PageHeader title="Analytics" subtitle="Données RH en temps réel" />
+      <PageHeader title={t('analytics')} subtitle={t('analytics_subtitle')} />
       <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spinner /></div>
     </div>
   );
@@ -129,7 +131,7 @@ export default function AnalyticsPage() {
 
   return (
     <div style={{ padding: '24px 28px' }}>
-      <PageHeader title="Analytics" subtitle="Données RH en temps réel · mise à jour continue" />
+      <PageHeader title={t('analytics')} subtitle={t('analytics_subtitle')} />
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 24 }}>

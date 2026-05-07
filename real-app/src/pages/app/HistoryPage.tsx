@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, Download, Trash2, FileText } from 'lucide-react';
-import { listDocuments, deleteDocument, downloadDoc, printDocument } from '../../lib/api';
+import { Search, Download, Trash2, FileText, Eye } from 'lucide-react';
+import { listDocuments, deleteDocument, downloadDoc, printDocument, viewDocument } from '../../lib/api';
 import { Card, Badge, Spinner, Empty, Button } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
+import { useLang } from '../../lib/lang';
 import { toast } from 'sonner';
 
 export default function HistoryPage() {
   const qc = useQueryClient();
+  const { t } = useLang();
   const [search, setSearch] = useState('');
   const { data, isLoading } = useQuery({ queryKey: ['documents'], queryFn: () => listDocuments({ limit: 100 }) });
 
@@ -24,23 +26,23 @@ export default function HistoryPage() {
 
   return (
     <div style={{ padding: '24px 28px' }}>
-      <PageHeader title="Document History" subtitle={`${data?.count ?? 0} documents generated`} />
+      <PageHeader title={t('document_history')} subtitle={`${data?.count ?? 0} ${t('recent_documents').toLowerCase()}`} />
 
       <div style={{ position: 'relative', maxWidth: 400, marginBottom: 20 }}>
         <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)' }} />
-        <input className="input" style={{ paddingLeft: 32 }} placeholder="Search by type or employee…" value={search} onChange={e => setSearch(e.target.value)} />
+        <input className="input" style={{ paddingLeft: 32 }} placeholder={t('search_documents')} value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <Card pad={false}>
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spinner /></div>
         ) : docs.length === 0 ? (
-          <Empty title="No documents yet" description="Generate your first document to see it here." />
+          <Empty title={t('no_history')} description={t('no_history_desc')} />
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                {['Type', 'Employee', 'Language', 'Date', 'Download', ''].map(h => (
+                {[t('col_type'), t('col_employee'), t('col_language'), t('col_date'), t('col_actions'), ''].map(h => (
                   <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 500, color: 'var(--fg-muted)', fontSize: 12 }}>{h}</th>
                 ))}
               </tr>
@@ -61,6 +63,10 @@ export default function HistoryPage() {
                   <td style={{ padding: '10px 16px', color: 'var(--fg-muted)' }}>{new Date(doc.created_at).toLocaleDateString()}</td>
                   <td style={{ padding: '10px 16px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-ghost btn-sm" title={t('preview')}
+                        onClick={() => viewDocument(doc.id, doc.document_type).catch(e => toast.error(e.message))}>
+                        <Eye size={12} /> {t('save')}
+                      </button>
                       <button className="btn btn-soft btn-sm"
                         onClick={() => printDocument(doc.id, doc.document_type).catch(e => toast.error(e.message))}>
                         <Download size={12} /> PDF

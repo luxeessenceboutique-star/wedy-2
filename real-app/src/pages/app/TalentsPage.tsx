@@ -8,6 +8,7 @@ import {
 import { api } from '../../lib/api';
 import { Button, Spinner, Input, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
+import { useLang } from '../../lib/lang';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
 
@@ -619,6 +620,7 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
 // ── Page ───────────────────────────────────────────────────────────────────────
 export default function TalentsPage() {
   const qc = useQueryClient();
+  const { t } = useLang();
   const [pageTab, setPageTab] = useState<'profiles' | 'mobility'>('profiles');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [selectedTalent, setSelectedTalent] = useState<any>(null);
@@ -642,7 +644,7 @@ export default function TalentsPage() {
   return (
     <div style={{ padding: '24px 28px' }}>
       <PageHeader
-        title="Gestion des Talents"
+        title={t('talents_title')}
         subtitle={`${talents.length} profil${talents.length !== 1 ? 's' : ''} · ${mobility.length} candidats mobilité`}
         action={
           <Button variant="soft" onClick={() => bulkMut.mutate()} loading={bulkMut.isPending}>

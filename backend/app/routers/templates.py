@@ -330,7 +330,7 @@ async def create_template(
     db: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    allowed = {"code", "name_fr", "name_en", "name_ar", "category", "body_template", "variables", "is_active"}
+    allowed = {"code", "name_fr", "name_en", "name_ar", "category", "target_type", "body_template", "variables", "is_active"}
     data = {k: v for k, v in payload.items() if k in allowed}
     if "code" not in data:
         base = re.sub(r"[^\w]", "_", data.get("name_fr", "template").lower())[:40]
@@ -340,6 +340,7 @@ async def create_template(
     data.setdefault("name_ar", name_fr)
     data.setdefault("is_active", True)
     data.setdefault("category", "autre")
+    data.setdefault("target_type", "employee")
     data.setdefault("variables", [])
     try:
         result = db.table("document_templates").insert(data).execute()
@@ -357,6 +358,7 @@ async def import_template_from_file(
     name_en: str = Form(""),
     name_ar: str = Form(""),
     category: str = Form("autre"),
+    target_type: str = Form("employee"),
     db: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
@@ -388,6 +390,7 @@ async def import_template_from_file(
         "name_en":       name_en or name_fr,
         "name_ar":       name_ar or name_fr,
         "category":      category,
+        "target_type":   target_type if target_type in ("employee", "intern", "both") else "employee",
         "body_template": body_template,
         "variables":     variables,
         "is_active":     True,
@@ -679,7 +682,7 @@ async def update_template(
     db: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    allowed = {"name_fr", "name_en", "name_ar", "category", "body_template", "variables", "is_active"}
+    allowed = {"name_fr", "name_en", "name_ar", "category", "target_type", "body_template", "variables", "is_active"}
     data = {k: v for k, v in payload.items() if k in allowed}
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")

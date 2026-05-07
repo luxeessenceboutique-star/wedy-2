@@ -700,6 +700,20 @@ export default function EmployeeFolderPage() {
               <p style={{ marginTop: 10, fontSize: 13, color: 'var(--fg)', lineHeight: 1.6 }}>{employee.notes}</p>
             </Card>
           )}
+
+          {employee.custom_fields && Object.keys(employee.custom_fields).length > 0 && (
+            <Card>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>Champs personnalisés</span>
+              <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {Object.entries(employee.custom_fields).map(([key, value]) => (
+                  <div key={key} style={{ padding: '10px 12px', borderRadius: 8, background: 'var(--bg-muted)', border: '1px solid var(--border)' }}>
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>{key}</p>
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--fg)', fontWeight: 500 }}>{String(value)}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
       )}
 

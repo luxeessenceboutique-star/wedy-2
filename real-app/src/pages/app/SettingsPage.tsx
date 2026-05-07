@@ -7,6 +7,7 @@ import { Card, Button } from '../../components/ui';
 import { useTheme } from '../../lib/theme';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
+import { useLang } from '../../lib/lang';
 
 const TABS = [
   { key: 'profile', label: 'Profil', icon: <User size={14} /> },
@@ -253,11 +254,12 @@ function TabSecurity() {
 }
 
 export default function SettingsPage() {
+  const { t } = useLang();
   const [tab, setTab] = useState('profile');
 
   return (
     <div style={{ padding: '24px 28px' }}>
-      <PageHeader title="Paramètres" subtitle="Gérez votre profil, l'apparence et la sécurité" />
+      <PageHeader title={t('settings')} subtitle={t('settings_subtitle')} />
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
         {/* Sidebar nav */}

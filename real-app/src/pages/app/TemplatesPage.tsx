@@ -4,6 +4,7 @@ import {
   FileText, Search, Wand2, Plus, Upload, Pencil, Trash2,
   X, Eye, FileUp, Tag, Save, ChevronDown, Sparkles,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  Users, GraduationCap,
 } from 'lucide-react';
 import {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
@@ -26,6 +27,13 @@ const CAT_META: Record<string, { color: string; bg: string; label: string }> = {
 };
 const catMeta = (cat: string) => CAT_META[cat] ?? CAT_META.autre;
 const CATEGORIES = Object.keys(CAT_META);
+
+const TARGET_TYPES = [
+  { value: 'employee', label: 'Employé',   Icon: Users,          color: '#0891b2', bg: '#ecfeff' },
+  { value: 'intern',   label: 'Stagiaire', Icon: GraduationCap,  color: '#7c3aed', bg: '#f5f3ff' },
+  { value: 'both',     label: 'Les deux',  Icon: null,           color: '#64748b', bg: '#f8fafc' },
+] as const;
+const targetMeta = (t?: string) => TARGET_TYPES.find(x => x.value === t) ?? TARGET_TYPES[0];
 
 // ── Variables ──────────────────────────────────────────────────────────────────
 
@@ -412,6 +420,9 @@ function TemplateEditorModal({
   const [nameFr, setNameFr] = useState(initial?.name_fr ?? '');
   const [nameEn, setNameEn] = useState(initial?.name_en ?? '');
   const [category, setCategory] = useState(initial?.category ?? 'attestation');
+  const [targetType, setTargetType] = useState<'employee' | 'intern' | 'both'>(
+    (initial?.target_type as 'employee' | 'intern' | 'both') ?? 'employee'
+  );
   const [body, setBody] = useState(initial?.body_template ?? '');
 
   const handleSave = () => {
@@ -419,7 +430,7 @@ function TemplateEditorModal({
     if (!body.trim()) { toast.error('Contenu requis'); return; }
     const vars = [...new Set((body.match(/\{\{(\w+)\}\}/g) ?? []).map(m => m.replace(/[{}]/g, '')))];
     const code = nameFr.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').slice(0, 50);
-    onSave({ name_fr: nameFr, name_en: nameEn || nameFr, name_ar: nameEn || nameFr, category, body_template: body, code, variables: vars, is_active: true });
+    onSave({ name_fr: nameFr, name_en: nameEn || nameFr, name_ar: nameEn || nameFr, category, target_type: targetType, body_template: body, code, variables: vars, is_active: true });
   };
 
   return (
@@ -470,6 +481,29 @@ function TemplateEditorModal({
           >
             {CATEGORIES.map(c => <option key={c} value={c}>{catMeta(c).label}</option>)}
           </select>
+
+          {/* Target type selector */}
+          <div style={{ display: 'flex', gap: 4, background: 'var(--bg-muted)', borderRadius: 8, padding: 3 }}>
+            {TARGET_TYPES.map(({ value, label, Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTargetType(value)}
+                title={label}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
+                  fontSize: 12, fontWeight: 600, border: 'none',
+                  background: targetType === value ? 'var(--bg-elev)' : 'transparent',
+                  color: targetType === value ? 'var(--primary)' : 'var(--fg-muted)',
+                  boxShadow: targetType === value ? 'var(--shadow-sm)' : 'none',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {Icon ? <Icon size={12} /> : '🔁'} {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <Button onClick={handleSave} loading={loading}>
@@ -489,6 +523,7 @@ function ImportModal({ onClose, onImported }: { onClose: () => void; onImported:
   const [file, setFile] = useState<File | null>(null);
   const [nameFr, setNameFr] = useState('');
   const [category, setCategory] = useState('attestation');
+  const [targetType, setTargetType] = useState<'employee' | 'intern' | 'both'>('employee');
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -502,6 +537,7 @@ function ImportModal({ onClose, onImported }: { onClose: () => void; onImported:
       fd.append('name_fr', nameFr.trim());
       fd.append('name_en', nameFr.trim());
       fd.append('category', category);
+      fd.append('target_type', targetType);
       await importTemplateFromPdf(fd);
       toast.success('Template importé avec succès');
       onImported();
@@ -555,6 +591,28 @@ function ImportModal({ onClose, onImported }: { onClose: () => void; onImported:
             <div>
               <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 4 }}>Nom du template *</label>
               <input className="input" style={{ fontSize: 13 }} value={nameFr} onChange={e => setNameFr(e.target.value)} required placeholder="ex: Attestation de travail" />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>Pour qui est ce modèle ? *</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {TARGET_TYPES.map(({ value, label, Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setTargetType(value)}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                      padding: '9px 0', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                      border: targetType === value ? `2px solid var(--primary)` : '1px solid var(--border)',
+                      background: targetType === value ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                      color: targetType === value ? 'var(--primary)' : 'var(--fg-muted)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {Icon && <Icon size={13} />} {label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 4 }}>Catégorie</label>
@@ -614,9 +672,16 @@ function TemplateCard({
               <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{tpl.name_en}</p>
             )}
           </div>
-          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', background: m.bg, color: m.color, borderRadius: 5, flexShrink: 0 }}>
-            {m.label}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', background: m.bg, color: m.color, borderRadius: 5 }}>
+              {m.label}
+            </span>
+            {(() => { const tm = targetMeta(tpl.target_type); return (
+              <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', background: tm.bg, color: tm.color, borderRadius: 5, display: 'flex', alignItems: 'center', gap: 3 }}>
+                {tm.Icon ? <tm.Icon size={9} /> : '🔁'} {tm.label}
+              </span>
+            ); })()}
+          </div>
         </div>
         {vars.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
@@ -666,9 +731,10 @@ function TemplateCard({
 
 export default function TemplatesPage() {
   const qc = useQueryClient();
-  const [search, setSearch]         = useState('');
-  const [catFilter, setCatFilter]   = useState('');
-  const [showImport, setShowImport] = useState(false);
+  const [search, setSearch]           = useState('');
+  const [catFilter, setCatFilter]     = useState('');
+  const [typeFilter, setTypeFilter]   = useState('');
+  const [showImport, setShowImport]   = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing]       = useState<Template | null>(null);
   const [previewing, setPreviewing] = useState<Template | null>(null);
@@ -683,7 +749,8 @@ export default function TemplatesPage() {
     const q = search.toLowerCase();
     return (
       (!q || t.name_fr.toLowerCase().includes(q) || (t.name_en ?? '').toLowerCase().includes(q)) &&
-      (!catFilter || t.category === catFilter)
+      (!catFilter  || t.category === catFilter) &&
+      (!typeFilter || t.target_type === typeFilter || t.target_type === 'both')
     );
   });
   const categories = [...new Set(allTemplates.map(t => t.category))].sort();
@@ -736,7 +803,7 @@ export default function TemplatesPage() {
       />
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
           <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)', pointerEvents: 'none' }} />
           <input
@@ -745,13 +812,34 @@ export default function TemplatesPage() {
             value={search} onChange={e => setSearch(e.target.value)}
           />
         </div>
+
+        {/* Type filter */}
         <div style={{ display: 'flex', gap: 6 }}>
           <button
-            onClick={() => setCatFilter('')}
-            style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid var(--border)', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: !catFilter ? 'var(--primary)' : 'var(--bg-elev)', color: !catFilter ? '#fff' : 'var(--fg)' }}
+            onClick={() => setTypeFilter('')}
+            style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid var(--border)', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: !typeFilter ? 'var(--primary)' : 'var(--bg-elev)', color: !typeFilter ? '#fff' : 'var(--fg)' }}
           >
             Tous
           </button>
+          {TARGET_TYPES.filter(t => t.value !== 'both').map(({ value, label, Icon, color, bg }) => (
+            <button
+              key={value}
+              onClick={() => setTypeFilter(typeFilter === value ? '' : value)}
+              style={{
+                padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                border: `1px solid ${typeFilter === value ? color : 'var(--border)'}`,
+                background: typeFilter === value ? bg : 'var(--bg-elev)',
+                color: typeFilter === value ? color : 'var(--fg)',
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}
+            >
+              <Icon size={12} /> {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Category filter */}
+        <div style={{ display: 'flex', gap: 6 }}>
           {categories.map(cat => {
             const m = catMeta(cat);
             return (

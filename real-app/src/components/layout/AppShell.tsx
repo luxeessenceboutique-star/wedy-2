@@ -6,11 +6,13 @@ import {
   Puzzle, Bell, Settings, HelpCircle, LogOut,
   ChevronDown, ExternalLink, Search, ClipboardList,
   UserCog, Moon, Sun, GraduationCap, UserCheck, BookOpen, Star,
+  Network, Video,
 } from 'lucide-react';
 import { WedyLogo } from '../WedyLogo';
 import { Avatar } from '../ui';
 import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme';
+import { useLang, type Lang } from '../../lib/lang';
 
 interface NavItem {
   label: string;
@@ -20,66 +22,14 @@ interface NavItem {
   badgeCount?: number;
 }
 
-const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
-  {
-    heading: 'Overview',
-    items: [
-      { label: 'Dashboard',     icon: <LayoutDashboard size={15} />, to: '/app' },
-      { label: 'AI Copilot',    icon: <Bot size={15} />,             to: '/app/copilot',       badge: 'New' },
-      { label: 'Notifications', icon: <Bell size={15} />,            to: '/app/notifications', badgeCount: 3 },
-    ],
-  },
-  {
-    heading: 'People',
-    items: [
-      { label: 'Employees',   icon: <Users size={15} />,         to: '/app/employees' },
-      { label: 'Interns',     icon: <GraduationCap size={15} />, to: '/app/interns' },
-      { label: 'Recruitment', icon: <UserPlus size={15} />,      to: '/app/recruitment' },
-      { label: 'Performance', icon: <TrendingUp size={15} />,    to: '/app/performance' },
-      { label: 'Time off',    icon: <Clock size={15} />,         to: '/app/timeoff' },
-      { label: 'Payroll',     icon: <DollarSign size={15} />,    to: '/app/payroll' },
-    ],
-  },
-  {
-    heading: 'Développement RH',
-    items: [
-      { label: 'Onboarding RH', icon: <UserCheck size={15} />, to: '/app/onboarding' },
-      { label: 'Formation',     icon: <BookOpen size={15} />,   to: '/app/training' },
-      { label: 'Talents',       icon: <Star size={15} />,       to: '/app/talents' },
-    ],
-  },
-  {
-    heading: 'Documents',
-    items: [
-      { label: 'Generate',  icon: <Wand2 size={15} />,    to: '/app/generate' },
-      { label: 'Templates', icon: <FileText size={15} />, to: '/app/templates' },
-      { label: 'History',   icon: <History size={15} />,  to: '/app/history' },
-    ],
-  },
-  {
-    heading: 'Insights',
-    items: [
-      { label: 'Analytics',  icon: <BarChart3 size={15} />,     to: '/app/analytics' },
-      { label: 'Audit log',  icon: <ClipboardList size={15} />, to: '/app/audit' },
-    ],
-  },
-  {
-    heading: 'Workspace',
-    items: [
-      { label: 'Integrations', icon: <Puzzle size={15} />,   to: '/app/integrations' },
-      { label: 'Users & roles',icon: <UserCog size={15} />,  to: '/app/users' },
-      { label: 'Settings',     icon: <Settings size={15} />, to: '/app/settings' },
-      { label: 'Help',         icon: <HelpCircle size={15}/>, to: '/app/help' },
-    ],
-  },
-];
-
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
+  const { t, lang, setLang, dir } = useLang();
   const location = useLocation();
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-direction', 'A');
@@ -87,8 +37,79 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
-  const fullName = ((user as any)?.full_name as string) || ((user as any)?.profile?.full_name as string) || user?.email?.split('@')[0] || 'User';
-  const initials = fullName.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+  const fullName =
+    ((user as any)?.full_name as string) ||
+    ((user as any)?.profile?.full_name as string) ||
+    user?.email?.split('@')[0] || 'User';
+
+  const isAdmin =
+    (((user as any)?.role_name as string) === 'admin') ||
+    (((user as any)?.roles as string[] | undefined)?.includes('admin'));
+
+  // ── Nav sections (labels pulled from translation context) ────────────────
+  const NAV_SECTIONS: { heading: string; items: NavItem[] }[] = [
+    {
+      heading: t('nav_overview'),
+      items: [
+        { label: t('dashboard'),      icon: <LayoutDashboard size={15} />, to: '/app' },
+        { label: t('ai_copilot'),     icon: <Bot size={15} />,             to: '/app/copilot',       badge: 'New' },
+        { label: t('notifications'),  icon: <Bell size={15} />,            to: '/app/notifications', badgeCount: 3 },
+      ],
+    },
+    {
+      heading: t('nav_people'),
+      items: [
+        { label: t('employees'),   icon: <Users size={15} />,         to: '/app/employees' },
+        { label: t('interns'),     icon: <GraduationCap size={15} />, to: '/app/interns' },
+        { label: t('recruitment'), icon: <UserPlus size={15} />,      to: '/app/recruitment' },
+        { label: t('performance'), icon: <TrendingUp size={15} />,    to: '/app/performance' },
+        { label: t('time_off'),    icon: <Clock size={15} />,         to: '/app/timeoff' },
+        { label: t('payroll'),     icon: <DollarSign size={15} />,    to: '/app/payroll' },
+        { label: t('org_chart'),   icon: <Network size={15} />,       to: '/app/orgchart' },
+        { label: t('meetings'),    icon: <Video size={15} />,         to: '/app/meetings' },
+      ],
+    },
+    {
+      heading: t('nav_hr_dev'),
+      items: [
+        { label: t('onboarding'), icon: <UserCheck size={15} />, to: '/app/onboarding' },
+        { label: t('training'),   icon: <BookOpen size={15} />,   to: '/app/training' },
+        { label: t('talents'),    icon: <Star size={15} />,       to: '/app/talents' },
+      ],
+    },
+    {
+      heading: t('nav_documents'),
+      items: [
+        { label: t('generate'),   icon: <Wand2 size={15} />,    to: '/app/generate' },
+        { label: t('templates'),  icon: <FileText size={15} />,  to: '/app/templates' },
+        { label: t('history'),    icon: <History size={15} />,   to: '/app/history' },
+      ],
+    },
+    {
+      heading: t('nav_insights'),
+      items: [
+        { label: t('analytics'),  icon: <BarChart3 size={15} />,     to: '/app/analytics' },
+        { label: t('audit_log'),  icon: <ClipboardList size={15} />, to: '/app/audit' },
+      ],
+    },
+    {
+      heading: t('nav_workspace'),
+      items: [
+        { label: t('integrations'), icon: <Puzzle size={15} />,   to: '/app/integrations' },
+        { label: t('users_roles'),  icon: <UserCog size={15} />,  to: '/app/users' },
+        { label: t('settings'),     icon: <Settings size={15} />, to: '/app/settings' },
+        { label: t('help'),         icon: <HelpCircle size={15}/>, to: '/app/help' },
+      ],
+    },
+  ];
+
+  const LANG_OPTIONS: { code: Lang; label: string; flag: string }[] = [
+    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+    { code: 'ar', label: 'العربية',  flag: '🇲🇦' },
+    { code: 'en', label: 'English',  flag: '🇬🇧' },
+  ];
+
+  const currentLang = LANG_OPTIONS.find(l => l.code === lang)!;
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
@@ -99,6 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         borderRight: '1px solid var(--border)',
         background: '#ffffff',
         display: 'flex', flexDirection: 'column',
+        ...(dir === 'rtl' ? { borderRight: 'none', borderLeft: '1px solid var(--border)' } : {}),
       }}>
 
         {/* Logo row */}
@@ -108,6 +130,59 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }}>
           <WedyLogo size={24} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+
+            {/* Language switcher */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setLangMenuOpen(o => !o)}
+                title="Language / Langue / اللغة"
+                style={{
+                  background: 'none', border: '1px solid var(--border)',
+                  cursor: 'pointer', color: 'var(--fg-subtle)',
+                  padding: '2px 6px', borderRadius: 4,
+                  display: 'flex', alignItems: 'center', gap: 3,
+                  fontSize: 11, fontWeight: 600,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+              >
+                <span>{currentLang.flag}</span>
+                <span>{currentLang.code.toUpperCase()}</span>
+              </button>
+
+              {langMenuOpen && (
+                <div style={{
+                  position: 'absolute', top: '100%',
+                  [dir === 'rtl' ? 'right' : 'left']: 0,
+                  marginTop: 4, zIndex: 100,
+                  background: '#fff', border: '1px solid var(--border)',
+                  borderRadius: 8, boxShadow: 'var(--shadow-lg)',
+                  minWidth: 130, overflow: 'hidden',
+                }}>
+                  {LANG_OPTIONS.map(opt => (
+                    <button
+                      key={opt.code}
+                      onClick={() => { setLang(opt.code); setLangMenuOpen(false); }}
+                      style={{
+                        width: '100%', padding: '8px 12px', border: 'none',
+                        background: lang === opt.code ? 'var(--primary-soft)' : 'none',
+                        color: lang === opt.code ? 'var(--primary)' : 'var(--fg)',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+                        fontSize: 13, fontWeight: lang === opt.code ? 600 : 400,
+                        textAlign: 'start',
+                      }}
+                      onMouseEnter={e => { if (lang !== opt.code) (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-muted)'; }}
+                      onMouseLeave={e => { if (lang !== opt.code) (e.currentTarget as HTMLButtonElement).style.background = 'none'; }}
+                    >
+                      <span style={{ fontSize: 16 }}>{opt.flag}</span>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
               title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
@@ -117,6 +192,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
             </button>
+
             <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-subtle)', padding: 4, borderRadius: 4, display: 'flex', alignItems: 'center' }}>
               <ExternalLink size={14} />
             </button>
@@ -132,7 +208,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             cursor: 'text',
           }}>
             <Search size={12} style={{ color: 'var(--fg-subtle)', flexShrink: 0 }} />
-            <span style={{ flex: 1, fontSize: 12, color: 'var(--fg-subtle)' }}>Search...</span>
+            <span style={{ flex: 1, fontSize: 12, color: 'var(--fg-subtle)' }}>{t('search')}</span>
             <span style={{
               fontSize: 10, color: 'var(--fg-subtle)',
               background: 'var(--bg-elev)', border: '1px solid var(--border)',
@@ -145,7 +221,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <nav style={{ flex: 1, overflowY: 'auto', paddingBottom: 8 }} className="scroll">
           {NAV_SECTIONS.map((section) => (
             <div key={section.heading} style={{ marginBottom: 2 }}>
-              {/* Section heading */}
               <div style={{
                 padding: '8px 14px 3px',
                 fontSize: 10, fontWeight: 600,
@@ -156,7 +231,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {section.heading}
               </div>
 
-              {/* Items */}
               {section.items.map(item => {
                 const active = item.to === '/app'
                   ? location.pathname === '/app'
@@ -183,7 +257,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       </span>
                       <span style={{ flex: 1 }}>{item.label}</span>
 
-                      {/* "New" text badge */}
                       {item.badge && (
                         <span style={{
                           fontSize: 10, fontWeight: 600,
@@ -195,7 +268,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         </span>
                       )}
 
-                      {/* Count badge */}
                       {item.badgeCount !== undefined && (
                         <span style={{
                           fontSize: 10, fontWeight: 600,
@@ -227,12 +299,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             onMouseLeave={e => (e.currentTarget.style.background = 'none')}
           >
             <Avatar name={fullName} size={28} />
-            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+            <div style={{ flex: 1, minWidth: 0, textAlign: dir === 'rtl' ? 'right' : 'left' }}>
               <div style={{ fontSize: 12, fontWeight: 500, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {fullName}
               </div>
               <div style={{ fontSize: 11, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {(((user as any)?.role_name as string) === 'admin' || ((user as any)?.roles as string[] | undefined)?.includes('admin')) ? 'HR Admin' : 'HR Member'}
+                {isAdmin ? t('hr_admin') : t('hr_member')}
               </div>
             </div>
             <ChevronDown size={13} style={{ color: '#94a3b8', flexShrink: 0 }} />
@@ -256,7 +328,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'none')}
               >
-                <LogOut size={13} /> Sign out
+                <LogOut size={13} /> {t('sign_out')}
               </button>
             </div>
           )}

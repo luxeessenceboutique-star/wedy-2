@@ -4,9 +4,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Wand2, Check, ChevronRight, Download, Sparkles, CheckCircle2,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  Printer, RotateCcw, AlertCircle, Eye, EyeOff
+  Printer, RotateCcw, AlertCircle, Eye, EyeOff, Search, Users, GraduationCap
 } from 'lucide-react';
-import { listEmployees, listTemplates, generateDocument, downloadDoc, aiEnhance } from '../../lib/api';
+import { listEmployees, listInterns, listTemplates, generateDocument, downloadDoc, aiEnhance } from '../../lib/api';
 import type { Employee, Template } from '../../lib/api';
 import { Button, Badge, Card, Spinner } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
@@ -77,6 +77,29 @@ const empOptions = (emp: Employee) => {
 // Extract {{variables}} from a template body
 const extractVars = (body = ''): string[] =>
   [...new Set((body.match(/\{\{(\w+)\}\}/g) ?? []).map(m => m.replace(/[{}]/g, '')))];
+
+const isInternTemplate = (tpl: Template) => {
+  // Use explicit target_type if set, fall back to keyword detection
+  if (tpl.target_type === 'intern') return true;
+  if (tpl.target_type === 'both') return false; // shown for both
+  if (tpl.target_type === 'employee') return false;
+  const INTERN_KEYWORDS = ['stage', 'stagiaire', 'convention'];
+  return INTERN_KEYWORDS.some(kw =>
+    tpl.name_fr.toLowerCase().includes(kw) ||
+    (tpl.name_en ?? '').toLowerCase().includes(kw)
+  );
+};
+const isEmployeeTemplate = (tpl: Template) =>
+  tpl.target_type === 'both' || !isInternTemplate(tpl);
+
+const TPL_CATEGORIES = [
+  { value: '',            label: 'Tous' },
+  { value: 'attestation', label: 'Attestation' },
+  { value: 'contrat',     label: 'Contrat' },
+  { value: 'lettre',      label: 'Lettre' },
+  { value: 'avenant',     label: 'Avenant' },
+  { value: 'autre',       label: 'Autre' },
+];
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 
@@ -185,8 +208,11 @@ export default function GeneratePage() {
   const navigate  = useNavigate();
 
   const [step, setStep]               = useState(0);
+  const [personType, setPersonType]   = useState<'employee' | 'intern'>('employee');
   const [employeeId, setEmployeeId]   = useState(params.get('employee_id') ?? '');
   const [templateId, setTemplateId]   = useState(params.get('template_id') ?? '');
+  const [tplSearch, setTplSearch]     = useState('');
+  const [tplCategory, setTplCategory] = useState('');
   const [language, setLanguage]       = useState('fr');
   const [useAI, setUseAI]             = useState(false);
   const [extraVars, setExtraVars]     = useState<Record<string, string>>({});
@@ -198,13 +224,27 @@ export default function GeneratePage() {
 
   const editorRef = useRef<HTMLDivElement>(null);
 
-  const { data: empData } = useQuery({ queryKey: ['employees'], queryFn: () => listEmployees({ limit: 200 }) });
-  const { data: tplData } = useQuery({ queryKey: ['templates'],  queryFn: () => listTemplates() });
+  const { data: empData }    = useQuery({ queryKey: ['employees'], queryFn: () => listEmployees({ limit: 200 }) });
+  const { data: internData } = useQuery({ queryKey: ['interns'],   queryFn: () => listInterns({ limit: 200 }) });
+  const { data: tplData }    = useQuery({ queryKey: ['templates'], queryFn: () => listTemplates() });
 
-  const employees = empData?.data ?? [];
-  const templates = tplData?.data  ?? [];
-  const selectedEmp = employees.find(e => e.id === employeeId);
+  const employees = empData?.data   ?? [];
+  const interns   = internData?.data ?? [];
+  const templates = tplData?.data   ?? [];
+
+  const persons = personType === 'intern' ? interns : employees;
+  const selectedEmp = persons.find(e => e.id === employeeId) ?? employees.find(e => e.id === employeeId);
   const selectedTpl = templates.find(t => t.id === templateId);
+
+  // Filtered templates for Step 1
+  const filteredTemplates = templates
+    .filter(t => t.is_active !== false)
+    .filter(t => !tplCategory || t.category === tplCategory)
+    .filter(t => !tplSearch ||
+      t.name_fr.toLowerCase().includes(tplSearch.toLowerCase()) ||
+      (t.name_en ?? '').toLowerCase().includes(tplSearch.toLowerCase())
+    )
+    .filter(t => personType === 'intern' ? isInternTemplate(t) : isEmployeeTemplate(t));
 
   // Variables detected in the chosen template
   const templateVars = extractVars(selectedTpl?.body_template);
@@ -310,35 +350,66 @@ export default function GeneratePage() {
 
       <StepIndicator step={step} labels={STEPS} />
 
-      {/* ── STEP 0: Select employee ── */}
+      {/* ── STEP 0: Type selector + person ── */}
       {step === 0 && (
         <Card>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Sélectionner un employé</h2>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>
-            Choisissez l'employé pour lequel le document sera généré.
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Type &amp; Personne</h2>
+          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 18 }}>
+            Choisissez d'abord le type, puis sélectionnez la personne concernée.
           </p>
-          {employees.length === 0 ? (
+
+          {/* Type toggle */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+            {([
+              { value: 'employee', label: 'Employé',   Icon: Users },
+              { value: 'intern',   label: 'Stagiaire',  Icon: GraduationCap },
+            ] as const).map(({ value, label, Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => { setPersonType(value); setEmployeeId(''); setTemplateId(''); setTplSearch(''); setTplCategory(''); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 20px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                  border: personType === value ? '2px solid var(--primary)' : '1px solid var(--border)',
+                  background: personType === value ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                  color: personType === value ? 'var(--primary)' : 'var(--fg-muted)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <Icon size={16} /> {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Person list */}
+          {persons.length === 0 ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner /></div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10, marginBottom: 20 }}>
-              {employees.slice(0, 24).map(emp => (
-                <div key={emp.id} onClick={() => setEmployeeId(emp.id)}
+              {persons.slice(0, 30).map(p => (
+                <div key={p.id} onClick={() => setEmployeeId(p.id)}
                   style={{
                     padding: '12px 14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                    border: employeeId === emp.id ? '2px solid var(--primary)' : '1px solid var(--border)',
-                    background: employeeId === emp.id ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                    border: employeeId === p.id ? '2px solid var(--primary)' : '1px solid var(--border)',
+                    background: employeeId === p.id ? 'var(--primary-soft)' : 'var(--bg-elev)',
                     display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.15s',
                   }}>
-                  <Avatar name={emp.full_name} size={32} />
+                  <Avatar name={p.full_name} size={32} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>{emp.full_name}</p>
-                    <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{emp.position || emp.department || emp.cin || '—'}</p>
+                    <p style={{ fontWeight: 600, fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.full_name}</p>
+                    <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>
+                      {personType === 'intern'
+                        ? ((p as any).school || p.department || p.cin || '—')
+                        : (p.position || p.department || p.cin || '—')}
+                    </p>
                   </div>
-                  {employeeId === emp.id && <Check size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />}
+                  {employeeId === p.id && <Check size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />}
                 </div>
               ))}
             </div>
           )}
+
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button disabled={!employeeId} onClick={() => setStep(1)}>
               Suivant <ChevronRight size={14} />
@@ -350,33 +421,84 @@ export default function GeneratePage() {
       {/* ── STEP 1: Select template ── */}
       {step === 1 && (
         <Card>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Sélectionner un template</h2>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>Choisissez le type de document à générer.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10, marginBottom: 20 }}>
-            {templates.map(tpl => {
-              const vars = extractVars(tpl.body_template);
-              return (
-                <div key={tpl.id} onClick={() => setTemplateId(tpl.id)}
-                  style={{
-                    padding: '14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                    border: templateId === tpl.id ? '2px solid var(--primary)' : '1px solid var(--border)',
-                    background: templateId === tpl.id ? 'var(--primary-soft)' : 'var(--bg-elev)',
-                    transition: 'all 0.15s',
-                  }}>
-                  <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{tpl.name_fr}</p>
-                  {tpl.name_en && tpl.name_en !== tpl.name_fr && (
-                    <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 6 }}>{tpl.name_en}</p>
-                  )}
-                  <Badge>{tpl.category}</Badge>
-                  {vars.length > 0 && (
-                    <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 6 }}>
-                      {vars.length} variable{vars.length > 1 ? 's' : ''}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Sélectionner un modèle</h2>
+            <span style={{ fontSize: 12, color: 'var(--fg-muted)', background: 'var(--bg-muted)', padding: '3px 10px', borderRadius: 20 }}>
+              {personType === 'intern' ? '🎓 Stagiaire' : '👤 Employé'} · {filteredTemplates.length} modèle{filteredTemplates.length !== 1 ? 's' : ''}
+            </span>
           </div>
+          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 16 }}>
+            Choisissez le type de document à générer.
+          </p>
+
+          {/* Search */}
+          <div style={{ position: 'relative', marginBottom: 14 }}>
+            <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)', pointerEvents: 'none' }} />
+            <input
+              className="input"
+              placeholder="Rechercher un modèle…"
+              value={tplSearch}
+              onChange={e => setTplSearch(e.target.value)}
+              style={{ paddingLeft: 34 }}
+            />
+          </div>
+
+          {/* Category filter */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 18, flexWrap: 'wrap' }}>
+            {TPL_CATEGORIES.map(cat => (
+              <button
+                key={cat.value}
+                type="button"
+                onClick={() => setTplCategory(cat.value)}
+                style={{
+                  padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 500,
+                  cursor: 'pointer', border: 'none',
+                  background: tplCategory === cat.value ? 'var(--primary)' : 'var(--bg-muted)',
+                  color: tplCategory === cat.value ? '#fff' : 'var(--fg-muted)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Template grid */}
+          {filteredTemplates.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--fg-muted)', fontSize: 13 }}>
+              Aucun modèle trouvé.{tplSearch && <> Essayez un autre terme de recherche.</>}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10, marginBottom: 20 }}>
+              {filteredTemplates.map(tpl => {
+                const vars = extractVars(tpl.body_template);
+                return (
+                  <div key={tpl.id} onClick={() => setTemplateId(tpl.id)}
+                    style={{
+                      padding: '14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+                      border: templateId === tpl.id ? '2px solid var(--primary)' : '1px solid var(--border)',
+                      background: templateId === tpl.id ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                      transition: 'all 0.15s',
+                    }}>
+                    <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tpl.name_fr}</p>
+                    {tpl.name_en && tpl.name_en !== tpl.name_fr && (
+                      <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tpl.name_en}</p>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Badge>{tpl.category}</Badge>
+                      {templateId === tpl.id && <Check size={12} style={{ color: 'var(--primary)' }} />}
+                    </div>
+                    {vars.length > 0 && (
+                      <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 6 }}>
+                        {vars.length} variable{vars.length > 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <Button variant="ghost" onClick={() => setStep(0)}>Retour</Button>
             <Button disabled={!templateId} onClick={() => setStep(2)}>
@@ -570,7 +692,7 @@ export default function GeneratePage() {
               ← Nouveau document
             </Button>
             <Button onClick={() => navigate('/app/history')}>
-              Voir l'historique →
+              Sauvegarder →
             </Button>
           </div>
         </div>

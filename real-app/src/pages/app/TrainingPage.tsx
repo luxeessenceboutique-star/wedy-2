@@ -7,6 +7,7 @@ import {
 import { api } from '../../lib/api';
 import { Button, Badge, Spinner, Input, Modal, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
+import { useLang } from '../../lib/lang';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
 
@@ -225,6 +226,7 @@ function SkillDetailModal({ skill, employees, onClose }: any) {
 // ── Page ───────────────────────────────────────────────────────────────────────
 export default function TrainingPage() {
   const qc = useQueryClient();
+  const { t } = useLang();
   const [catFilter, setCatFilter] = useState('');
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'catalog' | 'assignments' | 'skills'>('catalog');
@@ -309,8 +311,8 @@ export default function TrainingPage() {
   return (
     <div style={{ padding: '24px 28px' }}>
       <PageHeader
-        title="Plan de Formation"
-        subtitle="Catalogue, assignations, compétences et ROI"
+        title={t('training_title')}
+        subtitle={t('training_subtitle')}
         action={
           <Button onClick={() => view === 'skills' ? setShowCreateSkill(true) : setShowCreate(true)}>
             <Plus size={14} /> {view === 'skills' ? 'Nouvelle compétence' : 'Nouvelle formation'}

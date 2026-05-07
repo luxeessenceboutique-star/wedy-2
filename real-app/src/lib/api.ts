@@ -38,6 +38,7 @@ export type Employee = {
   languages?: string[];
   bio?: string;
   photo_url?: string;
+  custom_fields?: Record<string, string>;
   created_at?: string;
 };
 
@@ -117,6 +118,7 @@ export const listDepartments = () =>
 
 // ── Templates ────────────────────────────────────────────────────────
 export type Template = {
+  target_type?: 'employee' | 'intern' | 'both';
   id: string; name_fr: string; name_ar?: string; name_en?: string;
   category: string; description?: string; is_active: boolean;
   body_template?: string; created_at?: string;
@@ -191,6 +193,30 @@ function _openPrintWindow(html: string, title: string) {
   );
   w.document.close();
   setTimeout(() => { w.focus(); w.print(); }, 350);
+}
+
+/** Fetch a generated document's HTML and open it in a new tab for viewing (no print dialog). */
+export async function viewDocument(docId: string, title = 'Document'): Promise<void> {
+  const token = localStorage.getItem('wedy_token');
+  const res = await fetch(`/api/documents/generate/${docId}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.detail ?? `Erreur ${res.status}`);
+  }
+  const data = await res.json();
+  const w = window.open('', '_blank')!;
+  w.document.write(
+    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>` +
+    `<style>` +
+    `body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.8;margin:0;padding:40px 60px;color:#1a1a1a;max-width:800px;margin:0 auto;}` +
+    `img{max-width:100%;height:auto;}` +
+    `h1,h2,h3{text-align:center;}` +
+    `p{margin:4px 0;}` +
+    `</style></head><body>${data.content ?? ''}</body></html>`
+  );
+  w.document.close();
 }
 
 /** Fetch a generated document's HTML and open the browser print dialog (→ Save as PDF). */
@@ -539,3 +565,60 @@ export const listReviews = (params?: Record<string, string>) =>
     overall_score: rev.score,
     comments: rev.feedback,
   })));
+
+// ── Org Chart ────────────────────────────────────────────────────────────────
+export type OrgMember = {
+  employee_id: string;
+  project_id: string;
+  role_in_team?: string;
+  employee?: { id: string; full_name: string; position?: string; department?: string };
+};
+
+export type OrgProject = {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+  members: OrgMember[];
+};
+
+export const getOrgChart = async (): Promise<{ projects: OrgProject[]; unassigned: Employee[] }> => {
+  const [projRes, empRes] = await Promise.all([
+    api.get<{ data: any[] }>('/orgchart/projects').then(r => r.data.data ?? []),
+    listEmployees({ limit: 500 }).then(r => r.data),
+  ]);
+
+  const projects: OrgProject[] = await Promise.all(
+    projRes.map(async (p: any) => {
+      const membersRes = await api.get<{ data: OrgMember[] }>(`/orgchart/projects/${p.id}/members`).then(r => r.data.data ?? []);
+      return { ...p, members: membersRes } as OrgProject;
+    })
+  );
+
+  const assignedIds = new Set(projects.flatMap(p => p.members.map(m => m.employee_id)));
+  const unassigned = empRes.filter(e => !assignedIds.has(e.id));
+
+  return { projects, unassigned };
+};
+
+export const createOrgProject = (body: { name: string; color: string; description?: string }) =>
+  api.post<OrgProject>('/orgchart/projects', body).then(r => r.data);
+
+export const updateOrgProject = (id: string, body: { name?: string; color?: string; description?: string }) =>
+  api.patch<OrgProject>(`/orgchart/projects/${id}`, body).then(r => r.data);
+
+export const deleteOrgProject = (id: string) =>
+  api.delete(`/orgchart/projects/${id}`);
+
+export const addOrgMember = (projectId: string, body: { employee_id: string; role_in_team?: string }) =>
+  api.post<OrgMember>(`/orgchart/projects/${projectId}/members`, {
+    employee_id: body.employee_id,
+    project_id: projectId,
+    role_in_team: body.role_in_team,
+  }).then(r => r.data);
+
+export const removeOrgMember = (projectId: string, employeeId: string) =>
+  api.delete(`/orgchart/projects/${projectId}/members/${employeeId}`);
+
+export const updateOrgMemberRole = (projectId: string, employeeId: string, role: string) =>
+  api.patch(`/orgchart/projects/${projectId}/members/${employeeId}`, null, { params: { role_in_team: role } }).then(r => r.data);

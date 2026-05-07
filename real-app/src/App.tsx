@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth, isHRRole, isEmployeeRole } from './lib/auth';
 import { ThemeProvider } from './lib/theme';
+import { LangProvider } from './lib/lang';
 import { AppShell } from './components/layout/AppShell';
 import { AppShellEmployee } from './components/layout/AppShellEmployee';
 
@@ -34,6 +35,8 @@ import EmployeeFolderPage from './pages/app/EmployeeFolderPage';
 import EmployeeOnboardingPage from './pages/app/EmployeeOnboardingPage';
 import TrainingPage from './pages/app/TrainingPage';
 import TalentsPage from './pages/app/TalentsPage';
+import OrgChartPage from './pages/app/OrgChartPage';
+import MeetingsPage from './pages/app/MeetingsPage';
 
 // Employee portal pages
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
@@ -77,53 +80,57 @@ export default function App() {
 
   return (
     <QueryClientProvider client={qc}>
-      <ThemeProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <Toaster position="top-right" richColors />
-            <Routes>
-              {/* Public */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
+      <LangProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <Toaster position="top-right" richColors />
+              <Routes>
+                {/* Public */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
 
-              {/* ── HR Portal ── */}
-              <Route path="/app" element={<RequireHR><DashboardPage /></RequireHR>} />
-              <Route path="/app/copilot" element={<RequireHR><CopilotPage /></RequireHR>} />
-              <Route path="/app/employees" element={<RequireHR><EmployeesPage /></RequireHR>} />
-              <Route path="/app/employees/:id" element={<RequireHR><EmployeeFolderPage /></RequireHR>} />
-              <Route path="/app/generate" element={<RequireHR><GeneratePage /></RequireHR>} />
-              <Route path="/app/templates" element={<RequireHR><TemplatesPage /></RequireHR>} />
-              <Route path="/app/history" element={<RequireHR><HistoryPage /></RequireHR>} />
-              <Route path="/app/analytics" element={<RequireHR><AnalyticsPage /></RequireHR>} />
-              <Route path="/app/recruitment" element={<RequireHR><RecruitmentPage /></RequireHR>} />
-              <Route path="/app/interns" element={<RequireHR><InternsPage /></RequireHR>} />
-              <Route path="/app/timeoff" element={<RequireHR><TimeOffPage /></RequireHR>} />
-              <Route path="/app/payroll" element={<RequireHR><PayrollPage /></RequireHR>} />
-              <Route path="/app/performance" element={<RequireHR><PerformancePage /></RequireHR>} />
-              <Route path="/app/integrations" element={<RequireHR><IntegrationsPage /></RequireHR>} />
-              <Route path="/app/notifications" element={<RequireHR><NotificationsPage /></RequireHR>} />
-              <Route path="/app/security" element={<RequireHR><SecurityPage /></RequireHR>} />
-              <Route path="/app/audit" element={<RequireHR><AuditPage /></RequireHR>} />
-              <Route path="/app/users" element={<RequireHR><UsersPage /></RequireHR>} />
-              <Route path="/app/settings" element={<RequireHR><SettingsPage /></RequireHR>} />
-              <Route path="/app/help" element={<RequireHR><HelpPage /></RequireHR>} />
-              <Route path="/app/onboarding" element={<RequireHR><EmployeeOnboardingPage /></RequireHR>} />
-              <Route path="/app/training" element={<RequireHR><TrainingPage /></RequireHR>} />
-              <Route path="/app/talents" element={<RequireHR><TalentsPage /></RequireHR>} />
+                {/* ── HR Portal ── */}
+                <Route path="/app" element={<RequireHR><DashboardPage /></RequireHR>} />
+                <Route path="/app/copilot" element={<RequireHR><CopilotPage /></RequireHR>} />
+                <Route path="/app/employees" element={<RequireHR><EmployeesPage /></RequireHR>} />
+                <Route path="/app/employees/:id" element={<RequireHR><EmployeeFolderPage /></RequireHR>} />
+                <Route path="/app/generate" element={<RequireHR><GeneratePage /></RequireHR>} />
+                <Route path="/app/templates" element={<RequireHR><TemplatesPage /></RequireHR>} />
+                <Route path="/app/history" element={<RequireHR><HistoryPage /></RequireHR>} />
+                <Route path="/app/analytics" element={<RequireHR><AnalyticsPage /></RequireHR>} />
+                <Route path="/app/recruitment" element={<RequireHR><RecruitmentPage /></RequireHR>} />
+                <Route path="/app/interns" element={<RequireHR><InternsPage /></RequireHR>} />
+                <Route path="/app/timeoff" element={<RequireHR><TimeOffPage /></RequireHR>} />
+                <Route path="/app/payroll" element={<RequireHR><PayrollPage /></RequireHR>} />
+                <Route path="/app/performance" element={<RequireHR><PerformancePage /></RequireHR>} />
+                <Route path="/app/integrations" element={<RequireHR><IntegrationsPage /></RequireHR>} />
+                <Route path="/app/notifications" element={<RequireHR><NotificationsPage /></RequireHR>} />
+                <Route path="/app/security" element={<RequireHR><SecurityPage /></RequireHR>} />
+                <Route path="/app/audit" element={<RequireHR><AuditPage /></RequireHR>} />
+                <Route path="/app/users" element={<RequireHR><UsersPage /></RequireHR>} />
+                <Route path="/app/settings" element={<RequireHR><SettingsPage /></RequireHR>} />
+                <Route path="/app/help" element={<RequireHR><HelpPage /></RequireHR>} />
+                <Route path="/app/onboarding" element={<RequireHR><EmployeeOnboardingPage /></RequireHR>} />
+                <Route path="/app/training" element={<RequireHR><TrainingPage /></RequireHR>} />
+                <Route path="/app/talents" element={<RequireHR><TalentsPage /></RequireHR>} />
+                <Route path="/app/orgchart" element={<RequireHR><OrgChartPage /></RequireHR>} />
+                <Route path="/app/meetings" element={<RequireHR><MeetingsPage /></RequireHR>} />
 
-              {/* ── Employee Portal ── */}
-              <Route path="/employee" element={<RequireEmployee><EmployeeDashboard /></RequireEmployee>} />
-              <Route path="/employee/conges" element={<RequireEmployee><MyLeavePage /></RequireEmployee>} />
-              <Route path="/employee/documents" element={<RequireEmployee><MyDocumentsPage /></RequireEmployee>} />
-              <Route path="/employee/profil" element={<RequireEmployee><MyProfilePage /></RequireEmployee>} />
-              <Route path="/employee/formation" element={<RequireEmployee><MyTrainingPage /></RequireEmployee>} />
+                {/* ── Employee Portal ── */}
+                <Route path="/employee" element={<RequireEmployee><EmployeeDashboard /></RequireEmployee>} />
+                <Route path="/employee/conges" element={<RequireEmployee><MyLeavePage /></RequireEmployee>} />
+                <Route path="/employee/documents" element={<RequireEmployee><MyDocumentsPage /></RequireEmployee>} />
+                <Route path="/employee/profil" element={<RequireEmployee><MyProfilePage /></RequireEmployee>} />
+                <Route path="/employee/formation" element={<RequireEmployee><MyTrainingPage /></RequireEmployee>} />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </ThemeProvider>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
+        </ThemeProvider>
+      </LangProvider>
     </QueryClientProvider>
   );
 }

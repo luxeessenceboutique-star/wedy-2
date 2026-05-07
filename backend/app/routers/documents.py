@@ -40,6 +40,17 @@ def list_documents(
         query = query.eq("profile_id", str(profile_id))
     response = query.range(skip, skip + limit - 1).execute()
     rows = response.data or []
+
+    # Manual join: resolve employee names from the employees table
+    emp_ids = list({r["employee_id"] for r in rows if r.get("employee_id")})
+    emp_map = {}
+    if emp_ids:
+        emp_res = supabase.table("employees").select("id, full_name, cin, department").in_("id", emp_ids).execute()
+        emp_map = {e["id"]: e for e in (emp_res.data or [])}
+    for row in rows:
+        eid = row.get("employee_id")
+        row["employees"] = emp_map.get(eid) if eid else None
+
     return {"data": rows, "count": len(rows)}
 
 

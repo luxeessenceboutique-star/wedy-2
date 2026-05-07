@@ -1,11 +1,12 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, FileText, Wand2, AlertTriangle, TrendingUp, Clock, MessageSquare, Briefcase } from 'lucide-react';
+import { Users, FileText, Wand2, TrendingUp, Clock, MessageSquare, Briefcase } from 'lucide-react';
 import { listEmployees, listDocuments, getDashboardMetrics, listRequests } from '../../lib/api';
 import { Card, Badge, Spinner } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
+import { useLang } from '../../lib/lang';
 import { format } from 'date-fns';
 
 function StatCard({ icon, label, value, change, color = 'var(--primary)' }: {
@@ -29,6 +30,7 @@ function StatCard({ icon, label, value, change, color = 'var(--primary)' }: {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { t } = useLang();
   
   // Fetch real-time metrics from the dashboard endpoint
   const { data: metrics, isLoading: metricsLoading } = useQuery({ 
@@ -64,8 +66,8 @@ export default function DashboardPage() {
   return (
     <div style={{ padding: '24px 28px' }}>
       <PageHeader
-        title={`Good morning${user?.profile?.full_name ? `, ${(user.profile.full_name as string).split(' ')[0]}` : ''} 👋`}
-        subtitle="Here's what's happening across your HR operations today."
+        title={`${t('good_morning')}${user?.profile?.full_name ? `, ${(user.profile.full_name as string).split(' ')[0]}` : ''} 👋`}
+        subtitle={t('dashboard_subtitle')}
       />
 
       {/* Stats */}
@@ -73,10 +75,10 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner /></div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 28 }}>
-          <StatCard icon={<Users size={18} />} label="Total Employees" value={metrics?.total_employees || 0} change="Active workforce" />
-          <StatCard icon={<Briefcase size={18} />} label="Interns" value={metrics?.total_interns || 0} color="var(--accent)" />
-          <StatCard icon={<MessageSquare size={18} />} label="Pending Requests" value={metrics?.pending_requests || 0} color="var(--warning)" />
-          <StatCard icon={<FileText size={18} />} label="Expiring Contracts" value={expiring} color={expiring > 0 ? 'var(--danger)' : 'var(--fg-muted)'} />
+          <StatCard icon={<Users size={18} />} label={t('total_employees_label')} value={metrics?.total_employees || 0} change={t('active_workforce')} />
+          <StatCard icon={<Briefcase size={18} />} label={t('interns')} value={metrics?.total_interns || 0} color="var(--accent)" />
+          <StatCard icon={<MessageSquare size={18} />} label={t('pending_requests_label')} value={metrics?.pending_requests || 0} color="var(--warning)" />
+          <StatCard icon={<FileText size={18} />} label={t('expiring_contracts')} value={expiring} color={expiring > 0 ? 'var(--danger)' : 'var(--fg-muted)'} />
         </div>
       )}
 
@@ -85,14 +87,14 @@ export default function DashboardPage() {
           {/* Recent documents */}
           <Card pad={false}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: 600, fontSize: 14 }}>Recent Documents</span>
-              <Link to="/app/history" style={{ fontSize: 13, color: 'var(--primary)' }}>View all →</Link>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{t('recent_documents')}</span>
+              <Link to="/app/history" style={{ fontSize: 13, color: 'var(--primary)' }}>{t('view_all')}</Link>
             </div>
             {docLoading ? (
               <div style={{ padding: 40, textAlign: 'center' }}><Spinner /></div>
             ) : documents.length === 0 ? (
               <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13 }}>
-                No documents yet. <Link to="/app/generate" style={{ color: 'var(--primary)' }}>Generate your first →</Link>
+                {t('no_documents')} <Link to="/app/generate" style={{ color: 'var(--primary)' }}>{t('generate_first')}</Link>
               </div>
             ) : (
               <div>
@@ -118,14 +120,14 @@ export default function DashboardPage() {
           {/* Recent Requests */}
           <Card pad={false}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: 600, fontSize: 14 }}>Pending Requests</span>
-              <Link to="/app/requests" style={{ fontSize: 13, color: 'var(--primary)' }}>Manage →</Link>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{t('pending_requests_section')}</span>
+              <Link to="/app/requests" style={{ fontSize: 13, color: 'var(--primary)' }}>{t('manage')}</Link>
             </div>
             {reqLoading ? (
               <div style={{ padding: 40, textAlign: 'center' }}><Spinner /></div>
             ) : requests.length === 0 ? (
               <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13 }}>
-                No pending requests.
+                {t('no_pending_requests')}
               </div>
             ) : (
               <div>
@@ -136,7 +138,7 @@ export default function DashboardPage() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: 13, fontWeight: 500 }}>{req.type}</p>
-                      <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{req.profiles?.full_name || 'Anonymous'}</p>
+                      <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{req.profiles?.full_name || t('anonymous')}</p>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <Badge variant={req.status === 'pending' ? 'warning' : 'success'}>{req.status}</Badge>
@@ -152,13 +154,13 @@ export default function DashboardPage() {
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Card>
-            <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 14 }}>Quick Actions</p>
+            <p style={{ fontWeight: 600, fontSize: 14, marginBottom: 14 }}>{t('quick_actions')}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                { to: '/app/generate', icon: <Wand2 size={14} />, label: 'Generate document' },
-                { to: '/app/employees', icon: <Users size={14} />, label: 'Add employee' },
-                { to: '/app/copilot', icon: <TrendingUp size={14} />, label: 'Ask AI Copilot' },
-                { to: '/app/analytics', icon: <TrendingUp size={14} />, label: 'View analytics' },
+                { to: '/app/generate', icon: <Wand2 size={14} />, label: t('generate_document') },
+                { to: '/app/employees', icon: <Users size={14} />, label: t('add_employee') },
+                { to: '/app/copilot', icon: <TrendingUp size={14} />, label: t('ask_ai_copilot') },
+                { to: '/app/analytics', icon: <TrendingUp size={14} />, label: t('view_analytics') },
               ].map(a => (
                 <Link key={a.to} to={a.to} style={{ textDecoration: 'none' }}>
                   <div className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', justifyContent: 'flex-start', fontSize: 13 }}>
@@ -174,7 +176,7 @@ export default function DashboardPage() {
             <Card>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
                 <Clock size={14} style={{ color: 'var(--warning)' }} />
-                <span style={{ fontWeight: 600, fontSize: 14 }}>Expiring Soon</span>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{t('expiring_soon')}</span>
                 <Badge variant="warning">{expiring}</Badge>
               </div>
               {employees
@@ -184,7 +186,7 @@ export default function DashboardPage() {
                   <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                     <span style={{ fontSize: 13 }}>{e.full_name}</span>
                     <span style={{ fontSize: 12, color: 'var(--warning)' }}>
-                      {Math.ceil((new Date(e.contract_end!).getTime() - Date.now()) / 86400000)}d
+                      {Math.ceil((new Date(e.contract_end!).getTime() - Date.now()) / 86400000)}{t('days_short')}
                     </span>
                   </div>
                 ))}
@@ -193,9 +195,9 @@ export default function DashboardPage() {
 
           <div style={{ background: 'var(--primary)', borderRadius: 'var(--radius-lg)', padding: 20, color: 'white', position: 'relative', overflow: 'hidden' }}>
              <div style={{ position: 'relative', zIndex: 1 }}>
-               <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>AI Power Up</p>
-               <p style={{ fontSize: 12, opacity: 0.9, marginBottom: 16 }}>Use our AI Copilot to analyze workforce trends or draft custom policies in seconds.</p>
-               <Link to="/app/copilot" className="btn" style={{ background: 'white', color: 'var(--primary)', border: 'none', width: '100%', justifyContent: 'center' }}>Try it now</Link>
+               <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{t('ai_power_up')}</p>
+               <p style={{ fontSize: 12, opacity: 0.9, marginBottom: 16 }}>{t('ai_power_up_desc')}</p>
+               <Link to="/app/copilot" className="btn" style={{ background: 'white', color: 'var(--primary)', border: 'none', width: '100%', justifyContent: 'center' }}>{t('try_it_now')}</Link>
              </div>
              <TrendingUp size={80} style={{ position: 'absolute', right: -20, bottom: -20, opacity: 0.1, transform: 'rotate(-15deg)' }} />
           </div>

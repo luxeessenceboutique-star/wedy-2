@@ -4,6 +4,7 @@ import { Star, Plus, TrendingUp, Pencil, Trash2, X, Save } from 'lucide-react';
 import { listPerformanceReviews, createPerformanceReview, updatePerformanceReview, listEmployees } from '../../lib/api';
 import { Card, Badge, Spinner, Button, Modal } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
+import { useLang } from '../../lib/lang';
 import { toast } from 'sonner';
 
 // ── Star rating ────────────────────────────────────────────────────────────────
@@ -154,6 +155,7 @@ function ReviewForm({
 
 export default function PerformancePage() {
   const qc = useQueryClient();
+  const { t } = useLang();
   const now = new Date();
   const [period, setPeriod]   = useState(`${now.getFullYear()}-H${now.getMonth() < 6 ? 1 : 2}`);
   const [showCreate, setShowCreate] = useState(false);

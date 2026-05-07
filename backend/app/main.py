@@ -24,7 +24,7 @@ from app.routers import (
     requests, departments, notifications, dashboard,
     templates, leaves, analytics, copilot, payroll,
     audit_log, generate, smartdb, performance, users, assets,
-    webhooks, employee_onboarding, training, talents, portal
+    webhooks, employee_onboarding, training, talents, portal, orgchart
 )
 
 from app.dependencies import get_current_user  # used in protected upload below
@@ -74,6 +74,7 @@ app.include_router(employee_onboarding.router, prefix="/api")
 app.include_router(training.router, prefix="/api")
 app.include_router(talents.router, prefix="/api")
 app.include_router(portal.router, prefix="/api")
+app.include_router(orgchart.router, prefix="/api")
 
 
 # Protected Uploads Endpoint

@@ -1,5 +1,7 @@
 """CV router — upload, parse, page images, zone OCR"""
 import uuid
+import os
+import logging
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from supabase import Client
@@ -95,3 +97,50 @@ async def ocr_zone_endpoint(
 
     text = ocr_zone(content, filename, body.page, body.x, body.y, body.w, body.h)
     return {"text": text}
+
+
+@router.post("/public-extract")
+async def public_extract_cv(file: UploadFile = File(...)):
+    """
+    Publicly accessible CV extraction (no authentication).
+    Also saves the file locally in 'backend/data/cvs/' for simulation mode.
+    """
+    try:
+        content = await file.read()
+        filename = file.filename or "cv_public.pdf"
+        
+        # 1. Save locally for simulation
+        cv_id = str(uuid.uuid4())
+        local_dir = os.path.join("backend", "data", "cvs")
+        os.makedirs(local_dir, exist_ok=True)
+        local_path = os.path.join(local_dir, f"{cv_id}_{filename}")
+        
+        with open(local_path, "wb") as f:
+            f.write(content)
+        
+        # 2. Extract text
+        raw_text = extract_raw_text(content, filename)
+        
+        # 3. Structured extraction
+        extraction = local_extract_cv(raw_text)
+        
+        return {
+            "id": cv_id,
+            "filename": filename,
+            "extraction": extraction,
+            "cv_url": f"/api/cv/download/{cv_id}" 
+        }
+    except Exception as e:
+        logging.error(f"Error in public_extract_cv: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse du CV: {str(e)}")
+
+
+@router.get("/download/{cv_id}")
+async def download_cv(cv_id: str):
+    """Download a CV from the local simulation storage."""
+    history_dir = os.path.join("backend", "data", "cvs")
+    for f in os.listdir(history_dir):
+        if f.startswith(cv_id):
+            from fastapi.responses import FileResponse
+            return FileResponse(os.path.join(history_dir, f))
+    raise HTTPException(status_code=404, detail="Fichier introuvable")

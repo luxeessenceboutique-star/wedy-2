@@ -6,7 +6,7 @@ import {
   Puzzle, Bell, Settings, HelpCircle, LogOut,
   ChevronDown, ExternalLink, Search, ClipboardList,
   UserCog, Moon, Sun, GraduationCap, UserCheck, BookOpen, Star,
-  Network, Video, Briefcase,
+  Network, Video, Briefcase, Calendar,
 } from 'lucide-react';
 import { WedyLogo } from '../WedyLogo';
 import { Avatar } from '../ui';
@@ -59,14 +59,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     {
       heading: t('nav_people'),
       items: [
-        { label: t('employees'),   icon: <Users size={15} />,         to: '/app/employees' },
-        { label: t('interns'),     icon: <GraduationCap size={15} />, to: '/app/interns' },
-        { label: t('recruitment'), icon: <UserPlus size={15} />,      to: '/app/recruitment' },
-        { label: t('performance'), icon: <TrendingUp size={15} />,    to: '/app/performance' },
-        { label: t('time_off'),    icon: <Clock size={15} />,         to: '/app/timeoff' },
-        { label: t('payroll'),     icon: <DollarSign size={15} />,    to: '/app/payroll' },
-        { label: t('org_chart'),   icon: <Network size={15} />,       to: '/app/orgchart' },
-        { label: t('meetings'),    icon: <Video size={15} />,         to: '/app/meetings' },
+        { label: t('employees'),      icon: <Users size={15} />,         to: '/app/employees' },
+        { label: t('interns'),        icon: <GraduationCap size={15} />, to: '/app/interns' },
+        { label: t('candidats'),      icon: <UserPlus size={15} />,      to: '/app/candidats' },
+        { label: t('annonces'),       icon: <Wand2 size={15} />,         to: '/app/annonces', badge: 'AI' },
+        { label: t('calendrier_rh'),  icon: <Calendar size={15} />,      to: '/app/calendrier-rh' },
+        { label: t('creneaux_rh'),    icon: <Clock size={15} />,         to: '/app/creneaux-rh' },
+        { label: t('performance'),    icon: <TrendingUp size={15} />,    to: '/app/performance' },
+        { label: t('time_off'),       icon: <Clock size={15} />,         to: '/app/timeoff' },
+        { label: t('payroll'),        icon: <DollarSign size={15} />,    to: '/app/payroll' },
+        { label: t('org_chart'),      icon: <Network size={15} />,       to: '/app/orgchart' },
+        { label: t('meetings'),       icon: <Video size={15} />,         to: '/app/meetings' },
       ],
     },
     {

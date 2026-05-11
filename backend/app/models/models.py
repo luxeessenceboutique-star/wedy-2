@@ -34,6 +34,22 @@ DocumentTypeEnum = SAEnum(
     "cin", "convention", "nda", "completion",
     name="document_type", create_type=False,
 )
+InterviewTypeEnum = SAEnum(
+    "rh", "technical", "final",
+    name="interview_type", create_type=False,
+)
+InterviewStatusEnum = SAEnum(
+    "pending", "confirmed", "completed", "cancelled",
+    name="interview_status", create_type=False,
+)
+ApplicationStatusEnum = SAEnum(
+    "pending", "screening", "interview", "accepted", "rejected",
+    name="application_status", create_type=False,
+)
+SlotStatusEnum = SAEnum(
+    "free", "reserved",
+    name="slot_status", create_type=False,
+)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -350,3 +366,76 @@ class AuditLog(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("User", back_populates="audit_logs")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# RECRUITMENT (NEW)
+# ──────────────────────────────────────────────────────────────────────────────
+
+class JobAd(Base):
+    __tablename__ = "recruitment_ads"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    poste = Column(Text, nullable=False)
+    description = Column(Text)
+    competences = Column(Text)
+    experience = Column(Text)
+    contenu = Column(Text, nullable=False)
+    image_url = Column(Text)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    applications = relationship("CandidateApplication", back_populates="ad")
+    slots = relationship("HRSlot", back_populates="ad")
+
+
+class CandidateApplication(Base):
+    __tablename__ = "candidate_applications"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    profile_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    ad_id = Column(UUID(as_uuid=True), ForeignKey("recruitment_ads.id", ondelete="CASCADE"), nullable=False)
+    status = Column(ApplicationStatusEnum, default="pending")
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    profile = relationship("Profile")
+    ad = relationship("JobAd", back_populates="applications")
+
+
+class Interview(Base):
+    __tablename__ = "interviews"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    candidate_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    recruiter_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    date = Column(Date, nullable=False)
+    start_time = Column(String, nullable=False)  # Using String for simplicity in time mapping
+    end_time = Column(String, nullable=False)
+    type = Column(InterviewTypeEnum, nullable=False)
+    status = Column(InterviewStatusEnum, default="pending")
+    meet_link = Column(Text)
+    notes = Column(Text)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    candidate = relationship("Profile")
+    recruiter = relationship("User")
+    slots = relationship("HRSlot", back_populates="interview")
+
+
+class HRSlot(Base):
+    __tablename__ = "hr_slots"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    date = Column(Date, nullable=False)
+    start_time = Column(String, nullable=False)
+    end_time = Column(String, nullable=False)
+    status = Column(SlotStatusEnum, default="free")
+    ad_id = Column(UUID(as_uuid=True), ForeignKey("recruitment_ads.id", ondelete="SET NULL"))
+    interview_id = Column(UUID(as_uuid=True), ForeignKey("interviews.id", ondelete="SET NULL"))
+    created_at = Column(DateTime, server_default=func.now())
+
+    ad = relationship("JobAd", back_populates="slots")
+    interview = relationship("Interview", back_populates="slots")

@@ -21,6 +21,7 @@ class TokenResponse(BaseModel):
     user_id: UUID
     email: str
     role: str
+    role_name: Optional[str] = None
 
 
 class TokenData(BaseModel):
@@ -32,8 +33,9 @@ class TokenData(BaseModel):
 class UserOut(BaseModel):
     id: UUID
     email: str
-    role_id: Optional[UUID] = None
     role_name: Optional[str] = None
+    role: Optional[str] = None
+    full_name: Optional[str] = None
     created_at: Optional[str] = None
 
     class Config:

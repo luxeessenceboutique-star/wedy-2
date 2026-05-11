@@ -33,14 +33,19 @@ def list_slots(
     ad_id: Optional[UUID] = None,
     current_date: Optional[date] = None
 ):
+    from loguru import logger
     slots = mock_store.get_collection("creneaux")
     entretiens = mock_store.get_collection("entretiens")
+    
+    logger.info(f"LIST SLOTS: Total slots in DB: {len(slots)}")
     
     # Filter slots
     if ad_id:
         slots = [s for s in slots if s.get("ad_id") == str(ad_id) or s.get("ad_id") is None]
+        logger.info(f"Filtered by ad_id={ad_id} -> {len(slots)} left")
     if current_date:
         slots = [s for s in slots if s.get("date") == str(current_date)]
+        logger.info(f"Filtered by current_date={current_date} -> {len(slots)} left")
     
     # Mark reserved times
     for s in slots:

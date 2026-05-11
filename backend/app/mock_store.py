@@ -2,7 +2,8 @@ import json
 import os
 from uuid import uuid4
 
-DATA_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "recruitment.json")
+DATA_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "recruitment.json")
+# This path points to c:\Users\pc\Desktop\platform-RH\data\recruitment.json
 
 def load_data():
     if not os.path.exists(DATA_FILE):
@@ -11,9 +12,16 @@ def load_data():
         return json.load(f)
 
 def save_data(data):
+    from datetime import date, datetime
     os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+        json.dump(
+            data, 
+            f, 
+            indent=4, 
+            ensure_ascii=False,
+            default=lambda o: o.isoformat() if isinstance(o, (date, datetime)) else str(o)
+        )
 
 def get_collection(collection_name):
     return load_data().get(collection_name, [])

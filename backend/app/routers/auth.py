@@ -20,12 +20,27 @@ def login(payload: LoginRequest, supabase: Client = Depends(get_db)):
         if not res.session:
             raise HTTPException(status_code=400, detail="Identifiants invalides")
         
+        user_id = res.user.id
+        email = res.user.email
+        
+        # Fetch actual role
+        raw_role = "employee"
+        try:
+            role_res = supabase.table("user_roles").select("role").eq("user_id", user_id).maybe_single().execute()
+            if role_res.data:
+                raw_role = role_res.data.get("role", "employee")
+        except Exception:
+            pass
+
+        role_name = "hr" if raw_role == "rh" else raw_role
+
         return {
             "access_token": res.session.access_token,
             "token_type": "bearer",
-            "user_id": res.user.id,
-            "email": res.user.email,
-            "role": "employee" # Or fetch from metadata if available
+            "user_id": user_id,
+            "email": email,
+            "role": role_name,
+            "role_name": role_name
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

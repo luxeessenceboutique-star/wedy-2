@@ -57,7 +57,13 @@ def get_current_user(
     role_name = "hr" if raw_role == "rh" else raw_role
 
     print(f"[AUTH] user={email} role={role_name}")
-    return {"id": user_id, "email": email, "role_name": role_name, "full_name": full_name}
+    return {
+        "id": user_id, 
+        "email": email, 
+        "role_name": role_name, 
+        "role": role_name, 
+        "full_name": full_name
+    }
 
 def require_role(*roles: str):
     def _check(current_user: dict = Depends(get_current_user)) -> dict:

@@ -2,8 +2,8 @@
     "annonces": [
         {
             "id": "11111111-1111-1111-1111-111111111111",
-            "poste": "Développeur Fullstack React/FastAPI",
-            "description": "Nous recherchons un développeur passionné pour rejoindre notre équipe RH digitale.",
+            "poste": "D\u00e9veloppeur Fullstack React/FastAPI",
+            "description": "Nous recherchons un d\u00e9veloppeur passionn\u00e9 pour rejoindre notre \u00e9quipe RH digitale.",
             "competences": "React, TypeScript, FastAPI, Python",
             "experience": "2-3 ans",
             "contenu": "<h1>Offre d'emploi</h1><p>Description du poste...</p>",
@@ -15,7 +15,7 @@
             "description": null,
             "competences": null,
             "experience": null,
-            "contenu": "Très bien ! Voici une annonce de poste de Data Analyste pour TYTHON, avec un contenu attractif laissant la place aux discussions lors de l’entretien.\n\n```markdown\n# Data Analyste\n\n## À propos de TYTHON\nTYTHON est une entreprise innovante spécialisée pour le traitement et l’analyse avancée de données. Notre ambition est de transformer les données en leviers stratégiques pour nos clients à travers des solutions adaptées et performantes.\n\n## Vos missions\nEn tant que Data Analyste chez TYTHON, vous participerez à l’analyse et à l’exploitation de vastes jeux de données afin de fournir des insights pertinents. Vos missions seront discutées et adaptées en fonction de vos compétences et des besoins du projet.\n\n## Profil recherché\nNous recherchons un(e) candidat(e) passionné(e) par les données, avec des compétences en LLM (Large Language Models) et NLP (Natural Language Processing). Vous êtes rigoureux(se), curieux(se) et prêt(e) à relever des défis techniques qui feront évoluer vos compétences.\n\n## Ce que nous offrons\nUn environnement de travail stimulant au cœur de l’innovation, avec des perspectives d’évolution professionnelle. Les détails des conditions et avantages seront échangés lors de l’entretien.\n\n[**Postulez dès maintenant et rejoignez TYTHON !**]\n```\n\nN’hésitez pas à me demander si vous souhaitez une version modifiable ou adaptée !",
+            "contenu": "Tr\u00e8s bien ! Voici une annonce de poste de Data Analyste pour TYTHON, avec un contenu attractif laissant la place aux discussions lors de l\u2019entretien.\n\n```markdown\n# Data Analyste\n\n## \u00c0 propos de TYTHON\nTYTHON est une entreprise innovante sp\u00e9cialis\u00e9e pour le traitement et l\u2019analyse avanc\u00e9e de donn\u00e9es. Notre ambition est de transformer les donn\u00e9es en leviers strat\u00e9giques pour nos clients \u00e0 travers des solutions adapt\u00e9es et performantes.\n\n## Vos missions\nEn tant que Data Analyste chez TYTHON, vous participerez \u00e0 l\u2019analyse et \u00e0 l\u2019exploitation de vastes jeux de donn\u00e9es afin de fournir des insights pertinents. Vos missions seront discut\u00e9es et adapt\u00e9es en fonction de vos comp\u00e9tences et des besoins du projet.\n\n## Profil recherch\u00e9\nNous recherchons un(e) candidat(e) passionn\u00e9(e) par les donn\u00e9es, avec des comp\u00e9tences en LLM (Large Language Models) et NLP (Natural Language Processing). Vous \u00eates rigoureux(se), curieux(se) et pr\u00eat(e) \u00e0 relever des d\u00e9fis techniques qui feront \u00e9voluer vos comp\u00e9tences.\n\n## Ce que nous offrons\nUn environnement de travail stimulant au c\u0153ur de l\u2019innovation, avec des perspectives d\u2019\u00e9volution professionnelle. Les d\u00e9tails des conditions et avantages seront \u00e9chang\u00e9s lors de l\u2019entretien.\n\n[**Postulez d\u00e8s maintenant et rejoignez TYTHON !**]\n```\n\nN\u2019h\u00e9sitez pas \u00e0 me demander si vous souhaitez une version modifiable ou adapt\u00e9e !",
             "image_url": null,
             "is_active": true,
             "created_at": "2026-05-10T17:37:49.961798",
@@ -26,7 +26,7 @@
             "description": null,
             "competences": null,
             "experience": null,
-            "contenu": "```markdown\n# Data Scientist – Spécialiste NLP & LLM\n\n## Découvrez TYTHON  \nTYTHON est une entreprise innovante spécialisée dans les technologies de pointe, engagée à transformer les données en opportunités stratégiques grâce à l'intelligence artificielle.\n\n## Vos missions  \n- Développer et optimiser des modèles de traitement du langage naturel (NLP) et des modèles de langage de grande taille (LLM)  \n- Analyser et exploiter des jeux de données complexes pour extraire des insights pertinents  \n- Collaborer avec les équipes produit et recherche pour intégrer les solutions NLP dans les applications TYTHON  \n\n## Profil recherché  \n- Expertise solide en NLP et manipulation de LLM  \n- Maîtrise des outils et langages courants en data science (Python, frameworks ML/DL)  \n- Capacité à travailler en équipe et à conduire des projets innovants  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant  \n- Opportunités de développement professionnel et formation continue  \n- Une équipe dynamique et bienveillante  \n\n[Postulez dès maintenant chez TYTHON !](#)\n```",
+            "contenu": "```markdown\n# Data Scientist \u2013 Sp\u00e9cialiste NLP & LLM\n\n## D\u00e9couvrez TYTHON  \nTYTHON est une entreprise innovante sp\u00e9cialis\u00e9e dans les technologies de pointe, engag\u00e9e \u00e0 transformer les donn\u00e9es en opportunit\u00e9s strat\u00e9giques gr\u00e2ce \u00e0 l'intelligence artificielle.\n\n## Vos missions  \n- D\u00e9velopper et optimiser des mod\u00e8les de traitement du langage naturel (NLP) et des mod\u00e8les de langage de grande taille (LLM)  \n- Analyser et exploiter des jeux de donn\u00e9es complexes pour extraire des insights pertinents  \n- Collaborer avec les \u00e9quipes produit et recherche pour int\u00e9grer les solutions NLP dans les applications TYTHON  \n\n## Profil recherch\u00e9  \n- Expertise solide en NLP et manipulation de LLM  \n- Ma\u00eetrise des outils et langages courants en data science (Python, frameworks ML/DL)  \n- Capacit\u00e9 \u00e0 travailler en \u00e9quipe et \u00e0 conduire des projets innovants  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant  \n- Opportunit\u00e9s de d\u00e9veloppement professionnel et formation continue  \n- Une \u00e9quipe dynamique et bienveillante  \n\n[Postulez d\u00e8s maintenant chez TYTHON !](#)\n```",
             "image_url": null,
             "is_active": true,
             "created_at": "2026-05-10T18:29:53.980284",
@@ -37,7 +37,7 @@
             "description": null,
             "competences": null,
             "experience": null,
-            "contenu": "```markdown\n# Data Scientist – Spécialiste NLP & LLM\n\n## Découvrez TYTHON  \nTYTHON est une entreprise innovante spécialisée dans les technologies de pointe, engagée à transformer les données en opportunités stratégiques grâce à l'intelligence artificielle.\n\n## Vos missions  \n- Développer et optimiser des modèles de traitement du langage naturel (NLP) et des modèles de langage de grande taille (LLM)  \n- Analyser et exploiter des jeux de données complexes pour extraire des insights pertinents  \n- Collaborer avec les équipes produit et recherche pour intégrer les solutions NLP dans les applications TYTHON  \n\n## Profil recherché  \n- Expertise solide en NLP et manipulation de LLM  \n- Maîtrise des outils et langages courants en data science (Python, frameworks ML/DL)  \n- Capacité à travailler en équipe et à conduire des projets innovants  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant  \n- Opportunités de développement professionnel et formation continue  \n- Une équipe dynamique et bienveillante  \n\n[Postulez dès maintenant chez TYTHON !](#)\n```",
+            "contenu": "```markdown\n# Data Scientist \u2013 Sp\u00e9cialiste NLP & LLM\n\n## D\u00e9couvrez TYTHON  \nTYTHON est une entreprise innovante sp\u00e9cialis\u00e9e dans les technologies de pointe, engag\u00e9e \u00e0 transformer les donn\u00e9es en opportunit\u00e9s strat\u00e9giques gr\u00e2ce \u00e0 l'intelligence artificielle.\n\n## Vos missions  \n- D\u00e9velopper et optimiser des mod\u00e8les de traitement du langage naturel (NLP) et des mod\u00e8les de langage de grande taille (LLM)  \n- Analyser et exploiter des jeux de donn\u00e9es complexes pour extraire des insights pertinents  \n- Collaborer avec les \u00e9quipes produit et recherche pour int\u00e9grer les solutions NLP dans les applications TYTHON  \n\n## Profil recherch\u00e9  \n- Expertise solide en NLP et manipulation de LLM  \n- Ma\u00eetrise des outils et langages courants en data science (Python, frameworks ML/DL)  \n- Capacit\u00e9 \u00e0 travailler en \u00e9quipe et \u00e0 conduire des projets innovants  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant  \n- Opportunit\u00e9s de d\u00e9veloppement professionnel et formation continue  \n- Une \u00e9quipe dynamique et bienveillante  \n\n[Postulez d\u00e8s maintenant chez TYTHON !](#)\n```",
             "image_url": null,
             "is_active": true,
             "created_at": "2026-05-11T09:21:02.633048",
@@ -48,18 +48,18 @@
             "description": null,
             "competences": null,
             "experience": null,
-            "contenu": "```markdown\n# Data Scientist – Spécialiste NLP & LLM\n\n## Découvrez TYTHON  \nTYTHON est une entreprise innovante spécialisée dans les technologies de pointe, engagée à transformer les données en opportunités stratégiques grâce à l'intelligence artificielle.\n\n## Vos missions  \n- Développer et optimiser des modèles de traitement du langage naturel (NLP) et des modèles de langage de grande taille (LLM)  \n- Analyser et exploiter des jeux de données complexes pour extraire des insights pertinents  \n- Collaborer avec les équipes produit et recherche pour intégrer les solutions NLP dans les applications TYTHON  \n\n## Profil recherché  \n- Expertise solide en NLP et manipulation de LLM  \n- Maîtrise des outils et langages courants en data science (Python, frameworks ML/DL)  \n- Capacité à travailler en équipe et à conduire des projets innovants  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant  \n- Opportunités de développement professionnel et formation continue  \n- Une équipe dynamique et bienveillante  \n\n[Postulez dès maintenant chez TYTHON !](#)\n```",
+            "contenu": "```markdown\n# Data Scientist \u2013 Sp\u00e9cialiste NLP & LLM\n\n## D\u00e9couvrez TYTHON  \nTYTHON est une entreprise innovante sp\u00e9cialis\u00e9e dans les technologies de pointe, engag\u00e9e \u00e0 transformer les donn\u00e9es en opportunit\u00e9s strat\u00e9giques gr\u00e2ce \u00e0 l'intelligence artificielle.\n\n## Vos missions  \n- D\u00e9velopper et optimiser des mod\u00e8les de traitement du langage naturel (NLP) et des mod\u00e8les de langage de grande taille (LLM)  \n- Analyser et exploiter des jeux de donn\u00e9es complexes pour extraire des insights pertinents  \n- Collaborer avec les \u00e9quipes produit et recherche pour int\u00e9grer les solutions NLP dans les applications TYTHON  \n\n## Profil recherch\u00e9  \n- Expertise solide en NLP et manipulation de LLM  \n- Ma\u00eetrise des outils et langages courants en data science (Python, frameworks ML/DL)  \n- Capacit\u00e9 \u00e0 travailler en \u00e9quipe et \u00e0 conduire des projets innovants  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant  \n- Opportunit\u00e9s de d\u00e9veloppement professionnel et formation continue  \n- Une \u00e9quipe dynamique et bienveillante  \n\n[Postulez d\u00e8s maintenant chez TYTHON !](#)\n```",
             "image_url": null,
             "is_active": true,
             "created_at": "2026-05-11T09:44:33.745174",
             "id": "cdff667d-d827-4e69-b515-baaf8d545894"
         },
         {
-            "poste": "Développeur Fullstack React/FastAPI",
+            "poste": "D\u00e9veloppeur Fullstack React/FastAPI",
             "description": null,
             "competences": null,
             "experience": null,
-            "contenu": "```markdown\n# Data Analyste BI\n\n## À propos de TYTHON  \nTYTHON est une entreprise innovante spécialisée dans la transformation digitale et l'exploitation des données pour aider ses clients à prendre des décisions stratégiques éclairées. Rejoignez une équipe dynamique où vos analyses auront un impact direct sur la performance de nos projets.\n\n## Vos missions  \n- Collecter, traiter et analyser des données variées afin de produire des rapports clairs et pertinents.  \n- Concevoir et développer des tableaux de bord interactifs avec des outils BI (Power BI, Tableau, etc.).  \n- Collaborer étroitement avec les équipes métiers pour comprendre leurs besoins et proposer des solutions adaptées.  \n- Identifier les tendances et les opportunités d’amélioration à partir des données.  \n- Assurer la qualité, la fiabilité et la sécurité des données utilisées pour les analyses.  \n\n## Profil recherché  \n- Formation Bac+3 à Bac+5 en Statistiques, Informatique, Économie ou domaine similaire.  \n- Maîtrise des outils BI et des langages de requêtage (SQL, DAX, etc.).  \n- Solides compétences analytiques et esprit critique développés.  \n- Capacité à vulgariser les données pour des interlocuteurs non techniques.  \n- Autonomie, rigueur et sens du détail.  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant.  \n- Des perspectives d’évolution et de formation continue.  \n- Une politique de télétravail flexible.  \n- Un package salarial attractif avec avantages sociaux.  \n\n[Postulez dès maintenant chez TYTHON !](#)\n```",
+            "contenu": "```markdown\n# Data Analyste BI\n\n## \u00c0 propos de TYTHON  \nTYTHON est une entreprise innovante sp\u00e9cialis\u00e9e dans la transformation digitale et l'exploitation des donn\u00e9es pour aider ses clients \u00e0 prendre des d\u00e9cisions strat\u00e9giques \u00e9clair\u00e9es. Rejoignez une \u00e9quipe dynamique o\u00f9 vos analyses auront un impact direct sur la performance de nos projets.\n\n## Vos missions  \n- Collecter, traiter et analyser des donn\u00e9es vari\u00e9es afin de produire des rapports clairs et pertinents.  \n- Concevoir et d\u00e9velopper des tableaux de bord interactifs avec des outils BI (Power BI, Tableau, etc.).  \n- Collaborer \u00e9troitement avec les \u00e9quipes m\u00e9tiers pour comprendre leurs besoins et proposer des solutions adapt\u00e9es.  \n- Identifier les tendances et les opportunit\u00e9s d\u2019am\u00e9lioration \u00e0 partir des donn\u00e9es.  \n- Assurer la qualit\u00e9, la fiabilit\u00e9 et la s\u00e9curit\u00e9 des donn\u00e9es utilis\u00e9es pour les analyses.  \n\n## Profil recherch\u00e9  \n- Formation Bac+3 \u00e0 Bac+5 en Statistiques, Informatique, \u00c9conomie ou domaine similaire.  \n- Ma\u00eetrise des outils BI et des langages de requ\u00eatage (SQL, DAX, etc.).  \n- Solides comp\u00e9tences analytiques et esprit critique d\u00e9velopp\u00e9s.  \n- Capacit\u00e9 \u00e0 vulgariser les donn\u00e9es pour des interlocuteurs non techniques.  \n- Autonomie, rigueur et sens du d\u00e9tail.  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant.  \n- Des perspectives d\u2019\u00e9volution et de formation continue.  \n- Une politique de t\u00e9l\u00e9travail flexible.  \n- Un package salarial attractif avec avantages sociaux.  \n\n[Postulez d\u00e8s maintenant chez TYTHON !](#)\n```",
             "image_url": null,
             "is_active": true,
             "created_at": "2026-05-11T10:31:57.382072",
@@ -70,7 +70,7 @@
             "description": null,
             "competences": null,
             "experience": null,
-            "contenu": "```markdown\n# Data Analyste\n\n## À propos de TYTHON  \nTYTHON est une entreprise innovante, engagée dans l’analyse de données pour accompagner ses clients vers la prise de décisions éclairées.\n\n## Vos missions  \n- Collecter, analyser et interpréter les données pour produire des rapports clairs  \n- Utiliser des outils de Business Intelligence (BI) pour visualiser et partager l’information  \n\n## Profil recherché  \n- Maîtrise des outils de BI  \n- Esprit analytique et rigueur  \n\n## Ce que nous offrons  \n- Environnement dynamique  \n- Opportunités d’évolution  \n\n[Postulez dès maintenant]\n```",
+            "contenu": "```markdown\n# Data Analyste\n\n## \u00c0 propos de TYTHON  \nTYTHON est une entreprise innovante, engag\u00e9e dans l\u2019analyse de donn\u00e9es pour accompagner ses clients vers la prise de d\u00e9cisions \u00e9clair\u00e9es.\n\n## Vos missions  \n- Collecter, analyser et interpr\u00e9ter les donn\u00e9es pour produire des rapports clairs  \n- Utiliser des outils de Business Intelligence (BI) pour visualiser et partager l\u2019information  \n\n## Profil recherch\u00e9  \n- Ma\u00eetrise des outils de BI  \n- Esprit analytique et rigueur  \n\n## Ce que nous offrons  \n- Environnement dynamique  \n- Opportunit\u00e9s d\u2019\u00e9volution  \n\n[Postulez d\u00e8s maintenant]\n```",
             "image_url": null,
             "is_active": true,
             "created_at": "2026-05-11T10:33:05.287660",
@@ -78,41 +78,6 @@
         }
     ],
     "creneaux": [
-        {
-            "id": "22222222-2222-2222-2222-222222222222",
-            "date": "2026-05-12",
-            "start_time": "09:00",
-            "end_time": "10:00",
-            "status": "free"
-        },
-        {
-            "id": "33333333-3333-3333-3333-333333333333",
-            "date": "2026-05-12",
-            "start_time": "10:30",
-            "end_time": "11:30",
-            "status": "free"
-        },
-        {
-            "date": "2026-05-20",
-            "start_time": "09:00",
-            "end_time": "10:00",
-            "status": "free",
-            "id": "a827c69f-4a19-4d24-bd79-121ad7e36b8d"
-        },
-        {
-            "date": "2026-05-18",
-            "start_time": "10:00",
-            "end_time": "10:15",
-            "ad_id": null,
-            "id": "057f806d-623e-4c76-afb4-e026b1c056e1"
-        },
-        {
-            "date": "2026-05-18",
-            "start_time": "10:15",
-            "end_time": "10:30",
-            "ad_id": null,
-            "id": "c61be94f-252a-4b8b-b6cf-ffe8e75c0083"
-        },
         {
             "date": "2026-05-13",
             "start_time": "09:00",

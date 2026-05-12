@@ -77,19 +77,18 @@ export default function PostulerPage() {
         }
     };
 
-    // Helper to generate 30m slots from a range
-    const getSubslots = (start: string, end: string) => {
-        const slots: { start: string, end: string }[] = [];
-        let curr = new Date(`2000-01-01T${start}:00`);
-        const stop = new Date(`2000-01-01T${end}:00`);
-        while (curr < stop) {
-            const startT = curr.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-            curr.setMinutes(curr.getMinutes() + 30);
-            if (curr > stop) break;
-            const endT = curr.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-            slots.push({ start: startT, end: endT });
+    const groupedSlots = slots.reduce((acc, slot) => {
+        if (!acc[slot.date]) acc[slot.date] = [];
+        acc[slot.date].push(slot);
+        return acc;
+    }, {} as Record<string, HRSlot[]>);
+
+    const formatSlotDate = (dateStr: string) => {
+        try {
+            return new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+        } catch (e) {
+            return dateStr;
         }
-        return slots;
     };
 
     if (fetching) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}><Spinner size={40} /></div>;
@@ -213,29 +212,27 @@ export default function PostulerPage() {
                                     </h3>
                                     <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 16 }}>Sélectionnez une date et un horaire qui vous conviennent.</p>
 
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
-                                        {slots.map(slot => (
-                                            <div key={slot.id} style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12 }}>
+                                        {Object.entries(groupedSlots).sort(([a], [b]) => a.localeCompare(b)).map(([date, daySlots]) => (
+                                            <div key={date} style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
                                                 <div style={{ background: 'var(--bg-muted)', padding: '6px 10px', fontSize: 12, fontWeight: 700, borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
-                                                    {new Date(slot.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                    {formatSlotDate(date)}
                                                 </div>
-                                                <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                                    {getSubslots(slot.start_time, slot.end_time)
-                                                        .filter(range => !slot.reserved_times?.includes(range.start))
-                                                        .map(range => (
-                                                            <button
-                                                                key={range.start}
-                                                                type="button"
-                                                                onClick={() => setForm({ ...form, interview_date: slot.date, interview_time: range.start })}
-                                                                style={{
-                                                                    padding: '6px', fontSize: 10, fontWeight: 600, borderRadius: 4, cursor: 'pointer', border: '1px solid var(--border)',
-                                                                    background: form.interview_date === slot.date && form.interview_time === range.start ? 'var(--primary)' : 'white',
-                                                                    color: form.interview_date === slot.date && form.interview_time === range.start ? 'white' : 'var(--fg)',
-                                                                }}
-                                                            >
-                                                                {range.start} - {range.end}
-                                                            </button>
-                                                        ))}
+                                                <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                                    {daySlots.sort((a, b) => a.start_time.localeCompare(b.start_time)).map(slot => (
+                                                        <button
+                                                            key={slot.id}
+                                                            type="button"
+                                                            onClick={() => setForm({ ...form, interview_date: slot.date, interview_time: slot.start_time })}
+                                                            style={{
+                                                                padding: '8px 4px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', transition: 'all 0.2s',
+                                                                background: form.interview_date === slot.date && form.interview_time === slot.start_time ? 'var(--primary)' : 'white',
+                                                                color: form.interview_date === slot.date && form.interview_time === slot.start_time ? 'white' : 'var(--fg)',
+                                                            }}
+                                                        >
+                                                            {slot.start_time} - {slot.end_time}
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             </div>
                                         ))}

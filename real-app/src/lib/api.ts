@@ -681,6 +681,7 @@ export type Interview = {
   candidate?: Partial<Employee>;
   candidate_name?: string;
   job_title?: string;
+  recruiter_name?: string;
 };
 
 export const listInterviews = () => api.get<Interview[]>('/entretiens').then(r => r.data);

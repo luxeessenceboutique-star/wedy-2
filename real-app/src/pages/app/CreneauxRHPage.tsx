@@ -7,14 +7,17 @@ import { format, addDays, startOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button, Card, Spinner } from '../../components/ui';
 import { toast } from 'sonner';
-import type { HRSlot } from '../../lib/api';
-import { listSlots, addSlots, deleteSlot } from '../../lib/api';
+import type { HRSlot, Interview } from '../../lib/api';
+import { listSlots, addSlots, deleteSlot, listInterviews } from '../../lib/api';
+import { X, User, Briefcase } from 'lucide-react';
 
 export default function CreneauxRHPage() {
     const [currentWeek, setCurrentWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
     const [slots, setSlots] = useState<HRSlot[]>([]);
+    const [interviews, setInterviews] = useState<Interview[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
     const [newSlots, setNewSlots] = useState<{ date: string, start: string, end: string }[]>([]);
     const [bulkMode, setBulkMode] = useState<{ date: Date | null, start: string, end: string, duration: number }>({
@@ -31,13 +34,15 @@ export default function CreneauxRHPage() {
     const loadSlots = async () => {
         setLoading(true);
         try {
-            // Add a cache-buster timestamp
-            const data = await listSlots({ _t: Date.now() } as any);
-            console.log('[DEBUG] Loaded slots:', data);
-            setSlots(data);
+            const [slotsData, interviewsData] = await Promise.all([
+                listSlots({ _t: Date.now() } as any),
+                listInterviews()
+            ]);
+            setSlots(slotsData);
+            setInterviews(interviewsData);
         } catch (err: any) {
             console.error('[DEBUG] loadSlots error:', err);
-            toast.error("Erreur lors du chargement des créneaux: " + (err.message || "Inconnue"));
+            toast.error("Erreur lors du chargement des données");
         } finally {
             setLoading(false);
         }
@@ -190,7 +195,25 @@ export default function CreneauxRHPage() {
 
                     return (
                         <div key={dateStr} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                            <div style={{ textAlign: 'center', padding: '12px', background: 'var(--bg-elev)', borderRadius: 12, border: '1px solid var(--border)' }}>
+                            <div
+                                onClick={() => {
+                                    console.log('[DEBUG] Header clicked for day:', format(day, 'yyyy-MM-dd'));
+                                    setSelectedDay(day);
+                                    toast.info("Entretiens pour le " + format(day, 'd MMMM', { locale: fr }));
+                                }}
+                                style={{
+                                    textAlign: 'center', padding: '12px', borderRadius: 12, border: '1px solid var(--border)',
+                                    cursor: 'pointer', transition: 'all 0.2s',
+                                    borderColor: selectedDay && format(selectedDay, 'yyyy-MM-dd') === dateStr ? 'var(--primary)' : 'var(--border)',
+                                    background: selectedDay && format(selectedDay, 'yyyy-MM-dd') === dateStr ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
+                                onMouseLeave={e => {
+                                    if (!(selectedDay && format(selectedDay, 'yyyy-MM-dd') === dateStr)) {
+                                        e.currentTarget.style.borderColor = 'var(--border)';
+                                    }
+                                }}
+                            >
                                 <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', margin: 0 }}>{format(day, 'EEEE', { locale: fr })}</p>
                                 <p style={{ fontSize: 18, fontWeight: 800, margin: '2px 0 0', color: 'var(--fg)' }}>{format(day, 'd')}</p>
                             </div>
@@ -257,6 +280,80 @@ export default function CreneauxRHPage() {
                     );
                 })}
             </div>
+
+            {/* Side Panel for Interviews */}
+            {selectedDay && (
+                <div style={{
+                    position: 'fixed', top: 0, right: 0, width: 400, height: '100vh', background: 'var(--bg-elev)',
+                    boxShadow: '-4px 0 24px rgba(0,0,0,0.2)', zIndex: 9999, display: 'flex', flexDirection: 'column',
+                    animation: 'slideIn 0.3s ease-out', borderLeft: '1px solid var(--border)'
+                }}>
+                    <div style={{ padding: 24, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                            <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>Entretiens prévus</h2>
+                            <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: '4px 0 0' }}>{format(selectedDay, 'EEEE d MMMM', { locale: fr })}</p>
+                        </div>
+                        <button onClick={() => setSelectedDay(null)} style={{ background: 'var(--bg-muted)', border: 'none', padding: 8, borderRadius: '50%', cursor: 'pointer' }}>
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <div className="scroll" style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+                        {interviews.filter(i => i.date === format(selectedDay, 'yyyy-MM-dd')).length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                {interviews
+                                    .filter(i => i.date === format(selectedDay, 'yyyy-MM-dd'))
+                                    .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                                    .map(interview => (
+                                        <div key={interview.id} style={{
+                                            padding: 16, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elev)',
+                                            display: 'flex', flexDirection: 'column', gap: 12
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <User size={20} style={{ color: 'var(--primary)' }} />
+                                                    </div>
+                                                    <div>
+                                                        <p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>{interview.candidate_name || "Candidat Anonyme"}</p>
+                                                        <p style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 4, margin: '2px 0 0' }}>
+                                                            <Briefcase size={12} /> {interview.job_title || "Poste non spécifié"}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div style={{ padding: '4px 8px', borderRadius: 100, background: 'var(--primary-soft)', color: 'var(--primary)', fontSize: 10, fontWeight: 700 }}>
+                                                    {interview.start_time} - {interview.end_time}
+                                                </div>
+                                            </div>
+
+                                            {interview.status && (
+                                                <div style={{
+                                                    display: 'inline-flex', alignSelf: 'flex-start', padding: '4px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600,
+                                                    background: interview.status === 'confirmed' ? 'var(--success-soft)' : 'var(--warning-soft)',
+                                                    color: interview.status === 'confirmed' ? 'var(--success)' : 'var(--warning)'
+                                                }}>
+                                                    {interview.status === 'confirmed' ? 'Confirmé' : interview.status}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--fg-muted)' }}>
+                                <CalendarIcon size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
+                                <p style={{ fontSize: 14, fontWeight: 600 }}>Aucun entretien pour cette journée.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            <style>{`
+                @keyframes slideIn {
+                    from { transform: translateX(100%); }
+                    to { transform: translateX(0); }
+                }
+            `}</style>
         </div>
     );
 }

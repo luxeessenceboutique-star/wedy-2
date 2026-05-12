@@ -21,6 +21,7 @@ class InterviewBase(BaseModel):
     notes: Optional[str] = None
     candidate_name: Optional[str] = None
     job_title: Optional[str] = None
+    recruiter_name: Optional[str] = None
 
 class InterviewCreate(InterviewBase):
     slot_id: Optional[UUID] = None
@@ -39,6 +40,7 @@ def list_interviews():
 @router.post("", response_model=InterviewOut)
 def schedule_interview(payload: InterviewCreate):
     item = payload.dict(exclude={'slot_id'})
+    item["status"] = "confirmed"
     db_interview = mock_store.add_item("entretiens", item)
     
     if payload.slot_id:

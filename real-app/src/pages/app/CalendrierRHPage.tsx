@@ -13,12 +13,14 @@ import {
 import { Button, Card, Spinner } from '../../components/ui';
 import { toast } from 'sonner';
 import { CheckCircle } from 'lucide-react';
+import { useLang } from '../../lib/lang';
 import type { Interview, Employee } from '../../lib/api';
 import { listInterviews, listCandidates, scheduleInterview, updateInterviewStatus } from '../../lib/api';
 
 type ViewMode = 'month' | 'week' | 'day';
 
 export default function CalendrierRHPage() {
+    const { t } = useLang();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<ViewMode>('month');
     const [interviews, setInterviews] = useState<Interview[]>([]);
@@ -48,7 +50,7 @@ export default function CalendrierRHPage() {
             setInterviews(intData);
             setCandidates(candData);
         } catch (err) {
-            toast.error("Erreur lors du chargement des données");
+            toast.error(t('error'));
         } finally {
             setLoading(false);
         }
@@ -78,30 +80,29 @@ export default function CalendrierRHPage() {
         try {
             await updateInterviewStatus(id, newStatus);
             setInterviews(prev => prev.map(e => e.id === id ? { ...e, status: newStatus as any } : e));
-            toast.success(newStatus === 'realized' ? "Entretien marqué comme réalisé !" : "Statut réinitialisé");
+            toast.success(newStatus === 'realized' ? t('cal_marked_realized') : t('cal_status_reset'));
         } catch (err) {
-            toast.error("Erreur lors de la mise à jour");
+            toast.error(t('error'));
         }
     };
 
     const handleSaveInterview = async () => {
         if (!newInterview.candidate_id) {
-            toast.error("Veuillez sélectionner un candidat");
+            toast.error(t('cal_no_candidate_error'));
             return;
         }
         try {
-            // Find candidate name for the API if needed
             const cand = candidates.find(c => c.id === newInterview.candidate_id);
             await scheduleInterview({
                 ...newInterview,
                 candidate_name: cand?.full_name || (cand as any).candidate_name,
                 job_title: cand?.position || 'TEST'
             } as any);
-            toast.success("Entretien planifié avec succès !");
+            toast.success(t('cal_planned_success'));
             setIsModalOpen(false);
             loadData();
         } catch (err) {
-            toast.error("Erreur lors de la planification");
+            toast.error(t('error'));
         }
     };
 
@@ -110,6 +111,12 @@ export default function CalendrierRHPage() {
             prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
         );
     };
+
+    const interviewTypeFilters = [
+        { id: 'RH',        label: t('cal_interview_rh') },
+        { id: 'Technique', label: t('cal_interview_tech') },
+        { id: 'Final',     label: t('cal_interview_final') },
+    ];
 
     const renderMonthView = () => {
         const dateRange = eachDayOfInterval({ start: startDate, end: endDate });
@@ -171,16 +178,16 @@ export default function CalendrierRHPage() {
                                                 fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                                                 display: 'flex', flexDirection: 'column', gap: 2, transition: 'all 0.2s'
                                             }}
-                                            title="Cliquez pour marquer comme réalisé"
+                                            title={t('cal_click_realized')}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
                                                 <span style={{ fontWeight: 800 }}>{e.start_time}</span>
                                                 {e.status === 'realized' && <CheckCircle size={10} />}
                                             </div>
                                             <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                                                {(e as any).candidate_name || e.candidate?.full_name || 'Candidat'}
+                                                {(e as any).candidate_name || e.candidate?.full_name || t('cal_candidate_default')}
                                             </div>
-                                            <div style={{ fontSize: 9, opacity: 0.7 }}>{(e as any).job_title || 'Poste non spécifié'}</div>
+                                            <div style={{ fontSize: 9, opacity: 0.7 }}>{(e as any).job_title || t('cand_no_position')}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -200,7 +207,6 @@ export default function CalendrierRHPage() {
 
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                {/* Day Summary Card */}
                 <div style={{
                     padding: 24, background: 'white', borderRadius: 20, border: '1px solid var(--border)',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -212,15 +218,14 @@ export default function CalendrierRHPage() {
                         </div>
                         <div>
                             <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}</h2>
-                            <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: 0 }}>{dayInterviews.length} entretien(s) au programme</p>
+                            <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: 0 }}>{t('cal_interviews_count').replace('{n}', String(dayInterviews.length))}</p>
                         </div>
                     </div>
                     <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-                        <Plus size={16} style={{ marginRight: 8 }} /> Nouvel entretien
+                        <Plus size={16} style={{ marginRight: 8 }} /> {t('cal_new_interview')}
                     </Button>
                 </div>
 
-                {/* Interviews List */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {dayInterviews.length > 0 ? dayInterviews.map(interview => (
                         <div key={interview.id} style={{
@@ -228,43 +233,39 @@ export default function CalendrierRHPage() {
                             display: 'flex', gap: 20, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-sm)'
                         }}>
                             <div style={{ position: 'absolute', left: 0, top: 0, width: 4, height: '100%', background: 'var(--primary)' }} />
-
                             <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <Clock size={20} style={{ color: 'var(--fg-muted)' }} />
                             </div>
-
                             <div style={{ flex: 1 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                         <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, textTransform: 'uppercase' }}>
-                                            {(interview as any).candidate_name || 'Candidat'}
+                                            {(interview as any).candidate_name || t('cal_candidate_default')}
                                         </h3>
-                                        <div style={{ padding: '4px 8px', borderRadius: 6, background: '#eff6ff', color: '#1e40af', fontSize: 10, fontWeight: 700 }}>RH</div>
-                                        <div style={{ padding: '4px 8px', borderRadius: 6, background: '#dcfce7', color: '#166534', fontSize: 10, fontWeight: 700 }}>TERMINÉ</div>
+                                        <div style={{ padding: '4px 8px', borderRadius: 6, background: '#eff6ff', color: '#1e40af', fontSize: 10, fontWeight: 700 }}>{t('cal_interview_rh')}</div>
+                                        <div style={{ padding: '4px 8px', borderRadius: 6, background: '#dcfce7', color: '#166534', fontSize: 10, fontWeight: 700 }}>{t('cal_done_badge')}</div>
                                     </div>
                                     <button style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', fontSize: 12, fontWeight: 700 }}>
-                                        Modifier
+                                        {t('edit')}
                                     </button>
                                 </div>
-
                                 <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--fg-muted)', marginBottom: 12 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                         <Clock size={14} /> {interview.start_time} - {interview.end_time}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <Users size={14} /> Recruteur: RH Tython
+                                        <Users size={14} /> {t('cal_recruiter_short')}: RH Tython
                                     </div>
                                 </div>
-
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--fg-muted)' }}>
-                                    <Filter size={12} /> Auto-planifié pour le poste : {(interview as any).job_title || 'TEST'}
+                                    <Filter size={12} /> {t('cal_auto_planned')} {(interview as any).job_title || 'TEST'}
                                 </div>
                             </div>
                         </div>
                     )) : (
                         <div style={{ textAlign: 'center', padding: '60px 0', opacity: 0.5 }}>
                             <Card>
-                                <p>Aucun entretien pour cette journée.</p>
+                                <p>{t('cal_no_interviews_day')}</p>
                             </Card>
                         </div>
                     )}
@@ -274,7 +275,7 @@ export default function CalendrierRHPage() {
     };
 
     const renderWeekView = () => {
-        return <div style={{ padding: 40, textAlign: 'center', background: 'var(--bg-elev)', borderRadius: 16 }}>Vue semaine en cours de développement...</div>;
+        return <div style={{ padding: 40, textAlign: 'center', background: 'var(--bg-elev)', borderRadius: 16 }}>{t('cal_week_wip')}</div>;
     };
 
     if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><Spinner /></div>;
@@ -283,8 +284,12 @@ export default function CalendrierRHPage() {
         <div style={{ padding: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
                 <div>
-                    <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{viewMode === 'day' ? format(currentDate, 'd MMMM yyyy', { locale: fr }) : 'Calendrier RH'}</h1>
-                    <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: 0 }}>{viewMode === 'day' ? 'Gestion des entretiens et du calendrier RH' : 'Suivi des entretiens et disponibilités'}</p>
+                    <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>
+                        {viewMode === 'day' ? format(currentDate, 'd MMMM yyyy', { locale: fr }) : t('cal_title')}
+                    </h1>
+                    <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: 0 }}>
+                        {viewMode === 'day' ? t('cal_subtitle_day') : t('cal_subtitle_month')}
+                    </p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ display: 'flex', background: 'var(--bg-elev)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
@@ -299,7 +304,7 @@ export default function CalendrierRHPage() {
                                     boxShadow: viewMode === mode ? 'var(--shadow-sm)' : 'none'
                                 }}
                             >
-                                {mode === 'month' ? 'Mois' : mode === 'week' ? 'Semaine' : 'Jour'}
+                                {mode === 'month' ? t('cal_month_view') : mode === 'week' ? t('cal_week_view') : t('cal_day_view')}
                             </button>
                         ))}
                     </div>
@@ -319,7 +324,7 @@ export default function CalendrierRHPage() {
                         }}
                         style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', fontSize: 12, fontWeight: 700 }}
                     >
-                        Nouveau
+                        {t('cal_new_btn')}
                     </button>
                 </div>
             </div>
@@ -329,12 +334,12 @@ export default function CalendrierRHPage() {
                     {viewMode === 'day' && (
                         <Card>
                             <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <Users size={16} style={{ color: 'var(--primary)' }} /> Candidats disponibles
+                                <Users size={16} style={{ color: 'var(--primary)' }} /> {t('cal_available_candidates')}
                             </h3>
                             <div style={{ position: 'relative', marginBottom: 16 }}>
                                 <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
                                 <input
-                                    type="text" placeholder="Rechercher..."
+                                    type="text" placeholder={t('search')}
                                     style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 13 }}
                                 />
                             </div>
@@ -343,7 +348,7 @@ export default function CalendrierRHPage() {
                                     <div key={c.id} style={{ padding: 12, borderRadius: 12, background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <p style={{ fontSize: 12, fontWeight: 800, margin: 0 }}>{c.full_name || (c as any).candidate_name}</p>
-                                            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: '#dcfce7', color: '#166534', fontWeight: 700 }}>DÉJÀ PASSÉ</span>
+                                            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: '#dcfce7', color: '#166534', fontWeight: 700 }}>{t('cal_already_done')}</span>
                                         </div>
                                         <p style={{ fontSize: 10, color: 'var(--fg-muted)', margin: '2px 0 0' }}>{c.position || 'TEST'}</p>
                                     </div>
@@ -354,21 +359,17 @@ export default function CalendrierRHPage() {
 
                     <Card>
                         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Filter size={16} style={{ color: 'var(--primary)' }} /> Filtres calendrier
+                            <Filter size={16} style={{ color: 'var(--primary)' }} /> {t('cal_filters')}
                         </h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            {[
-                                { id: 'RH', label: 'Entretien RH' },
-                                { id: 'Technique', label: 'Entretien Technique' },
-                                { id: 'Final', label: 'Entretien Final' }
-                            ].map(t => (
-                                <label key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, cursor: 'pointer' }}>
+                            {interviewTypeFilters.map(tf => (
+                                <label key={tf.id} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, cursor: 'pointer' }}>
                                     <input
                                         type="checkbox"
-                                        checked={activeFilters.includes(t.id)}
-                                        onChange={() => handleToggleFilter(t.id)}
+                                        checked={activeFilters.includes(tf.id)}
+                                        onChange={() => handleToggleFilter(tf.id)}
                                     />
-                                    {t.label}
+                                    {tf.label}
                                 </label>
                             ))}
                         </div>
@@ -381,6 +382,7 @@ export default function CalendrierRHPage() {
                     {viewMode === 'day' && renderDayView()}
                 </div>
             </div>
+
             {isModalOpen && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
@@ -391,19 +393,19 @@ export default function CalendrierRHPage() {
                         maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)'
                     }}>
                         <div style={{ padding: 24, borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>Planifier un entretien</h2>
+                            <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>{t('cal_modal_title')}</h2>
                             <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)' }}><X size={20} /></button>
                         </div>
 
                         <div style={{ padding: 24, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                <label style={{ fontSize: 13, fontWeight: 700 }}>Candidat</label>
+                                <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_candidate_default')}</label>
                                 <select
                                     style={{ padding: 12, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elev)', fontSize: 14 }}
                                     value={newInterview.candidate_id}
                                     onChange={e => setNewInterview({ ...newInterview, candidate_id: e.target.value })}
                                 >
-                                    <option value="">Sélectionner un candidat</option>
+                                    <option value="">{t('cal_select_candidate')}</option>
                                     {candidates.map(c => (
                                         <option key={c.id} value={c.id}>{c.full_name || (c as any).candidate_name}</option>
                                     ))}
@@ -412,7 +414,7 @@ export default function CalendrierRHPage() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                    <label style={{ fontSize: 13, fontWeight: 700 }}>Date</label>
+                                    <label style={{ fontSize: 13, fontWeight: 700 }}>{t('ef_hire_date')}</label>
                                     <input
                                         type="date"
                                         style={{ padding: 12, borderRadius: 12, border: '1px solid var(--border)', fontSize: 14 }}
@@ -421,22 +423,22 @@ export default function CalendrierRHPage() {
                                     />
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                    <label style={{ fontSize: 13, fontWeight: 700 }}>Type d'entretien</label>
+                                    <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_interview_type')}</label>
                                     <select
                                         style={{ padding: 12, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elev)', fontSize: 14 }}
                                         value={newInterview.type}
                                         onChange={e => setNewInterview({ ...newInterview, type: e.target.value })}
                                     >
-                                        <option value="RH">Entretien RH</option>
-                                        <option value="Technique">Entretien Technique</option>
-                                        <option value="Final">Entretien Final</option>
+                                        <option value="RH">{t('cal_interview_rh')}</option>
+                                        <option value="Technique">{t('cal_interview_tech')}</option>
+                                        <option value="Final">{t('cal_interview_final')}</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                    <label style={{ fontSize: 13, fontWeight: 700 }}>Heure début</label>
+                                    <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_start_time')}</label>
                                     <div style={{ position: 'relative' }}>
                                         <Clock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
                                         <input
@@ -448,7 +450,7 @@ export default function CalendrierRHPage() {
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                    <label style={{ fontSize: 13, fontWeight: 700 }}>Heure fin</label>
+                                    <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_end_time')}</label>
                                     <div style={{ position: 'relative' }}>
                                         <Clock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
                                         <input
@@ -462,9 +464,9 @@ export default function CalendrierRHPage() {
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                <label style={{ fontSize: 13, fontWeight: 700 }}>Recruteur</label>
+                                <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_recruiter_short')}</label>
                                 <input
-                                    type="text" placeholder="Nom du recruteur"
+                                    type="text" placeholder={t('cal_recruiter_ph')}
                                     style={{ padding: 12, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elev)', fontSize: 14 }}
                                     value={newInterview.recruiter_name}
                                     onChange={e => setNewInterview({ ...newInterview, recruiter_name: e.target.value })}
@@ -472,7 +474,7 @@ export default function CalendrierRHPage() {
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                <label style={{ fontSize: 13, fontWeight: 700 }}>Lien Meet/Zoom</label>
+                                <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_meet_link')}</label>
                                 <div style={{ position: 'relative' }}>
                                     <Video size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
                                     <input
@@ -486,8 +488,8 @@ export default function CalendrierRHPage() {
                         </div>
 
                         <div style={{ padding: 24, borderTop: '1px solid var(--border)', display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-                            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Annuler</Button>
-                            <Button variant="primary" onClick={handleSaveInterview}>Enregistrer l'entretien</Button>
+                            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>{t('cancel')}</Button>
+                            <Button variant="primary" onClick={handleSaveInterview}>{t('cal_save_interview')}</Button>
                         </div>
                     </div>
                 </div>

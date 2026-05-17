@@ -6,12 +6,15 @@ import {
 } from 'lucide-react';
 import { Button, Card, Spinner } from '../../components/ui';
 import { toast } from 'sonner';
+import { useLang } from '../../lib/lang';
 import type { ChatMessage, JobAd } from '../../lib/api';
 import { chatGenerateAnnonce, createAnnonce, listAnnonces } from '../../lib/api';
 
 export default function AnnoncesPage() {
+    const { t } = useLang();
+
     const [messages, setMessages] = useState<ChatMessage[]>([
-        { role: 'assistant', content: "Bonjour ! Je suis votre assistant de recrutement IA. Quels sont les détails du poste pour lequel vous souhaitez créer une annonce ? (Titre, missions, profil recherché...)" }
+        { role: 'assistant', content: t('annonces_welcome') }
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
@@ -51,15 +54,9 @@ export default function AnnoncesPage() {
             const res = await chatGenerateAnnonce(newMessages);
             setMessages([...newMessages, { role: 'assistant', content: res.reply }]);
 
-            // Attempt to extract ad data if formatted as JSON or similar, 
-            // but for now let's just assume the assistant gives a good response
-            // and we might have a button "Extract Ad" or the backend returns it.
-            // In our professional implementation, we'll try to find if there's a 
-            // [AD_CONTENT] block or just use the whole last msg.
-
             const extractPoste = (txt: string) => {
                 const match = txt.match(/(?:Titre du poste|Poste)\s*:\s*([^\n]+)/i) || txt.match(/^#\s*([^\n]+)/m);
-                return match ? match[1].trim() : "Nouveau Poste";
+                return match ? match[1].trim() : t('annonces_default_poste');
             };
 
             if (res.reply.includes("---")) {
@@ -68,17 +65,17 @@ export default function AnnoncesPage() {
                 setGeneratedAd(prev => ({
                     ...prev,
                     contenu: content,
-                    poste: prev?.poste && prev.poste !== "Nouveau Poste" ? prev.poste : extractPoste(res.reply)
+                    poste: prev?.poste && prev.poste !== t('annonces_default_poste') ? prev.poste : extractPoste(res.reply)
                 }));
             } else {
                 setGeneratedAd(prev => ({
                     ...prev,
                     contenu: res.reply,
-                    poste: prev?.poste && prev.poste !== "Nouveau Poste" ? prev.poste : extractPoste(res.reply)
+                    poste: prev?.poste && prev.poste !== t('annonces_default_poste') ? prev.poste : extractPoste(res.reply)
                 }));
             }
         } catch (err) {
-            toast.error("Erreur de communication avec l'IA");
+            toast.error(t('annonces_ai_error'));
         } finally {
             setLoading(false);
         }
@@ -89,16 +86,16 @@ export default function AnnoncesPage() {
         setSaving(true);
         try {
             const res = await createAnnonce({
-                poste: generatedAd.poste || 'Poste sans titre',
+                poste: generatedAd.poste || t('annonces_no_title'),
                 contenu: generatedAd.contenu,
                 is_active: true
             });
             const url = `${window.location.origin}/postuler/${res.id}`;
             setPublishedUrl(url);
-            toast.success("Annonce enregistrée et publiée !");
+            toast.success(t('annonces_save_success'));
             loadHistory();
         } catch (err) {
-            toast.error("Erreur lors de l'enregistrement");
+            toast.error(t('annonces_save_error'));
         } finally {
             setSaving(false);
         }
@@ -109,7 +106,7 @@ export default function AnnoncesPage() {
         navigator.clipboard.writeText(generatedAd.contenu);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-        toast.success("Contenu copié !");
+        toast.success(t('annonces_copy_success'));
     };
 
     const selectFromHistory = (ad: JobAd) => {
@@ -124,12 +121,12 @@ export default function AnnoncesPage() {
             {showHistory && (
                 <div style={{ width: 280, flexShrink: 0, borderRight: '1px solid var(--border)', background: 'var(--bg-elev)', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--fg-muted)', margin: 0 }}>Historique</h3>
+                        <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--fg-muted)', margin: 0 }}>{t('annonces_history')}</h3>
                         <button onClick={() => loadHistory()} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)' }}><RefreshCw size={14} /></button>
                     </div>
                     <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
                         {history.length === 0 && (
-                            <div style={{ padding: 20, textAlign: 'center', color: 'var(--fg-subtle)', fontSize: 12 }}>Aucun historique</div>
+                            <div style={{ padding: 20, textAlign: 'center', color: 'var(--fg-subtle)', fontSize: 12 }}>{t('annonces_no_history')}</div>
                         )}
                         {history.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(ad => (
                             <div
@@ -157,8 +154,8 @@ export default function AnnoncesPage() {
                         <Bot size={22} style={{ color: 'var(--primary)' }} />
                     </div>
                     <div>
-                        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Générateur d'Annonces IA</h2>
-                        <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>Discutez avec l'IA pour affiner votre annonce</p>
+                        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{t('annonces_title')}</h2>
+                        <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>{t('annonces_subtitle')}</p>
                     </div>
                 </div>
 
@@ -192,7 +189,7 @@ export default function AnnoncesPage() {
                     <div style={{ position: 'relative', display: 'flex', gap: 10 }}>
                         <textarea
                             className="textarea"
-                            placeholder="Décrivez le poste, les avantages, les prérequis..."
+                            placeholder={t('annonces_placeholder')}
                             value={input}
                             onChange={e => setInput(e.target.value)}
                             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
@@ -227,7 +224,7 @@ export default function AnnoncesPage() {
                                 color: view === 'preview' ? 'var(--primary)' : 'var(--fg-muted)',
                                 boxShadow: view === 'preview' ? 'var(--shadow-sm)' : 'none'
                             }}
-                        >Aperçu</button>
+                        >{t('annonces_preview_tab')}</button>
                         <button
                             onClick={() => setView('edit')}
                             style={{
@@ -236,14 +233,14 @@ export default function AnnoncesPage() {
                                 color: view === 'edit' ? 'var(--primary)' : 'var(--fg-muted)',
                                 boxShadow: view === 'edit' ? 'var(--shadow-sm)' : 'none'
                             }}
-                        >Éditeur</button>
+                        >{t('annonces_editor_tab')}</button>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                        <Button size="sm" variant="ghost" onClick={copyToClipboard} title="Copier">
+                        <Button size="sm" variant="ghost" onClick={copyToClipboard} title={t('annonces_copy_success')}>
                             {copied ? <Check size={16} style={{ color: 'var(--success)' }} /> : <Copy size={16} />}
                         </Button>
                         <Button size="sm" onClick={handleSave} loading={saving} disabled={!generatedAd?.contenu}>
-                            Publier
+                            {t('annonces_publish')}
                         </Button>
                     </div>
                 </div>
@@ -252,8 +249,8 @@ export default function AnnoncesPage() {
                     {!generatedAd?.contenu ? (
                         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--fg-subtle)', padding: 40, textAlign: 'center' }}>
                             <Sparkles size={48} style={{ marginBottom: 20, opacity: 0.2 }} />
-                            <p style={{ fontSize: 15, fontWeight: 600 }}>L'aperçu de l'annonce s'affichera ici</p>
-                            <p style={{ fontSize: 13 }}>Commencez par donner quelques détails au chatbot à gauche.</p>
+                            <p style={{ fontSize: 15, fontWeight: 600 }}>{t('annonces_empty_preview')}</p>
+                            <p style={{ fontSize: 13 }}>{t('annonces_empty_hint')}</p>
                         </div>
                     ) : (
                         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -275,12 +272,12 @@ export default function AnnoncesPage() {
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                                 <div style={{ display: 'flex', gap: 12, alignItems: 'center', color: 'var(--primary)' }}>
                                                     <Check size={18} />
-                                                    <span style={{ fontSize: 13, fontWeight: 700 }}>Annonce publiée ! Voici le lien de postulation :</span>
+                                                    <span style={{ fontSize: 13, fontWeight: 700 }}>{t('annonces_published_banner')}</span>
                                                 </div>
                                                 <div style={{ display: 'flex', gap: 8, background: 'var(--bg)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', overflow: 'hidden' }}>
                                                     <code style={{ flex: 1, fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{publishedUrl}</code>
                                                     <button
-                                                        onClick={() => { navigator.clipboard.writeText(publishedUrl); toast.success("Lien copié !"); }}
+                                                        onClick={() => { navigator.clipboard.writeText(publishedUrl); toast.success(t('ef_link_copied')); }}
                                                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)' }}
                                                     >
                                                         <Copy size={14} />
@@ -290,7 +287,7 @@ export default function AnnoncesPage() {
                                         ) : (
                                             <div style={{ display: 'flex', gap: 12, alignItems: 'center', color: 'var(--fg-subtle)' }}>
                                                 <ExternalLink size={18} />
-                                                <span style={{ fontSize: 13, fontWeight: 600 }}>Le lien de postulation sera généré après publication.</span>
+                                                <span style={{ fontSize: 13, fontWeight: 600 }}>{t('annonces_link_pending')}</span>
                                             </div>
                                         )}
                                     </div>
@@ -303,5 +300,3 @@ export default function AnnoncesPage() {
         </div>
     );
 }
-
-// End of file

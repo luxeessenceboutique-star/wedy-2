@@ -6,10 +6,12 @@ import {
 } from 'lucide-react';
 import { Button, Card, Spinner, Avatar } from '../../components/ui';
 import { toast } from 'sonner';
+import { useLang } from '../../lib/lang';
 import type { Employee } from '../../lib/api';
 import { listCandidates, promoteToEmployee, promoteToIntern, deleteCandidate } from '../../lib/api';
 
 export default function CandidatsPage() {
+    const { t } = useLang();
     const [candidates, setCandidates] = useState<Employee[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -24,20 +26,20 @@ export default function CandidatsPage() {
             const data = await listCandidates();
             setCandidates(data);
         } catch (err) {
-            toast.error("Erreur lors du chargement");
+            toast.error(t('error'));
         } finally {
             setLoading(false);
         }
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le candidat ${name} ?`)) return;
+        if (!window.confirm(t('cand_delete_confirm').replace('{name}', name))) return;
         try {
             await deleteCandidate(id);
-            toast.success("Candidat supprimé");
+            toast.success(t('cand_deleted'));
             load();
         } catch (err) {
-            toast.error("Erreur lors de la suppression");
+            toast.error(t('error'));
         }
     };
 
@@ -55,11 +57,11 @@ export default function CandidatsPage() {
                     internship_start: new Date().toISOString().split('T')[0]
                 });
             }
-            toast.success(`${selectedCand.full_name} a été promu avec succès !`);
+            toast.success(t('cand_promoted').replace('{name}', selectedCand.full_name));
             load();
             setSelectedCand(null);
         } catch (err) {
-            toast.error("Erreur lors de la promotion");
+            toast.error(t('error'));
         } finally {
             setPromoting(false);
         }
@@ -77,8 +79,8 @@ export default function CandidatsPage() {
         <div style={{ padding: 24 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
                 <div>
-                    <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Gestion des Candidats</h1>
-                    <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: 0 }}>Pool de talents et pipeline de recrutement</p>
+                    <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{t('cand_title')}</h1>
+                    <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: 0 }}>{t('cand_subtitle')}</p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     <div style={{ position: 'relative' }}>
@@ -86,7 +88,7 @@ export default function CandidatsPage() {
                         <input
                             className="input"
                             style={{ paddingLeft: 38, width: 260 }}
-                            placeholder="Rechercher un candidat..."
+                            placeholder={t('cand_search_ph')}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
@@ -102,11 +104,11 @@ export default function CandidatsPage() {
                             <Avatar name={c.full_name} size={48} />
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.full_name}</h3>
-                                <p style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 600, margin: 0 }}>{c.position || 'Poste non spécifié'}</p>
+                                <p style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 600, margin: 0 }}>{c.position || t('cand_no_position')}</p>
                             </div>
                             <div style={{ display: 'flex', gap: 6 }}>
-                                <button onClick={() => setSelectedCand(c)} style={{ background: 'var(--bg-muted)', border: 'none', padding: 6, borderRadius: 8, cursor: 'pointer', color: 'var(--fg-muted)' }} title="Voir détails"><Eye size={14} /></button>
-                                <button onClick={() => handleDelete(c.id, c.full_name)} style={{ background: 'var(--error-soft)', border: 'none', padding: 6, borderRadius: 8, cursor: 'pointer', color: 'var(--error)' }} title="Supprimer"><Trash2 size={14} /></button>
+                                <button onClick={() => setSelectedCand(c)} style={{ background: 'var(--bg-muted)', border: 'none', padding: 6, borderRadius: 8, cursor: 'pointer', color: 'var(--fg-muted)' }} title={t('edit')}><Eye size={14} /></button>
+                                <button onClick={() => handleDelete(c.id, c.full_name)} style={{ background: 'var(--error-soft)', border: 'none', padding: 6, borderRadius: 8, cursor: 'pointer', color: 'var(--error)' }} title={t('delete')}><Trash2 size={14} /></button>
                             </div>
                         </div>
 
@@ -117,10 +119,10 @@ export default function CandidatsPage() {
 
                         <div style={{ display: 'flex', gap: 8, marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--border)' }}>
                             <Button size="sm" style={{ flex: 1 }} onClick={() => { setSelectedCand(c); handlePromote('employee'); }} loading={promoting && selectedCand?.id === c.id}>
-                                <UserPlus size={14} style={{ marginRight: 6 }} /> Engager
+                                <UserPlus size={14} style={{ marginRight: 6 }} /> {t('cand_hire_btn')}
                             </Button>
                             <Button size="sm" variant="ghost" style={{ flex: 1 }} onClick={() => { setSelectedCand(c); handlePromote('intern'); }}>
-                                <GraduationCap size={14} style={{ marginRight: 6 }} /> Stagiaire
+                                <GraduationCap size={14} style={{ marginRight: 6 }} /> {t('interns')}
                             </Button>
                         </div>
                     </Card>
@@ -131,7 +133,7 @@ export default function CandidatsPage() {
                 <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setSelectedCand(null)}>
                     <div style={{ background: 'var(--bg-elev)', borderRadius: 16, border: '1px solid var(--border)', padding: 24, maxWidth: 500, width: '100%' }} onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                            <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>Profil Candidat</h2>
+                            <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{t('cand_profile_title')}</h2>
                             <button onClick={() => setSelectedCand(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><XCircle size={20} style={{ color: 'var(--fg-muted)' }} /></button>
                         </div>
                         <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
@@ -141,10 +143,9 @@ export default function CandidatsPage() {
                                 <p style={{ color: 'var(--primary)', fontWeight: 600 }}>{selectedCand.position}</p>
                             </div>
                         </div>
-                        {/* More details here if needed */}
                         <div style={{ display: 'flex', gap: 12 }}>
-                            <Button style={{ flex: 1 }} variant="primary" onClick={() => handlePromote('employee')}>Promouvoir en Employé</Button>
-                            <Button style={{ flex: 1 }} variant="ghost" onClick={() => handlePromote('intern')}>Promouvoir en Stagiaire</Button>
+                            <Button style={{ flex: 1 }} variant="primary" onClick={() => handlePromote('employee')}>{t('cand_promote_employee')}</Button>
+                            <Button style={{ flex: 1 }} variant="ghost" onClick={() => handlePromote('intern')}>{t('cand_promote_intern')}</Button>
                         </div>
                     </div>
                 </div>

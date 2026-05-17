@@ -9,6 +9,7 @@ import {
 import { Modal } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { useAuth } from '../../lib/auth';
+import { useLang } from '../../lib/lang';
 import { toast } from 'sonner';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -84,12 +85,12 @@ function daysUntil(dateStr: string): number | null {
   return Math.ceil((d.getTime() - Date.now()) / 86400000);
 }
 
-function complexityColor(level?: string): { bg: string; fg: string; label: string } {
+function complexityColor(level?: string): { bg: string; fg: string } {
   switch (level) {
-    case 'high':   return { bg: '#fee2e2', fg: '#dc2626', label: 'Complexité haute' };
-    case 'medium': return { bg: '#fef3c7', fg: '#d97706', label: 'Complexité moyenne' };
-    case 'low':    return { bg: '#dcfce7', fg: '#16a34a', label: 'Complexité basse' };
-    default:       return { bg: 'var(--bg-muted)', fg: 'var(--fg-muted)', label: 'Non analysé' };
+    case 'high':   return { bg: '#fee2e2', fg: '#dc2626' };
+    case 'medium': return { bg: '#fef3c7', fg: '#d97706' };
+    case 'low':    return { bg: '#dcfce7', fg: '#16a34a' };
+    default:       return { bg: 'var(--bg-muted)', fg: 'var(--fg-muted)' };
   }
 }
 
@@ -149,14 +150,14 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
-const AGENT_STEPS = [
-  { icon: <Search size={13} />, label: 'Lancement de la recherche sur les portails publics' },
-  { icon: <Download size={13} />, label: 'Téléchargement des dossiers de consultation (DCE)' },
-  { icon: <Cpu size={13} />, label: 'Analyse IA des appels d\'offres détectés' },
-  { icon: <CheckCircle2 size={13} />, label: 'Structuration et classification des résultats' },
-];
-
 function AgentTimeline({ progress }: { progress?: number }) {
+  const { t } = useLang();
+  const AGENT_STEPS = [
+    { icon: <Search size={13} />, label: t('tender_step1') },
+    { icon: <Download size={13} />, label: t('tender_step2') },
+    { icon: <Cpu size={13} />, label: t('tender_step3') },
+    { icon: <CheckCircle2 size={13} />, label: t('tender_step4') },
+  ];
   const pct = progress ?? 0;
   const activeStep = Math.floor((pct / 100) * AGENT_STEPS.length);
 
@@ -211,9 +212,16 @@ function TechChip({ tech, idx }: { tech: string; idx: number }) {
 }
 
 function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles: (t: TenderResult) => void }) {
+  const { t } = useLang();
   const [hovered, setHovered] = useState(false);
   const ar = tender.analysis_result;
   const complexity = complexityColor(ar?.niveau_complexite);
+  const complexityLabels: Record<string, string> = {
+    high: t('tender_complexity_high'),
+    medium: t('tender_complexity_medium'),
+    low: t('tender_complexity_low'),
+  };
+  const complexityLabel = complexityLabels[ar?.niveau_complexite ?? ''] ?? t('tender_not_analyzed');
   const days = daysUntil(ar?.date_limite ?? tender.deadline);
   const urgent = days !== null && days >= 0 && days < 7;
   const overdue = days !== null && days < 0;
@@ -257,7 +265,7 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
             background: complexity.bg, color: complexity.fg,
             flexShrink: 0,
           }}>
-            {complexity.label}
+            {complexityLabel}
           </div>
           {tender.is_analyzed && (
             <div style={{
@@ -279,7 +287,7 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
             fontSize: 11, color: 'var(--fg-muted)', fontWeight: 500,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
-            {ar?.organisme || tender.organization || 'Organisme non précisé'}
+            {ar?.organisme || tender.organization || t('tender_no_org')}
           </span>
         </div>
 
@@ -351,7 +359,7 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
               border: '1px solid #bbf7d0',
             }}>
               <Paperclip size={10} />
-              {tender.file_count} fichier{tender.file_count > 1 ? 's' : ''} disponible{tender.file_count > 1 ? 's' : ''}
+              {t('tender_files_available_tpl').replace('{n}', String(tender.file_count))}
             </div>
           </div>
         )}
@@ -365,11 +373,11 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
           }}>
             {ar?.date_limite || tender.deadline
               ? overdue
-                ? `Expiré (${ar?.date_limite || tender.deadline})`
+                ? t('tender_expired_tpl').replace('{date}', ar?.date_limite || tender.deadline)
                 : urgent
-                ? `Urgent — ${days} jour${days > 1 ? 's' : ''} restant${days > 1 ? 's' : ''}`
-                : `Limite : ${ar?.date_limite || tender.deadline}`
-              : 'Date limite non précisée'}
+                ? t('tender_urgent_tpl').replace('{days}', String(days))
+                : t('tender_deadline_tpl').replace('{date}', ar?.date_limite || tender.deadline)
+              : t('tender_no_deadline')}
           </span>
         </div>
       </div>
@@ -399,7 +407,7 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
           onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
         >
           <ExternalLink size={11} />
-          Voir offre
+          {t('tender_see_offer')}
         </a>
 
         {tender.file_count > 0 && (
@@ -448,6 +456,7 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
 
 export default function TendersPage() {
   const { user } = useAuth();
+  const { t } = useLang();
 
   const [form, setForm] = useState<FormData>({
     keywords: '',
@@ -470,7 +479,6 @@ export default function TendersPage() {
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Pre-fill name from auth user
   useEffect(() => {
     if (user) {
       const fullName = (user as any)?.full_name || (user as any)?.profile?.full_name || '';
@@ -522,15 +530,14 @@ export default function TendersPage() {
       if (status.state === 'done') {
         stopPolling();
         await fetchResults();
-        toast.success(`Recherche terminée — ${results.length || '?'} offres trouvées`);
+        toast.success(t('tender_found_toast_tpl').replace('{n}', String(results.length || '?')));
       } else if (status.state === 'error') {
         stopPolling();
-        toast.error(`Erreur agent : ${status.error ?? status.message}`);
+        toast.error(status.error ?? status.message ?? t('error'));
       }
     }, 3000);
-  }, [fetchStatus, fetchResults, stopPolling, results.length]);
+  }, [fetchStatus, fetchResults, stopPolling, results.length, t]);
 
-  // On mount: check if already running or done
   useEffect(() => {
     fetchStatus().then(status => {
       if (status?.state === 'running') {
@@ -542,7 +549,6 @@ export default function TendersPage() {
     return () => stopPolling();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-refresh results when state changes to done
   useEffect(() => {
     if (agentStatus.state === 'done' && results.length === 0) {
       fetchResults();
@@ -550,10 +556,10 @@ export default function TendersPage() {
   }, [agentStatus.state, fetchResults, results.length]);
 
   const handleLaunch = async () => {
-    if (!form.keywords.trim()) { toast.error('Veuillez saisir des mots-clés'); return; }
-    if (!form.nom.trim() || !form.prenom.trim()) { toast.error('Nom et prénom requis'); return; }
-    if (!form.email.trim()) { toast.error('Email professionnel requis'); return; }
-    if (!form.company.trim()) { toast.error('Société requise'); return; }
+    if (!form.keywords.trim()) { toast.error(t('tender_keywords_required')); return; }
+    if (!form.nom.trim() || !form.prenom.trim()) { toast.error(t('tender_name_required')); return; }
+    if (!form.email.trim()) { toast.error(t('tender_email_required')); return; }
+    if (!form.company.trim()) { toast.error(t('tender_company_required')); return; }
 
     setLoading(true);
     try {
@@ -577,12 +583,12 @@ export default function TendersPage() {
         throw new Error(err?.detail ?? `Erreur ${res.status}`);
       }
 
-      toast.success('Agent lancé — Recherche en cours...');
-      setAgentStatus({ state: 'running', message: 'Recherche en cours', progress: 0 });
+      toast.success(t('tender_agent_launched'));
+      setAgentStatus({ state: 'running', message: t('tender_running_title'), progress: 0 });
       setResults([]);
       startPolling();
     } catch (e: any) {
-      toast.error(e.message ?? 'Erreur lors du lancement');
+      toast.error(e.message ?? t('error'));
     } finally {
       setLoading(false);
     }
@@ -590,8 +596,8 @@ export default function TendersPage() {
 
   const handleStop = async () => {
     stopPolling();
-    setAgentStatus(prev => ({ ...prev, state: 'idle', message: 'Arrêté' }));
-    toast.info('Agent arrêté');
+    setAgentStatus(prev => ({ ...prev, state: 'idle', message: t('tender_stopped') }));
+    toast.info(t('tender_agent_stopped'));
   };
 
   const handleClear = async () => {
@@ -599,22 +605,22 @@ export default function TendersPage() {
       await authFetch('/api/tenders/results', { method: 'DELETE' });
       setResults([]);
       setAgentStatus({ state: 'idle', message: '' });
-      toast.success('Résultats effacés');
+      toast.success(t('tender_results_cleared'));
     } catch {
-      toast.error('Impossible d\'effacer les résultats');
+      toast.error(t('tender_clear_error'));
     }
   };
 
   // ─── Filtering & sorting ────────────────────────────────────────────────────
 
   const filteredResults = results
-    .filter(t => {
-      const ar = t.analysis_result;
+    .filter(r => {
+      const ar = r.analysis_result;
       if (filterComplexity !== 'all' && ar?.niveau_complexite !== filterComplexity) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        const title = (ar?.titre || t.title || '').toLowerCase();
-        const org = (ar?.organisme || t.organization || '').toLowerCase();
+        const title = (ar?.titre || r.title || '').toLowerCase();
+        const org = (ar?.organisme || r.organization || '').toLowerCase();
         if (!title.includes(q) && !org.includes(q)) return false;
       }
       return true;
@@ -656,15 +662,14 @@ export default function TendersPage() {
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); } 70% { box-shadow: 0 0 0 10px rgba(124,58,237,0); } 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0); } }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .tender-launch-btn { transition: opacity 0.15s, transform 0.15s; }
         .tender-launch-btn:hover { opacity: 0.92; transform: translateY(-1px); }
         .tender-launch-btn:active { transform: translateY(0); }
       `}</style>
 
       <PageHeader
-        title="Marchés Publics"
-        subtitle="Agent IA de veille et d'analyse des appels d'offres publics"
+        title={t('tender_title')}
+        subtitle={t('tender_subtitle')}
         action={
           results.length > 0 ? (
             <button
@@ -681,7 +686,7 @@ export default function TendersPage() {
               onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-elev)'; e.currentTarget.style.color = 'var(--fg-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
             >
               <Trash2 size={12} />
-              Effacer les résultats
+              {t('tender_clear_results')}
             </button>
           ) : undefined
         }
@@ -720,8 +725,8 @@ export default function TendersPage() {
                 <Search size={16} style={{ color: '#fff' }} />
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>Configuration de l'agent</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)' }}>Paramétrez votre recherche</div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>{t('tender_config_title')}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)' }}>{t('tender_config_subtitle')}</div>
               </div>
             </div>
 
@@ -729,12 +734,12 @@ export default function TendersPage() {
               {/* Keywords */}
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Mots-clés de recherche *
+                  {t('tender_keywords_label')}
                 </label>
                 <textarea
                   value={form.keywords}
                   onChange={e => setForm(prev => ({ ...prev, keywords: e.target.value }))}
-                  placeholder="informatique, développement, ERP, logiciel..."
+                  placeholder={t('tender_keywords_ph')}
                   disabled={isRunning}
                   rows={3}
                   style={{
@@ -760,12 +765,12 @@ export default function TendersPage() {
               {/* Name / Email / Company grid */}
               <div style={{ marginBottom: 14 }}>
                 <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Informations du contact *
+                  {t('tender_contact_label')}
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {([
-                    { key: 'prenom', label: 'Prénom', placeholder: 'Mohamed' },
-                    { key: 'nom', label: 'Nom', placeholder: 'Alaoui' },
+                    { key: 'prenom', label: t('tender_prenom'), placeholder: 'Mohamed' },
+                    { key: 'nom', label: t('tender_nom'), placeholder: 'Alaoui' },
                   ] as const).map(f => (
                     <div key={f.key}>
                       <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', display: 'block', marginBottom: 4 }}>{f.label}</label>
@@ -792,7 +797,7 @@ export default function TendersPage() {
                     </div>
                   ))}
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', display: 'block', marginBottom: 4 }}>Email professionnel</label>
+                    <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', display: 'block', marginBottom: 4 }}>{t('tender_email_label')}</label>
                     <input
                       type="email"
                       value={form.email}
@@ -816,7 +821,7 @@ export default function TendersPage() {
                     />
                   </div>
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', display: 'block', marginBottom: 4 }}>Société</label>
+                    <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', display: 'block', marginBottom: 4 }}>{t('tender_company_label')}</label>
                     <input
                       value={form.company}
                       onChange={e => setForm(prev => ({ ...prev, company: e.target.value }))}
@@ -855,7 +860,7 @@ export default function TendersPage() {
                   }}
                 >
                   <Settings2 size={12} />
-                  Configuration IA (optionnel)
+                  {t('tender_ai_config')}
                   {showAiConfig ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 </button>
                 {showAiConfig && (
@@ -937,12 +942,12 @@ export default function TendersPage() {
                   {loading ? (
                     <>
                       <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                      Lancement...
+                      {t('tender_launching')}
                     </>
                   ) : (
                     <>
                       <Play size={16} />
-                      🚀 Lancer la recherche
+                      🚀 {t('tender_launch')}
                     </>
                   )}
                 </button>
@@ -963,7 +968,7 @@ export default function TendersPage() {
                   }}
                 >
                   <Square size={15} />
-                  Arrêter l'agent
+                  {t('tender_stop')}
                 </button>
               )}
             </div>
@@ -982,7 +987,7 @@ export default function TendersPage() {
                 {agentStatus.state === 'done' && <CheckCircle2 size={14} style={{ color: '#059669', flexShrink: 0 }} />}
                 {agentStatus.state === 'error' && <AlertCircle size={14} style={{ color: '#dc2626', flexShrink: 0 }} />}
                 <span style={{ fontSize: 12, fontWeight: 600, color: isRunning ? '#7c3aed' : agentStatus.state === 'done' ? '#059669' : '#dc2626' }}>
-                  {isRunning ? 'Agent en cours d\'exécution' : agentStatus.state === 'done' ? 'Recherche terminée' : 'Erreur'}
+                  {isRunning ? t('tender_agent_running') : agentStatus.state === 'done' ? t('tender_search_done') : t('error')}
                 </span>
               </div>
               {agentStatus.message && (
@@ -1012,10 +1017,10 @@ export default function TendersPage() {
           {/* Stats bar */}
           {results.length > 0 && (
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <StatCard icon={<Briefcase size={16} />} label="Total offres" value={results.length} color="#7c3aed" />
-              <StatCard icon={<Cpu size={16} />} label="Analysées IA" value={totalAnalyzed} color="#2563eb" />
-              <StatCard icon={<TrendingUp size={16} />} label="Complexité haute" value={highComplexity} color="#dc2626" />
-              <StatCard icon={<Paperclip size={16} />} label="Fichiers DCE" value={totalFiles} color="#059669" />
+              <StatCard icon={<Briefcase size={16} />} label={t('tender_stat_total')} value={results.length} color="#7c3aed" />
+              <StatCard icon={<Cpu size={16} />} label={t('tender_stat_analyzed')} value={totalAnalyzed} color="#2563eb" />
+              <StatCard icon={<TrendingUp size={16} />} label={t('tender_stat_high_complexity')} value={highComplexity} color="#dc2626" />
+              <StatCard icon={<Paperclip size={16} />} label={t('tender_stat_files')} value={totalFiles} color="#059669" />
             </div>
           )}
 
@@ -1031,10 +1036,10 @@ export default function TendersPage() {
               <CheckCircle2 size={18} style={{ color: '#059669', flexShrink: 0 }} />
               <div>
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#065f46' }}>
-                  {results.length} offre{results.length > 1 ? 's' : ''} trouvée{results.length > 1 ? 's' : ''}
+                  {t('tender_results_tpl').replace('{n}', String(results.length))}
                 </span>
                 <span style={{ fontSize: 12, color: '#047857', marginLeft: 8 }}>
-                  • {totalAnalyzed} analysée{totalAnalyzed > 1 ? 's' : ''} par IA
+                  • {t('tender_analyzed_tpl').replace('{n}', String(totalAnalyzed))}
                 </span>
               </div>
               <button
@@ -1049,7 +1054,7 @@ export default function TendersPage() {
                 }}
               >
                 <RefreshCw size={11} />
-                Actualiser
+                {t('tender_refresh')}
               </button>
             </div>
           )}
@@ -1062,7 +1067,7 @@ export default function TendersPage() {
             }}>
               <AlertCircle size={18} style={{ color: '#dc2626', flexShrink: 0 }} />
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#991b1b' }}>Erreur de l'agent</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#991b1b' }}>{t('tender_agent_error_title')}</div>
                 {agentStatus.error && <div style={{ fontSize: 12, color: '#b91c1c' }}>{agentStatus.error}</div>}
               </div>
             </div>
@@ -1089,7 +1094,7 @@ export default function TendersPage() {
                 <input
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Rechercher une offre..."
+                  placeholder={t('tender_search_ph')}
                   style={{
                     border: 'none', background: 'transparent',
                     color: 'var(--fg)', fontSize: 13, outline: 'none', flex: 1,
@@ -1115,10 +1120,10 @@ export default function TendersPage() {
                     fontSize: 12, outline: 'none', cursor: 'pointer',
                   }}
                 >
-                  <option value="all">Toutes complexités</option>
-                  <option value="low">Basse</option>
-                  <option value="medium">Moyenne</option>
-                  <option value="high">Haute</option>
+                  <option value="all">{t('tender_filter_all')}</option>
+                  <option value="low">{t('tender_filter_low')}</option>
+                  <option value="medium">{t('tender_filter_medium')}</option>
+                  <option value="high">{t('tender_filter_high')}</option>
                 </select>
               </div>
 
@@ -1135,14 +1140,14 @@ export default function TendersPage() {
                     fontSize: 12, outline: 'none', cursor: 'pointer',
                   }}
                 >
-                  <option value="deadline">Trier par deadline</option>
-                  <option value="budget">Trier par budget</option>
-                  <option value="complexity">Trier par complexité</option>
+                  <option value="deadline">{t('tender_sort_deadline')}</option>
+                  <option value="budget">{t('tender_sort_budget')}</option>
+                  <option value="complexity">{t('tender_sort_complexity')}</option>
                 </select>
               </div>
 
               <span style={{ fontSize: 11, color: 'var(--fg-subtle)', marginLeft: 'auto' }}>
-                {filteredResults.length} sur {results.length}
+                {t('tender_count_tpl').replace('{n}', String(filteredResults.length)).replace('{total}', String(results.length))}
               </span>
             </div>
           )}
@@ -1158,7 +1163,7 @@ export default function TendersPage() {
                 <TenderCard
                   key={tender.id}
                   tender={tender}
-                  onShowFiles={t => setFilesModal(t)}
+                  onShowFiles={r => setFilesModal(r)}
                 />
               ))}
             </div>
@@ -1183,10 +1188,10 @@ export default function TendersPage() {
                 <Search size={30} style={{ color: '#7c3aed' }} />
               </div>
               <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--fg)', marginBottom: 8 }}>
-                Aucune recherche lancée
+                {t('tender_empty_title')}
               </h3>
               <p style={{ fontSize: 13, color: 'var(--fg-muted)', maxWidth: 340, lineHeight: 1.6, marginBottom: 0 }}>
-                Configurez vos mots-clés et informations de contact dans le panneau de gauche, puis lancez l'agent pour détecter les appels d'offres correspondants.
+                {t('tender_empty_text')}
               </p>
               <div style={{ display: 'flex', gap: 8, marginTop: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
                 {['Informatique', 'ERP', 'Développement web', 'Logiciel RH', 'Infrastructure'].map(kw => (
@@ -1230,10 +1235,10 @@ export default function TendersPage() {
                 <Zap size={26} style={{ color: '#fff' }} />
               </div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: '#7c3aed', marginBottom: 8 }}>
-                Recherche en cours...
+                {t('tender_running_title')}
               </h3>
               <p style={{ fontSize: 12, color: 'var(--fg-muted)', maxWidth: 300 }}>
-                L'agent parcourt les portails publics et analyse les appels d'offres. Les résultats apparaîtront ici dès qu'ils seront disponibles.
+                {t('tender_running_text')}
               </p>
             </div>
           )}
@@ -1246,8 +1251,8 @@ export default function TendersPage() {
               borderRadius: 12,
             }}>
               <Filter size={28} style={{ color: 'var(--fg-subtle)', marginBottom: 12 }} />
-              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)', marginBottom: 6 }}>Aucun résultat avec ce filtre</p>
-              <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>Essayez de modifier vos critères de recherche ou de filtre.</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)', marginBottom: 6 }}>{t('tender_no_filter_title')}</p>
+              <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{t('tender_no_filter_text')}</p>
               <button
                 onClick={() => { setSearchQuery(''); setFilterComplexity('all'); }}
                 style={{
@@ -1257,7 +1262,7 @@ export default function TendersPage() {
                   fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 }}
               >
-                Réinitialiser les filtres
+                {t('tender_reset_filters')}
               </button>
             </div>
           )}
@@ -1268,17 +1273,17 @@ export default function TendersPage() {
       <Modal
         open={filesModal !== null}
         onClose={() => setFilesModal(null)}
-        title={`Fichiers DCE — ${filesModal?.analysis_result?.titre ?? filesModal?.title ?? ''}`}
+        title={`DCE — ${filesModal?.analysis_result?.titre ?? filesModal?.title ?? ''}`}
         width={560}
       >
         {filesModal && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <p style={{ fontSize: 12, color: 'var(--fg-muted)', marginBottom: 8 }}>
-              {filesModal.file_count} fichier{filesModal.file_count > 1 ? 's' : ''} téléchargé{filesModal.file_count > 1 ? 's' : ''} depuis le portail officiel.
+              {t('tender_files_downloaded_tpl').replace('{n}', String(filesModal.file_count))}
             </p>
             {filesModal.downloaded_files.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '20px', color: 'var(--fg-muted)', fontSize: 12 }}>
-                Aucun fichier listé. Consultez la source pour télécharger.
+                {t('tender_no_files_listed')}
               </div>
             ) : (
               filesModal.downloaded_files.map((file, i) => {
@@ -1324,7 +1329,7 @@ export default function TendersPage() {
                       onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
                     >
                       <Download size={11} />
-                      Télécharger
+                      {t('tender_download')}
                     </a>
                   </div>
                 );
@@ -1342,7 +1347,7 @@ export default function TendersPage() {
                 }}
               >
                 <ExternalLink size={12} />
-                Voir l'appel d'offre sur le portail officiel
+                {t('tender_see_source')}
               </a>
             </div>
           </div>

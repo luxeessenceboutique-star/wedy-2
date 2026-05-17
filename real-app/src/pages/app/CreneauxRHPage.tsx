@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
     Clock, Calendar as CalendarIcon, Plus, Trash2,
-    Save, Filter, ChevronLeft, ChevronRight, Check
+    Save, ChevronLeft, ChevronRight, Check
 } from 'lucide-react';
 import { format, addDays, startOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button, Card, Spinner } from '../../components/ui';
 import { toast } from 'sonner';
+import { useLang } from '../../lib/lang';
 import type { HRSlot, Interview } from '../../lib/api';
 import { listSlots, addSlots, deleteSlot, listInterviews } from '../../lib/api';
 import { X, User, Briefcase } from 'lucide-react';
 
 export default function CreneauxRHPage() {
+    const { t } = useLang();
     const [currentWeek, setCurrentWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
     const [slots, setSlots] = useState<HRSlot[]>([]);
     const [interviews, setInterviews] = useState<Interview[]>([]);
@@ -42,13 +44,13 @@ export default function CreneauxRHPage() {
             setInterviews(interviewsData);
         } catch (err: any) {
             console.error('[DEBUG] loadSlots error:', err);
-            toast.error("Erreur lors du chargement des données");
+            toast.error(t('creneaux_load_error'));
         } finally {
             setLoading(false);
         }
     };
 
-    const weekDays = Array.from({ length: 6 }, (_, i) => addDays(currentWeek, i)); // Mon to Sat
+    const weekDays = Array.from({ length: 6 }, (_, i) => addDays(currentWeek, i));
 
     const handleAddSlot = (date: Date) => {
         setBulkMode({ ...bulkMode, date });
@@ -67,7 +69,7 @@ export default function CreneauxRHPage() {
         const endMinutes = hEnd * 60 + mEnd;
 
         if (currentMinutes >= endMinutes) {
-            toast.error("L'heure de fin doit être après l'heure de début");
+            toast.error(t('creneaux_end_after_start'));
             return;
         }
 
@@ -88,7 +90,7 @@ export default function CreneauxRHPage() {
 
         setNewSlots([...newSlots, ...generated]);
         setBulkMode({ ...bulkMode, date: null });
-        toast.success(`${generated.length} créneaux générés !`);
+        toast.success(t('creneaux_generated').replace('{n}', String(generated.length)));
     };
 
     const handleSaveNewSlots = async () => {
@@ -101,11 +103,11 @@ export default function CreneauxRHPage() {
                 end_time: s.end,
                 status: 'free'
             })));
-            toast.success("Créneaux enregistrés !");
+            toast.success(t('creneaux_saved'));
             setNewSlots([]);
             loadSlots();
         } catch (err) {
-            toast.error("Erreur lors de l'enregistrement");
+            toast.error(t('error'));
         } finally {
             setSaving(false);
         }
@@ -114,10 +116,10 @@ export default function CreneauxRHPage() {
     const handleDeleteSlot = async (id: string) => {
         try {
             await deleteSlot(id);
-            toast.success("Créneau supprimé");
+            toast.success(t('creneaux_slot_deleted'));
             setSlots(slots.filter(s => s.id !== id));
         } catch (err) {
-            toast.error("Erreur lors de la suppression");
+            toast.error(t('error'));
         }
     };
 
@@ -127,20 +129,20 @@ export default function CreneauxRHPage() {
         <div style={{ padding: 24, minHeight: '100vh', background: 'var(--bg)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
                 <div>
-                    <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, color: 'var(--fg)' }}>Gestion des Créneaux RH</h1>
-                    <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: '4px 0 0' }}>Définissez vos disponibilités pour les entretiens</p>
+                    <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, color: 'var(--fg)' }}>{t('creneaux_title')}</h1>
+                    <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: '4px 0 0' }}>{t('creneaux_subtitle')}</p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     <div style={{ display: 'flex', gap: 4, background: 'var(--bg-elev)', padding: 4, borderRadius: 10, border: '1px solid var(--border)' }}>
                         <button onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)' }}><ChevronLeft size={18} /></button>
                         <span style={{ padding: '4px 12px', fontSize: 14, fontWeight: 700, minWidth: 200, textAlign: 'center', color: 'var(--fg)' }}>
-                            Semaine du {format(currentWeek, 'd MMMM', { locale: fr })}
+                            {t('creneaux_week_of').replace('{date}', format(currentWeek, 'd MMMM', { locale: fr }))}
                         </span>
                         <button onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)' }}><ChevronRight size={18} /></button>
                     </div>
                     {newSlots.length > 0 && (
                         <Button onClick={handleSaveNewSlots} loading={saving} variant="primary">
-                            <Save size={16} style={{ marginRight: 8 }} /> Enregistrer ({newSlots.length})
+                            <Save size={16} style={{ marginRight: 8 }} /> {t('creneaux_save_btn').replace('{n}', String(newSlots.length))}
                         </Button>
                     )}
                 </div>
@@ -160,13 +162,13 @@ export default function CreneauxRHPage() {
                         <Clock size={16} style={{ color: 'var(--primary)' }} />
                         <input type="time" value={bulkMode.start} onChange={e => setBulkMode({ ...bulkMode, start: e.target.value })}
                             style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }} />
-                        <span>à</span>
+                        <span>{t('creneaux_to')}</span>
                         <input type="time" value={bulkMode.end} onChange={e => setBulkMode({ ...bulkMode, end: e.target.value })}
                             style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }} />
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600 }}>Durée :</span>
+                        <span style={{ fontSize: 13, fontWeight: 600 }}>{t('creneaux_duration')}</span>
                         <select
                             value={bulkMode.duration}
                             onChange={e => setBulkMode({ ...bulkMode, duration: parseInt(e.target.value) })}
@@ -176,13 +178,13 @@ export default function CreneauxRHPage() {
                             <option value={20}>20 min</option>
                             <option value={30}>30 min</option>
                             <option value={45}>45 min</option>
-                            <option value={60}>1 heure</option>
+                            <option value={60}>1h</option>
                         </select>
                     </div>
 
                     <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-                        <button onClick={() => setBulkMode({ ...bulkMode, date: null })} className="btn btn-ghost" style={{ fontSize: 13 }}>Annuler</button>
-                        <Button onClick={generateSlots} variant="primary" size="sm">Générer les créneaux</Button>
+                        <button onClick={() => setBulkMode({ ...bulkMode, date: null })} className="btn btn-ghost" style={{ fontSize: 13 }}>{t('cancel')}</button>
+                        <Button onClick={generateSlots} variant="primary" size="sm">{t('creneaux_generate_btn')}</Button>
                     </div>
                 </div>
             )}
@@ -197,9 +199,8 @@ export default function CreneauxRHPage() {
                         <div key={dateStr} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                             <div
                                 onClick={() => {
-                                    console.log('[DEBUG] Header clicked for day:', format(day, 'yyyy-MM-dd'));
                                     setSelectedDay(day);
-                                    toast.info("Entretiens pour le " + format(day, 'd MMMM', { locale: fr }));
+                                    toast.info(t('creneaux_interviews_for').replace('{date}', format(day, 'd MMMM', { locale: fr })));
                                 }}
                                 style={{
                                     textAlign: 'center', padding: '12px', borderRadius: 12, border: '1px solid var(--border)',
@@ -273,7 +274,7 @@ export default function CreneauxRHPage() {
                                         e.currentTarget.style.color = 'var(--fg-muted)';
                                     }}
                                 >
-                                    <Plus size={14} /> Définir dispos
+                                    <Plus size={14} /> {t('creneaux_add_btn')}
                                 </button>
                             </div>
                         </div>
@@ -281,7 +282,6 @@ export default function CreneauxRHPage() {
                 })}
             </div>
 
-            {/* Side Panel for Interviews */}
             {selectedDay && (
                 <div style={{
                     position: 'fixed', top: 0, right: 0, width: 400, height: '100vh', background: 'var(--bg-elev)',
@@ -290,7 +290,7 @@ export default function CreneauxRHPage() {
                 }}>
                     <div style={{ padding: 24, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
-                            <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>Entretiens prévus</h2>
+                            <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{t('creneaux_panel_title')}</h2>
                             <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: '4px 0 0' }}>{format(selectedDay, 'EEEE d MMMM', { locale: fr })}</p>
                         </div>
                         <button onClick={() => setSelectedDay(null)} style={{ background: 'var(--bg-muted)', border: 'none', padding: 8, borderRadius: '50%', cursor: 'pointer' }}>
@@ -315,9 +315,9 @@ export default function CreneauxRHPage() {
                                                         <User size={20} style={{ color: 'var(--primary)' }} />
                                                     </div>
                                                     <div>
-                                                        <p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>{interview.candidate_name || "Candidat Anonyme"}</p>
+                                                        <p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>{interview.candidate_name || t('creneaux_anon')}</p>
                                                         <p style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 4, margin: '2px 0 0' }}>
-                                                            <Briefcase size={12} /> {interview.job_title || "Poste non spécifié"}
+                                                            <Briefcase size={12} /> {interview.job_title || t('cand_no_position')}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -332,7 +332,7 @@ export default function CreneauxRHPage() {
                                                     background: interview.status === 'confirmed' ? 'var(--success-soft)' : 'var(--warning-soft)',
                                                     color: interview.status === 'confirmed' ? 'var(--success)' : 'var(--warning)'
                                                 }}>
-                                                    {interview.status === 'confirmed' ? 'Confirmé' : interview.status}
+                                                    {interview.status === 'confirmed' ? t('creneaux_confirmed') : interview.status}
                                                 </div>
                                             )}
                                         </div>
@@ -341,7 +341,7 @@ export default function CreneauxRHPage() {
                         ) : (
                             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--fg-muted)' }}>
                                 <CalendarIcon size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
-                                <p style={{ fontSize: 14, fontWeight: 600 }}>Aucun entretien pour cette journée.</p>
+                                <p style={{ fontSize: 14, fontWeight: 600 }}>{t('creneaux_no_interviews')}</p>
                             </div>
                         )}
                     </div>

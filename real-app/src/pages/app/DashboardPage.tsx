@@ -9,11 +9,12 @@ import { useAuth } from '../../lib/auth';
 import { useLang } from '../../lib/lang';
 import { format } from 'date-fns';
 
-function StatCard({ icon, label, value, change, color = 'var(--primary)' }: {
-  icon: React.ReactNode; label: string; value: string | number; change?: string; color?: string;
+function StatCard({ icon, label, value, change, color = 'var(--primary)', to }: {
+  icon: React.ReactNode; label: string; value: string | number; change?: string; color?: string; to?: string;
 }) {
-  return (
-    <Card>
+  const [hovered, setHovered] = React.useState(false);
+  const card = (
+    <Card style={to ? { cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s', transform: hovered ? 'translateY(-2px)' : 'none', boxShadow: hovered ? 'var(--shadow-md)' : undefined } : undefined}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
           <p style={{ fontSize: 12, color: 'var(--fg-muted)', fontWeight: 500, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
@@ -26,6 +27,13 @@ function StatCard({ icon, label, value, change, color = 'var(--primary)' }: {
       </div>
     </Card>
   );
+  if (to) return (
+    <Link to={to} style={{ textDecoration: 'none', display: 'block' }}
+      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      {card}
+    </Link>
+  );
+  return card;
 }
 
 export default function DashboardPage() {
@@ -75,10 +83,10 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner /></div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 28 }}>
-          <StatCard icon={<Users size={18} />} label={t('total_employees_label')} value={metrics?.total_employees || 0} change={t('active_workforce')} />
-          <StatCard icon={<Briefcase size={18} />} label={t('interns')} value={metrics?.total_interns || 0} color="var(--accent)" />
-          <StatCard icon={<MessageSquare size={18} />} label={t('pending_requests_label')} value={metrics?.pending_requests || 0} color="var(--warning)" />
-          <StatCard icon={<FileText size={18} />} label={t('expiring_contracts')} value={expiring} color={expiring > 0 ? 'var(--danger)' : 'var(--fg-muted)'} />
+          <StatCard icon={<Users size={18} />} label={t('total_employees_label')} value={metrics?.total_employees || 0} change={t('active_workforce')} to="/app/employees" />
+          <StatCard icon={<Briefcase size={18} />} label={t('interns')} value={metrics?.total_interns || 0} color="var(--accent)" to="/app/interns" />
+          <StatCard icon={<MessageSquare size={18} />} label={t('pending_requests_label')} value={metrics?.pending_requests || 0} color="var(--warning)" to="/app/requests" />
+          <StatCard icon={<FileText size={18} />} label={t('expiring_contracts')} value={expiring} color={expiring > 0 ? 'var(--danger)' : 'var(--fg-muted)'} to="/app/employees" />
         </div>
       )}
 

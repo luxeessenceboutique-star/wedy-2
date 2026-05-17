@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FileText, History, Wand2, Bot,
@@ -13,6 +14,7 @@ import { Avatar } from '../ui';
 import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme';
 import { useLang, type Lang } from '../../lib/lang';
+import { listNotifications } from '../../lib/api';
 
 interface NavItem {
   label: string;
@@ -30,6 +32,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+
+  const { data: notifData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: listNotifications,
+    refetchInterval: 60000,
+  });
+  const unreadCount = (notifData?.data ?? []).filter(n => !n.is_read).length;
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-direction', 'A');
@@ -53,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       items: [
         { label: t('dashboard'),      icon: <LayoutDashboard size={15} />, to: '/app' },
         { label: t('ai_copilot'),     icon: <Bot size={15} />,             to: '/app/copilot',       badge: 'New' },
-        { label: t('notifications'),  icon: <Bell size={15} />,            to: '/app/notifications', badgeCount: 3 },
+        { label: t('notifications'),  icon: <Bell size={15} />,            to: '/app/notifications', badgeCount: unreadCount > 0 ? unreadCount : undefined },
       ],
     },
     {

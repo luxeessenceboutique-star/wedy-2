@@ -55,6 +55,7 @@ type Handlers = {
   onRenameProject: (id: string, name: string) => void;
   onRemoveMember: (projectId: string, employeeId: string) => void;
   onEditMemberRole: (projectId: string, employeeId: string, current: string) => void;
+  readOnly: boolean;
 };
 
 const HandlersCtx = React.createContext<Handlers>({
@@ -63,13 +64,14 @@ const HandlersCtx = React.createContext<Handlers>({
   onRenameProject: () => {},
   onRemoveMember: () => {},
   onEditMemberRole: () => {},
+  readOnly: false,
 });
 
 // ── Project (Team) Node ───────────────────────────────────────────────────────
 
 function ProjectNode({ data }: NodeProps) {
   const { t } = useLang();
-  const { onDeleteProject, onAddMember, onRenameProject } = React.useContext(HandlersCtx);
+  const { onDeleteProject, onAddMember, onRenameProject, readOnly } = React.useContext(HandlersCtx);
   const d = data as { projectId: string; name: string; color: string; memberCount: number };
 
   const [editing, setEditing] = useState(false);
@@ -113,23 +115,27 @@ function ProjectNode({ data }: NodeProps) {
           />
         ) : (
           <span
-            onDoubleClick={() => { setEditing(true); setNameVal(d.name); }}
-            title={t('org_node_edit_hint')}
-            style={{ flex: 1, color: 'white', fontWeight: 600, fontSize: 13, cursor: 'text', lineHeight: 1.3 }}
+            onDoubleClick={readOnly ? undefined : () => { setEditing(true); setNameVal(d.name); }}
+            title={readOnly ? undefined : t('org_node_edit_hint')}
+            style={{ flex: 1, color: 'white', fontWeight: 600, fontSize: 13, cursor: readOnly ? 'default' : 'text', lineHeight: 1.3 }}
           >
             {d.name}
           </span>
         )}
-        <button
-          onClick={() => onAddMember(d.projectId)}
-          title={t('add_member')}
-          style={iconBtn}
-        ><UserPlus size={13} color="white" /></button>
-        <button
-          onClick={() => onDeleteProject(d.projectId)}
-          title={t('delete')}
-          style={iconBtn}
-        ><Trash2 size={13} color="white" /></button>
+        {!readOnly && (
+          <>
+            <button
+              onClick={() => onAddMember(d.projectId)}
+              title={t('add_member')}
+              style={iconBtn}
+            ><UserPlus size={13} color="white" /></button>
+            <button
+              onClick={() => onDeleteProject(d.projectId)}
+              title={t('delete')}
+              style={iconBtn}
+            ><Trash2 size={13} color="white" /></button>
+          </>
+        )}
       </div>
 
       {/* Footer */}
@@ -160,7 +166,7 @@ const iconBtn: React.CSSProperties = {
 
 function PersonNode({ data }: NodeProps) {
   const { t } = useLang();
-  const { onRemoveMember, onEditMemberRole } = React.useContext(HandlersCtx);
+  const { onRemoveMember, onEditMemberRole, readOnly } = React.useContext(HandlersCtx);
   const d = data as {
     employeeId: string; projectId: string;
     name: string; position?: string; roleInTeam?: string; color: string;
@@ -205,22 +211,24 @@ function PersonNode({ data }: NodeProps) {
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flexShrink: 0 }}>
-          <button
-            onClick={() => onEditMemberRole(d.projectId, d.employeeId, d.roleInTeam || '')}
-            title={t('edit_role')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2, borderRadius: 4, display: 'flex', alignItems: 'center' }}
-            onMouseEnter={e => (e.currentTarget.style.color = d.color)}
-            onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
-          ><Pencil size={11} /></button>
-          <button
-            onClick={() => onRemoveMember(d.projectId, d.employeeId)}
-            title={t('remove')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2, borderRadius: 4, display: 'flex', alignItems: 'center' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
-          ><X size={11} /></button>
-        </div>
+        {!readOnly && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flexShrink: 0 }}>
+            <button
+              onClick={() => onEditMemberRole(d.projectId, d.employeeId, d.roleInTeam || '')}
+              title={t('edit_role')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2, borderRadius: 4, display: 'flex', alignItems: 'center' }}
+              onMouseEnter={e => (e.currentTarget.style.color = d.color)}
+              onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
+            ><Pencil size={11} /></button>
+            <button
+              onClick={() => onRemoveMember(d.projectId, d.employeeId)}
+              title={t('remove')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2, borderRadius: 4, display: 'flex', alignItems: 'center' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
+            ><X size={11} /></button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -295,7 +303,7 @@ function buildGraph(
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-export default function OrgChartPage() {
+export default function OrgChartPage({ readOnly = false }: { readOnly?: boolean }) {
   const { t } = useLang();
   const qc = useQueryClient();
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -358,7 +366,8 @@ export default function OrgChartPage() {
     onRenameProject: (id, name) => renameProject.mutate({ id, name }),
     onRemoveMember: (pid, empId) => removeMember.mutate({ pid, empId }),
     onEditMemberRole: (pid, empId, current) => { setEditRoleModal({ projectId: pid, employeeId: empId, current }); setEditRoleVal(current); },
-  }), [delProject, renameProject, removeMember, editRole]);
+    readOnly,
+  }), [delProject, renameProject, removeMember, editRole, readOnly]);
 
   // ── Sync API data → ReactFlow nodes ───────────────────────────────
   useEffect(() => {
@@ -381,9 +390,11 @@ export default function OrgChartPage() {
           title={t('nav_orgchart')}
           subtitle={t('org_subtitle')}
           action={
-            <Button variant="primary" onClick={() => setNewProjectModal(true)}>
-              <Plus size={14} style={{ marginRight: 6 }} /> {t('org_new_team')}
-            </Button>
+            !readOnly ? (
+              <Button variant="primary" onClick={() => setNewProjectModal(true)}>
+                <Plus size={14} style={{ marginRight: 6 }} /> {t('org_new_team')}
+              </Button>
+            ) : undefined
           }
         />
 
@@ -439,10 +450,11 @@ export default function OrgChartPage() {
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
+                onNodesChange={readOnly ? undefined : onNodesChange}
+                onEdgesChange={readOnly ? undefined : onEdgesChange}
                 nodeTypes={NODE_TYPES}
-                onNodeDragStop={onNodeDragStop}
+                onNodeDragStop={readOnly ? undefined : onNodeDragStop}
+                nodesDraggable={!readOnly}
                 fitView
                 fitViewOptions={{ padding: 0.25 }}
                 minZoom={0.2}
@@ -476,9 +488,11 @@ export default function OrgChartPage() {
                       <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>
                         {t('org_empty_desc')}
                       </p>
-                      <Button variant="primary" onClick={() => setNewProjectModal(true)}>
-                        <Plus size={14} style={{ marginRight: 6 }} /> {t('org_new_team')}
-                      </Button>
+                      {!readOnly && (
+                        <Button variant="primary" onClick={() => setNewProjectModal(true)}>
+                          <Plus size={14} style={{ marginRight: 6 }} /> {t('org_new_team')}
+                        </Button>
+                      )}
                     </div>
                   </Panel>
                 )}

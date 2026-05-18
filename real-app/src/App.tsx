@@ -135,6 +135,8 @@ export default function App() {
                 <Route path="/employee/documents" element={<RequireEmployee><MyDocumentsPage /></RequireEmployee>} />
                 <Route path="/employee/profil" element={<RequireEmployee><MyProfilePage /></RequireEmployee>} />
                 <Route path="/employee/formation" element={<RequireEmployee><MyTrainingPage /></RequireEmployee>} />
+                <Route path="/employee/orgchart" element={<RequireEmployee><OrgChartPage readOnly /></RequireEmployee>} />
+                <Route path="/employee/meetings" element={<RequireEmployee><MeetingsPage /></RequireEmployee>} />
 
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" replace />} />

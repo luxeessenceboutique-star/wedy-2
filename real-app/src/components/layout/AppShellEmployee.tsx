@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Calendar, FileText, BookOpen, User,
-  LogOut, ChevronDown, Bell,
+  LogOut, ChevronDown, Bell, Network, Video,
 } from 'lucide-react';
 import { WedyLogo } from '../WedyLogo';
 import { Avatar } from '../ui';
@@ -15,6 +15,8 @@ const NAV = [
   { label: 'Mes Congés', icon: <Calendar size={15} />, to: '/employee/conges' },
   { label: 'Mes Documents', icon: <FileText size={15} />, to: '/employee/documents' },
   { label: 'Ma Formation', icon: <BookOpen size={15} />, to: '/employee/formation' },
+  { label: 'Organigramme', icon: <Network size={15} />, to: '/employee/orgchart' },
+  { label: 'Réunions', icon: <Video size={15} />, to: '/employee/meetings' },
   { label: 'Mon Profil', icon: <User size={15} />, to: '/employee/profil' },
 ];
 

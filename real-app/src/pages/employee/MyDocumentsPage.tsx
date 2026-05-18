@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, Plus, Clock, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { FileText, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { api } from '../../lib/api';
 import { Button, Spinner, Modal } from '../../components/ui';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
+import { useLang } from '../../lib/lang';
 
 const getDocRequests = () => api.get('/portal/me/document-requests').then(r => r.data).catch(() => []);
 const submitDocRequest = (body: any) => api.post('/portal/me/document-requests', body).then(r => r.data);
@@ -14,26 +15,27 @@ const safeFormat = (d: any) => {
   return isValid(dt) ? format(dt, 'dd/MM/yyyy HH:mm') : d;
 };
 
-const DOC_TYPES = [
-  { value: 'attestation_travail',  label: 'Attestation de travail' },
-  { value: 'bulletin_paie',        label: 'Bulletin de paie' },
-  { value: 'attestation_conge',    label: 'Attestation de congé' },
-  { value: 'certificat_presence',  label: 'Certificat de présence' },
-  { value: 'lettre_recommandation',label: 'Lettre de recommandation' },
-  { value: 'autre',                label: 'Autre (préciser dans le commentaire)' },
-];
-
-const STATUS_META: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  pending:     { label: 'En attente',   color: '#f59e0b', bg: '#fffbeb', icon: <Clock size={13} /> },
-  in_progress: { label: 'En cours',     color: '#3b82f6', bg: '#eff6ff', icon: <Clock size={13} /> },
-  completed:   { label: 'Complété',     color: '#10b981', bg: '#ecfdf5', icon: <CheckCircle size={13} /> },
-  rejected:    { label: 'Refusé',       color: '#ef4444', bg: '#fef2f2', icon: <XCircle size={13} /> },
-};
-
 export default function MyDocumentsPage() {
   const qc = useQueryClient();
+  const { t } = useLang();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ doc_type: 'attestation_travail', comment: '' });
+
+  const DOC_TYPES = [
+    { value: 'attestation_travail',   label: t('doc_type_attestation_travail') },
+    { value: 'bulletin_paie',         label: t('doc_type_bulletin_paie') },
+    { value: 'attestation_conge',     label: t('doc_type_attestation_conge') },
+    { value: 'certificat_presence',   label: t('doc_type_certificat_presence') },
+    { value: 'lettre_recommandation', label: t('doc_type_lettre_recommandation') },
+    { value: 'autre',                 label: t('doc_type_autre') },
+  ];
+
+  const STATUS_META: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
+    pending:     { label: t('doc_status_pending'),     color: '#f59e0b', bg: '#fffbeb', icon: <Clock size={13} /> },
+    in_progress: { label: t('doc_status_in_progress'), color: '#3b82f6', bg: '#eff6ff', icon: <Clock size={13} /> },
+    completed:   { label: t('doc_status_completed'),   color: '#10b981', bg: '#ecfdf5', icon: <CheckCircle size={13} /> },
+    rejected:    { label: t('doc_status_rejected'),    color: '#ef4444', bg: '#fef2f2', icon: <XCircle size={13} /> },
+  };
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['portal-doc-requests'], queryFn: getDocRequests, retry: false,
@@ -46,20 +48,20 @@ export default function MyDocumentsPage() {
       qc.invalidateQueries({ queryKey: ['portal-stats'] });
       setShowForm(false);
       setForm({ doc_type: 'attestation_travail', comment: '' });
-      toast.success('Demande envoyée — votre RH a été notifié');
+      toast.success(t('mydoc_success'));
     },
-    onError: (e: any) => toast.error(e?.response?.data?.detail || 'Erreur'),
+    onError: (e: any) => toast.error(e?.response?.data?.detail || t('error')),
   });
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 780, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>Mes Documents</h1>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: 0 }}>Demandez vos documents RH et suivez leur statut</p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>{t('mydoc_title')}</h1>
+          <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: 0 }}>{t('mydoc_subtitle')}</p>
         </div>
         <Button onClick={() => setShowForm(true)}>
-          <Plus size={14} /> Demander un document
+          <Plus size={14} /> {t('mydoc_request_btn')}
         </Button>
       </div>
 
@@ -81,9 +83,9 @@ export default function MyDocumentsPage() {
       ) : (requests as any[]).length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
           <FileText size={40} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
-          <p style={{ fontWeight: 500 }}>Aucune demande de document.</p>
+          <p style={{ fontWeight: 500 }}>{t('mydoc_empty')}</p>
           <Button onClick={() => setShowForm(true)} style={{ marginTop: 8 }}>
-            <Plus size={13} /> Faire une demande
+            <Plus size={13} /> {t('mydoc_request_btn')}
           </Button>
         </div>
       ) : (
@@ -108,11 +110,11 @@ export default function MyDocumentsPage() {
                   <p style={{ fontWeight: 700, fontSize: 14, margin: '0 0 3px' }}>{docLabel}</p>
                   <div style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', gap: 14 }}>
                     {r.comment && <span>{r.comment}</span>}
-                    <span>Demandé le {safeFormat(r.created_at)}</span>
+                    <span>{t('mydoc_requested_on')} {safeFormat(r.created_at)}</span>
                   </div>
                   {r.hr_note && (
-                    <p style={{ fontSize: 12, color: '#0891b2', marginTop: 4, padding: '4px 8px', background: '#ecfeff', borderRadius: 6, margin: '6px 0 0' }}>
-                      Note RH : {r.hr_note}
+                    <p style={{ fontSize: 12, color: '#0891b2', padding: '4px 8px', background: '#ecfeff', borderRadius: 6, margin: '6px 0 0' }}>
+                      {t('mydoc_hr_note_prefix')} {r.hr_note}
                     </p>
                   )}
                 </div>
@@ -128,24 +130,24 @@ export default function MyDocumentsPage() {
       )}
 
       {/* Modal */}
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="Demander un document" width={460}>
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={t('mydoc_modal_title')} width={460}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label className="label">Type de document *</label>
+            <label className="label">{t('mydoc_type_label')} *</label>
             <select className="input" value={form.doc_type} onChange={e => setForm(f => ({ ...f, doc_type: e.target.value }))}>
               {DOC_TYPES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Commentaire (optionnel)</label>
+            <label className="label">{t('mydoc_comment_label')}</label>
             <textarea className="input" rows={3} style={{ resize: 'none', padding: '8px 12px' }}
               value={form.comment} onChange={e => setForm(f => ({ ...f, comment: e.target.value }))}
-              placeholder="Précisions, urgence, destination du document..." />
+              placeholder={t('mydoc_comment_ph')} />
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
-            <Button variant="ghost" onClick={() => setShowForm(false)}>Annuler</Button>
+            <Button variant="ghost" onClick={() => setShowForm(false)}>{t('cancel')}</Button>
             <Button onClick={() => submitMut.mutate()} loading={submitMut.isPending}>
-              Envoyer la demande
+              {t('mydoc_submit_btn')}
             </Button>
           </div>
         </div>

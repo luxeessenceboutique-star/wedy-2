@@ -6,26 +6,26 @@ def repair():
     # On essaie d'abord l'hôte Supabase direct sur le port 6543 (souvent plus ouvert)
     # Project: vaimfbevkbcjjhtrrtdf
     DSN_LIST = [
-        "postgresql://postgres:qacgjigYlsR0NXUUA2yG2lDF8Z@db.vaimfbevkbcjjhtrrtdf.supabase.co:6543/postgres",
-        "postgresql://postgres:qacgjigYlsR0NXUUA2yG2lDF8Z@db.vaimfbevkbcjjhtrrtdf.supabase.co:5432/postgres",
-        "postgresql://postgres:qacgjigYlsR0NXUUA2yG2lDF8Z@dbrag.tybot.ma:5432/postgres"
+        "postgresql://postgres:qacgjigYlsR0NXUUA2yG2lDF8Z@db.vaimfbevkbcjjhtrrtdf.supabase.co:6543/postgres?options=-c%20search_path%3Drh",
+        "postgresql://postgres:qacgjigYlsR0NXUUA2yG2lDF8Z@db.vaimfbevkbcjjhtrrtdf.supabase.co:5432/postgres?options=-c%20search_path%3Drh",
+        "postgresql://postgres:qacgjigYlsR0NXUUA2yG2lDF8Z@dbrag.tybot.ma:5432/postgres?options=-c%20search_path%3Drh"
     ]
     
     SQL = """
     -- Ajout des colonnes nécessaires pour le recrutement
-    ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS type text DEFAULT 'candidate';
-    ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS first_name text;
-    ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_name text;
-    ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email text;
-    ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone text;
-    ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS cin text;
-    ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS address text;
+    ALTER TABLE rh.profiles ADD COLUMN IF NOT EXISTS type text DEFAULT 'candidate';
+    ALTER TABLE rh.profiles ADD COLUMN IF NOT EXISTS first_name text;
+    ALTER TABLE rh.profiles ADD COLUMN IF NOT EXISTS last_name text;
+    ALTER TABLE rh.profiles ADD COLUMN IF NOT EXISTS email text;
+    ALTER TABLE rh.profiles ADD COLUMN IF NOT EXISTS phone text;
+    ALTER TABLE rh.profiles ADD COLUMN IF NOT EXISTS cin text;
+    ALTER TABLE rh.profiles ADD COLUMN IF NOT EXISTS address text;
 
     -- Mise à jour des types de profils existants
-    UPDATE public.profiles p SET type = 'employee' 
-    WHERE EXISTS (SELECT 1 FROM public.employees e WHERE e.email = p.email);
+    UPDATE rh.profiles p SET type = 'employee' 
+    WHERE EXISTS (SELECT 1 FROM rh.employees e WHERE e.email = p.email);
 
-    CREATE INDEX IF NOT EXISTS idx_profiles_type ON public.profiles(type);
+    CREATE INDEX IF NOT EXISTS idx_profiles_type ON rh.profiles(type);
     """
 
     success = False

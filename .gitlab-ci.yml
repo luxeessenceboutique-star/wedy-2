@@ -10,7 +10,7 @@ variables:
 # =========================
 build_backend:
   stage: build
-  image: docker:24
+  image: docker:24 
   services:
     - docker:24-dind
 

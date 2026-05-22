@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from './supabase';
-import { getMe } from './api';
+import { api, getMe } from './api';
 
 interface User {
   id: string;
@@ -23,97 +22,55 @@ interface AuthCtx {
 const Ctx = createContext<AuthCtx>(null!);
 export const useAuth = () => useContext(Ctx);
 
-export const isHRRole     = (role?: string) => ['hr', 'admin', 'rh'].includes(role ?? '');
+export const isHRRole      = (role?: string) => ['hr', 'admin', 'rh'].includes(role ?? '');
 export const isEmployeeRole = (role?: string) => role === 'employee';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser]     = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // On mount: restore session from stored token via backend /auth/me
   useEffect(() => {
     const token = localStorage.getItem('wedy_token');
     if (!token) { setLoading(false); return; }
-    const initAuth = async () => {
-      try {
-        const me = await getMe();
-        console.log('[AUTH] getMe result:', me);
-        setUser(me);
-      } catch (err) {
-        console.warn('Initial /auth/me failed, trying Supabase recovery:', err);
-        const { data: { user: sbUser } } = await supabase.auth.getUser();
-        if (sbUser) {
-          let role = 'hr';
-          try {
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', sbUser.id)
-              .maybeSingle();
-            if (roleData?.role) {
-              role = roleData.role === 'rh' ? 'hr' : roleData.role;
-            }
-          } catch (dbErr) {
-            console.error('Failed to fetch role from Supabase during init:', dbErr);
-          }
-          setUser({ id: sbUser.id, email: sbUser.email!, role_name: role, role,
-            full_name: sbUser.user_metadata?.full_name || sbUser.email?.split('@')[0] });
-        } else {
-          localStorage.removeItem('wedy_token');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    initAuth();
+    getMe()
+      .then(me => setUser(me))
+      .catch(() => {
+        // Token is stale / backend unreachable — clear it
+        localStorage.removeItem('wedy_token');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
+  // Login via backend (avoids browser CORS issues with direct Supabase auth)
   const login = async (email: string, password: string): Promise<{ role: string }> => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw { message: error.message };
-    const token = data.session!.access_token;
-    localStorage.setItem('wedy_token', token);
-    try {
-      const me = await getMe();
-      console.log('[AUTH] Login success, user:', me);
-      setUser(me);
-      return { role: me.role ?? me.role_name ?? 'hr' };
-    } catch (err) {
-      console.warn('Backend /auth/me unreachable, fetching role from Supabase directly:', err);
-      let role = 'hr';
-      try {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', data.user!.id)
-          .maybeSingle();
-        if (roleData?.role) {
-          role = roleData.role === 'rh' ? 'hr' : roleData.role;
-        }
-      } catch (dbErr) {
-        console.error('Failed to fetch role from Supabase:', dbErr);
-      }
-      const fallback: User = {
-        id: data.user!.id, email: data.user!.email!, role_name: role, role,
-        full_name: data.user!.user_metadata?.full_name || data.user!.email?.split('@')[0]
-      };
-      setUser(fallback);
-      return { role };
-    }
+    const res = await api.post('/auth/login', { email, password });
+    const { access_token, role, role_name, user_id, email: userEmail } = res.data;
+
+    const resolvedRole: string = role ?? role_name ?? 'employee';
+    localStorage.setItem('wedy_token', access_token);
+
+    const me: User = {
+      id:        user_id,
+      email:     userEmail,
+      role:      resolvedRole,
+      role_name: resolvedRole,
+    };
+
+    // Enrich with full profile in background (non-blocking)
+    getMe().then(full => setUser(full)).catch(() => setUser(me));
+    setUser(me);
+
+    return { role: resolvedRole };
   };
 
   const signup = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: name } },
-    });
-    if (error) throw { message: error.message };
+    await api.post('/auth/register', { email, password, full_name: name });
   };
 
   const logout = () => {
     localStorage.removeItem('wedy_token');
-    supabase.auth.signOut();
     setUser(null);
   };
 

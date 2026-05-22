@@ -4,7 +4,6 @@ Replaces SQLAlchemy to allow connection via HTTPS (Port 443)
 when PostgreSQL direct port (5432/6543) is blocked.
 """
 from supabase import create_client, Client
-from supabase.lib.client_options import ClientOptions
 from app.config import settings
 
 _supabase: Client = None
@@ -15,8 +14,7 @@ def get_supabase() -> Client:
     """
     global _supabase
     if _supabase is None:
-        options = ClientOptions(schema=settings.SUPABASE_SCHEMA)
-        _supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY, options=options)
+        _supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
     return _supabase
 
 def get_db():

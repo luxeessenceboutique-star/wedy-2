@@ -7,7 +7,7 @@ import {
   Puzzle, Bell, Settings, HelpCircle, LogOut,
   ChevronDown, ExternalLink, Search, ClipboardList,
   UserCog, Moon, Sun, GraduationCap, UserCheck, BookOpen, Star,
-  Network, Video, Briefcase, Calendar,
+  Network, Video, Briefcase, Calendar, Target,
 } from 'lucide-react';
 import { WedyLogo } from '../WedyLogo';
 import { Avatar } from '../ui';
@@ -70,6 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       items: [
         { label: t('employees'),      icon: <Users size={15} />,         to: '/app/employees' },
         { label: t('interns'),        icon: <GraduationCap size={15} />, to: '/app/interns' },
+        { label: t('recruitment'),     icon: <Target size={15} />,        to: '/app/recruitment' },
         { label: t('candidats'),      icon: <UserPlus size={15} />,      to: '/app/candidats' },
         { label: t('annonces'),       icon: <Wand2 size={15} />,         to: '/app/annonces', badge: 'AI' },
         { label: t('calendrier_rh'),  icon: <Calendar size={15} />,      to: '/app/calendrier-rh' },

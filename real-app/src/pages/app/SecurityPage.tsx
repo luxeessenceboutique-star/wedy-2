@@ -7,10 +7,10 @@ export default function SecurityPage() {
   const { t } = useLang();
 
   const ITEMS = [
-    { icon: <Shield size={18} />, title: t('sec_gdpr_title'), desc: t('sec_gdpr_desc'), status: t('status_active_item') },
-    { icon: <FileCheck size={18} />, title: t('sec_labor_title'), desc: t('sec_labor_desc'), status: t('status_active_item') },
-    { icon: <Lock size={18} />, title: t('sec_encryption_title'), desc: t('sec_encryption_desc'), status: t('status_active_item') },
-    { icon: <Globe size={18} />, title: t('sec_residency_title'), desc: t('sec_residency_desc'), status: t('status_configured') },
+    { icon: <Shield size={18} />, title: t('sec_gdpr_title'), desc: t('sec_gdpr_desc'), status: t('sec_status_active') },
+    { icon: <FileCheck size={18} />, title: t('sec_labor_title'), desc: t('sec_labor_desc'), status: t('sec_status_active') },
+    { icon: <Lock size={18} />, title: t('sec_encryption_title'), desc: t('sec_encryption_desc'), status: t('sec_status_active') },
+    { icon: <Globe size={18} />, title: t('sec_residency_title'), desc: t('sec_residency_desc'), status: t('sec_status_configured') },
   ];
 
   return (

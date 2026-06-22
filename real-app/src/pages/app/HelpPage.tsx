@@ -10,22 +10,18 @@ export default function HelpPage() {
   const SECTIONS = [
     {
       title: t('help_getting_started'),
-      color: '#0891b2',
-      links: [t('help_create_doc'), t('help_import_employees'), t('help_invite_team')],
+      links: [t('help_create_doc'), t('help_import_emp'), t('help_invite_team')],
     },
     {
-      title: t('help_docs_cat'),
-      color: '#0891b2',
+      title: t('help_documents_cat'),
       links: [t('help_custom_templates'), t('help_variables'), t('help_signing')],
     },
     {
       title: t('help_ai_cat'),
-      color: '#0891b2',
       links: [t('help_claude_hr'), t('help_translation_q'), t('help_data_privacy')],
     },
     {
       title: t('help_compliance_cat'),
-      color: '#0891b2',
       links: [t('help_labor_code'), t('help_gdpr_check'), t('help_audit_export')],
     },
   ];
@@ -34,7 +30,6 @@ export default function HelpPage() {
     <div style={{ padding: '24px 28px' }}>
       <PageHeader title={t('help_center_title')} subtitle={t('help_subtitle')} />
 
-      {/* Search */}
       <div style={{ maxWidth: 560, margin: '0 auto 32px' }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
@@ -55,7 +50,6 @@ export default function HelpPage() {
         </div>
       </div>
 
-      {/* Cards grid */}
       <div style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr',
         gap: 16, maxWidth: 740, margin: '0 auto',
@@ -69,11 +63,10 @@ export default function HelpPage() {
               {section.title}
             </div>
             {section.links.map((link, idx) => (
-              <div key={idx} style={{
+              <div key={link} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '8px 0',
-                borderBottom: idx < section.links.length - 1
-                  ? '1px solid var(--border)' : 'none',
+                borderBottom: idx < section.links.length - 1 ? '1px solid var(--border)' : 'none',
                 cursor: 'pointer',
               }}>
                 <span style={{ fontSize: 13, color: '#475569' }}>{link}</span>

@@ -12,11 +12,6 @@ const ACTION_VARIANT: Record<string, 'success' | 'danger' | 'warning' | 'default
   APPROVED: 'success', REJECTED: 'danger', BULK_GENERATE: 'warning',
 };
 
-const ENTITY_LABEL: Record<string, string> = {
-  employee: 'Employé', leave_request: 'Congé', payroll_record: 'Paie',
-  document: 'Document', template: 'Template',
-};
-
 export default function AuditPage() {
   const { t } = useLang();
   const [skip, setSkip] = useState(0);
@@ -31,6 +26,11 @@ export default function AuditPage() {
   const logs = data?.data ?? [];
   const total = data?.count ?? 0;
 
+  const ENTITY_LABEL: Record<string, string> = {
+    employee: t('col_employee'), leave_request: t('time_off'),
+    payroll_record: t('payroll'), document: t('col_type'), template: t('templates'),
+  };
+
   const filtered = search
     ? logs.filter(l =>
         l.action.toLowerCase().includes(search.toLowerCase()) ||
@@ -43,7 +43,7 @@ export default function AuditPage() {
     <div style={{ padding: '24px 28px' }}>
       <PageHeader
         title={t('audit_log')}
-        subtitle={`${total} ${t('col_actions').toLowerCase()} · ${t('audit_subtitle')}`}
+        subtitle={`${total} entrée(s) · ${t('audit_subtitle')}`}
       />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -100,13 +100,13 @@ export default function AuditPage() {
       {total > LIMIT && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
           <button className="btn btn-ghost btn-sm" disabled={skip === 0} onClick={() => setSkip(s => Math.max(0, s - LIMIT))}>
-            ← {t('prev_page')}
+            {t('prev_page')}
           </button>
           <span style={{ fontSize: 13, color: 'var(--fg-muted)', alignSelf: 'center' }}>
             {skip + 1}–{Math.min(skip + LIMIT, total)} / {total}
           </span>
           <button className="btn btn-ghost btn-sm" disabled={skip + LIMIT >= total} onClick={() => setSkip(s => s + LIMIT)}>
-            {t('next_page')} →
+            {t('next_page')}
           </button>
         </div>
       )}

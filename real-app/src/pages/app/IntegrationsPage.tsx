@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Send, CheckCircle, Clock, X, ExternalLink, Zap } from 'lucide-react';
+import { Plus, Trash2, Send, X, Zap } from 'lucide-react';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Card, Button, Badge } from '../../components/ui';
 import { toast } from 'sonner';
 import { api } from '../../lib/api';
 import { useLang } from '../../lib/lang';
-
-// ── Static integrations catalog ───────────────────────────────────────────────
 
 const CATALOG = [
   { letter: 'S',  name: 'Slack',             desc: 'Notifications & approbations',  color: '#4a154b', coming: false },
@@ -18,36 +16,21 @@ const CATALOG = [
   { letter: 'O',  name: 'Okta',              desc: 'SSO & SCIM',                    color: '#007dc1', coming: true  },
 ];
 
-// ── Webhook types ─────────────────────────────────────────────────────────────
-
 interface Webhook {
-  id: string;
-  url: string;
-  events: string[];
-  active: boolean;
-  created_at: string;
-  last_triggered?: string;
+  id: string; url: string; events: string[]; active: boolean;
+  created_at: string; last_triggered?: string;
 }
 
 const EVENT_OPTIONS = [
-  'employee.created', 'employee.updated',
-  'leave.approved',   'leave.rejected',
-  'document.generated',
-  'payroll.generated',
-  'contract.expiring',
+  'employee.created', 'employee.updated', 'leave.approved', 'leave.rejected',
+  'document.generated', 'payroll.generated', 'contract.expiring',
 ];
 
-// ── Webhook manager ───────────────────────────────────────────────────────────
-
 const STORAGE_KEY = 'wedy_webhooks';
-
 function loadWebhooks(): Webhook[] {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]'); }
-  catch { return []; }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '[]'); } catch { return []; }
 }
-function saveWebhooks(hooks: Webhook[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(hooks));
-}
+function saveWebhooks(hooks: Webhook[]) { localStorage.setItem(STORAGE_KEY, JSON.stringify(hooks)); }
 
 function WebhookForm({ onAdd }: { onAdd: (w: Webhook) => void }) {
   const { t } = useLang();
@@ -59,49 +42,37 @@ function WebhookForm({ onAdd }: { onAdd: (w: Webhook) => void }) {
     setEvents(prev => prev.includes(ev) ? prev.filter(e => e !== ev) : [...prev, ev]);
 
   const handleTest = async () => {
-    if (!url.startsWith('http')) { toast.error('URL invalide'); return; }
+    if (!url.startsWith('http')) { toast.error(t('wh_invalid_url')); return; }
     setTesting(true);
     try {
-      await fetch(url, {
-        method: 'POST', mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: 'ping', source: 'wedy-rh', timestamp: new Date().toISOString() }),
-      });
-      toast.success(t('webhook_ping_sent'));
-    } catch {
-      toast.warning('Requête envoyée en mode no-cors');
-    } finally {
-      setTesting(false);
-    }
+      await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'ping', source: 'wedy-rh', timestamp: new Date().toISOString() }) });
+      toast.success('Requête envoyée (vérifiez votre endpoint)');
+    } catch { toast.warning('Requête envoyée en mode no-cors'); }
+    finally { setTesting(false); }
   };
 
   const handleAdd = () => {
-    if (!url.startsWith('http')) { toast.error('URL invalide (doit commencer par http/https)'); return; }
-    if (events.length === 0)     { toast.error('Sélectionnez au moins un événement'); return; }
-    const hook: Webhook = {
-      id: crypto.randomUUID(), url, events, active: true,
-      created_at: new Date().toISOString(),
-    };
+    if (!url.startsWith('http')) { toast.error(t('wh_invalid_url')); return; }
+    if (events.length === 0)     { toast.error(t('wh_no_events')); return; }
+    const hook: Webhook = { id: crypto.randomUUID(), url, events, active: true, created_at: new Date().toISOString() };
     onAdd(hook);
     setUrl(''); setEvents(['employee.created']);
-    toast.success('Webhook ajouté');
+    toast.success(t('wh_added'));
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div>
-        <label className="label">{t('webhook_endpoint')} *</label>
+        <label className="label">{t('wh_url_label')}</label>
         <div style={{ display: 'flex', gap: 8 }}>
-          <input className="input" style={{ flex: 1 }}
-            value={url} onChange={e => setUrl(e.target.value)}
-            placeholder="https://votre-serveur.com/webhook" />
+          <input className="input" style={{ flex: 1 }} value={url} onChange={e => setUrl(e.target.value)} placeholder={t('wh_url_ph')} />
           <Button variant="ghost" loading={testing} onClick={handleTest} disabled={!url}>
-            <Send size={13} /> {t('webhook_test')}
+            <Send size={13} /> {t('wh_test')}
           </Button>
         </div>
       </div>
       <div>
-        <label className="label">{t('webhook_events')}</label>
+        <label className="label">{t('wh_events_label')}</label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
           {EVENT_OPTIONS.map(ev => (
             <button key={ev} onClick={() => toggle(ev)}
@@ -111,20 +82,16 @@ function WebhookForm({ onAdd }: { onAdd: (w: Webhook) => void }) {
                 background: events.includes(ev) ? 'var(--primary-soft)' : 'var(--bg-muted)',
                 color: events.includes(ev) ? 'var(--primary)' : 'var(--fg-muted)',
                 cursor: 'pointer', fontWeight: events.includes(ev) ? 600 : 400,
-              }}>
-              {ev}
-            </button>
+              }}>{ev}</button>
           ))}
         </div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button onClick={handleAdd}><Plus size={13} /> {t('add')}</Button>
+        <Button onClick={handleAdd}><Plus size={13} /> {t('wh_add_btn')}</Button>
       </div>
     </div>
   );
 }
-
-// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function IntegrationsPage() {
   const { t } = useLang();
@@ -133,23 +100,19 @@ export default function IntegrationsPage() {
 
   const addWebhook = (w: Webhook) => {
     const updated = [...webhooks, w];
-    setWebhooks(updated);
-    saveWebhooks(updated);
-    setShowForm(false);
+    setWebhooks(updated); saveWebhooks(updated); setShowForm(false);
   };
 
   const removeWebhook = (id: string) => {
-    if (!confirm('Supprimer ce webhook ?')) return;
+    if (!confirm(t('wh_delete_confirm'))) return;
     const updated = webhooks.filter(w => w.id !== id);
-    setWebhooks(updated);
-    saveWebhooks(updated);
-    toast.success('Webhook supprimé');
+    setWebhooks(updated); saveWebhooks(updated);
+    toast.success(t('wh_deleted'));
   };
 
   const toggleWebhook = (id: string) => {
     const updated = webhooks.map(w => w.id === id ? { ...w, active: !w.active } : w);
-    setWebhooks(updated);
-    saveWebhooks(updated);
+    setWebhooks(updated); saveWebhooks(updated);
   };
 
   return (
@@ -159,37 +122,35 @@ export default function IntegrationsPage() {
         subtitle={t('integrations_subtitle')}
         action={
           <Button onClick={() => setShowForm(s => !s)}>
-            {showForm ? <><X size={13} /> {t('cancel')}</> : <><Plus size={13} /> {t('webhook_add')}</>}
+            {showForm ? <><X size={13} /> {t('cancel')}</> : <><Plus size={13} /> {t('integrations_new_webhook')}</>}
           </Button>
         }
       />
 
-      {/* Webhook form */}
       {showForm && (
         <div className="card card-pad" style={{ marginBottom: 20, border: '1px solid var(--primary-border)', background: 'var(--primary-soft)' }}>
           <h3 style={{ fontWeight: 700, fontSize: 14, marginBottom: 16, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 7 }}>
-            <Zap size={15} /> {t('webhook_add')}
+            <Zap size={15} /> {t('integrations_new_webhook')}
           </h3>
           <WebhookForm onAdd={addWebhook} />
         </div>
       )}
 
-      {/* Active webhooks */}
       <div style={{ marginBottom: 28 }}>
         <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: 'var(--fg)', display: 'flex', alignItems: 'center', gap: 7 }}>
-          <Zap size={15} style={{ color: 'var(--primary)' }} /> {t('webhooks_active')} ({webhooks.length})
+          <Zap size={15} style={{ color: 'var(--primary)' }} /> {t('webhooks_section')} ({webhooks.length})
         </h2>
         {webhooks.length === 0 ? (
           <div style={{ padding: '28px 20px', textAlign: 'center', color: 'var(--fg-muted)', background: 'var(--bg-elev)', border: '1px dashed var(--border)', borderRadius: 10, fontSize: 13 }}>
             <Zap size={28} style={{ margin: '0 auto 10px', opacity: 0.15 }} />
-            <p style={{ fontWeight: 600 }}>{t('webhooks_none')}</p>
-            <p style={{ fontSize: 12, marginTop: 4 }}>Ajoutez un endpoint pour recevoir des événements RH en temps réel.</p>
+            <p style={{ fontWeight: 600 }}>{t('wh_none_title')}</p>
+            <p style={{ fontSize: 12, marginTop: 4 }}>{t('wh_none_desc')}</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {webhooks.map(w => (
               <div key={w.id} style={{
-                background: 'var(--bg-elev)', border: `1px solid ${w.active ? 'var(--border)' : 'var(--border)'}`,
+                background: 'var(--bg-elev)', border: '1px solid var(--border)',
                 borderRadius: 10, padding: '12px 16px',
                 display: 'flex', alignItems: 'flex-start', gap: 12,
                 opacity: w.active ? 1 : 0.55,
@@ -206,7 +167,7 @@ export default function IntegrationsPage() {
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                   <button onClick={() => toggleWebhook(w.id)}
                     style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', background: 'var(--bg-muted)', color: 'var(--fg-muted)', fontWeight: 600 }}>
-                    {w.active ? 'Désactiver' : 'Activer'}
+                    {w.active ? t('wh_disable') : t('wh_enable')}
                   </button>
                   <button onClick={() => removeWebhook(w.id)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: '4px 6px', borderRadius: 6, display: 'flex' }}>
@@ -219,7 +180,6 @@ export default function IntegrationsPage() {
         )}
       </div>
 
-      {/* Integration catalog */}
       <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: 'var(--fg)' }}>{t('integrations_catalog')}</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
         {CATALOG.map(item => (
@@ -233,11 +193,11 @@ export default function IntegrationsPage() {
             </div>
             {item.coming ? (
               <span style={{ fontSize: 10, padding: '2px 8px', background: 'var(--bg-muted)', color: 'var(--fg-muted)', borderRadius: 999, border: '1px solid var(--border)', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                {t('status_coming_soon')}
+                {t('coming_soon')}
               </span>
             ) : (
               <span style={{ fontSize: 11, padding: '3px 10px', background: '#d1fae5', color: '#065f46', border: '1px solid #6ee7b7', borderRadius: 999, fontWeight: 600 }}>
-                ✓ {t('status_available')}
+                {t('available_badge')}
               </span>
             )}
           </div>

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Moon, Sun, Monitor, Palette, User, Bell, Shield, Database } from 'lucide-react';
+import { Moon, Sun, Palette, User, Bell, Shield } from 'lucide-react';
 import { PageHeader } from '../../components/layout/AppShell';
-import { Card, Button, Badge } from '../../components/ui';
+import { Card, Button } from '../../components/ui';
 import { useTheme } from '../../lib/theme';
 import { useAuth } from '../../lib/auth';
 import { api } from '../../lib/api';
@@ -20,8 +20,8 @@ function TabProfile() {
 
   const mutation = useMutation({
     mutationFn: () => api.patch('/profiles/me', form).then(r => r.data),
-    onSuccess: () => toast.success(t('save')),
-    onError: () => toast.error('Error'),
+    onSuccess: () => toast.success(t('profile_updated')),
+    onError: () => toast.error(t('profile_update_err')),
   });
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -29,22 +29,22 @@ function TabProfile() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>{t('personal_info')}</h3>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>{t('personal_info_title')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div>
-            <label className="label">{t('full_name_label')}</label>
+            <label className="label">{t('label_full_name')}</label>
             <input className="input" value={form.full_name} onChange={e => set('full_name', e.target.value)} />
           </div>
           <div>
-            <label className="label">Email</label>
+            <label className="label">{t('label_email')}</label>
             <input className="input" value={user?.email || ''} disabled style={{ opacity: 0.6, cursor: 'not-allowed' }} />
           </div>
           <div>
-            <label className="label">{t('company_label')}</label>
-            <input className="input" value={form.company} onChange={e => set('company', e.target.value)} placeholder={t('company_label')} />
+            <label className="label">{t('label_company')}</label>
+            <input className="input" value={form.company} onChange={e => set('company', e.target.value)} placeholder={t('ph_company')} />
           </div>
           <div>
-            <label className="label">{t('phone_label')}</label>
+            <label className="label">{t('label_phone')}</label>
             <input className="input" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="+212 6 00 00 00 00" />
           </div>
         </div>
@@ -56,12 +56,12 @@ function TabProfile() {
       </Card>
 
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>{t('role_access')}</h3>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>{t('role_access_title')}</h3>
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ background: 'var(--primary-soft)', border: '1px solid var(--primary-border)', borderRadius: 'var(--radius-md)', padding: '10px 16px', fontSize: 13 }}>
-            <span style={{ color: 'var(--fg-muted)', marginRight: 8 }}>{t('role_access')} :</span>
+            <span style={{ color: 'var(--fg-muted)', marginRight: 8 }}>{t('role_label')}</span>
             <span style={{ fontWeight: 600, color: 'var(--primary)' }}>
-              {user?.role_name === 'hr' ? t('hr_admin') : t('hr_member')}
+              {((user as any)?.role_name as string) || t('hr_member')}
             </span>
           </div>
         </div>
@@ -72,66 +72,72 @@ function TabProfile() {
 
 function TabAppearance() {
   const { theme, setTheme } = useTheme();
-  const { t, lang, setLang } = useLang();
+  const { t } = useLang();
 
   const THEMES = [
-    { key: 'light' as const, label: t('light_mode'), icon: <Sun size={20} />, desc: t('light_desc') },
-    { key: 'dark'  as const, label: t('dark_mode'), icon: <Moon size={20} />, desc: t('dark_desc') },
+    { key: 'light' as const, label: t('theme_light_label'), icon: <Sun size={20} />, desc: t('theme_light_desc') },
+    { key: 'dark'  as const, label: t('theme_dark_label'),  icon: <Moon size={20} />, desc: t('theme_dark_desc') },
   ];
+
+  const DIRECTIONS = [
+    { key: 'A', label: 'Clinical', desc: 'Épuré, Linear-like' },
+    { key: 'B', label: 'Cyan Bold', desc: 'Couleurs vives, marque forte' },
+    { key: 'C', label: 'Editorial', desc: 'Serif élégant, style européen' },
+  ];
+
+  const [dir, setDir] = useState(document.documentElement.getAttribute('data-direction') || 'A');
+
+  const applyDir = (d: string) => {
+    document.documentElement.setAttribute('data-direction', d);
+    setDir(d);
+    localStorage.setItem('wedy_direction', d);
+    toast.success(t('theme_applied'));
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>{t('display_mode')}</h3>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>{t('display_mode_title')}</h3>
         <div style={{ display: 'flex', gap: 12 }}>
-          {THEMES.map(t_item => (
+          {THEMES.map(th => (
             <button
-              key={t_item.key}
-              onClick={() => setTheme(t_item.key)}
+              key={th.key}
+              onClick={() => setTheme(th.key)}
               style={{
                 flex: 1, padding: 20, borderRadius: 'var(--radius-lg)', cursor: 'pointer', textAlign: 'center',
-                border: theme === t_item.key ? '2px solid var(--primary)' : '2px solid var(--border)',
-                background: theme === t_item.key ? 'var(--primary-soft)' : 'var(--bg-muted)',
+                border: theme === th.key ? '2px solid var(--primary)' : '2px solid var(--border)',
+                background: theme === th.key ? 'var(--primary-soft)' : 'var(--bg-muted)',
                 transition: 'all 0.15s',
               }}
             >
-              <div style={{ color: theme === t_item.key ? 'var(--primary)' : 'var(--fg-muted)', marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
-                {t_item.icon}
+              <div style={{ color: theme === th.key ? 'var(--primary)' : 'var(--fg-muted)', marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
+                {th.icon}
               </div>
-              <p style={{ fontSize: 13, fontWeight: 600, color: theme === t_item.key ? 'var(--primary)' : 'var(--fg)', marginBottom: 2 }}>{t_item.label}</p>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{t_item.desc}</p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: theme === th.key ? 'var(--primary)' : 'var(--fg)', marginBottom: 2 }}>{th.label}</p>
+              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{th.desc}</p>
             </button>
           ))}
         </div>
       </Card>
 
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>Language (Langue)</h3>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {(['fr', 'ar', 'en'] as const).map(l => (
-            <button key={l}
-              onClick={() => setLang(l)}
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>{t('visual_style_title')}</h3>
+        <div style={{ display: 'flex', gap: 12 }}>
+          {DIRECTIONS.map(d => (
+            <button
+              key={d.key}
+              onClick={() => applyDir(d.key)}
               style={{
-                padding: '8px 16px', borderRadius: 8, border: lang === l ? '2px solid var(--primary)' : '1px solid var(--border)',
-                background: lang === l ? 'var(--primary-soft)' : 'var(--bg-elev)',
-                color: lang === l ? 'var(--primary)' : 'var(--fg)',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer', textTransform: 'uppercase'
-              }}>
-              {l}
+                flex: 1, padding: 16, borderRadius: 'var(--radius-lg)', cursor: 'pointer', textAlign: 'left',
+                border: dir === d.key ? '2px solid var(--primary)' : '2px solid var(--border)',
+                background: dir === d.key ? 'var(--primary-soft)' : 'var(--bg-muted)',
+                transition: 'all 0.15s',
+              }}
+            >
+              <p style={{ fontSize: 13, fontWeight: 600, color: dir === d.key ? 'var(--primary)' : 'var(--fg)', marginBottom: 4 }}>{d.key} · {d.label}</p>
+              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{d.desc}</p>
             </button>
           ))}
-        </div>
-      </Card>
-
-      <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>{t('visual_style')}</h3>
-        <div style={{ display: 'flex', gap: 14 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-            <input type="checkbox" checked readOnly /> Animations
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-            <input type="checkbox" checked readOnly /> Glassmorphism
-          </label>
         </div>
       </Card>
     </div>
@@ -149,16 +155,16 @@ function TabNotifications() {
   const toggle = (k: keyof typeof prefs) => setPrefs(p => ({ ...p, [k]: !p[k] }));
 
   const items = [
-    { key: 'contracts_expiring' as const, label: t('cat_contracts'), desc: t('notif_contracts_desc') },
-    { key: 'leave_requests' as const, label: t('cat_leaves'), desc: t('notif_leaves_desc') },
-    { key: 'new_employee' as const, label: t('nav_people'), desc: t('notif_new_emp_desc') },
-    { key: 'payroll_ready' as const, label: t('payroll'), desc: t('notif_payroll_desc') },
-    { key: 'email_notifications' as const, label: t('email_notifs'), desc: t('email_notifs_desc') },
+    { key: 'contracts_expiring' as const, label: t('notif_contracts_label'), desc: t('notif_contracts_desc') },
+    { key: 'leave_requests' as const,     label: t('notif_leaves_label'),    desc: t('notif_leaves_desc') },
+    { key: 'new_employee' as const,       label: t('notif_new_emp_label'),   desc: t('notif_new_emp_desc') },
+    { key: 'payroll_ready' as const,      label: t('notif_payroll_label'),   desc: t('notif_payroll_desc') },
+    { key: 'email_notifications' as const,label: t('notif_email_label'),     desc: t('notif_email_desc') },
   ];
 
   return (
     <Card>
-      <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>{t('notif_prefs')}</h3>
+      <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>{t('notif_prefs_title')}</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
         {items.map((item, i) => (
           <div key={item.key} style={{
@@ -180,15 +186,14 @@ function TabNotifications() {
             >
               <span style={{
                 position: 'absolute', top: 3, width: 16, height: 16, borderRadius: '50%', background: '#fff',
-                transition: 'left 0.2s',
-                left: prefs[item.key] ? 21 : 3,
+                transition: 'left 0.2s', left: prefs[item.key] ? 21 : 3,
               }} />
             </button>
           </div>
         ))}
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
-        <Button onClick={() => toast.success(t('save'))}>{t('save')}</Button>
+        <Button onClick={() => toast.success(t('prefs_saved'))}>{t('save')}</Button>
       </div>
     </Card>
   );
@@ -202,42 +207,42 @@ function TabSecurity() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>{t('change_password')}</h3>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>{t('change_pw_title')}</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 360 }}>
           <div>
-            <label className="label">{t('current_pass')}</label>
+            <label className="label">{t('label_current_pw')}</label>
             <input className="input" type="password" value={form.current} onChange={e => set('current', e.target.value)} />
           </div>
           <div>
-            <label className="label">{t('new_pass')}</label>
+            <label className="label">{t('label_new_pw')}</label>
             <input className="input" type="password" value={form.next} onChange={e => set('next', e.target.value)} />
           </div>
           <div>
-            <label className="label">{t('confirm_pass')}</label>
+            <label className="label">{t('label_confirm_pw')}</label>
             <input className="input" type="password" value={form.confirm} onChange={e => set('confirm', e.target.value)} />
           </div>
         </div>
         <div style={{ marginTop: 20 }}>
           <Button
             onClick={() => {
-              if (form.next !== form.confirm) { toast.error(t('confirm_pass')); return; }
-              toast.success(t('save'));
+              if (form.next !== form.confirm) { toast.error(t('pw_mismatch')); return; }
+              toast.success(t('pw_updated'));
               setForm({ current: '', next: '', confirm: '' });
             }}
           >
-            {t('save')}
+            {t('update_btn')}
           </Button>
         </div>
       </Card>
 
       <Card>
-        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>{t('active_sessions')}</h3>
+        <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>{t('active_sessions_title')}</h3>
         <div style={{ background: 'var(--bg-muted)', borderRadius: 'var(--radius-md)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p style={{ fontSize: 13, fontWeight: 500 }}>{t('current_session')}</p>
-            <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{t('browser_web')} · Maintenant</p>
+            <p style={{ fontSize: 13, fontWeight: 500 }}>{t('current_session_label')}</p>
+            <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{t('session_now')}</p>
           </div>
-          <span style={{ fontSize: 11, background: 'var(--success)', color: '#fff', padding: '2px 8px', borderRadius: 999 }}>{t('status_active_item')}</span>
+          <span style={{ fontSize: 11, background: 'var(--success)', color: '#fff', padding: '2px 8px', borderRadius: 999 }}>{t('active_badge')}</span>
         </div>
       </Card>
     </div>
@@ -249,10 +254,10 @@ export default function SettingsPage() {
   const [tab, setTab] = useState('profile');
 
   const TABS = [
-    { key: 'profile', label: t('tab_profile'), icon: <User size={14} /> },
-    { key: 'appearance', label: t('tab_appearance'), icon: <Palette size={14} /> },
-    { key: 'notifications', label: t('tab_notifications'), icon: <Bell size={14} /> },
-    { key: 'security', label: t('tab_security'), icon: <Shield size={14} /> },
+    { key: 'profile',       label: t('tab_profile'),           icon: <User size={14} /> },
+    { key: 'appearance',    label: t('tab_appearance'),        icon: <Palette size={14} /> },
+    { key: 'notifications', label: t('tab_notifications_tab'), icon: <Bell size={14} /> },
+    { key: 'security',      label: t('tab_security_tab'),      icon: <Shield size={14} /> },
   ];
 
   return (
@@ -260,31 +265,29 @@ export default function SettingsPage() {
       <PageHeader title={t('settings')} subtitle={t('settings_subtitle')} />
 
       <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-        {/* Sidebar nav */}
         <div style={{ width: 180, flexShrink: 0 }}>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {TABS.map(t_item => (
+            {TABS.map(tb => (
               <button
-                key={t_item.key}
-                onClick={() => setTab(t_item.key)}
+                key={tb.key}
+                onClick={() => setTab(tb.key)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '8px 12px', borderRadius: 'var(--radius-md)',
                   border: 'none', cursor: 'pointer', fontSize: 13,
-                  background: tab === t_item.key ? 'var(--primary-soft)' : 'transparent',
-                  color: tab === t_item.key ? 'var(--primary)' : 'var(--fg-muted)',
-                  fontWeight: tab === t_item.key ? 500 : 400,
+                  background: tab === tb.key ? 'var(--primary-soft)' : 'transparent',
+                  color: tab === tb.key ? 'var(--primary)' : 'var(--fg-muted)',
+                  fontWeight: tab === tb.key ? 500 : 400,
                   textAlign: 'left',
                 }}
               >
-                <span style={{ color: tab === t_item.key ? 'var(--primary)' : 'var(--fg-muted)' }}>{t_item.icon}</span>
-                {t_item.label}
+                <span style={{ color: tab === tb.key ? 'var(--primary)' : 'var(--fg-muted)' }}>{tb.icon}</span>
+                {tb.label}
               </button>
             ))}
           </nav>
         </div>
 
-        {/* Content */}
         <div style={{ flex: 1 }}>
           {tab === 'profile'       && <TabProfile />}
           {tab === 'appearance'    && <TabAppearance />}

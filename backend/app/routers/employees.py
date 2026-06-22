@@ -287,7 +287,7 @@ def update_employee(
 def delete_employee(
     employee_id: UUID,
     supabase: Client = Depends(get_db),
-    current_user: dict = Depends(require_role("admin")),
+    current_user: dict = Depends(require_role("admin", "hr")),
 ):
     response = supabase.table("employees").delete().eq("id", str(employee_id)).execute()
     if not response.data:

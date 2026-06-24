@@ -9,11 +9,12 @@ import {
 import {
   listInterns, createIntern, updateIntern, deleteIntern, uploadDocument, listDocuments, deleteDocument,
   getInternOnboarding, updateInternOnboarding, listInternEvaluations, createInternEvaluation, deleteInternEvaluation,
-  sendForSignature,
+  sendForSignature, listDepartments,
 } from '../../lib/api';
 import type { Intern, InternOnboarding, InternEvaluation, ChecklistItem, Objective } from '../../lib/api';
 import { CVImportModal } from '../../components/cv/CVImportModal';
 import { ImportExportModal } from '../../components/ImportExportModal';
+import { DepartmentsModal } from '../../components/DepartmentsModal';
 import { Button, Badge, Input, Modal, Spinner, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';
@@ -538,6 +539,7 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
 function InternForm({ initial, onSave, onCancel, loading }: {
   initial?: Partial<Intern>; onSave: (data: Partial<Intern>) => void; onCancel: () => void; loading: boolean;
 }) {
+  const { data: departments = [] } = useQuery({ queryKey: ['departments'], queryFn: listDepartments });
   const [form, setForm] = useState<Partial<Intern>>(initial ?? {
     full_name: '', email: '', phone: '', position: 'Stagiaire',
     department: '', manager: '', internship_start: '', internship_end: '',
@@ -591,7 +593,13 @@ function InternForm({ initial, onSave, onCancel, loading }: {
         <Input label="Email" type="email" value={form.email ?? ''} onChange={set('email')} placeholder="amine@gmail.com" />
         <Input label="Téléphone" value={form.phone ?? ''} onChange={set('phone')} placeholder="+212 6 00 00 00 00" />
         <Input label="École / Formation" value={form.position ?? ''} onChange={set('position')} placeholder="ENSA Casablanca" />
-        <Input label="Département" value={form.department ?? ''} onChange={set('department')} placeholder="Informatique" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label className="label">Département</label>
+          <select className="select" value={form.department ?? ''} onChange={set('department')}>
+            <option value="">— Sélectionner —</option>
+            {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+          </select>
+        </div>
         <Input label="Superviseur" value={form.manager ?? ''} onChange={set('manager')} placeholder="Sara RH" />
         <Input label="Début du stage" type="date" value={form.internship_start ?? ''} onChange={set('internship_start')} />
         <Input label="Fin du stage" type="date" value={form.internship_end ?? ''} onChange={set('internship_end')} />
@@ -632,6 +640,7 @@ export default function InternsPage() {
   const [viewingIntern, setViewingIntern] = useState<Intern | null>(null);
   const [activeTab, setActiveTab]   = useState<'info' | 'docs' | 'onboarding' | 'actions'>('info');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDeptManager, setShowDeptManager] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['interns', search],
@@ -699,11 +708,17 @@ export default function InternsPage() {
         }
       />
 
-      <div style={{ position: 'relative', marginBottom: 20 }}>
-        <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
-        <input className="input" style={{ paddingLeft: 36 }}
-          placeholder="Rechercher par nom..."
-          value={search} onChange={e => setSearch(e.target.value)} />
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
+          <input className="input" style={{ paddingLeft: 36 }}
+            placeholder="Rechercher par nom..."
+            value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={() => setShowDeptManager(true)}
+          style={{ padding: '0 12px', fontSize: 11, color: 'var(--fg-muted)', whiteSpace: 'nowrap', border: '1px solid var(--border)', borderRadius: 8 }}>
+          ⚙ Gérer les départements
+        </button>
       </div>
 
       {/* Selection bar */}
@@ -1038,6 +1053,8 @@ export default function InternsPage() {
         arrayFields={['skills', 'languages', 'certifications']}
         onCreate={row => createIntern({ ...row, status: 'intern', contract_type: 'Stage' } as Partial<Intern>)}
       />
+
+      <DepartmentsModal open={showDeptManager} onClose={() => setShowDeptManager(false)} />
     </div>
   );
 }

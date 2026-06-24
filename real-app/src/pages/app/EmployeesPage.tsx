@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, ChevronUp, FileUp, Eye, X, ArrowUpDown } from 'lucide-react';
-import { listEmployees, createEmployee, updateEmployee, deleteEmployee } from '../../lib/api';
+import { listEmployees, createEmployee, updateEmployee, deleteEmployee, listDepartments } from '../../lib/api';
 import type { Employee } from '../../lib/api';
 import { Button, Badge, Card, Input, Select, Modal, Spinner, Empty, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { CVImportModal } from '../../components/cv/CVImportModal';
 import { ImportExportModal } from '../../components/ImportExportModal';
+import { DepartmentsModal } from '../../components/DepartmentsModal';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { useLang } from '../../lib/lang';
@@ -40,7 +41,6 @@ const STATUS_COLORS: Record<string, 'success' | 'warning' | 'danger' | 'default'
 };
 
 const CONTRACT_TYPES = ['CDI', 'CDD', 'Stage', 'ANAPEC', 'Consultant', 'Freelance'];
-const DEPARTMENTS = ['RH', 'Finance', 'Tech', 'Marketing', 'Commercial', 'Direction', 'Juridique', 'Logistique'];
 const today = new Date().toISOString().split('T')[0];
 
 type TagField = 'skills' | 'languages' | 'certifications';
@@ -91,6 +91,7 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
   initial?: Partial<Employee>; onSave: (data: Partial<Employee>) => void; onCancel: () => void; loading: boolean;
 }) {
   const isAdd = !initial?.id;
+  const { data: departments = [] } = useQuery({ queryKey: ['departments'], queryFn: listDepartments });
   const [form, setForm] = useState<Partial<Employee>>(
     isAdd
       ? { status: 'active', contract_type: 'CDI', hire_date: today, contract_start: today, ...initial }
@@ -131,7 +132,7 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
         <Input label="Poste" value={form.position ?? ''} onChange={set('position')} placeholder="Responsable RH" />
         <Select label="Département" value={form.department ?? ''} onChange={set('department')}>
           <option value="">— Sélectionner —</option>
-          {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+          {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
         </Select>
         <Select label="Statut" value={form.status ?? 'active'} onChange={set('status')}>
           <option value="active">Actif</option>
@@ -264,9 +265,13 @@ export default function EmployeesPage() {
   const [showModal, setShowModal] = useState(false);
   const [showCVImport, setShowCVImport] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
+  const [showDeptManager, setShowDeptManager] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const { data: deptData } = useQuery({ queryKey: ['departments'], queryFn: listDepartments });
+  const departments = deptData ?? [];
 
   const { data, isLoading } = useQuery({
     queryKey: ['employees', search, dept, status],
@@ -325,10 +330,16 @@ export default function EmployeesPage() {
           <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)' }} />
           <input className="input" style={{ paddingLeft: 32 }} placeholder={t('search_employees')} value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <select className="select" style={{ width: 160 }} value={dept} onChange={e => setDept(e.target.value)}>
-          <option value="">{t('col_department')}</option>
-          {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-        </select>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <select className="select" style={{ width: 160 }} value={dept} onChange={e => setDept(e.target.value)}>
+            <option value="">{t('col_department')}</option>
+            {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+          </select>
+          <button className="btn btn-ghost btn-sm" title="Gérer les départements" onClick={() => setShowDeptManager(true)}
+            style={{ padding: '0 8px', fontSize: 11, color: 'var(--fg-muted)', whiteSpace: 'nowrap' }}>
+            ⚙ Gérer
+          </button>
+        </div>
         <select className="select" style={{ width: 140 }} value={status} onChange={e => setStatus(e.target.value)}>
           <option value="">{t('all_status')}</option>
           <option value="active">{t('status_active')}</option>
@@ -498,6 +509,8 @@ export default function EmployeesPage() {
         arrayFields={['skills', 'languages', 'certifications']}
         onCreate={row => createEmployee(row as Partial<Employee>)}
       />
+
+      <DepartmentsModal open={showDeptManager} onClose={() => setShowDeptManager(false)} />
     </div>
   );
 }

@@ -616,6 +616,7 @@ export const TRANSLATIONS = {
     // Nav additions
     candidats: 'Candidats',
     annonces: 'Annonces',
+    planning_rh: 'Planning RH',
     calendrier_rh: 'Calendrier RH',
     creneaux_rh: 'Créneaux RH',
     tenders: 'Appels d\'offres',
@@ -1507,6 +1508,7 @@ export const TRANSLATIONS = {
     onb_signed_on: 'وُقِّع في',
     candidats: 'المرشحون',
     annonces: 'الإعلانات',
+    planning_rh: 'تخطيط الموارد البشرية',
     calendrier_rh: 'تقويم الموارد البشرية',
     creneaux_rh: 'فترات الموارد البشرية',
     tenders: 'المناقصات',
@@ -2375,6 +2377,7 @@ export const TRANSLATIONS = {
     onb_signed_on: 'Signed on',
     candidats: 'Candidates',
     annonces: 'Job Postings',
+    planning_rh: 'HR Planning',
     calendrier_rh: 'HR Calendar',
     creneaux_rh: 'HR Slots',
     tenders: 'Tenders',

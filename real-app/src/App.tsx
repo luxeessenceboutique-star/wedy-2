@@ -39,8 +39,7 @@ import OrgChartPage from './pages/app/OrgChartPage';
 import MeetingsPage from './pages/app/MeetingsPage';
 import TendersPage from './pages/app/TendersPage';
 import AnnoncesPage from './pages/app/AnnoncesPage';
-import CalendrierRHPage from './pages/app/CalendrierRHPage';
-import CreneauxRHPage from './pages/app/CreneauxRHPage';
+import PlanningRHPage from './pages/app/PlanningRHPage';
 import CandidatsPage from './pages/app/CandidatsPage';
 import PostulerPage from './pages/public/PostulerPage';
 
@@ -125,8 +124,9 @@ export default function App() {
                 <Route path="/app/meetings" element={<RequireHR><MeetingsPage /></RequireHR>} />
                 <Route path="/app/tenders" element={<RequireHR><TendersPage /></RequireHR>} />
                 <Route path="/app/annonces" element={<RequireHR><AnnoncesPage /></RequireHR>} />
-                <Route path="/app/calendrier-rh" element={<RequireHR><CalendrierRHPage /></RequireHR>} />
-                <Route path="/app/creneaux-rh" element={<RequireHR><CreneauxRHPage /></RequireHR>} />
+                <Route path="/app/planning-rh" element={<RequireHR><PlanningRHPage /></RequireHR>} />
+                <Route path="/app/calendrier-rh" element={<Navigate to="/app/planning-rh" replace />} />
+                <Route path="/app/creneaux-rh"   element={<Navigate to="/app/planning-rh" replace />} />
                 <Route path="/app/candidats" element={<RequireHR><CandidatsPage /></RequireHR>} />
 
                 {/* ── Employee Portal ── */}

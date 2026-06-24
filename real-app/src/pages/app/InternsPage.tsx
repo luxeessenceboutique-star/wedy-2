@@ -4,6 +4,7 @@ import {
   Plus, Search, Pencil, Trash2, FileUp, GraduationCap, User, Calendar, Mail, Phone,
   Camera, X, FileText, CheckCircle2, TrendingUp, Eye, Settings, ClipboardList,
   Star, ChevronDown, ChevronUp, Target, UserCheck, Zap, Shield, Flame, BookOpen, Award,
+  ArrowUpDown,
 } from 'lucide-react';
 import {
   listInterns, createIntern, updateIntern, deleteIntern, uploadDocument, listDocuments, deleteDocument,
@@ -12,10 +13,26 @@ import {
 } from '../../lib/api';
 import type { Intern, InternOnboarding, InternEvaluation, ChecklistItem, Objective } from '../../lib/api';
 import { CVImportModal } from '../../components/cv/CVImportModal';
+import { ImportExportModal } from '../../components/ImportExportModal';
 import { Button, Badge, Input, Modal, Spinner, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';
 import { format, isValid, differenceInDays } from 'date-fns';
+
+const INTERN_COLS = [
+  { key: 'full_name',        label: 'Nom complet',           required: true },
+  { key: 'email',            label: 'Email' },
+  { key: 'phone',            label: 'Téléphone' },
+  { key: 'position',         label: 'École / Formation' },
+  { key: 'department',       label: 'Département' },
+  { key: 'manager',          label: 'Superviseur' },
+  { key: 'internship_start', label: 'Début du stage' },
+  { key: 'internship_end',   label: 'Fin du stage' },
+  { key: 'remuneration',     label: 'Rémunération (DH)' },
+  { key: 'skills',           label: 'Compétences' },
+  { key: 'languages',        label: 'Langues' },
+  { key: 'bio',              label: 'Bio' },
+];
 
 const safeFormat = (date: any, fmt = 'dd/MM/yyyy') => {
   if (!date) return '—';
@@ -609,10 +626,12 @@ export default function InternsPage() {
   const qc = useQueryClient();
   const [search, setSearch]         = useState('');
   const [showCVImport, setShowCVImport] = useState(false);
+  const [showImportExport, setShowImportExport] = useState(false);
   const [editing, setEditing]       = useState<Intern | null>(null);
   const [prefill, setPrefill]       = useState<Partial<Intern> | null>(null);
   const [viewingIntern, setViewingIntern] = useState<Intern | null>(null);
   const [activeTab, setActiveTab]   = useState<'info' | 'docs' | 'onboarding' | 'actions'>('info');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading } = useQuery({
     queryKey: ['interns', search],
@@ -621,6 +640,12 @@ export default function InternsPage() {
 
   const interns = data?.data ?? [];
   const total   = data?.count ?? 0;
+  const allSelected = interns.length > 0 && selectedIds.size === interns.length;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < interns.length;
+  const toggleOne = (id: string) =>
+    setSelectedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const toggleAll = () =>
+    setSelectedIds(allSelected ? new Set() : new Set(interns.map(i => i.id)));
 
   const { data: docsData, refetch: refetchDocs } = useQuery({
     queryKey: ['intern-docs', viewingIntern?.id],
@@ -664,6 +689,9 @@ export default function InternsPage() {
             <Button variant="soft" onClick={() => setShowCVImport(true)}>
               <FileUp size={14} /> Importer CV
             </Button>
+            <Button variant="soft" onClick={() => setShowImportExport(true)}>
+              <ArrowUpDown size={14} /> Import / Export
+            </Button>
             <Button onClick={() => setEditing({} as Intern)}>
               <Plus size={14} /> Nouveau stagiaire
             </Button>
@@ -676,6 +704,42 @@ export default function InternsPage() {
         <input className="input" style={{ paddingLeft: 36 }}
           placeholder="Rechercher par nom..."
           value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
+
+      {/* Selection bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--fg-muted)' }}>
+          <input
+            type="checkbox"
+            checked={allSelected}
+            ref={el => { if (el) el.indeterminate = someSelected; }}
+            onChange={toggleAll}
+            style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)' }}
+          />
+          Sélectionner tout
+        </label>
+        {selectedIds.size > 0 && (
+          <>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary)' }}>
+              {selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}
+            </span>
+            <button
+              className="btn btn-ghost btn-sm"
+              style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 4 }}
+              onClick={() => {
+                if (confirm(`Supprimer ${selectedIds.size} stagiaire(s) ?`)) {
+                  selectedIds.forEach(id => deleteMut.mutate(id));
+                  setSelectedIds(new Set());
+                }
+              }}
+            >
+              <Trash2 size={13} /> Supprimer
+            </button>
+            <button className="btn btn-ghost btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => setSelectedIds(new Set())}>
+              <X size={13} /> Désélectionner
+            </button>
+          </>
+        )}
       </div>
 
       {isLoading ? (
@@ -691,10 +755,17 @@ export default function InternsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {interns.map(intern => (
             <div key={intern.id} className="card card-pad hover-scale"
-              style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+              style={{ cursor: 'pointer', transition: 'all 0.2s', outline: selectedIds.has(intern.id) ? '2px solid var(--primary)' : 'none' }}
               onClick={() => openDossier(intern)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(intern.id)}
+                    onChange={() => toggleOne(intern.id)}
+                    onClick={e => e.stopPropagation()}
+                    style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)', flexShrink: 0 }}
+                  />
                   <Avatar name={intern.full_name} src={intern.photo_url} size={44} />
                   <div>
                     <p style={{ fontWeight: 600, fontSize: 14 }}>{intern.full_name}</p>
@@ -956,6 +1027,17 @@ export default function InternsPage() {
           }}
         />
       )}
+
+      {/* Import / Export modal */}
+      <ImportExportModal
+        open={showImportExport}
+        onClose={() => { setShowImportExport(false); qc.invalidateQueries({ queryKey: ['interns'] }); }}
+        cols={INTERN_COLS}
+        rows={interns as unknown as Record<string, unknown>[]}
+        entityName="Stagiaires"
+        arrayFields={['skills', 'languages', 'certifications']}
+        onCreate={row => createIntern({ ...row, status: 'intern', contract_type: 'Stage' } as Partial<Intern>)}
+      />
     </div>
   );
 }

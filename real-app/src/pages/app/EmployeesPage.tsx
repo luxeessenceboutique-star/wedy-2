@@ -1,14 +1,39 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, ChevronUp, FileUp, Eye, X } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, ChevronUp, FileUp, Eye, X, ArrowUpDown } from 'lucide-react';
 import { listEmployees, createEmployee, updateEmployee, deleteEmployee } from '../../lib/api';
 import type { Employee } from '../../lib/api';
 import { Button, Badge, Card, Input, Select, Modal, Spinner, Empty, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { CVImportModal } from '../../components/cv/CVImportModal';
+import { ImportExportModal } from '../../components/ImportExportModal';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { useLang } from '../../lib/lang';
+
+const EMPLOYEE_COLS = [
+  { key: 'full_name',      label: 'Nom complet',       required: true },
+  { key: 'cin',            label: 'CIN' },
+  { key: 'email',          label: 'Email' },
+  { key: 'phone',          label: 'Téléphone' },
+  { key: 'position',       label: 'Poste' },
+  { key: 'department',     label: 'Département' },
+  { key: 'status',         label: 'Statut' },
+  { key: 'contract_type',  label: 'Type de contrat' },
+  { key: 'hire_date',      label: "Date d'embauche" },
+  { key: 'contract_start', label: 'Début contrat' },
+  { key: 'contract_end',   label: 'Fin contrat' },
+  { key: 'salary',         label: 'Salaire' },
+  { key: 'birth_date',     label: 'Date de naissance' },
+  { key: 'address',        label: 'Adresse' },
+  { key: 'city',           label: 'Ville' },
+  { key: 'nationality',    label: 'Nationalité' },
+  { key: 'manager',        label: 'Manager' },
+  { key: 'matricule',      label: 'Matricule' },
+  { key: 'skills',         label: 'Compétences' },
+  { key: 'languages',      label: 'Langues' },
+  { key: 'notes',          label: 'Notes' },
+];
 
 const STATUS_COLORS: Record<string, 'success' | 'warning' | 'danger' | 'default'> = {
   active: 'success', inactive: 'danger', 'on-leave': 'warning',
@@ -238,8 +263,10 @@ export default function EmployeesPage() {
   const [status, setStatus] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showCVImport, setShowCVImport] = useState(false);
+  const [showImportExport, setShowImportExport] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const { data, isLoading } = useQuery({
     queryKey: ['employees', search, dept, status],
@@ -265,6 +292,12 @@ export default function EmployeesPage() {
   });
 
   const employees = data?.data ?? [];
+  const allSelected = employees.length > 0 && selectedIds.size === employees.length;
+  const someSelected = selectedIds.size > 0 && selectedIds.size < employees.length;
+  const toggleOne = (id: string) =>
+    setSelectedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
+  const toggleAll = () =>
+    setSelectedIds(allSelected ? new Set() : new Set(employees.map(e => e.id)));
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -275,6 +308,9 @@ export default function EmployeesPage() {
           <div style={{ display: 'flex', gap: 8 }}>
             <Button variant="soft" onClick={() => setShowCVImport(true)}>
               <FileUp size={14} /> {t('import_cv')}
+            </Button>
+            <Button variant="soft" onClick={() => setShowImportExport(true)}>
+              <ArrowUpDown size={14} /> Import / Export
             </Button>
             <Button onClick={() => setShowModal(true)}>
               <Plus size={14} /> {t('add_employee')}
@@ -301,6 +337,30 @@ export default function EmployeesPage() {
         </select>
       </div>
 
+      {/* Selection bar */}
+      {selectedIds.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px', background: 'var(--primary-light, #eff6ff)', border: '1px solid var(--primary)', borderRadius: 8, marginBottom: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary)' }}>
+            {selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}
+          </span>
+          <button
+            className="btn btn-ghost btn-sm"
+            style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 4 }}
+            onClick={() => {
+              if (confirm(`Supprimer ${selectedIds.size} employé(s) ?`)) {
+                selectedIds.forEach(id => deleteMut.mutate(id));
+                setSelectedIds(new Set());
+              }
+            }}
+          >
+            <Trash2 size={13} /> Supprimer la sélection
+          </button>
+          <button className="btn btn-ghost btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 4 }} onClick={() => setSelectedIds(new Set())}>
+            <X size={13} /> Désélectionner
+          </button>
+        </div>
+      )}
+
       {/* Table */}
       <Card pad={false}>
         {isLoading ? (
@@ -316,6 +376,16 @@ export default function EmployeesPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  <th style={{ padding: '10px 16px', width: 40 }}>
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      ref={el => { if (el) el.indeterminate = someSelected; }}
+                      onChange={toggleAll}
+                      style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)' }}
+                      title={allSelected ? 'Désélectionner tout' : 'Sélectionner tout'}
+                    />
+                  </th>
                   {[t('col_employee'), 'CIN', t('col_department'), t('col_contract'), t('col_status'), t('col_hire_date'), ''].map(h => (
                     <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 500, color: 'var(--fg-muted)', fontSize: 12, whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
@@ -323,9 +393,17 @@ export default function EmployeesPage() {
               </thead>
               <tbody>
                 {employees.map(emp => (
-                  <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '')}>
+                  <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)', background: selectedIds.has(emp.id) ? 'var(--primary-light, #eff6ff)' : '' }}
+                    onMouseEnter={e => { if (!selectedIds.has(emp.id)) e.currentTarget.style.background = 'var(--bg-muted)'; }}
+                    onMouseLeave={e => { if (!selectedIds.has(emp.id)) e.currentTarget.style.background = ''; }}>
+                    <td style={{ padding: '10px 16px', width: 40 }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(emp.id)}
+                        onChange={() => toggleOne(emp.id)}
+                        style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)' }}
+                      />
+                    </td>
                     <td style={{ padding: '10px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <Avatar name={emp.full_name} size={30} />
@@ -409,6 +487,17 @@ export default function EmployeesPage() {
           }}
         />
       )}
+
+      {/* Import / Export modal */}
+      <ImportExportModal
+        open={showImportExport}
+        onClose={() => { setShowImportExport(false); qc.invalidateQueries({ queryKey: ['employees'] }); }}
+        cols={EMPLOYEE_COLS}
+        rows={employees as unknown as Record<string, unknown>[]}
+        entityName="Employés"
+        arrayFields={['skills', 'languages', 'certifications']}
+        onCreate={row => createEmployee(row as Partial<Employee>)}
+      />
     </div>
   );
 }

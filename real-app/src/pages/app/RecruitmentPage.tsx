@@ -13,11 +13,18 @@ const BASE_ID = 'prd6w1jt4faaysm';
 
 const dbGet = async (path: string, params?: Record<string, any>) => {
   const token = localStorage.getItem('wedy_token');
-  const res = await axios.get(`/api/smartdb${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    params,
-  });
-  return res.data;
+  try {
+    const res = await axios.get(`/api/smartdb${path}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      params,
+    });
+    return res.data;
+  } catch (e: any) {
+    if (e?.response?.status === 401) {
+      throw new Error('Session expirée — veuillez vous reconnecter.');
+    }
+    throw e;
+  }
 };
 
 // Tables to hide (CV import + interview calendar + Tech FAQ)

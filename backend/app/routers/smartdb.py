@@ -1,6 +1,7 @@
 """SmartDB proxy — forwards requests to TyBotFlow/NocoDB API server-side."""
 import os
 import time
+import hashlib
 import httpx
 from threading import Lock
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -238,7 +239,6 @@ def get_records(
     # Include filter params in cache key so different filters don't share cache
     cache_key = f"records:{table_id}:{offset}:{limit}"
     if where:
-        import hashlib
         cache_key += ":" + hashlib.md5(where.encode()).hexdigest()[:8]
     return _exhaustive(
         [

@@ -660,6 +660,8 @@ export const chatGenerateAnnonce = (messages: ChatMessage[]) =>
 
 
 export const listCandidates = () => api.get<Employee[]>('/candidats').then(r => r.data);
+export const createCandidate = (data: { full_name: string; email?: string; phone?: string; position?: string; notes?: string }) =>
+  api.post<Employee>('/candidats', data).then(r => r.data);
 export const deleteCandidate = (id: string) => api.delete(`/candidats/${id}`).then(r => r.data);
 export const applyCandidate = (data: { full_name: string, email: string, phone?: string, ad_id?: string, interview_date?: string, interview_time?: string, cv_url?: string }) =>
   api.post('/candidats/apply', data).then(r => r.data);

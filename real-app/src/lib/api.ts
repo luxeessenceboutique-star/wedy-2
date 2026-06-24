@@ -10,6 +10,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  r => r,
+  err => {
+    if (err?.response?.status === 401) {
+      localStorage.removeItem('wedy_token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
+
 // ── Auth ────────────────────────────────────────────────────────────
 export interface LoginRes { access_token: string; user: { id: string; email: string } }
 

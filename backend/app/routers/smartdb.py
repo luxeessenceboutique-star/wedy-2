@@ -231,19 +231,10 @@ def get_records(
     table_id: str,
     limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
-    where: str | None = Query(None),
-    sort: str | None = Query(None),
     _user: dict = Depends(get_current_user),
 ):
     params: dict = {"limit": limit, "offset": offset}
-    if where:
-        params["where"] = where
-    if sort:
-        params["sort"] = sort
-    # Include filter params in cache key so different filters don't share cache
     cache_key = f"records:{table_id}:{offset}:{limit}"
-    if where:
-        cache_key += ":" + hashlib.md5(where.encode()).hexdigest()[:8]
     return _exhaustive(
         [
             f"/tables/{table_id}/records",

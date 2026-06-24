@@ -186,20 +186,15 @@ export default function RecruitmentPage() {
       const cutoff = getCutoff(tf);
 
       if (tf !== 'all' && cutoff) {
-        // Time-filtered mode: fetch a large batch sorted newest-first, then
-        // also filter client-side in case the NocoDB `where` param isn't applied.
-        const params: Record<string, any> = {
-          limit: 1000,
-          offset: 0,
-          sort: '-CreatedAt',
-          where: `(CreatedAt,gte,${cutoff.toISOString()})`,
-        };
+        // Time-filtered mode: fetch a large batch with standard params only
+        // (NocoDB rejects unknown params like sort/where on some endpoints),
+        // then filter client-side by CreatedAt.
+        const params: Record<string, any> = { limit: 200, offset: 0 };
         const [colRes, recRes] = await Promise.all([
           dbGet(`/tables/${tbl.id}/columns`),
           dbGet(`/tables/${tbl.id}/records`, params),
         ]);
         const raw = pickArray(recRes);
-        // Client-side fallback: if server didn't filter, do it here
         const filtered = raw.filter((r: any) => {
           const dateStr = r.CreatedAt ?? r.created_at ?? r['Created At'] ?? r.nc_created_at;
           if (!dateStr) return true;

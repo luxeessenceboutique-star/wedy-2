@@ -188,16 +188,41 @@ export default function RecruitmentPage() {
     setLoadData(true); setErr(null);
     try {
       const cutoff = getCutoff(tf);
-      const params: Record<string, any> = { limit: LIMIT, offset: off };
-      if (cutoff) params.where = `(CreatedAt,gte,${cutoff.toISOString()})`;
 
-      const [colRes, recRes] = await Promise.all([
-        dbGet(`/tables/${tbl.id}/columns`),
-        dbGet(`/tables/${tbl.id}/records`, params),
-      ]);
-      setColumns(parseColumns(pickArray(colRes)));
-      setRecords(pickArray(recRes));
-      setPageInfo(parsePageInfo(recRes));
+      if (tf !== 'all' && cutoff) {
+        // Time-filtered mode: fetch a large batch sorted newest-first, then
+        // also filter client-side in case the NocoDB `where` param isn't applied.
+        const params: Record<string, any> = {
+          limit: 1000,
+          offset: 0,
+          sort: '-CreatedAt',
+          where: `(CreatedAt,gte,${cutoff.toISOString()})`,
+        };
+        const [colRes, recRes] = await Promise.all([
+          dbGet(`/tables/${tbl.id}/columns`),
+          dbGet(`/tables/${tbl.id}/records`, params),
+        ]);
+        const raw = pickArray(recRes);
+        // Client-side fallback: if server didn't filter, do it here
+        const filtered = raw.filter((r: any) => {
+          const dateStr = r.CreatedAt ?? r.created_at ?? r['Created At'] ?? r.nc_created_at;
+          if (!dateStr) return true;
+          try { return new Date(dateStr) >= cutoff; } catch { return true; }
+        });
+        setColumns(parseColumns(pickArray(colRes)));
+        setRecords(filtered);
+        setPageInfo({ totalRows: filtered.length });
+      } else {
+        // Normal paginated fetch (no time filter)
+        const params: Record<string, any> = { limit: LIMIT, offset: off };
+        const [colRes, recRes] = await Promise.all([
+          dbGet(`/tables/${tbl.id}/columns`),
+          dbGet(`/tables/${tbl.id}/records`, params),
+        ]);
+        setColumns(parseColumns(pickArray(colRes)));
+        setRecords(pickArray(recRes));
+        setPageInfo(parsePageInfo(recRes));
+      }
     } catch (e: any) {
       setErr(e?.response?.data?.msg || e?.message || 'Erreur de chargement');
     } finally { setLoadData(false); }
@@ -448,8 +473,8 @@ export default function RecruitmentPage() {
                 </table>
               </div>
 
-              {/* Pagination */}
-              {total > LIMIT && (
+              {/* Pagination — only in unfiltered mode (time filter loads all at once) */}
+              {timeFilter === 'all' && total > LIMIT && (
                 <div style={{ padding: '10px 20px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: 'var(--bg-elev)' }}>
                   <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
                     <b style={{ color: 'var(--fg)' }}>{offset + 1}–{Math.min(offset + LIMIT, total)}</b> sur <b style={{ color: 'var(--fg)' }}>{total.toLocaleString()}</b>

@@ -224,11 +224,22 @@ def get_columns(table_id: str, _user: dict = Depends(get_current_user)):
 @router.get("/tables/{table_id}/records")
 def get_records(
     table_id: str,
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
+    where: str | None = Query(None),
+    sort: str | None = Query(None),
     _user: dict = Depends(get_current_user),
 ):
-    params = {"limit": limit, "offset": offset}
+    params: dict = {"limit": limit, "offset": offset}
+    if where:
+        params["where"] = where
+    if sort:
+        params["sort"] = sort
+    # Include filter params in cache key so different filters don't share cache
+    cache_key = f"records:{table_id}:{offset}:{limit}"
+    if where:
+        import hashlib
+        cache_key += ":" + hashlib.md5(where.encode()).hexdigest()[:8]
     return _exhaustive(
         [
             f"/tables/{table_id}/records",
@@ -238,6 +249,6 @@ def get_records(
             f"/bases/{BASE_ID}/tables/{table_id}/records",
         ],
         params=params,
-        cache_key=f"records:{table_id}:{offset}:{limit}",
+        cache_key=cache_key,
         ttl=TTL_RECORDS,
     )

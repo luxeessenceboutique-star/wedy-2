@@ -128,7 +128,11 @@ def _exhaustive(
                     pass
 
     if best_http:
-        raise HTTPException(status_code=best_http[0], detail=f"SmartDB {best_http[0]}: {best_http[1]}")
+        # NocoDB auth failures (401/403) are a backend connectivity problem,
+        # NOT a client session problem — return 502 so the frontend does not
+        # mistake them for an expired user token and log the user out.
+        client_status = 502 if best_http[0] in (401, 403) else best_http[0]
+        raise HTTPException(status_code=client_status, detail=f"SmartDB upstream {best_http[0]}: {best_http[1]}")
     raise HTTPException(status_code=502, detail="SmartDB: could not reach any endpoint")
 
 

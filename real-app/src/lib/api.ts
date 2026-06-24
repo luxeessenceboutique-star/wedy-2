@@ -13,7 +13,11 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   r => r,
   err => {
-    if (err?.response?.status === 401) {
+    const is401 = err?.response?.status === 401;
+    const isSmartDb = err?.config?.url?.includes('/smartdb');
+    // Only treat 401 as session expiry for our own API endpoints,
+    // not for the SmartDB proxy (whose upstream can independently return 401).
+    if (is401 && !isSmartDb) {
       localStorage.removeItem('wedy_token');
       window.location.href = '/login';
     }

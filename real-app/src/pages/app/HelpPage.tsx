@@ -778,7 +778,7 @@ export default function HelpPage() {
                 <div key={section.id} style={{ marginBottom: 22 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                     <div style={{ width: 22, height: 22, borderRadius: 7, background: section.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                      {React.cloneElement(section.icon as React.ReactElement, { size: 11 })}
+                      <span style={{ display: 'inline-flex', transform: 'scale(0.73)', transformOrigin: 'center' }}>{section.icon}</span>
                     </div>
                     <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg)' }}>{section.label}</span>
                     <span style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>— {section.pages.length} pages</span>

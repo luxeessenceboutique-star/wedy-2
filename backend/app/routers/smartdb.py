@@ -60,12 +60,13 @@ def _key() -> str:
     return (
         os.getenv("TYBOTFLOW_API_KEY")
         or getattr(settings, "TYBOTFLOW_API_KEY", "")
-        or "twx_4csaOnT9aItwn08I_107"
+        or "twx_wccFjUReF38x9N1h_107"
     )
 
 
 def _auth_variants(k: str) -> list[dict]:
     return [
+        {"x-api-key": k, "Accept": "application/json"},
         {"Authorization": f"Bearer {k}", "Accept": "application/json"},
         {"xc-token": k, "Accept": "application/json"},
         {"xc-auth":  k, "Accept": "application/json"},

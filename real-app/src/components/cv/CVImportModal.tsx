@@ -4,7 +4,7 @@ import {
   User, Briefcase, GraduationCap, Wrench, Globe, Award,
   Camera, Crosshair, AlertTriangle, FileText, UserCheck, Plus,
 } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api, getApiError } from '../../lib/api';
 import { toast } from 'sonner';
 import { Button, Spinner } from '../ui';
 
@@ -171,7 +171,7 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
 
       toast.success(`CV analysé — ${filled.size} champ(s) extraits`);
     } catch (e: any) {
-      toast.error(e?.response?.data?.detail || 'Erreur lors de l\'analyse');
+      toast.error(getApiError(e, "Erreur lors de l'analyse"));
     } finally {
       setLoading(false);
     }

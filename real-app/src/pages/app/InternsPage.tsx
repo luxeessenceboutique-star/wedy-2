@@ -9,7 +9,7 @@ import {
 import {
   listInterns, createIntern, updateIntern, deleteIntern, uploadDocument, listDocuments, deleteDocument,
   getInternOnboarding, updateInternOnboarding, listInternEvaluations, createInternEvaluation, deleteInternEvaluation,
-  sendForSignature, listDepartments,
+  sendForSignature, listDepartments, getApiError,
 } from '../../lib/api';
 import type { Intern, InternOnboarding, InternEvaluation, ChecklistItem, Objective } from '../../lib/api';
 import { CVImportModal } from '../../components/cv/CVImportModal';
@@ -666,13 +666,13 @@ export default function InternsPage() {
   const createMut = useMutation({
     mutationFn: createIntern,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['interns'] }); setEditing(null); setPrefill(null); toast.success('Stagiaire ajouté'); },
-    onError: (e: any) => toast.error(e?.response?.data?.detail ?? 'Erreur'),
+    onError: (e: any) => toast.error(getApiError(e, 'Erreur')),
   });
 
   const updateMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Intern> }) => updateIntern(id, data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['interns'] }); setEditing(null); toast.success('Mis à jour'); },
-    onError: (e: any) => toast.error(e?.response?.data?.detail ?? 'Erreur'),
+    onError: (e: any) => toast.error(getApiError(e, 'Erreur')),
   });
 
   const deleteMut = useMutation({
@@ -941,7 +941,7 @@ export default function InternsPage() {
                                     navigator.clipboard.writeText(link);
                                     toast.info(`Lien copié: ${link}`);
                                     refetchDocs();
-                                  } catch (e: any) { toast.error(e.response?.data?.detail || "Erreur"); }
+                                  } catch (e: any) { toast.error(getApiError(e, "Erreur")); }
                                 }}
                               >
                                 {d.signature_status === 'pending' ? 'Renvoyer' : 'Signer'}

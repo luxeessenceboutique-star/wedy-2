@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, ChevronUp, FileUp, Eye, X, ArrowUpDown } from 'lucide-react';
-import { listEmployees, createEmployee, updateEmployee, deleteEmployee, listDepartments } from '../../lib/api';
+import { listEmployees, createEmployee, updateEmployee, deleteEmployee, listDepartments, getApiError } from '../../lib/api';
 import type { Employee } from '../../lib/api';
 import { Button, Badge, Card, Input, Select, Modal, Spinner, Empty, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
@@ -40,7 +40,7 @@ const STATUS_COLORS: Record<string, 'success' | 'warning' | 'danger' | 'default'
   active: 'success', inactive: 'danger', 'on-leave': 'warning',
 };
 
-const CONTRACT_TYPES = ['CDI', 'CDD', 'Stage', 'ANAPEC', 'Consultant', 'Freelance'];
+const CONTRACT_TYPES = ['CDI', 'CDD', 'Stage', 'Freelance'];
 const today = new Date().toISOString().split('T')[0];
 
 type TagField = 'skills' | 'languages' | 'certifications';
@@ -137,7 +137,8 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
         <Select label="Statut" value={form.status ?? 'active'} onChange={set('status')}>
           <option value="active">Actif</option>
           <option value="inactive">Inactif</option>
-          <option value="on-leave">En congé</option>
+          <option value="terminated">Terminé</option>
+          <option value="intern">Stagiaire</option>
         </Select>
         <Select label="Type de contrat" value={form.contract_type ?? 'CDI'} onChange={set('contract_type')}>
           {CONTRACT_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -281,13 +282,13 @@ export default function EmployeesPage() {
   const createMut = useMutation({
     mutationFn: createEmployee,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); setShowModal(false); toast.success('Employee added'); },
-    onError: (e: unknown) => toast.error((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Error adding employee'),
+    onError: (e: unknown) => toast.error(getApiError(e, 'Error adding employee')),
   });
 
   const updateMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Employee> }) => updateEmployee(id, data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); setEditing(null); toast.success('Employee updated'); },
-    onError: (e: unknown) => toast.error((e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Error updating'),
+    onError: (e: unknown) => toast.error(getApiError(e, 'Error updating')),
   });
 
   const deleteMut = useMutation({

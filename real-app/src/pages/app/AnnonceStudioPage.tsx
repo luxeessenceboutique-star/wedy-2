@@ -6,6 +6,7 @@ import {
     Trash2, Plus, Download, Layout
 } from 'lucide-react';
 import { Button, Card, Input, Spinner } from '../../components/ui';
+import { getApiError } from '../../lib/api';
 import { toast } from 'sonner';
 
 export default function AnnonceStudioPage() {
@@ -35,7 +36,7 @@ export default function AnnonceStudioPage() {
             setView('preview');
             toast.success('Annonce générée avec succès !');
         } catch (err: any) {
-            toast.error(err.response?.data?.detail || 'Erreur lors de la génération');
+            toast.error(getApiError(err, 'Erreur lors de la génération'));
         } finally {
             setLoading(false);
         }

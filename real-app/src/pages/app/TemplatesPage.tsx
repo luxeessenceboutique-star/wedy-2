@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
-  importTemplateFromPdf, seedDefaultTemplates,
+  importTemplateFromPdf, seedDefaultTemplates, getApiError,
 } from '../../lib/api';
 import type { Template } from '../../lib/api';
 import { Spinner, Button } from '../../components/ui';
@@ -543,7 +543,7 @@ function ImportModal({ onClose, onImported }: { onClose: () => void; onImported:
       onImported();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.detail ?? "Erreur lors de l'import");
+      toast.error(getApiError(err, "Erreur lors de l'import"));
     } finally {
       setLoading(false);
     }
@@ -759,13 +759,13 @@ export default function TemplatesPage() {
   const createMut = useMutation({
     mutationFn: createTemplate,
     onSuccess: () => { invalidate(); setShowCreate(false); toast.success('Template créé'); },
-    onError: (e: any) => toast.error(e?.response?.data?.detail ?? 'Erreur création'),
+    onError: (e: any) => toast.error(getApiError(e, 'Erreur création')),
   });
 
   const updateMut = useMutation({
     mutationFn: ({ id, body }: { id: string; body: any }) => updateTemplate(id, body),
     onSuccess: () => { invalidate(); setEditing(null); toast.success('Template mis à jour'); },
-    onError: (e: any) => toast.error(e?.response?.data?.detail ?? 'Erreur mise à jour'),
+    onError: (e: any) => toast.error(getApiError(e, 'Erreur mise à jour')),
   });
 
   const deleteMut = useMutation({
@@ -787,7 +787,7 @@ export default function TemplatesPage() {
                 qc.invalidateQueries({ queryKey: ['templates'] });
                 toast.success(`${res.created.length} modèle(s) officiel(s) chargé(s)${res.skipped.length ? ` (${res.skipped.length} déjà présent(s))` : ''}`);
               } catch (e: any) {
-                toast.error(e?.response?.data?.detail ?? 'Erreur lors du chargement des modèles');
+                toast.error(getApiError(e, 'Erreur lors du chargement des modèles'));
               }
             }}>
               <Sparkles size={14} /> Modèles officiels

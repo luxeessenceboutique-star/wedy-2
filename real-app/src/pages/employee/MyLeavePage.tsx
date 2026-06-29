@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calendar, Plus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api, getApiError } from '../../lib/api';
 import { Button, Input, Spinner, Modal } from '../../components/ui';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
@@ -58,7 +58,7 @@ export default function MyLeavePage() {
       setForm({ type: 'annual', start_date: '', end_date: '', reason: '' });
       toast.success(t('myleave_success'));
     },
-    onError: (e: any) => toast.error(e?.response?.data?.detail || t('error')),
+    onError: (e: any) => toast.error(getApiError(e, t('error'))),
   });
 
   const filtered = filter === 'all' ? (leaves as any[]) : (leaves as any[]).filter((l: any) => l.status === filter);

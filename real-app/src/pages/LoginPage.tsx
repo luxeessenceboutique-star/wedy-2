@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth, isHRRole } from '../lib/auth';
+import { getApiError } from '../lib/api';
 import { Button, Input } from '../components/ui';
 import { WedyLogo } from '../components/WedyLogo';
 import { Sparkles } from 'lucide-react';
@@ -29,7 +30,7 @@ export default function LoginPage() {
         setSignupDone(true);
       }
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail || (err as { message?: string })?.message || 'An error occurred';
+      const msg = getApiError(err, 'An error occurred');
       setError(msg);
     } finally {
       setLoading(false);

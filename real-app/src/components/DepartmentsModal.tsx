@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Building2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listDepartments, createDepartment, updateDepartment, deleteDepartment } from '../lib/api';
+import { listDepartments, createDepartment, updateDepartment, deleteDepartment, getApiError } from '../lib/api';
 import { Modal, Button, Spinner } from './ui';
 import { toast } from 'sonner';
 
@@ -31,7 +31,7 @@ export function DepartmentsModal({ open, onClose }: Props) {
       setNewDesc('');
       toast.success('Département créé');
     },
-    onError: (e: any) => toast.error(e?.response?.data?.detail ?? 'Erreur lors de la création'),
+    onError: (e: any) => toast.error(getApiError(e, 'Erreur lors de la création')),
   });
 
   const updateMut = useMutation({
@@ -41,13 +41,13 @@ export function DepartmentsModal({ open, onClose }: Props) {
       setEditingId(null);
       toast.success('Département modifié');
     },
-    onError: (e: any) => toast.error(e?.response?.data?.detail ?? 'Erreur lors de la modification'),
+    onError: (e: any) => toast.error(getApiError(e, 'Erreur lors de la modification')),
   });
 
   const deleteMut = useMutation({
     mutationFn: deleteDepartment,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['departments'] }); toast.success('Département supprimé'); },
-    onError: (e: any) => toast.error(e?.response?.data?.detail ?? 'Erreur lors de la suppression'),
+    onError: (e: any) => toast.error(getApiError(e, 'Erreur lors de la suppression')),
   });
 
   const startEdit = (dept: { id: string; name: string }) => { setEditingId(dept.id); setEditName(dept.name); };

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, RefreshCw } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
-import { sendCopilotMessage, type ChatMessage } from '../../lib/api';
+import { sendCopilotMessage, getApiError, type ChatMessage } from '../../lib/api';
 import { toast } from 'sonner';
 import { useLang } from '../../lib/lang';
 
@@ -93,9 +93,7 @@ export default function CopilotPage() {
       const res = await sendCopilotMessage(contextMsgs);
       setMessages(prev => [...prev, { role: 'assistant', content: res.reply }]);
     } catch (err: unknown) {
-      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      const msg = detail || (err as { message?: string })?.message || 'Impossible de contacter le backend.';
-      toast.error(msg);
+      toast.error(getApiError(err, 'Impossible de contacter le backend.'));
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);

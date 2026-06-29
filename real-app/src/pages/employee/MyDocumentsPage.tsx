@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api, getApiError } from '../../lib/api';
 import { Button, Spinner, Modal } from '../../components/ui';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';
@@ -50,7 +50,7 @@ export default function MyDocumentsPage() {
       setForm({ doc_type: 'attestation_travail', comment: '' });
       toast.success(t('mydoc_success'));
     },
-    onError: (e: any) => toast.error(e?.response?.data?.detail || t('error')),
+    onError: (e: any) => toast.error(getApiError(e, t('error'))),
   });
 
   return (

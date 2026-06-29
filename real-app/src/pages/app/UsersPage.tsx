@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../lib/api';
+import { api, getApiError } from '../../lib/api';
 import { Spinner, Button, Badge, Avatar, Input, Modal } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';
@@ -68,7 +68,7 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
       onSuccess();
       toast.success(role === 'hr_admin' ? 'Compte Admin RH créé' : 'Compte Employé créé');
     },
-    onError: (e: any) => toast.error(e?.response?.data?.detail || 'Erreur création compte'),
+    onError: (e: any) => toast.error(getApiError(e, 'Erreur création compte')),
   });
 
   if (created) {

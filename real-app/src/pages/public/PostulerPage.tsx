@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Briefcase, Send, CheckCircle, ArrowRight, MapPin, Clock, Calendar as CalIcon, Info, Upload, FileText } from 'lucide-react';
 import { Button, Card, Spinner } from '../../components/ui';
-import { applyCandidate, getAnnonce, listSlots, extractCV } from '../../lib/api';
+import { applyCandidate, getAnnonce, listSlots, extractCV, getApiError } from '../../lib/api';
 import type { JobAd, HRSlot } from '../../lib/api';
 import { toast } from 'sonner';
 
@@ -48,8 +48,7 @@ export default function PostulerPage() {
             setSubmitted(true);
             toast.success("Candidature envoyée avec succès !");
         } catch (err: any) {
-            const msg = err.response?.data?.detail || "Erreur lors de l'envoi de la candidature";
-            toast.error(msg);
+            toast.error(getApiError(err, "Erreur lors de l'envoi de la candidature"));
         } finally {
             setLoading(false);
         }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { api } from '../../lib/api';
+import { api, getApiError } from '../../lib/api';
 import {
   RefreshCw, Search, X, Eye, Table2, AlertTriangle,
   Hash, Calendar, Mail, Globe, ToggleLeft, Paperclip, Key,
@@ -174,7 +174,7 @@ export default function RecruitmentPage() {
       const data = await dbGet(`/bases/${BASE_ID}/tables`);
       setAllTables(pickArray(data));
     } catch (e: any) {
-      setErr(e?.response?.data?.detail || e?.message || 'Erreur de connexion');
+      setErr(getApiError(e, 'Erreur de connexion'));
     } finally { setLoadTables(false); }
   };
 
@@ -215,7 +215,7 @@ export default function RecruitmentPage() {
         setPageInfo(parsePageInfo(recRes));
       }
     } catch (e: any) {
-      setErr(e?.response?.data?.msg || e?.message || 'Erreur de chargement');
+      setErr(getApiError(e, 'Erreur de chargement'));
     } finally { setLoadData(false); }
   }, []);
 

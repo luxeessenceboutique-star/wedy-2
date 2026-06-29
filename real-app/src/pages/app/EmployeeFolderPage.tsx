@@ -12,6 +12,7 @@ import {
   listLeaveRequests, listPayslips, listGoals, listReviews,
   downloadDoc, printDocument, listDepartments,
   analyzeEmployeeFolder, applyAnalysis, sendForSignature,
+  getApiError,
   type Employee, type GeneratedDoc, type EmployeeFile,
   type LeaveRequest, type Payslip, type PerformanceGoal, type PerformanceReview,
   type AnalysisResult,
@@ -769,7 +770,7 @@ export default function EmployeeFolderPage() {
                             toast.info(`Lien copié: ${link}`);
 
                             refetchDocs();
-                          } catch (e: any) { toast.error(e.response?.data?.detail || "Error"); }
+                          } catch (e: any) { toast.error(getApiError(e, "Error")); }
                         }}
                       >
                         <FileSignature size={11} /> {doc.signature_status === 'pending' ? t('resend') : t('sign')}

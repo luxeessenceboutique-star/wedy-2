@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Download, Upload, FileSpreadsheet, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Modal, Button, Spinner } from './ui';
+import { getApiError } from '../lib/api';
 import * as XLSX from 'xlsx';
 
 export interface ColDef {
@@ -108,8 +109,7 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
         await onCreate(mapped);
         setStatuses(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'success' } : s));
       } catch (e: unknown) {
-        const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Erreur';
-        setStatuses(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'error', message: detail } : s));
+        setStatuses(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'error', message: getApiError(e, 'Erreur') } : s));
       }
     }
     setImporting(false);

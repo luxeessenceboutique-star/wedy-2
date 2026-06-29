@@ -7,7 +7,7 @@ import { Button, Spinner, Avatar, Modal } from '../../components/ui';
 import { toast } from 'sonner';
 import { useLang } from '../../lib/lang';
 import type { Employee } from '../../lib/api';
-import { listCandidates, createCandidate, promoteToEmployee, promoteToIntern, deleteCandidate } from '../../lib/api';
+import { listCandidates, createCandidate, promoteToEmployee, promoteToIntern, deleteCandidate, getApiError } from '../../lib/api';
 
 // ── Add Candidate Modal ────────────────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ function AddCandidateModal({ open, onClose, onCreated }: { open: boolean; onClos
             onCreated();
             onClose();
         } catch (err: any) {
-            toast.error(err?.response?.data?.detail || 'Erreur lors de la création');
+            toast.error(getApiError(err, 'Erreur lors de la création'));
         } finally {
             setSaving(false);
         }

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight, Zap, CheckCircle, Printer, Download, TrendingUp, TrendingDown, ArrowRight, DollarSign, BarChart3, Plus, X } from 'lucide-react';
-import { listPayroll, generateBulkPayroll, updatePayroll, createPayroll, listEmployees, type PayrollRecord } from '../../lib/api';
+import { listPayroll, generateBulkPayroll, updatePayroll, createPayroll, listEmployees, getApiError, type PayrollRecord } from '../../lib/api';
 import { Badge, Spinner, Button } from '../../components/ui';
 import { useLang } from '../../lib/lang';
 
@@ -114,10 +114,7 @@ function CreatePayrollModal({ defaultMonth, defaultYear, onClose }: { defaultMon
       qc.invalidateQueries({ queryKey: ['payroll'] });
       onClose();
     },
-    onError: (e: unknown) => {
-      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erreur lors de la création';
-      toast.error(msg);
-    },
+    onError: (e: unknown) => toast.error(getApiError(e, 'Erreur lors de la création')),
   });
 
   const MONTHS = [

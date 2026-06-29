@@ -350,6 +350,7 @@ export default function EmployeesPage() {
           <option value="active">{t('status_active')}</option>
           <option value="inactive">{t('status_inactive')}</option>
           <option value="on-leave">{t('status_on_leave')}</option>
+          <option value="terminated">{t('status_terminated') || 'Terminé'}</option>
         </select>
       </div>
 

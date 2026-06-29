@@ -36,6 +36,7 @@ def list_employees(
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
+    exclude_intern: bool = True,
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
@@ -43,6 +44,9 @@ def list_employees(
 
     if status:
         query = query.eq("status", status)
+    elif exclude_intern:
+        # Never mix interns into the employee list unless explicitly requested
+        query = query.neq("status", "intern")
     if search:
         query = query.ilike("full_name", f"%{search}%")
 

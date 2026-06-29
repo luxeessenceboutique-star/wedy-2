@@ -139,6 +139,14 @@ async def create_user_account(
     except Exception:
         pass
 
+    # Link to existing employee record so portal email-lookup works
+    employee_id = payload.get("employee_id")
+    if employee_id:
+        try:
+            db.table("employees").update({"email": email}).eq("id", employee_id).execute()
+        except Exception:
+            pass
+
     return {
         "id":        user_id,
         "email":     email,

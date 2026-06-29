@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, getApiError } from '../../lib/api';
+import { api, getApiError, listEmployees } from '../../lib/api';
 import { Spinner, Button, Badge, Avatar, Input, Modal } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';
-import { UserPlus, ShieldCheck, Eye, EyeOff, Copy, CheckCircle, Shield, User } from 'lucide-react';
+import { UserPlus, ShieldCheck, Eye, EyeOff, Copy, CheckCircle, Shield, User, Link } from 'lucide-react';
 
 // ── API ────────────────────────────────────────────────────────────────────────
 const listUsers       = () => api.get('/users').then(r => r.data);
@@ -43,13 +43,21 @@ const DOC_TYPE_LABELS: Record<string, string> = {
 
 // ── Create User Modal ──────────────────────────────────────────────────────────
 function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
-  const [role, setRole]         = useState<'employee' | 'hr_admin'>('employee');
-  const [email, setEmail]       = useState('');
-  const [fullName, setFullName] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPwd, setShowPwd]   = useState(false);
-  const [created, setCreated]   = useState<any>(null);
-  const [copied, setCopied]     = useState(false);
+  const [role, setRole]               = useState<'employee' | 'hr_admin'>('employee');
+  const [email, setEmail]             = useState('');
+  const [fullName, setFullName]       = useState('');
+  const [password, setPassword]       = useState('');
+  const [showPwd, setShowPwd]         = useState(false);
+  const [created, setCreated]         = useState<any>(null);
+  const [copied, setCopied]           = useState(false);
+  const [linkedEmpId, setLinkedEmpId] = useState('');
+
+  const { data: empData } = useQuery({
+    queryKey: ['employees', 'active'],
+    queryFn: () => listEmployees({ limit: 200, status: 'active' }),
+    enabled: role === 'employee',
+  });
+  const employees: any[] = empData?.data ?? [];
 
   const generatePassword = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#';
@@ -62,7 +70,13 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
   };
 
   const mut = useMutation({
-    mutationFn: () => createUser({ email, password, full_name: fullName, role: role === 'hr_admin' ? 'hr' : 'employee' }),
+    mutationFn: () => createUser({
+      email,
+      password,
+      full_name: fullName,
+      role: role === 'hr_admin' ? 'hr' : 'employee',
+      ...(linkedEmpId ? { employee_id: linkedEmpId } : {}),
+    }),
     onSuccess: (data) => {
       setCreated({ ...data, password });
       onSuccess();
@@ -131,6 +145,42 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           })}
         </div>
       </div>
+
+      {/* Link to existing employee */}
+      {role === 'employee' && (
+        <div>
+          <label className="label" style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Link size={12} /> Lier à un employé existant
+          </label>
+          <select
+            className="input"
+            value={linkedEmpId}
+            onChange={e => {
+              const id = e.target.value;
+              setLinkedEmpId(id);
+              if (id) {
+                const emp = employees.find((x: any) => x.id === id);
+                if (emp) {
+                  if (emp.email) setEmail(emp.email);
+                  if (emp.full_name) setFullName(emp.full_name);
+                }
+              }
+            }}
+          >
+            <option value="">— Sélectionner un employé (optionnel) —</option>
+            {employees.map((emp: any) => (
+              <option key={emp.id} value={emp.id}>
+                {emp.full_name}{emp.position ? ` · ${emp.position}` : ''}
+              </option>
+            ))}
+          </select>
+          {linkedEmpId && (
+            <p style={{ fontSize: 11, color: '#10b981', marginTop: 4 }}>
+              L'email du profil employé sera mis à jour pour permettre la connexion au portail.
+            </p>
+          )}
+        </div>
+      )}
 
       <Input label="Email *" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="prenom.nom@entreprise.com" required />
       <Input label="Nom complet" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Prénom Nom" />

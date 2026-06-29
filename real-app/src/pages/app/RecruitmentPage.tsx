@@ -16,13 +16,11 @@ const dbGet = async (path: string, params?: Record<string, any>) => {
   return res.data;
 };
 
-// Tables to hide (CV raw import + Tech FAQ)
-const EXCLUDED_IDS = new Set([
-  'mjim075k89bk73f', // CV raw import
-]);
+// Tables to hide (internal/system tables only)
+const EXCLUDED_IDS = new Set<string>([]);
 const isExcluded = (t: DBTable) =>
   EXCLUDED_IDS.has(t.id) ||
-  ['faq', 'cv', 'tech', 'test', 'qa', 'testing'].some(kw =>
+  ['faq', 'tech', 'test', 'qa', 'testing', 'new table', 'règles'].some(kw =>
     t.title.toLowerCase().includes(kw)
   );
 

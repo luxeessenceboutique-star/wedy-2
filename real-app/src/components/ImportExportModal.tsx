@@ -22,6 +22,8 @@ interface Props {
 
 interface RowStatus { row: number; status: 'pending' | 'success' | 'error'; message?: string }
 
+const SKIP = '__skip__';
+
 export function ImportExportModal({ open, onClose, cols, rows, entityName, arrayFields = [], onCreate }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<'export' | 'import'>('export');
@@ -29,10 +31,16 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
   const [statuses, setStatuses] = useState<RowStatus[]>([]);
   const [importing, setImporting] = useState(false);
   const [done, setDone] = useState(false);
+  // Column mapping state (sourceHeader → targetKey or SKIP)
+  const [colMapping, setColMapping] = useState<Record<string, string>>({});
+  const [showMapper, setShowMapper] = useState(false);
 
   const labelToKey = Object.fromEntries(cols.map(c => [c.label, c.key]));
 
-  const reset = () => { setPreviewRows([]); setStatuses([]); setImporting(false); setDone(false); };
+  const reset = () => {
+    setPreviewRows([]); setStatuses([]); setImporting(false); setDone(false);
+    setColMapping({}); setShowMapper(false);
+  };
 
   const switchTab = (t: 'export' | 'import') => { setTab(t); reset(); };
 
@@ -81,6 +89,19 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
         const ws = wb.Sheets[wb.SheetNames[0]];
         const parsed: Record<string, string>[] = XLSX.utils.sheet_to_json(ws, { raw: false, defval: '' });
         setPreviewRows(parsed);
+
+        if (parsed.length > 0) {
+          const sourceHeaders = Object.keys(parsed[0]);
+          // Build initial mapping: auto-match by label, otherwise SKIP
+          const initial: Record<string, string> = {};
+          sourceHeaders.forEach(h => {
+            initial[h] = labelToKey[h] ?? SKIP;
+          });
+          setColMapping(initial);
+          // Show mapper only if no header matched at all
+          const hasAnyMatch = sourceHeaders.some(h => labelToKey[h]);
+          setShowMapper(!hasAnyMatch);
+        }
       } catch {
         alert('Impossible de lire le fichier. Vérifiez le format (CSV ou Excel).');
       }
@@ -88,23 +109,24 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
     reader.readAsArrayBuffer(file);
   };
 
+  const applyMapping = (raw: Record<string, string>): Record<string, unknown> => {
+    const result: Record<string, unknown> = {};
+    Object.entries(raw).forEach(([header, val]) => {
+      const targetKey = colMapping[header];
+      if (!targetKey || targetKey === SKIP || val === '') return;
+      result[targetKey] = arrayFields.includes(targetKey)
+        ? String(val).split(',').map(s => s.trim()).filter(Boolean)
+        : val;
+    });
+    return result;
+  };
+
   const runImport = async () => {
     setImporting(true);
     setStatuses(previewRows.map((_, i) => ({ row: i, status: 'pending' })));
 
     for (let i = 0; i < previewRows.length; i++) {
-      const raw = previewRows[i];
-      // Map header labels → field keys
-      const mapped: Record<string, unknown> = {};
-      Object.entries(raw).forEach(([header, val]) => {
-        const key = labelToKey[header] ?? header;
-        if (val !== '') {
-          mapped[key] = arrayFields.includes(key)
-            ? String(val).split(',').map(s => s.trim()).filter(Boolean)
-            : val;
-        }
-      });
-
+      const mapped = applyMapping(previewRows[i]);
       try {
         await onCreate(mapped);
         setStatuses(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'success' } : s));
@@ -119,6 +141,8 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
   const successCount = statuses.filter(s => s.status === 'success').length;
   const errorCount   = statuses.filter(s => s.status === 'error').length;
   const previewCols  = cols.slice(0, 6);
+  const sourceHeaders = previewRows.length > 0 ? Object.keys(previewRows[0]) : [];
+  const sampleRow = previewRows[0] ?? {};
 
   return (
     <Modal open={open} onClose={() => { reset(); onClose(); }} title={`Import / Export — ${entityName}`} width={720}>
@@ -185,8 +209,79 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
             </div>
           )}
 
-          {/* Step 2 — preview */}
-          {previewRows.length > 0 && !done && (
+          {/* Step 2a — column mapper (when headers don't match template) */}
+          {previewRows.length > 0 && showMapper && !done && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 2px' }}>Correspondance des colonnes</p>
+                  <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>
+                    Associez chaque colonne de votre fichier au champ correspondant.
+                  </p>
+                </div>
+                <button onClick={reset} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                  <X size={12} /> Changer de fichier
+                </button>
+              </div>
+
+              <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg-muted)' }}>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--fg-muted)', borderBottom: '1px solid var(--border)' }}>Colonne fichier</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--fg-muted)', borderBottom: '1px solid var(--border)' }}>Exemple</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--fg-muted)', borderBottom: '1px solid var(--border)' }}>Champ cible</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sourceHeaders.map(h => (
+                      <tr key={h} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '6px 12px', color: 'var(--fg-muted)', fontFamily: 'monospace', fontSize: 11 }}>{h}</td>
+                        <td style={{ padding: '6px 12px', color: 'var(--fg)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {String(sampleRow[h] ?? '')}
+                        </td>
+                        <td style={{ padding: '6px 12px' }}>
+                          <select
+                            value={colMapping[h] ?? SKIP}
+                            onChange={e => setColMapping(prev => ({ ...prev, [h]: e.target.value }))}
+                            style={{
+                              padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)',
+                              background: 'var(--bg)', color: 'var(--fg)', fontSize: 12, width: '100%',
+                            }}
+                          >
+                            <option value={SKIP}>— Ignorer —</option>
+                            {cols.map(c => (
+                              <option key={c.key} value={c.key}>
+                                {c.label}{c.required ? ' *' : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <Button variant="ghost" onClick={reset}>Annuler</Button>
+                <Button
+                  onClick={() => setShowMapper(false)}
+                  disabled={!cols.filter(c => c.required).every(c => Object.values(colMapping).includes(c.key))}
+                >
+                  Confirmer la correspondance →
+                </Button>
+              </div>
+              {cols.some(c => c.required && !Object.values(colMapping).includes(c.key)) && (
+                <p style={{ fontSize: 12, color: 'var(--danger)', textAlign: 'right', marginTop: -8 }}>
+                  Champs obligatoires manquants : {cols.filter(c => c.required && !Object.values(colMapping).includes(c.key)).map(c => c.label).join(', ')}
+                </p>
+              )}
+            </>
+          )}
+
+          {/* Step 2b — preview */}
+          {previewRows.length > 0 && !showMapper && !done && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <p style={{ fontSize: 13, fontWeight: 600 }}>
@@ -220,6 +315,7 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
                   </thead>
                   <tbody>
                     {previewRows.slice(0, 50).map((row, i) => {
+                      const mapped = applyMapping(row);
                       const st = statuses[i];
                       return (
                         <tr key={i} style={{
@@ -240,7 +336,7 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
                           )}
                           {previewCols.map(c => (
                             <td key={c.key} style={{ padding: '6px 10px', color: 'var(--fg)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {String(row[c.label] ?? row[c.key] ?? '')}
+                              {String(mapped[c.key] ?? '')}
                             </td>
                           ))}
                         </tr>

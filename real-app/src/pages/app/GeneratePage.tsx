@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
@@ -141,7 +141,7 @@ export default function GeneratePage() {
 
   const editorRef = useRef<HTMLDivElement>(null);
 
-  const { data: empData }    = useQuery({ queryKey: ['employees'], queryFn: () => listEmployees({ limit: 200 }) });
+  const { data: empData }    = useQuery({ queryKey: ['employees', 'active'], queryFn: () => listEmployees({ limit: 200, status: 'active' }) });
   const { data: internData } = useQuery({ queryKey: ['interns'],   queryFn: () => listInterns({ limit: 200 }) });
   const { data: tplData }    = useQuery({ queryKey: ['templates'], queryFn: () => listTemplates() });
 

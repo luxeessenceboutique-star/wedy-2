@@ -80,16 +80,15 @@ function autoMapHeader(header: string, cols: ColDef[], labelToKey: Record<string
 
   let bestKey = SKIP;
   let bestScore = 0;
-  let tied = false;
 
   for (const c of cols) {
     const lWords = normalize(c.label).split(' ').filter(w => w.length > 2);
     const common = hWords.filter(w => lWords.includes(w)).length;
-    if (common > bestScore) { bestScore = common; bestKey = c.key; tied = false; }
-    else if (common > 0 && common === bestScore) { tied = true; }
+    // Strict improvement only — first match wins on ties (cols are ordered by priority)
+    if (common > bestScore) { bestScore = common; bestKey = c.key; }
   }
 
-  return (tied || bestScore === 0) ? SKIP : bestKey;
+  return bestScore === 0 ? SKIP : bestKey;
 }
 
 // Parse the file and return { headers, dataRows } using the detected header row

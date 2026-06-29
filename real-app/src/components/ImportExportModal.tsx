@@ -24,6 +24,16 @@ interface RowStatus { row: number; status: 'pending' | 'success' | 'error'; mess
 
 const SKIP = '__skip__';
 
+// Convert D/M/YYYY or DD/MM/YYYY → YYYY-MM-DD for date fields
+function normalizeDate(val: string): string {
+  const m = val.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  return val;
+}
+
+const DATE_FIELD = (key: string) =>
+  key.includes('date') || key.endsWith('_start') || key.endsWith('_end');
+
 // Strip accents, lowercase, collapse non-alphanum to spaces
 function normalize(s: string): string {
   return s
@@ -222,7 +232,9 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
       if (!val) return;
       result[targetKey] = arrayFields.includes(targetKey)
         ? val.split(',').map(s => s.trim()).filter(Boolean)
-        : val;
+        : DATE_FIELD(targetKey)
+          ? normalizeDate(val)
+          : val;
     });
     return result;
   };

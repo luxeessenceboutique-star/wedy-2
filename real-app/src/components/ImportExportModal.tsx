@@ -24,11 +24,34 @@ interface RowStatus { row: number; status: 'pending' | 'success' | 'error'; mess
 
 const SKIP = '__skip__';
 
-// Convert D/M/YYYY or DD/MM/YYYY → YYYY-MM-DD for date fields
-function normalizeDate(val: string): string {
-  const m = val.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
-  return val;
+// Robustly parse messy date values → ISO YYYY-MM-DD, or null if unparseable/invalid
+function normalizeDate(val: string): string | null {
+  const s = val.trim();
+  if (!s) return null;
+
+  // Already ISO YYYY-MM-DD — validate (catches impossible dates like Feb 31)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, mo, d] = s.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    return dt.getUTCMonth() + 1 === mo ? s : null;
+  }
+
+  // Excel serial number (e.g. "45705")
+  if (/^\d{5}$/.test(s)) {
+    const dt = new Date(Math.round((parseInt(s) - 25569) * 86400_000));
+    return isNaN(dt.getTime()) ? null : dt.toISOString().split('T')[0];
+  }
+
+  // Strip French "le " prefix then extract first D/M/YYYY pattern anywhere in the string
+  const cleaned = s.replace(/^le\s+/i, '');
+  const m = cleaned.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (m) {
+    const day = m[1].padStart(2, '0'), month = m[2].padStart(2, '0'), year = m[3];
+    const dt = new Date(Date.UTC(+year, +month - 1, +day));
+    return dt.getUTCMonth() + 1 === +month ? `${year}-${month}-${day}` : null;
+  }
+
+  return null; // "Non précisé", "A VOIR", etc. → skip field
 }
 
 const DATE_FIELD = (key: string) =>
@@ -229,11 +252,15 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
       if (!targetKey || targetKey === SKIP) return;
       const val = String(raw[h] ?? '').trim();
       if (!val) return;
-      result[targetKey] = arrayFields.includes(targetKey)
-        ? val.split(',').map(s => s.trim()).filter(Boolean)
-        : DATE_FIELD(targetKey)
-          ? normalizeDate(val)
-          : val;
+      if (arrayFields.includes(targetKey)) {
+        result[targetKey] = val.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (DATE_FIELD(targetKey)) {
+        const iso = normalizeDate(val);
+        if (iso !== null) result[targetKey] = iso;
+        // null → field omitted entirely (DB keeps NULL rather than erroring)
+      } else {
+        result[targetKey] = val;
+      }
     });
     return result;
   };

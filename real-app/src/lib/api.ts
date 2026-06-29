@@ -677,10 +677,17 @@ export const chatGenerateAnnonce = (messages: ChatMessage[]) =>
   api.post<{ reply: string }>('/annonces/chat-generate', { messages }).then(r => r.data);
 
 
-export const listCandidates = () => api.get<Employee[]>('/candidats').then(r => r.data);
+// Candidates — backed by the employees table (status='candidate')
+export const listCandidates = () =>
+  api.get('/employees', { params: { status: 'candidate', limit: 200 } })
+    .then(r => (Array.isArray(r.data) ? r.data : r.data?.data ?? []));
 export const createCandidate = (data: { full_name: string; email?: string; phone?: string; position?: string; notes?: string }) =>
-  api.post<Employee>('/candidats', data).then(r => r.data);
-export const deleteCandidate = (id: string) => api.delete(`/candidats/${id}`).then(r => r.data);
+  api.post<Employee>('/employees', { ...data, status: 'candidate' }).then(r => r.data);
+export const deleteCandidate = (id: string) => api.delete(`/employees/${id}`);
+export const promoteToEmployee = (id: string, data: any) =>
+  api.patch(`/employees/${id}`, { status: 'active', ...data }).then(r => r.data);
+export const promoteToIntern = (id: string, data: any) =>
+  api.patch(`/employees/${id}`, { status: 'intern', ...data }).then(r => r.data);
 export const applyCandidate = (data: { full_name: string, email: string, phone?: string, ad_id?: string, interview_date?: string, interview_time?: string, cv_url?: string }) =>
   api.post('/candidats/apply', data).then(r => r.data);
 export const extractCV = (file: File) => {
@@ -690,10 +697,6 @@ export const extractCV = (file: File) => {
     headers: { 'Content-Type': 'multipart/form-data' }
   }).then(r => r.data);
 };
-export const promoteToEmployee = (profileId: string, data: any) =>
-  api.post(`/candidats/${profileId}/promote-to-employee`, data).then(r => r.data);
-export const promoteToIntern = (profileId: string, data: any) =>
-  api.post(`/candidats/${profileId}/promote-to-intern`, data).then(r => r.data);
 
 export type HRSlot = {
   id: string;

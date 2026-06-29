@@ -15,6 +15,7 @@ class EmployeeStatus(str, Enum):
     inactive = "inactive"
     terminated = "terminated"
     intern = "intern"
+    candidate = "candidate"
 
 class EmployeeBase(BaseModel):
     full_name: str

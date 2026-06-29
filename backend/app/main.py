@@ -1,5 +1,6 @@
 """Main entry point for WEDY RH Platform v2.0 (Supabase SDK Version)"""
 from fastapi import FastAPI, Depends, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from loguru import logger
@@ -95,6 +96,16 @@ async def get_protected_upload(
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Fichier non trouvé")
     return FileResponse(full_path)
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    body = None
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    logger.warning(f"[422] {request.method} {request.url.path} | errors={exc.errors()} | body={body}")
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

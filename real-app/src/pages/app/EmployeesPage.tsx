@@ -116,7 +116,11 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
     e.preventDefault();
     const built: Record<string, string> = {};
     customFields.forEach(({ key, value }) => { if (key.trim()) built[key.trim()] = value; });
-    onSave({ ...form, custom_fields: Object.keys(built).length ? built : undefined });
+    // Strip empty strings so optional Pydantic fields receive null instead of an invalid empty value
+    const cleaned = Object.fromEntries(
+      Object.entries(form).map(([k, v]) => [k, v === '' ? undefined : v])
+    ) as Partial<Employee>;
+    onSave({ ...cleaned, custom_fields: Object.keys(built).length ? built : undefined });
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FileText, Search, Wand2, Plus, Upload, Pencil, Trash2,
@@ -150,20 +150,34 @@ function RichEditor({ value, onChange }: { value: string; onChange: (v: string) 
   const editorRef = useRef<HTMLDivElement>(null);
   const [showVars, setShowVars] = useState(false);
   const [focused, setFocused] = useState(false);
+  const dirtyRef = useRef(false); // true once user has made at least one keystroke/edit
+
+  // Detect image-based PDF templates — these must NOT have positions stripped
+  const isImageTemplate = value.includes('<img ') && value.includes('data:image');
 
   // Set HTML once on mount — imperatively so React never resets the contentEditable
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.innerHTML = toEditorHTML(value);
+      // For image-based PDF templates, render as-is (no normalization)
+      editorRef.current.innerHTML = isImageTemplate
+        ? value
+        : toEditorHTML(value);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const emit = () => {
-    if (editorRef.current) onChange(fromEditorHTML(editorRef.current.innerHTML));
+    // Only propagate changes the user actually made; never on the initial mount/blur
+    if (editorRef.current && dirtyRef.current) {
+      onChange(isImageTemplate
+        ? editorRef.current.innerHTML          // image templates: preserve raw HTML
+        : fromEditorHTML(editorRef.current.innerHTML)
+      );
+    }
   };
 
   const exec = (cmd: string, val?: string) => {
+    dirtyRef.current = true;
     editorRef.current?.focus();
     // eslint-disable-next-line no-restricted-globals
     document.execCommand(cmd, false, val);
@@ -171,6 +185,7 @@ function RichEditor({ value, onChange }: { value: string; onChange: (v: string) 
   };
 
   const insertVar = (varKey: string) => {
+    dirtyRef.current = true;
     editorRef.current?.focus();
     // eslint-disable-next-line no-restricted-globals
     document.execCommand('insertHTML', false, varChipHTML(varKey) + ' ');
@@ -328,7 +343,7 @@ function RichEditor({ value, onChange }: { value: string; onChange: (v: string) 
           ref={editorRef}
           contentEditable
           suppressContentEditableWarning
-          onInput={emit}
+          onInput={() => { dirtyRef.current = true; emit(); }}
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); emit(); }}
           style={{

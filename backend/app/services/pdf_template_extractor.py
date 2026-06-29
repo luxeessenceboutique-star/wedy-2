@@ -287,15 +287,170 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
 
 # ── DOCX extraction ───────────────────────────────────────────────────────────
 
+def _esc(text: str) -> str:
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _run_to_html(run) -> str:
+    """Convert a python-docx Run to inline HTML. Does NOT apply _apply_vars here
+    (variable substitution happens at paragraph level to catch cross-run markers)."""
+    text = run.text
+    if not text:
+        return ""
+    text = _esc(text)
+    # Bold / italic / underline
+    if getattr(run, "bold", False):
+        text = f"<strong>{text}</strong>"
+    if getattr(run, "italic", False):
+        text = f"<em>{text}</em>"
+    if getattr(run, "underline", False):
+        text = f"<u>{text}</u>"
+    # Font size / color
+    styles = []
+    try:
+        if run.font.size:
+            styles.append(f"font-size:{run.font.size.pt:.0f}pt")
+    except Exception:
+        pass
+    try:
+        from docx.enum.dml import MSO_THEME_COLOR  # noqa
+        if run.font.color and run.font.color.type is not None:
+            rgb = run.font.color.rgb
+            styles.append(f"color:#{rgb}")
+    except Exception:
+        pass
+    if styles:
+        text = f'<span style="{";".join(styles)}">{text}</span>'
+    return text
+
+
+def _para_to_html(para) -> str:
+    """Convert a python-docx Paragraph to an HTML block element.
+
+    Variable placeholders like [Nom et prénom] can span several runs in DOCX
+    (Word's spell-checker / autocorrect splits text into multiple runs).  To
+    catch them reliably we first apply _apply_vars() to the *full* paragraph
+    text.  If it produced any {{var}} tokens we render the paragraph as plain
+    HTML text (losing per-run formatting for that paragraph).  Otherwise we
+    use per-run rendering to preserve bold/italic/color.
+    """
+    full_raw = para.text          # concatenates all runs — never misses cross-run vars
+    full_sub = _apply_vars(full_raw)
+
+    if not full_raw.strip():
+        return "<p>&nbsp;</p>"
+
+    # ── Alignment ────────────────────────────────────────────────────────────
+    align_css = ""
+    try:
+        from docx.enum.text import WD_ALIGN_PARAGRAPH
+        a = para.alignment
+        if a == WD_ALIGN_PARAGRAPH.CENTER:
+            align_css = "text-align:center;"
+        elif a == WD_ALIGN_PARAGRAPH.RIGHT:
+            align_css = "text-align:right;"
+        elif a == WD_ALIGN_PARAGRAPH.JUSTIFY:
+            align_css = "text-align:justify;"
+    except Exception:
+        pass
+
+    # ── Heading styles ───────────────────────────────────────────────────────
+    style_name = (para.style.name or "").lower()
+    content: str
+    if full_sub != full_raw:
+        # Variable substitution happened — use plain text to preserve tokens
+        content = _esc(full_sub)
+    else:
+        # No variables — use per-run HTML for rich formatting
+        content = "".join(_run_to_html(r) for r in para.runs) or _esc(full_raw)
+
+    if "heading 1" in style_name:
+        return (f'<h1 style="font-size:18pt;font-weight:bold;text-align:center;'
+                f'text-decoration:underline;margin:24px 0 16px;">{content}</h1>')
+    if "heading 2" in style_name:
+        return (f'<h2 style="font-size:15pt;font-weight:bold;{align_css}'
+                f'margin:20px 0 12px;">{content}</h2>')
+    if "heading 3" in style_name:
+        return (f'<h3 style="font-size:13pt;font-weight:bold;{align_css}'
+                f'margin:16px 0 10px;">{content}</h3>')
+
+    # ── Body paragraph ───────────────────────────────────────────────────────
+    para_fs = "12pt"
+    try:
+        if para.style.font.size:
+            para_fs = f"{para.style.font.size.pt:.0f}pt"
+    except Exception:
+        pass
+
+    return (f'<p style="font-size:{para_fs};line-height:1.8;'
+            f'margin:4px 0;{align_css}">{content}</p>')
+
+
+def _table_to_html(table) -> str:
+    """Convert a python-docx Table to an HTML table."""
+    rows_html = []
+    for row in table.rows:
+        cells_html = []
+        for cell in row.cells:
+            cell_content = "".join(_para_to_html(p) for p in cell.paragraphs)
+            cells_html.append(
+                f'<td style="border:1px solid #bbb;padding:6px 10px;'
+                f'vertical-align:top;font-size:11pt;line-height:1.7;">'
+                f'{cell_content}</td>'
+            )
+        rows_html.append(f'<tr>{"".join(cells_html)}</tr>')
+    return (
+        '<table style="width:100%;border-collapse:collapse;'
+        'margin:12px 0;font-family:inherit;">'
+        + "".join(rows_html)
+        + "</table>"
+    )
+
+
 def _extract_from_docx(file_bytes: bytes) -> str:
+    """
+    Convert DOCX to faithful HTML, preserving:
+    - Paragraph formatting (bold, italic, underline, alignment, font size/color)
+    - Tables (rendered as <table> elements)
+    - Document element order
+    - Variable placeholder substitution
+    """
     try:
         from docx import Document
+        from lxml import etree
+
         doc = Document(io.BytesIO(file_bytes))
-        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
-        text = "\n".join(paragraphs)
-        return _plain_fallback(text)
+        parts: list[str] = []
+
+        # Walk body children in document order — paragraphs AND tables
+        for child in doc.element.body:
+            tag = etree.QName(child.tag).localname
+            if tag == "p":
+                from docx.text.paragraph import Paragraph as DocxPara
+                para = DocxPara(child, doc)
+                html = _para_to_html(para)
+                parts.append(html)
+            elif tag == "tbl":
+                from docx.table import Table as DocxTable
+                table = DocxTable(child, doc)
+                parts.append(_table_to_html(table))
+            # sdt (content controls), sectPr, etc. are silently skipped
+
+        return (
+            '<div style="font-family:\'Times New Roman\',serif;'
+            'max-width:720px;margin:0 auto;padding:50px 48px;background:#fff;">\n'
+            + "\n".join(parts)
+            + "\n</div>"
+        )
     except Exception as exc:
-        return f"<p style='color:red;'>Erreur DOCX: {exc}</p>"
+        # Fallback to plain-text extraction on any error
+        try:
+            from docx import Document
+            doc = Document(io.BytesIO(file_bytes))
+            text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+            return _plain_fallback(text)
+        except Exception:
+            return f"<p style='color:red;'>Erreur DOCX: {exc}</p>"
 
 
 # ── Plain-text fallback ───────────────────────────────────────────────────────

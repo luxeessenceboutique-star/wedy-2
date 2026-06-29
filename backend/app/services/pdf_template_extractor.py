@@ -89,6 +89,83 @@ def _apply_vars(text: str) -> str:
     return text
 
 
+# ── Contextual patterns for filled-in documents ───────────────────────────────
+# These detect REAL data (names, CIN numbers, dates, positions) by their
+# surrounding context, for PDFs that were already filled in rather than using
+# [bracket] placeholder markers.
+#
+# Each entry is (pattern, replacement, flags).
+# Use flags=0 for case-SENSITIVE matching (e.g. ALL-CAPS position detection).
+
+_D = r"\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4}"   # date pattern shorthand
+
+_CONTEXTUAL_SUBS: list[tuple] = [
+    # ── CIN — 1-2 uppercase letters + 5-7 digits ─────────────────────────────
+    (r"(CIN\s*N?°?\s*:?\s*)([A-Z]{1,2}\d{5,7})\b",
+     r"\1{{cin}}", re.IGNORECASE),
+
+    # ── Employee name: contract header "- M.: NAME" or "- Mme: NAME" ─────────
+    (r"^(\s*[-–]\s*M(?:me)?\.?\s*:?\s+)([A-Z\xc0-\xd6\xd8-\xde][A-Z\xc0-\xd6\xd8-\xde\s]+)\s*$",
+     r"\1{{full_name}}", re.MULTILINE),
+
+    # ── Employee name: attestation standalone line "M. NAME" or "Mme. NAME" ──
+    # Only matches ALL-CAPS names (>=5 chars) to avoid signer names (mixed case)
+    (r"^(M(?:me)?\.?\s+)([A-Z\xc0-\xd6\xd8-\xde][A-Z\xc0-\xd6\xd8-\xde\s]{4,})\s*$",
+     r"\1{{full_name}}", re.MULTILINE),
+
+    # ── Birth date after "né le" / "née le" ──────────────────────────────────
+    (r"(n[e\xe9]e?\s+le\s+)(" + _D + r")", r"\1{{birth_date}}", re.IGNORECASE),
+
+    # ── Hire date: "à compter du DATE" or "depuis le DATE" ───────────────────
+    (r"(\xe0\s+compter\s+du\s+)(" + _D + r")", r"\1{{hire_date}}", re.IGNORECASE),
+    (r"(depuis\s+le\s+)(" + _D + r")",          r"\1{{hire_date}}", re.IGNORECASE),
+
+    # ── Date range on same line: "DATE au DATE" → hire_date … contract_end ───
+    # Applied BEFORE standalone patterns so both dates are captured together.
+    (r"(" + _D + r")(\s+au\s+)(" + _D + r")",
+     r"{{hire_date}}\2{{contract_end}}", re.IGNORECASE),
+
+    # ── "Jusqu'à présent" ─────────────────────────────────────────────────────
+    (r"jusqu['’`]?à\s+pr[e\xe9]sent\b", r"{{contract_end}}", re.IGNORECASE),
+
+    # ── Address after "Demeurant à" ───────────────────────────────────────────
+    (r"(demeurant\s+\xe0\s+)(.{3,60}?)\s*$", r"\1{{address}}", re.IGNORECASE | re.MULTILINE),
+
+    # ── Position with French guillemets «…» (mixed-case ok, contract style) ──
+    (r"(en\s+(?:sa\s+)?qualit[e\xe9]\s+de\s*«\s*)(.{2,60}?)(\s*»)",
+     r"\1{{position}}\3", re.IGNORECASE),
+
+    # ── Position ALL-CAPS multi-word (attestation style: "UI/UX DESIGNER") ───
+    # Case-SENSITIVE (flags=0) so mixed-case signer titles like "Gérant" don't match.
+    # Requires at least 5 chars total and ends with uppercase letter.
+    (r"(en\s+(?:sa\s+)?qualit[e\xe9]\s+de\s+)([A-Z\xc0-\xd6\xd8-\xde][A-Z\xc0-\xd6\xd8-\xde\s/\-]{4,}[A-Z\xc0-\xd6\xd8-\xde])(\s+(?:du|au|depuis)|,|\s*$)",
+     r"\1{{position}}\3", 0),
+
+    # ── Salary: "salaire mensuel net sera de X dirhams" ───────────────────────
+    (r"(salaire\s+mensuel\s+net\s+sera\s+de\s+)([\d\s ,\.]+?)\s*(dirhams|MAD|dhs?\.?)\b",
+     r"\1{{salary}} \3", re.IGNORECASE),
+
+    # ── Today's date: "Fait (en double exemplaire)? à CITY, le DATE" ─────────
+    (r"(Fait(?:\s+en\s+double\s+exemplaire)?\s+\xe0\s+\w+,?\s+le\s+)(" + _D + r")",
+     r"\1{{today}}", re.IGNORECASE),
+]
+
+
+def _apply_contextual_vars(text: str) -> str:
+    """Detect filled-in HR data by context and replace with {{variable}} tokens.
+
+    Works on documents that contain real employee data (names, CIN numbers, dates,
+    positions) rather than [bracket] placeholder markers.
+    """
+    for item in _CONTEXTUAL_SUBS:
+        pat, repl, flags = item
+        try:
+            text = re.sub(pat, repl, text, flags=flags)
+        except re.error:
+            pass
+    return text
+
+
 def _extract_vars_from(token: str) -> list[str]:
     """Return list of  var_name  strings found inside {{...}} tokens."""
     return re.findall(r"\{\{(\w+)\}\}", token)
@@ -150,10 +227,12 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
 
                 # Reconstruct the full line text
                 full_text = "".join(s.get("text", "") for s in spans)
-                substituted = _apply_vars(full_text)
+                # First try bracket-style [placeholder] substitution, then fall
+                # back to contextual detection for real filled-in data.
+                substituted = _apply_contextual_vars(_apply_vars(full_text))
 
                 if "{{" not in substituted:
-                    continue  # no placeholder in this line
+                    continue  # no variable detected in this line
 
                 # Get the bounding box of the whole line
                 bbox = line.get("bbox", [0, 0, 0, 0])   # [x0,y0,x1,y1] in pt
@@ -335,7 +414,7 @@ def _para_to_html(para) -> str:
     use per-run rendering to preserve bold/italic/color.
     """
     full_raw = para.text          # concatenates all runs — never misses cross-run vars
-    full_sub = _apply_vars(full_raw)
+    full_sub = _apply_contextual_vars(_apply_vars(full_raw))
 
     if not full_raw.strip():
         return "<p>&nbsp;</p>"
@@ -457,7 +536,7 @@ def _extract_from_docx(file_bytes: bytes) -> str:
 
 def _plain_fallback(raw_text: str) -> str:
     """Minimal fallback used when fitz is unavailable or for text files."""
-    text  = _apply_vars(raw_text)
+    text  = _apply_contextual_vars(_apply_vars(raw_text))
     lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
     parts: list[str] = []
     for line in lines:

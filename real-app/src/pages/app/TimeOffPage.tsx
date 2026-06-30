@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format, parseISO, startOfDay, getDaysInMonth, getDay, isWeekend, addMonths, subMonths } from 'date-fns';
@@ -16,8 +16,8 @@ const TYPE_LABELS: Record<string, string> = {
   maternity: 'Maternité', paternity: 'Paternité', unpaid: 'Sans solde',
 };
 const TYPE_COLORS: Record<string, string> = {
-  annual: '#3B82F6', sick: '#EF4444', personal: '#8B5CF6',
-  maternity: '#EC4899', paternity: '#06B6D4', unpaid: '#6B7280',
+  annual: 'var(--primary)', sick: '#EF4444', personal: 'var(--violet)',
+  maternity: 'var(--violet)', paternity: 'var(--accent)', unpaid: 'var(--ink-3)',
 };
 const STATUS_VARIANT: Record<string, 'warning' | 'success' | 'danger' | 'default'> = {
   pending: 'warning', approved: 'success', rejected: 'danger',
@@ -35,19 +35,19 @@ function RingProgress({ value, max, color, size = 72, label, sublabel }: {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
       <div style={{ position: 'relative', width: size, height: size }}>
         <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border)" strokeWidth={5} />
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--line)" strokeWidth={5} />
           <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={5}
             strokeDasharray={`${circ * pct} ${circ}`} strokeLinecap="round"
             style={{ transition: 'stroke-dasharray 0.6s ease' }} />
         </svg>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ fontSize: 15, fontWeight: 700, color, lineHeight: 1 }}>{remaining}</span>
-          <span style={{ fontSize: 9, color: 'var(--fg-subtle)', marginTop: 1 }}>restants</span>
+          <span style={{ fontSize: 9, color: 'var(--ink-3)', marginTop: 1 }}>restants</span>
         </div>
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg)' }}>{label}</div>
-        <div style={{ fontSize: 10, color: 'var(--fg-muted)' }}>{sublabel}</div>
+        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>{sublabel}</div>
       </div>
     </div>
   );
@@ -83,14 +83,14 @@ function CalendarView({ leaves, calDate, onPrev, onNext }: {
 
   return (
     <Card pad={false}>
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={onPrev} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg)' }}>
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={onPrev} style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg)' }}>
           <ChevronLeft size={14} />
         </button>
         <span style={{ fontWeight: 600, fontSize: 15, flex: 1, textAlign: 'center' }}>
           {MONTHS_FR[month]} {year}
         </span>
-        <button onClick={onNext} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg)' }}>
+        <button onClick={onNext} style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg)' }}>
           <ChevronRight size={14} />
         </button>
       </div>
@@ -98,7 +98,7 @@ function CalendarView({ leaves, calDate, onPrev, onNext }: {
       <div style={{ padding: '12px 16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
           {WEEK_DAYS.map(d => (
-            <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--fg-subtle)', padding: '4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', padding: '4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {d}
             </div>
           ))}
@@ -112,18 +112,18 @@ function CalendarView({ leaves, calDate, onPrev, onNext }: {
             return (
               <div key={i} style={{
                 minHeight: 70, padding: '4px 3px',
-                background: isToday ? 'var(--primary-soft)' : isWknd ? 'var(--bg-muted)' : 'var(--bg-elev)',
+                background: isToday ? 'var(--primary-soft)' : isWknd ? 'var(--surface-2)' : 'var(--surface)',
                 borderRadius: 6,
-                border: isToday ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                border: isToday ? '1.5px solid var(--primary)' : '1px solid var(--line)',
               }}>
-                <div style={{ fontSize: 11, fontWeight: isToday ? 700 : 500, color: isToday ? 'var(--primary)' : isWknd ? 'var(--fg-subtle)' : 'var(--fg)', textAlign: 'right', paddingRight: 2, marginBottom: 2 }}>
+                <div style={{ fontSize: 11, fontWeight: isToday ? 700 : 500, color: isToday ? 'var(--primary)' : isWknd ? 'var(--ink-3)' : 'var(--fg)', textAlign: 'right', paddingRight: 2, marginBottom: 2 }}>
                   {day.getDate()}
                 </div>
                 {dayLeaves.map(l => (
                   <div key={l.id} title={`${l.employees?.full_name} — ${TYPE_LABELS[l.type] || l.type}`}
                     style={{
                       fontSize: 9, padding: '1px 3px', borderRadius: 3, marginBottom: 1,
-                      background: TYPE_COLORS[l.type] || '#3B82F6', color: '#fff',
+                      background: TYPE_COLORS[l.type] || 'var(--primary)', color: '#fff',
                       fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       opacity: l.status === 'pending' ? 0.55 : 1,
                     }}>
@@ -136,15 +136,15 @@ function CalendarView({ leaves, calDate, onPrev, onNext }: {
         </div>
       </div>
 
-      <div style={{ padding: '10px 20px', borderTop: '1px solid var(--border)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+      <div style={{ padding: '10px 20px', borderTop: '1px solid var(--line)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         {Object.entries(TYPE_LABELS).map(([k, v]) => (
-          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--fg-muted)' }}>
+          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--ink-2)' }}>
             <div style={{ width: 8, height: 8, borderRadius: 2, background: TYPE_COLORS[k] }} />
             {v}
           </div>
         ))}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--fg-subtle)' }}>
-          <div style={{ width: 8, height: 8, borderRadius: 2, background: '#3B82F6', opacity: 0.4 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--ink-3)' }}>
+          <div style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--primary)', opacity: 0.4 }} />
           En attente (opaque)
         </div>
       </div>
@@ -196,7 +196,7 @@ function NewLeaveModal({ onClose, onCreated }: { onClose: () => void; onCreated:
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'var(--bg-elev)', borderRadius: 'var(--radius-lg)', padding: 28, width: 450, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border)' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: 28, width: 450, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--line)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
           <div style={{ width: 34, height: 34, borderRadius: 8, background: typeColor + '20', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Calendar size={16} style={{ color: typeColor }} />
@@ -219,9 +219,9 @@ function NewLeaveModal({ onClose, onCreated }: { onClose: () => void; onCreated:
               {Object.entries(TYPE_LABELS).map(([k, v]) => (
                 <button key={k} type="button" onClick={() => set('type', k)} style={{
                   padding: '7px 6px', borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 500,
-                  border: form.type === k ? `2px solid ${TYPE_COLORS[k]}` : '1px solid var(--border)',
+                  border: form.type === k ? `2px solid ${TYPE_COLORS[k]}` : '1px solid var(--line)',
                   background: form.type === k ? TYPE_COLORS[k] + '18' : 'transparent',
-                  color: form.type === k ? TYPE_COLORS[k] : 'var(--fg-muted)',
+                  color: form.type === k ? TYPE_COLORS[k] : 'var(--ink-2)',
                 }}>
                   {v}
                 </button>
@@ -238,7 +238,7 @@ function NewLeaveModal({ onClose, onCreated }: { onClose: () => void; onCreated:
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 13px', borderRadius: 8, background: hasWarning ? '#FEF2F2' : 'var(--primary-soft)', border: `1px solid ${hasWarning ? '#FCA5A5' : typeColor + '30'}` }}>
               <span style={{ fontSize: 14, fontWeight: 700, color: hasWarning ? '#EF4444' : typeColor }}>{days} jour{days > 1 ? 's' : ''}</span>
               {remaining !== null && (
-                <span style={{ fontSize: 11, color: hasWarning ? '#EF4444' : 'var(--fg-muted)' }}>
+                <span style={{ fontSize: 11, color: hasWarning ? '#EF4444' : 'var(--ink-2)' }}>
                   {hasWarning ? `⚠ Solde insuffisant (${remaining} restants)` : `Solde après : ${remaining - days} jours`}
                 </span>
               )}
@@ -252,7 +252,7 @@ function NewLeaveModal({ onClose, onCreated }: { onClose: () => void; onCreated:
         </div>
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
-          <Button onClick={onClose} style={{ background: 'var(--bg-muted)', color: 'var(--fg)', border: '1px solid var(--border)' }}>Annuler</Button>
+          <Button onClick={onClose} style={{ background: 'var(--surface-2)', color: 'var(--fg)', border: '1px solid var(--line)' }}>Annuler</Button>
           <Button onClick={() => mutation.mutate()} loading={mutation.isPending} disabled={!form.employee_id || !form.start_date || !form.end_date || days === 0}>
             Soumettre
           </Button>
@@ -342,17 +342,17 @@ export default function TimeOffPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
           { label: t('total_leaves'), value: allLeaves.length, color: 'var(--primary)', icon: <Calendar size={16} /> },
-          { label: t('pending_leaves'), value: pendingCount, color: '#F59E0B', icon: <Clock size={16} /> },
+          { label: t('pending_leaves'), value: pendingCount, color: 'var(--warn)', icon: <Clock size={16} /> },
           { label: t('approved_leaves'), value: approvedCount, color: '#22C55E', icon: <Check size={16} /> },
           { label: t('col_days'), value: totalDays, color: 'var(--fg)', icon: selectedEmpId ? <User size={16} /> : <Users size={16} /> },
         ].map(stat => (
-          <div key={stat.label} style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div key={stat.label} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 10, background: stat.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color, flexShrink: 0 }}>
               {stat.icon}
             </div>
             <div>
               <div style={{ fontSize: 22, fontWeight: 700, color: stat.color, lineHeight: 1 }}>{stat.value}</div>
-              <div style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 3 }}>{stat.label}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>{stat.label}</div>
             </div>
           </div>
         ))}
@@ -361,16 +361,16 @@ export default function TimeOffPage() {
       {selectedEmployee && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
-          padding: '10px 16px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10,
+          padding: '10px 16px', background: 'var(--primary-soft)', border: '1px solid #bfdbfe', borderRadius: 10,
         }}>
-          <User size={14} style={{ color: '#3b82f6', flexShrink: 0 }} />
+          <User size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
           <span style={{ fontSize: 13, color: '#1d4ed8' }}>
             {t('filtered_for')} <strong>{selectedEmployee.full_name}</strong>
           </span>
           <button
             onClick={() => setSelectedEmpId('')}
             title="Afficher tous les employés"
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 4 }}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 4 }}
           >
             <X size={14} />
           </button>
@@ -382,24 +382,24 @@ export default function TimeOffPage() {
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Toolbar */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', gap: 4, background: 'var(--bg-muted)', borderRadius: 9, padding: 4 }}>
+            <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', borderRadius: 9, padding: 4 }}>
               {FILTERS.map(f => (
                 <button key={f.key} onClick={() => setFilter(f.key)} style={{
                   padding: '5px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500,
-                  border: 'none', background: filter === f.key ? 'var(--bg-elev)' : 'transparent',
-                  color: filter === f.key ? 'var(--fg)' : 'var(--fg-muted)',
+                  border: 'none', background: filter === f.key ? 'var(--surface)' : 'transparent',
+                  color: filter === f.key ? 'var(--fg)' : 'var(--ink-2)',
                   boxShadow: filter === f.key ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                   display: 'flex', alignItems: 'center', gap: 5,
                 }}>
                   {f.label}
-                  <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 10, background: filter === f.key ? 'var(--primary)' : 'var(--border)', color: filter === f.key ? '#fff' : 'var(--fg-muted)' }}>
+                  <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 10, background: filter === f.key ? 'var(--primary)' : 'var(--line)', color: filter === f.key ? '#fff' : 'var(--ink-2)' }}>
                     {f.count}
                   </span>
                 </button>
               ))}
             </div>
 
-            <div style={{ display: 'flex', background: 'var(--bg-muted)', borderRadius: 9, padding: 3 }}>
+            <div style={{ display: 'flex', background: 'var(--surface-2)', borderRadius: 9, padding: 3 }}>
               {[
                 { key: 'list', icon: <List size={13} />, label: t('leave_requests_title') },
                 { key: 'calendar', icon: <Calendar size={13} />, label: t('leave_calendar_title') },
@@ -407,8 +407,8 @@ export default function TimeOffPage() {
                 <button key={v.key} onClick={() => setView(v.key as 'list' | 'calendar')} style={{
                   padding: '5px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500,
                   border: 'none', display: 'flex', alignItems: 'center', gap: 5,
-                  background: view === v.key ? 'var(--bg-elev)' : 'transparent',
-                  color: view === v.key ? 'var(--primary)' : 'var(--fg-muted)',
+                  background: view === v.key ? 'var(--surface)' : 'transparent',
+                  color: view === v.key ? 'var(--primary)' : 'var(--ink-2)',
                   boxShadow: view === v.key ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                 }}>
                   {v.icon} {v.label}
@@ -429,18 +429,18 @@ export default function TimeOffPage() {
               {isLoading ? (
                 <div style={{ padding: 48, textAlign: 'center' }}><Spinner /></div>
               ) : displayLeaves.length === 0 ? (
-                <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--fg-muted)' }}>
+                <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--ink-2)' }}>
                   <Calendar size={36} style={{ margin: '0 auto 12px', opacity: 0.2 }} />
                   <p style={{ fontSize: 14 }}>{t('no_leaves')}</p>
                 </div>
               ) : (
                 displayLeaves.map((req: LeaveRequest, i) => {
-                  const color = TYPE_COLORS[req.type] || '#6B7280';
+                  const color = TYPE_COLORS[req.type] || 'var(--ink-3)';
                   let startFmt = req.start_date, endFmt = req.end_date;
                   try { startFmt = format(parseISO(req.start_date), 'dd MMM'); } catch { /* keep raw */ }
                   try { endFmt = format(parseISO(req.end_date), 'dd MMM yyyy'); } catch { /* keep raw */ }
                   return (
-                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: i < displayLeaves.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: i < displayLeaves.length - 1 ? '1px solid var(--line)' : 'none' }}>
                       <div style={{ width: 4, height: 44, borderRadius: 2, background: color, flexShrink: 0 }} />
                       <div style={{ width: 38, height: 38, borderRadius: '50%', background: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 700, color }}>
                         {(req.employees?.full_name || '?')[0]}
@@ -452,18 +452,18 @@ export default function TimeOffPage() {
                             {TYPE_LABELS[req.type] || req.type}
                           </span>
                         </div>
-                        <div style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
+                        <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
                           {startFmt} → {endFmt}
                           <span style={{ margin: '0 6px', opacity: 0.3 }}>·</span>
                           <strong>{req.days}</strong> jour{req.days > 1 ? 's' : ''}
                         </div>
-                        {req.reason && <div style={{ fontSize: 11, color: 'var(--fg-subtle)', marginTop: 2, fontStyle: 'italic' }}>"{req.reason}"</div>}
+                        {req.reason && <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2, fontStyle: 'italic' }}>"{req.reason}"</div>}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                         {req.status === 'pending' ? (
                           <>
                             <button onClick={() => reviewMutation.mutate({ id: req.id, status: 'rejected' })}
-                              style={{ border: '1px solid var(--border)', background: 'var(--bg-elev)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--fg-muted)' }}>
+                              style={{ border: '1px solid var(--line)', background: 'var(--surface)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--ink-2)' }}>
                               <X size={12} /> {t('reject')}
                             </button>
                             <button onClick={() => reviewMutation.mutate({ id: req.id, status: 'approved' })}
@@ -488,7 +488,7 @@ export default function TimeOffPage() {
         {/* Sidebar */}
         <div style={{ width: 268, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Balance panel */}
-          <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '18px 16px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '18px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
               <User size={14} style={{ color: 'var(--primary)' }} />
               <span style={{ fontWeight: 600, fontSize: 13 }}>{t('leave_balance')}</span>
@@ -506,16 +506,16 @@ export default function TimeOffPage() {
             ) : balance ? (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: 10 }}>
-                  <RingProgress value={balance.annual_used || 0} max={balance.annual_total || 18} color="#3B82F6" label="Annuel" sublabel={`${(balance.annual_total||18)-(balance.annual_used||0)}/${balance.annual_total||18}j`} />
+                  <RingProgress value={balance.annual_used || 0} max={balance.annual_total || 18} color="var(--primary)" label="Annuel" sublabel={`${(balance.annual_total||18)-(balance.annual_used||0)}/${balance.annual_total||18}j`} />
                   <RingProgress value={balance.sick_used || 0} max={balance.sick_total || 12} color="#EF4444" label="Maladie" sublabel={`${(balance.sick_total||12)-(balance.sick_used||0)}/${balance.sick_total||12}j`} />
-                  <RingProgress value={balance.personal_used || 0} max={balance.personal_total || 5} color="#8B5CF6" label="Perso" sublabel={`${(balance.personal_total||5)-(balance.personal_used||0)}/${balance.personal_total||5}j`} />
+                  <RingProgress value={balance.personal_used || 0} max={balance.personal_total || 5} color="var(--violet)" label="Perso" sublabel={`${(balance.personal_total||5)-(balance.personal_used||0)}/${balance.personal_total||5}j`} />
                 </div>
-                <p style={{ fontSize: 10, color: 'var(--fg-subtle)', textAlign: 'center' }}>Année {balance.year}</p>
+                <p style={{ fontSize: 10, color: 'var(--ink-3)', textAlign: 'center' }}>Année {balance.year}</p>
               </>
             ) : selectedEmpId ? (
               <div style={{ textAlign: 'center', padding: '16px 0' }}><Spinner /></div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--fg-subtle)' }}>
+              <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--ink-3)' }}>
                 <TrendingUp size={28} style={{ margin: '0 auto 8px', opacity: 0.2 }} />
                 <p style={{ fontSize: 12 }}>Sélectionnez un employé</p>
               </div>
@@ -523,7 +523,7 @@ export default function TimeOffPage() {
           </div>
 
           {/* Type breakdown */}
-          <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '18px 16px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '18px 16px' }}>
             <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 14 }}>Répartition par type</p>
             {Object.entries(TYPE_LABELS).map(([key, label]) => {
               const count = filteredByEmployee.filter(l => l.type === key).length;
@@ -531,10 +531,10 @@ export default function TimeOffPage() {
               return (
                 <div key={key} style={{ marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
-                    <span style={{ color: 'var(--fg-muted)' }}>{label}</span>
+                    <span style={{ color: 'var(--ink-2)' }}>{label}</span>
                     <span style={{ fontWeight: 500, color: 'var(--fg)' }}>{count}</span>
                   </div>
-                  <div style={{ height: 4, borderRadius: 999, background: 'var(--border)', overflow: 'hidden' }}>
+                  <div style={{ height: 4, borderRadius: 999, background: 'var(--line)', overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: 999, width: `${(count / total) * 100}%`, background: TYPE_COLORS[key], transition: 'width 0.5s ease' }} />
                   </div>
                 </div>

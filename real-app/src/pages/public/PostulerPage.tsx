@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Briefcase, Send, CheckCircle, ArrowRight, MapPin, Clock, Calendar as CalIcon, Info, Upload, FileText } from 'lucide-react';
 import { Button, Card, Spinner } from '../../components/ui';
@@ -94,14 +94,14 @@ export default function PostulerPage() {
 
     if (submitted) {
         return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-muted)', padding: 20 }}>
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-2)', padding: 20 }}>
                 <div style={{ maxWidth: 450, textAlign: 'center', padding: '48px 32px' }}>
                     <Card>
                         <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--success-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
                             <CheckCircle size={32} style={{ color: 'var(--success)' }} />
                         </div>
                         <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Candidature Envoyée !</h1>
-                        <p style={{ color: 'var(--fg-muted)', marginBottom: 12 }}>Merci pour votre intérêt. Votre entretien est déjà planifié pour le :</p>
+                        <p style={{ color: 'var(--ink-2)', marginBottom: 12 }}>Merci pour votre intérêt. Votre entretien est déjà planifié pour le :</p>
                         <p style={{ fontWeight: 700, color: 'var(--primary)', marginBottom: 32 }}>{new Date(form.interview_date).toLocaleDateString('fr-FR')} à {form.interview_time}</p>
                         <Button variant="soft" onClick={() => window.location.href = '/'}>Retour à l'accueil</Button>
                     </Card>
@@ -111,14 +111,14 @@ export default function PostulerPage() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-muted)', padding: '40px 20px' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--surface-2)', padding: '40px 20px' }}>
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
                 <div style={{ textAlign: 'center', marginBottom: 40 }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', background: 'var(--primary-soft)', borderRadius: 100, color: 'var(--primary)', fontWeight: 700, fontSize: 13, marginBottom: 16 }}>
                         <Briefcase size={14} /> {annonce?.poste || "Offre d'emploi"}
                     </div>
                     <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 16 }}>Rejoignez notre équipe</h1>
-                    <p style={{ color: 'var(--fg-muted)', fontSize: 16 }}>Complétez le formulaire et choisissez votre créneau d'entretien.</p>
+                    <p style={{ color: 'var(--ink-2)', fontSize: 16 }}>Complétez le formulaire et choisissez votre créneau d'entretien.</p>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: 32 }}>
@@ -126,10 +126,10 @@ export default function PostulerPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                         <Card pad={true}>
                             <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>À propos du poste</h3>
-                            <div className="scroll" style={{ maxHeight: 300, overflowY: 'auto', fontSize: 14, color: 'var(--fg-muted)', lineHeight: 1.6 }}
+                            <div className="scroll" style={{ maxHeight: 300, overflowY: 'auto', fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.6 }}
                                 dangerouslySetInnerHTML={{ __html: annonce?.contenu || "" }} />
 
-                            <div style={{ marginTop: 24, padding: 16, background: 'var(--bg-muted)', borderRadius: 8, border: '1px solid var(--border)' }}>
+                            <div style={{ marginTop: 24, padding: 16, background: 'var(--surface-2)', borderRadius: 8, border: '1px solid var(--line)' }}>
                                 <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
                                     <MapPin size={16} style={{ color: 'var(--primary)' }} />
                                     <span style={{ fontSize: 13 }}>Casablanca, Maroc</span>
@@ -153,8 +153,8 @@ export default function PostulerPage() {
                                     <div style={{ marginBottom: 24 }}>
                                         <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>CV (PDF ou Image)</label>
                                         <div style={{
-                                            position: 'relative', border: '2px dashed var(--border)', borderRadius: 12, padding: '32px 20px',
-                                            textAlign: 'center', transition: 'all 0.2s', background: extracting ? 'var(--bg-muted)' : 'transparent'
+                                            position: 'relative', border: '2px dashed var(--line)', borderRadius: 12, padding: '32px 20px',
+                                            textAlign: 'center', transition: 'all 0.2s', background: extracting ? 'var(--surface-2)' : 'transparent'
                                         }}>
                                             <input
                                                 type="file"
@@ -173,7 +173,7 @@ export default function PostulerPage() {
                                                         <FileText size={24} style={{ color: 'var(--success)' }} />
                                                     </div>
                                                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--success)' }}>CV téléchargé avec succès</span>
-                                                    <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>Cliquez pour modifier</span>
+                                                    <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>Cliquez pour modifier</span>
                                                 </div>
                                             ) : (
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
@@ -182,7 +182,7 @@ export default function PostulerPage() {
                                                     </div>
                                                     <div>
                                                         <p style={{ fontSize: 14, fontWeight: 700, margin: '0 0 4px' }}>Cliquez pour uploader</p>
-                                                        <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>Remplissage automatique disponible</p>
+                                                        <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>Remplissage automatique disponible</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -205,16 +205,16 @@ export default function PostulerPage() {
                                     </div>
                                 </div>
 
-                                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 24 }}>
+                                <div style={{ borderTop: '1px solid var(--line)', paddingTop: 24 }}>
                                     <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                                         <CalIcon size={18} /> Choisir un créneau d'entretien
                                     </h3>
-                                    <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 16 }}>Sélectionnez une date et un horaire qui vous conviennent.</p>
+                                    <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 16 }}>Sélectionnez une date et un horaire qui vous conviennent.</p>
 
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12 }}>
                                         {Object.entries(groupedSlots).sort(([a], [b]) => a.localeCompare(b)).map(([date, daySlots]) => (
-                                            <div key={date} style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
-                                                <div style={{ background: 'var(--bg-muted)', padding: '6px 10px', fontSize: 12, fontWeight: 700, borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
+                                            <div key={date} style={{ border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden' }}>
+                                                <div style={{ background: 'var(--surface-2)', padding: '6px 10px', fontSize: 12, fontWeight: 700, borderBottom: '1px solid var(--line)', textAlign: 'center' }}>
                                                     {formatSlotDate(date)}
                                                 </div>
                                                 <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -224,7 +224,7 @@ export default function PostulerPage() {
                                                             type="button"
                                                             onClick={() => setForm({ ...form, interview_date: slot.date, interview_time: slot.start_time })}
                                                             style={{
-                                                                padding: '8px 4px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', transition: 'all 0.2s',
+                                                                padding: '8px 4px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--line)', transition: 'all 0.2s',
                                                                 background: form.interview_date === slot.date && form.interview_time === slot.start_time ? 'var(--primary)' : 'white',
                                                                 color: form.interview_date === slot.date && form.interview_time === slot.start_time ? 'white' : 'var(--fg)',
                                                             }}
@@ -237,7 +237,7 @@ export default function PostulerPage() {
                                         ))}
                                     </div>
                                     {slots.length === 0 && (
-                                        <div style={{ padding: 20, textAlign: 'center', background: 'var(--warning-soft)', borderRadius: 8, color: 'var(--warning)', fontSize: 13 }}>
+                                        <div style={{ padding: 20, textAlign: 'center', background: 'var(--warning-soft)', borderRadius: 8, color: 'var(--warn)', fontSize: 13 }}>
                                             <Info size={16} /> Aucun créneau disponible pour le moment.
                                         </div>
                                     )}

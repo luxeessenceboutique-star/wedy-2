@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import {
     Sparkles, Send, Copy, Check, Eye, PenTool,
     Briefcase, MessageSquare, Trash2, Plus, Layout,
@@ -119,14 +119,14 @@ export default function AnnoncesPage() {
         <div style={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
             {/* Sidebar: History */}
             {showHistory && (
-                <div style={{ width: 280, flexShrink: 0, borderRight: '1px solid var(--border)', background: 'var(--bg-elev)', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--fg-muted)', margin: 0 }}>{t('annonces_history')}</h3>
+                <div style={{ width: 280, flexShrink: 0, borderRight: '1px solid var(--line)', background: 'var(--surface)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--ink-2)', margin: 0 }}>{t('annonces_history')}</h3>
                         <button onClick={() => loadHistory()} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)' }}><RefreshCw size={14} /></button>
                     </div>
                     <div style={{ flex: 1, overflowY: 'auto', padding: 8 }}>
                         {history.length === 0 && (
-                            <div style={{ padding: 20, textAlign: 'center', color: 'var(--fg-subtle)', fontSize: 12 }}>{t('annonces_no_history')}</div>
+                            <div style={{ padding: 20, textAlign: 'center', color: 'var(--ink-3)', fontSize: 12 }}>{t('annonces_no_history')}</div>
                         )}
                         {history.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(ad => (
                             <div
@@ -140,7 +140,7 @@ export default function AnnoncesPage() {
                                 }}
                             >
                                 <div style={{ fontSize: 13, fontWeight: 600, color: generatedAd?.id === ad.id ? 'var(--primary)' : 'var(--fg)', marginBottom: 4 }}>{ad.poste}</div>
-                                <div style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{new Date(ad.created_at).toLocaleDateString()}</div>
+                                <div style={{ fontSize: 11, color: 'var(--ink-2)' }}>{new Date(ad.created_at).toLocaleDateString()}</div>
                             </div>
                         ))}
                     </div>
@@ -148,14 +148,14 @@ export default function AnnoncesPage() {
             )}
 
             {/* Left: Chatbot */}
-            <div style={{ flex: '1', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border)', background: 'var(--bg)' }}>
-                <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ flex: '1', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--line)', background: 'var(--bg)' }}>
+                <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Bot size={22} style={{ color: 'var(--primary)' }} />
                     </div>
                     <div>
                         <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{t('annonces_title')}</h2>
-                        <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>{t('annonces_subtitle')}</p>
+                        <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{t('annonces_subtitle')}</p>
                     </div>
                 </div>
 
@@ -168,9 +168,9 @@ export default function AnnoncesPage() {
                             borderRadius: 16,
                             fontSize: 14,
                             lineHeight: 1.5,
-                            background: m.role === 'user' ? 'var(--primary)' : 'var(--bg-elev)',
+                            background: m.role === 'user' ? 'var(--primary)' : 'var(--surface)',
                             color: m.role === 'user' ? '#fff' : 'var(--fg)',
-                            border: m.role === 'user' ? 'none' : '1px solid var(--border)',
+                            border: m.role === 'user' ? 'none' : '1px solid var(--line)',
                             boxShadow: 'var(--shadow-sm)',
                             whiteSpace: 'pre-wrap'
                         }}>
@@ -178,14 +178,14 @@ export default function AnnoncesPage() {
                         </div>
                     ))}
                     {loading && (
-                        <div style={{ alignSelf: 'flex-start', padding: '12px 16px', borderRadius: 16, background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
+                        <div style={{ alignSelf: 'flex-start', padding: '12px 16px', borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--line)' }}>
                             <Spinner size={16} />
                         </div>
                     )}
                     <div ref={chatEndRef} />
                 </div>
 
-                <div style={{ padding: 20, borderTop: '1px solid var(--border)', background: 'var(--bg-elev)' }}>
+                <div style={{ padding: 20, borderTop: '1px solid var(--line)', background: 'var(--surface)' }}>
                     <div style={{ position: 'relative', display: 'flex', gap: 10 }}>
                         <textarea
                             className="textarea"
@@ -213,15 +213,15 @@ export default function AnnoncesPage() {
             </div>
 
             {/* Right: Preview & Editor */}
-            <div style={{ width: '45%', display: 'flex', flexDirection: 'column', background: 'var(--bg-muted)' }}>
-                <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg)' }}>
-                    <div style={{ display: 'flex', gap: 4, background: 'var(--bg-muted)', padding: 3, borderRadius: 8 }}>
+            <div style={{ width: '45%', display: 'flex', flexDirection: 'column', background: 'var(--surface-2)' }}>
+                <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg)' }}>
+                    <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', padding: 3, borderRadius: 8 }}>
                         <button
                             onClick={() => setView('preview')}
                             style={{
                                 padding: '6px 12px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: 'none', cursor: 'pointer',
-                                background: view === 'preview' ? 'var(--bg-elev)' : 'transparent',
-                                color: view === 'preview' ? 'var(--primary)' : 'var(--fg-muted)',
+                                background: view === 'preview' ? 'var(--surface)' : 'transparent',
+                                color: view === 'preview' ? 'var(--primary)' : 'var(--ink-2)',
                                 boxShadow: view === 'preview' ? 'var(--shadow-sm)' : 'none'
                             }}
                         >{t('annonces_preview_tab')}</button>
@@ -229,8 +229,8 @@ export default function AnnoncesPage() {
                             onClick={() => setView('edit')}
                             style={{
                                 padding: '6px 12px', fontSize: 13, fontWeight: 600, borderRadius: 6, border: 'none', cursor: 'pointer',
-                                background: view === 'edit' ? 'var(--bg-elev)' : 'transparent',
-                                color: view === 'edit' ? 'var(--primary)' : 'var(--fg-muted)',
+                                background: view === 'edit' ? 'var(--surface)' : 'transparent',
+                                color: view === 'edit' ? 'var(--primary)' : 'var(--ink-2)',
                                 boxShadow: view === 'edit' ? 'var(--shadow-sm)' : 'none'
                             }}
                         >{t('annonces_editor_tab')}</button>
@@ -247,7 +247,7 @@ export default function AnnoncesPage() {
 
                 <div style={{ flex: 1, overflow: 'hidden' }}>
                     {!generatedAd?.contenu ? (
-                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--fg-subtle)', padding: 40, textAlign: 'center' }}>
+                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', padding: 40, textAlign: 'center' }}>
                             <Sparkles size={48} style={{ marginBottom: 20, opacity: 0.2 }} />
                             <p style={{ fontSize: 15, fontWeight: 600 }}>{t('annonces_empty_preview')}</p>
                             <p style={{ fontSize: 13 }}>{t('annonces_empty_hint')}</p>
@@ -274,7 +274,7 @@ export default function AnnoncesPage() {
                                                     <Check size={18} />
                                                     <span style={{ fontSize: 13, fontWeight: 700 }}>{t('annonces_published_banner')}</span>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: 8, background: 'var(--bg)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', overflow: 'hidden' }}>
+                                                <div style={{ display: 'flex', gap: 8, background: 'var(--bg)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', overflow: 'hidden' }}>
                                                     <code style={{ flex: 1, fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{publishedUrl}</code>
                                                     <button
                                                         onClick={() => { navigator.clipboard.writeText(publishedUrl); toast.success(t('ef_link_copied')); }}
@@ -285,7 +285,7 @@ export default function AnnoncesPage() {
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div style={{ display: 'flex', gap: 12, alignItems: 'center', color: 'var(--fg-subtle)' }}>
+                                            <div style={{ display: 'flex', gap: 12, alignItems: 'center', color: 'var(--ink-3)' }}>
                                                 <ExternalLink size={18} />
                                                 <span style={{ fontSize: 13, fontWeight: 600 }}>{t('annonces_link_pending')}</span>
                                             </div>

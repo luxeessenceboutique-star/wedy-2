@@ -58,10 +58,10 @@ function TagInput({ label, values, onChange }: {
   };
   return (
     <div>
-      <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--fg-muted)', marginBottom: 4 }}>{label}</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 8, minHeight: 38, background: '#fff' }}>
+      <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--ink-2)', marginBottom: 4 }}>{label}</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '6px 10px', border: '1px solid var(--line)', borderRadius: 8, minHeight: 38, background: 'var(--surface)' }}>
         {values.map((v, i) => (
-          <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--primary-light, #eff6ff)', color: 'var(--primary)', borderRadius: 4, padding: '2px 8px', fontSize: 12 }}>
+          <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 6, padding: '2px 8px', fontSize: 12, border: '1px solid var(--primary-line)' }}>
             {v}
             <X size={10} style={{ cursor: 'pointer' }} onClick={() => onChange(values.filter((_, j) => j !== i))} />
           </span>
@@ -81,7 +81,7 @@ function TagInput({ label, values, onChange }: {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '4px 0 0' }}>
+    <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '4px 0 0' }}>
       {children}
     </p>
   );
@@ -156,8 +156,8 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
         type="button"
         onClick={() => setShowExtra(s => !s)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: '1px dashed var(--border)',
-          borderRadius: 8, padding: '8px 14px', cursor: 'pointer', color: 'var(--fg-muted)', fontSize: 12, fontWeight: 500,
+          display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: '1px dashed var(--line)',
+          borderRadius: 8, padding: '8px 14px', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 12, fontWeight: 500,
           width: '100%', justifyContent: 'center',
         }}
       >
@@ -166,7 +166,7 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
       </button>
 
       {showExtra && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '16px', background: 'var(--bg-muted)', borderRadius: 10, border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '16px', background: 'var(--surface-2)', borderRadius: 10, border: '1px solid var(--line)' }}>
 
           <SectionLabel>Contrat & Rémunération</SectionLabel>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -205,13 +205,13 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
               ['notes', 'Notes internes'],
             ] as [keyof Employee, string][]).map(([k, lbl]) => (
               <div key={k}>
-                <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--fg-muted)', marginBottom: 4 }}>{lbl}</p>
+                <p style={{ fontSize: 12, fontWeight: 500, color: 'var(--ink-2)', marginBottom: 4 }}>{lbl}</p>
                 <textarea
                   rows={2}
                   value={(form[k] as string) ?? ''}
                   onChange={set(k)}
                   placeholder={lbl}
-                  style={{ width: '100%', resize: 'vertical', borderRadius: 8, border: '1px solid var(--border)', padding: '8px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', resize: 'vertical', borderRadius: 8, border: '1px solid var(--line)', padding: '8px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
             ))}
@@ -225,18 +225,18 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
                   value={cf.key}
                   onChange={e => setCustomField(i, 'key', e.target.value)}
                   placeholder="Nom du champ (ex: CNSS)"
-                  style={{ borderRadius: 8, border: '1px solid var(--border)', padding: '8px 10px', fontSize: 13, outline: 'none' }}
+                  style={{ borderRadius: 8, border: '1px solid var(--line)', padding: '8px 10px', fontSize: 13, outline: 'none' }}
                 />
                 <input
                   value={cf.value}
                   onChange={e => setCustomField(i, 'value', e.target.value)}
                   placeholder="Valeur"
-                  style={{ borderRadius: 8, border: '1px solid var(--border)', padding: '8px 10px', fontSize: 13, outline: 'none' }}
+                  style={{ borderRadius: 8, border: '1px solid var(--line)', padding: '8px 10px', fontSize: 13, outline: 'none' }}
                 />
                 <button
                   type="button"
                   onClick={() => removeCustomField(i)}
-                  style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '7px 10px', cursor: 'pointer', color: 'var(--danger)', display: 'flex', alignItems: 'center' }}
+                  style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 8, padding: '7px 10px', cursor: 'pointer', color: 'var(--danger)', display: 'flex', alignItems: 'center' }}
                 >
                   <X size={13} />
                 </button>
@@ -245,7 +245,7 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
             <button
               type="button"
               onClick={addCustomField}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: '1px dashed var(--border)', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', color: 'var(--fg-muted)', fontSize: 12, fontWeight: 500, width: 'fit-content' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: '1px dashed var(--line)', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 12, fontWeight: 500, width: 'fit-content' }}
             >
               <Plus size={13} /> Ajouter un champ
             </button>
@@ -332,7 +332,7 @@ export default function EmployeesPage() {
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)' }} />
+          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} />
           <input className="input" style={{ paddingLeft: 32 }} placeholder={t('search_employees')} value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <div style={{ display: 'flex', gap: 4 }}>
@@ -341,7 +341,7 @@ export default function EmployeesPage() {
             {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
           </select>
           <button className="btn btn-ghost btn-sm" title="Gérer les départements" onClick={() => setShowDeptManager(true)}
-            style={{ padding: '0 8px', fontSize: 11, color: 'var(--fg-muted)', whiteSpace: 'nowrap' }}>
+            style={{ padding: '0 8px', fontSize: 11, color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
             ⚙ Gérer
           </button>
         </div>
@@ -356,7 +356,7 @@ export default function EmployeesPage() {
 
       {/* Selection bar */}
       {selectedIds.size > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 14px', background: 'var(--primary-light, #eff6ff)', border: '1px solid var(--primary)', borderRadius: 8, marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 16px', background: 'var(--primary-soft)', border: '1px solid var(--primary-line)', borderRadius: 10, marginBottom: 12 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary)' }}>
             {selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}
           </span>
@@ -392,8 +392,8 @@ export default function EmployeesPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  <th style={{ padding: '10px 16px', width: 40 }}>
+                <tr>
+                  <th style={{ padding: '10px 16px', width: 40, background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>
                     <input
                       type="checkbox"
                       checked={allSelected}
@@ -404,14 +404,14 @@ export default function EmployeesPage() {
                     />
                   </th>
                   {[t('col_employee'), 'CIN', t('col_department'), t('col_contract'), t('col_status'), t('col_hire_date'), ''].map(h => (
-                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 500, color: 'var(--fg-muted)', fontSize: 12, whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-3)', fontSize: 11, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '.06em', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {employees.map(emp => (
-                  <tr key={emp.id} style={{ borderBottom: '1px solid var(--border)', background: selectedIds.has(emp.id) ? 'var(--primary-light, #eff6ff)' : '' }}
-                    onMouseEnter={e => { if (!selectedIds.has(emp.id)) e.currentTarget.style.background = 'var(--bg-muted)'; }}
+                  <tr key={emp.id} style={{ borderBottom: '1px solid var(--line)', background: selectedIds.has(emp.id) ? 'var(--primary-soft)' : '' }}
+                    onMouseEnter={e => { if (!selectedIds.has(emp.id)) e.currentTarget.style.background = 'var(--surface-2)'; }}
                     onMouseLeave={e => { if (!selectedIds.has(emp.id)) e.currentTarget.style.background = ''; }}>
                     <td style={{ padding: '10px 16px', width: 40 }}>
                       <input
@@ -426,19 +426,19 @@ export default function EmployeesPage() {
                         <Avatar name={emp.full_name} size={30} />
                         <div>
                           <p style={{ fontWeight: 500 }}>{emp.full_name}</p>
-                          <p style={{ color: 'var(--fg-muted)', fontSize: 11 }}>{emp.position || emp.email || '—'}</p>
+                          <p style={{ color: 'var(--ink-2)', fontSize: 11 }}>{emp.position || emp.email || '—'}</p>
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: '10px 16px', color: 'var(--fg-muted)' }}>{emp.cin}</td>
-                    <td style={{ padding: '10px 16px', color: 'var(--fg-muted)' }}>{emp.department || '—'}</td>
+                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>{emp.cin}</td>
+                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>{emp.department || '—'}</td>
                     <td style={{ padding: '10px 16px' }}>
                       <Badge>{emp.contract_type || '—'}</Badge>
                     </td>
                     <td style={{ padding: '10px 16px' }}>
                       <Badge variant={STATUS_COLORS[emp.status] ?? 'default'}>{emp.status}</Badge>
                     </td>
-                    <td style={{ padding: '10px 16px', color: 'var(--fg-muted)' }}>
+                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>
                       {emp.hire_date ? new Date(emp.hire_date).toLocaleDateString() : '—'}
                     </td>
                     <td style={{ padding: '10px 16px' }}>

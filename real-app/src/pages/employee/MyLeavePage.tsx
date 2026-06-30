@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calendar, Plus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
@@ -40,9 +40,9 @@ export default function MyLeavePage() {
   ];
 
   const STATUS_META: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-    pending:  { label: t('leave_pending'),  color: '#f59e0b', bg: '#fffbeb', icon: <Clock size={13} /> },
-    approved: { label: t('leave_approved'), color: '#10b981', bg: '#ecfdf5', icon: <CheckCircle size={13} /> },
-    rejected: { label: t('leave_rejected'), color: '#ef4444', bg: '#fef2f2', icon: <AlertCircle size={13} /> },
+    pending:  { label: t('leave_pending'),  color: 'var(--warn)', bg: 'var(--warn-soft)', icon: <Clock size={13} /> },
+    approved: { label: t('leave_approved'), color: 'var(--success)', bg: 'var(--success-soft)', icon: <CheckCircle size={13} /> },
+    rejected: { label: t('leave_rejected'), color: 'var(--danger)', bg: '#fef2f2', icon: <AlertCircle size={13} /> },
   };
 
   const { data: leaves = [], isLoading } = useQuery({
@@ -69,7 +69,7 @@ export default function MyLeavePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>{t('myleave_title')}</h1>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: 0 }}>{t('myleave_subtitle')}</p>
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>{t('myleave_subtitle')}</p>
         </div>
         <Button onClick={() => setShowForm(true)}>
           <Plus size={14} /> {t('myleave_request_btn')}
@@ -86,7 +86,7 @@ export default function MyLeavePage() {
         ].map(f => (
           <button key={f.id} onClick={() => setFilter(f.id)}
             style={{ padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              border: '1px solid var(--border)',
+              border: '1px solid var(--line)',
               background: filter === f.id ? 'var(--primary)' : 'transparent',
               color: filter === f.id ? '#fff' : 'var(--fg)' }}>
             {f.label}
@@ -98,7 +98,7 @@ export default function MyLeavePage() {
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
           <Calendar size={40} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
           <p style={{ fontWeight: 500 }}>{t('myleave_empty')}</p>
           <Button onClick={() => setShowForm(true)} style={{ marginTop: 8 }}>
@@ -113,16 +113,16 @@ export default function MyLeavePage() {
             return (
               <div key={l.id} style={{
                 display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 18px', border: '1px solid var(--border)',
+                padding: '14px 18px', border: '1px solid var(--line)',
                 borderLeft: `4px solid ${sm.color}`,
-                borderRadius: 12, background: 'var(--bg-elev)',
+                borderRadius: 12, background: 'var(--surface)',
               }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
                     <span style={{ fontWeight: 700, fontSize: 14 }}>{typeLabel}</span>
-                    {l.reason && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>· {l.reason}</span>}
+                    {l.reason && <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>· {l.reason}</span>}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', gap: 16 }}>
+                  <div style={{ fontSize: 12, color: 'var(--ink-2)', display: 'flex', gap: 16 }}>
                     <span><Calendar size={11} /> {safeFormat(l.start_date)} → {safeFormat(l.end_date)}</span>
                     <span><strong>{l.days}</strong> {t('myleave_days')}</span>
                     <span>{t('myleave_submitted_on')} {safeFormat(l.created_at)}</span>
@@ -161,7 +161,7 @@ export default function MyLeavePage() {
             </div>
           </div>
           {days > 0 && (
-            <div style={{ padding: '8px 12px', background: '#eff6ff', borderRadius: 8, fontSize: 13, color: '#3b82f6', fontWeight: 600 }}>
+            <div style={{ padding: '8px 12px', background: 'var(--primary-soft)', borderRadius: 8, fontSize: 13, color: 'var(--primary)', fontWeight: 600 }}>
               {t('myleave_duration_tpl').replace('{days}', String(days))}
             </div>
           )}

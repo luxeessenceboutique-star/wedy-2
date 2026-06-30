@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, LayoutDashboard, Bot, Bell, Users, GraduationCap, Target,
@@ -36,8 +36,8 @@ interface DocSection {
 
 const SECTIONS: DocSection[] = [
   {
-    id: 'overview', label: "Vue d'ensemble", color: '#0891b2',
-    lightBg: '#ecfeff', icon: <LayoutDashboard size={15} />,
+    id: 'overview', label: "Vue d'ensemble", color: 'var(--primary)',
+    lightBg: 'var(--primary-soft)', icon: <LayoutDashboard size={15} />,
     pages: [
       {
         id: 'dashboard', icon: <LayoutDashboard size={16} />, title: 'Tableau de bord',
@@ -76,7 +76,7 @@ const SECTIONS: DocSection[] = [
   },
   {
     id: 'people', label: 'Personnes', color: '#7c3aed',
-    lightBg: '#f5f3ff', icon: <Users size={15} />,
+    lightBg: 'var(--violet-soft)', icon: <Users size={15} />,
     pages: [
       {
         id: 'employees', icon: <Users size={16} />, title: 'Employés',
@@ -214,7 +214,7 @@ const SECTIONS: DocSection[] = [
   },
   {
     id: 'hrdev', label: 'Développement RH', color: '#059669',
-    lightBg: '#ecfdf5', icon: <BookOpen size={15} />,
+    lightBg: 'var(--success-soft)', icon: <BookOpen size={15} />,
     pages: [
       {
         id: 'onboarding', icon: <UserCheck size={16} />, title: 'Onboarding',
@@ -263,8 +263,8 @@ const SECTIONS: DocSection[] = [
     ],
   },
   {
-    id: 'documents', label: 'Documents', color: '#d97706',
-    lightBg: '#fffbeb', icon: <FileText size={15} />,
+    id: 'documents', label: 'Documents', color: 'var(--warn)',
+    lightBg: 'var(--warn-soft)', icon: <FileText size={15} />,
     pages: [
       {
         id: 'generate', icon: <Wand2 size={16} />, title: 'Générer un document',
@@ -336,8 +336,8 @@ const SECTIONS: DocSection[] = [
     ],
   },
   {
-    id: 'workspace', label: 'Espace de travail', color: '#475569',
-    lightBg: '#f8fafc', icon: <Settings size={15} />,
+    id: 'workspace', label: 'Espace de travail', color: 'var(--ink-2)',
+    lightBg: 'var(--surface-2)', icon: <Settings size={15} />,
     pages: [
       {
         id: 'integrations', icon: <Puzzle size={16} />, title: 'Intégrations',
@@ -386,12 +386,12 @@ const SECTIONS: DocSection[] = [
 // ─── Home cards ───────────────────────────────────────────────────────────────
 
 const HOME_CARDS = [
-  { icon: <Rocket size={20} />, title: 'Démarrage rapide', desc: "Configurez votre entreprise et générez votre premier document en 5 minutes.", color: '#0891b2', bg: '#ecfeff', border: '#a5f3fc', sectionId: 'overview', pageId: 'dashboard' },
-  { icon: <Bot size={20} />, title: 'Copilote IA', desc: "Rédigez n'importe quel document RH en langage naturel avec Claude AI.", color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', sectionId: 'overview', pageId: 'copilot' },
-  { icon: <FileText size={20} />, title: 'Documents', desc: "Générez des attestations, contrats et bulletins de paie en quelques clics.", color: '#d97706', bg: '#fffbeb', border: '#fde68a', sectionId: 'documents', pageId: 'generate' },
-  { icon: <Users size={20} />, title: 'Gestion RH', desc: "Employés, recrutement, congés, paie et performances dans un seul outil.", color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', sectionId: 'people', pageId: 'employees' },
-  { icon: <BarChart3 size={20} />, title: 'Analytique', desc: "Tableaux de bord et indicateurs clés pour piloter vos RH avec données.", color: '#dc2626', bg: '#fff1f2', border: '#fecaca', sectionId: 'insights', pageId: 'analytics' },
-  { icon: <Shield size={20} />, title: 'Sécurité & Audit', desc: "Traçabilité complète, contrôle d'accès et conformité RGPD/CNDP.", color: '#475569', bg: '#f8fafc', border: '#e2e8f0', sectionId: 'insights', pageId: 'audit' },
+  { icon: <Rocket size={20} />, title: 'Démarrage rapide', desc: "Configurez votre entreprise et générez votre premier document en 5 minutes.", color: 'var(--primary)', bg: 'var(--primary-soft)', border: 'var(--primary-line)', sectionId: 'overview', pageId: 'dashboard' },
+  { icon: <Bot size={20} />, title: 'Copilote IA', desc: "Rédigez n'importe quel document RH en langage naturel avec Claude AI.", color: '#7c3aed', bg: 'var(--violet-soft)', border: '#ddd6fe', sectionId: 'overview', pageId: 'copilot' },
+  { icon: <FileText size={20} />, title: 'Documents', desc: "Générez des attestations, contrats et bulletins de paie en quelques clics.", color: 'var(--warn)', bg: 'var(--warn-soft)', border: '#fde68a', sectionId: 'documents', pageId: 'generate' },
+  { icon: <Users size={20} />, title: 'Gestion RH', desc: "Employés, recrutement, congés, paie et performances dans un seul outil.", color: '#059669', bg: 'var(--success-soft)', border: '#a7f3d0', sectionId: 'people', pageId: 'employees' },
+  { icon: <BarChart3 size={20} />, title: 'Analytique', desc: "Tableaux de bord et indicateurs clés pour piloter vos RH avec données.", color: '#dc2626', bg: '#fff1f2', border: 'color-mix(in srgb,var(--danger) 30%,transparent)', sectionId: 'insights', pageId: 'analytics' },
+  { icon: <Shield size={20} />, title: 'Sécurité & Audit', desc: "Traçabilité complète, contrôle d'accès et conformité RGPD/CNDP.", color: 'var(--ink-2)', bg: 'var(--surface-2)', border: 'var(--line)', sectionId: 'insights', pageId: 'audit' },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -440,11 +440,11 @@ export default function HelpPage() {
     <div style={{ display: 'flex', height: '100%', background: 'var(--bg)', overflow: 'hidden' }}>
 
       {/* ── LEFT SIDEBAR ──────────────────────────────────────────────── */}
-      <div style={{ width: 240, flexShrink: 0, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: '#fff', overflow: 'hidden' }}>
+      <div style={{ width: 240, flexShrink: 0, borderRight: '1px solid var(--line)', display: 'flex', flexDirection: 'column', background: 'var(--surface)', overflow: 'hidden' }}>
         {/* Search */}
-        <div style={{ padding: '14px 12px 10px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-muted)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 12px' }}>
-            <Search size={13} style={{ color: 'var(--fg-subtle)', flexShrink: 0 }} />
+        <div style={{ padding: '14px 12px 10px', borderBottom: '1px solid var(--line)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 8, padding: '8px 12px' }}>
+            <Search size={13} style={{ color: 'var(--ink-3)', flexShrink: 0 }} />
             <input
               value={query}
               onChange={e => setQuery(e.target.value)}
@@ -452,7 +452,7 @@ export default function HelpPage() {
               style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 13, color: 'var(--fg)' }}
             />
             {query && (
-              <button onClick={() => setQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-subtle)', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
+              <button onClick={() => setQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>
             )}
           </div>
         </div>
@@ -466,8 +466,8 @@ export default function HelpPage() {
               width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '7px 10px', borderRadius: 7,
-              background: (!activeSection && !q) ? '#ecfeff' : 'transparent',
-              color: (!activeSection && !q) ? '#0891b2' : 'var(--fg-muted)',
+              background: (!activeSection && !q) ? 'var(--primary-soft)' : 'transparent',
+              color: (!activeSection && !q) ? 'var(--primary)' : 'var(--ink-2)',
               fontWeight: (!activeSection && !q) ? 600 : 400,
               fontSize: 13, transition: 'all 0.12s', marginBottom: 4,
             }}
@@ -484,7 +484,7 @@ export default function HelpPage() {
                   width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '5px 10px', background: 'transparent', borderRadius: 6,
-                  fontSize: 10.5, fontWeight: 700, color: 'var(--fg-subtle)',
+                  fontSize: 10.5, fontWeight: 700, color: 'var(--ink-3)',
                   letterSpacing: '0.07em', textTransform: 'uppercase', marginTop: 6,
                 }}
               >
@@ -508,16 +508,16 @@ export default function HelpPage() {
                       background: isActive ? section.lightBg : 'transparent',
                       borderLeft: isActive ? `2px solid ${section.color}` : '2px solid transparent',
                       fontSize: 12.5, fontWeight: isActive ? 600 : 400,
-                      color: isActive ? section.color : 'var(--fg-muted)',
+                      color: isActive ? section.color : 'var(--ink-2)',
                       transition: 'all 0.1s', marginBottom: 1,
                     }}
-                    onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'var(--bg-muted)'; e.currentTarget.style.color = 'var(--fg)'; } }}
-                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--fg-muted)'; } }}
+                    onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--fg)'; } }}
+                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ink-2)'; } }}
                   >
-                    <span style={{ color: isActive ? section.color : 'var(--fg-subtle)', flexShrink: 0 }}>{page.icon}</span>
+                    <span style={{ color: isActive ? section.color : 'var(--ink-3)', flexShrink: 0 }}>{page.icon}</span>
                     <span style={{ flex: 1 }}>{page.title}</span>
                     {page.badge && (
-                      <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 999, background: '#ecfeff', color: '#0891b2', border: '1px solid #a5f3fc' }}>
+                      <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 999, background: 'var(--primary-soft)', color: 'var(--primary)', border: '1px solid #a5f3fc' }}>
                         {page.badge}
                       </span>
                     )}
@@ -529,7 +529,7 @@ export default function HelpPage() {
         </div>
 
         {/* CTA */}
-        <div style={{ padding: 12, borderTop: '1px solid var(--border)' }}>
+        <div style={{ padding: 12, borderTop: '1px solid var(--line)' }}>
           <button
             onClick={() => navigate('/app/copilot')}
             style={{
@@ -553,14 +553,14 @@ export default function HelpPage() {
         {/* SEARCH RESULTS */}
         {q && (
           <div style={{ padding: '28px 36px' }}>
-            <div style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>
+            <div style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 20 }}>
               <strong style={{ color: 'var(--fg)' }}>{searchResults.length}</strong> résultat{searchResults.length !== 1 ? 's' : ''} pour «&nbsp;{query}&nbsp;»
             </div>
             {searchResults.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                <Search size={36} style={{ color: 'var(--border)', display: 'block', margin: '0 auto 14px' }} />
+                <Search size={36} style={{ color: 'var(--line)', display: 'block', margin: '0 auto 14px' }} />
                 <p style={{ fontWeight: 600, color: 'var(--fg)' }}>Aucun résultat</p>
-                <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginTop: 6 }}>Essayez un autre terme ou parcourez les sections à gauche.</p>
+                <p style={{ fontSize: 13, color: 'var(--ink-2)', marginTop: 6 }}>Essayez un autre terme ou parcourez les sections à gauche.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -568,9 +568,9 @@ export default function HelpPage() {
                   <button
                     key={`${section.id}-${page.id}`}
                     onClick={() => openPage(section.id, page.id)}
-                    style={{ textAlign: 'left', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 20px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 14, transition: 'all 0.15s' }}
+                    style={{ textAlign: 'left', border: '1px solid var(--line)', borderRadius: 12, padding: '16px 20px', background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', gap: 14, transition: 'all 0.15s' }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = section.color; e.currentTarget.style.boxShadow = `0 0 0 3px ${section.color}18`; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--line)'; e.currentTarget.style.boxShadow = 'none'; }}
                   >
                     <div style={{ width: 36, height: 36, borderRadius: 9, background: section.lightBg, border: `1px solid ${section.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: section.color, flexShrink: 0 }}>
                       {page.icon}
@@ -580,9 +580,9 @@ export default function HelpPage() {
                         <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--fg)' }}>{page.title}</span>
                         <span style={{ fontSize: 11, color: section.color, background: section.lightBg, padding: '1px 7px', borderRadius: 999, border: `1px solid ${section.color}30` }}>{section.label}</span>
                       </div>
-                      <p style={{ fontSize: 13, color: 'var(--fg-muted)', lineHeight: 1.55 }}>{page.desc}</p>
+                      <p style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.55 }}>{page.desc}</p>
                     </div>
-                    <ArrowRight size={16} style={{ color: 'var(--fg-subtle)', flexShrink: 0, marginTop: 10 }} />
+                    <ArrowRight size={16} style={{ color: 'var(--ink-3)', flexShrink: 0, marginTop: 10 }} />
                   </button>
                 ))}
               </div>
@@ -594,10 +594,10 @@ export default function HelpPage() {
         {!q && currentPage && currentSection && (
           <div style={{ paddingBottom: 60 }}>
             {/* Hero */}
-            <div style={{ background: `linear-gradient(135deg, ${currentSection.lightBg} 0%, #fff 70%)`, borderBottom: '1px solid var(--border)', padding: '28px 36px 24px' }}>
+            <div style={{ background: `linear-gradient(135deg, ${currentSection.lightBg} 0%, #fff 70%)`, borderBottom: '1px solid var(--line)', padding: '28px 36px 24px' }}>
               {/* Breadcrumb */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16, fontSize: 12, color: 'var(--fg-muted)' }}>
-                <button onClick={() => { setActiveSection(null); setActivePage(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', fontSize: 12, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16, fontSize: 12, color: 'var(--ink-2)' }}>
+                <button onClick={() => { setActiveSection(null); setActivePage(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 12, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Home size={11} /> Accueil
                 </button>
                 <ChevronRight size={10} />
@@ -614,10 +614,10 @@ export default function HelpPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                     <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)' }}>{currentPage.title}</h1>
                     {currentPage.badge && (
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: '#ecfeff', color: '#0891b2', border: '1px solid #a5f3fc' }}>{currentPage.badge}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'var(--primary-soft)', color: 'var(--primary)', border: '1px solid #a5f3fc' }}>{currentPage.badge}</span>
                     )}
                   </div>
-                  <p style={{ fontSize: 14, color: 'var(--fg-muted)', lineHeight: 1.65, maxWidth: 580 }}>{currentPage.desc}</p>
+                  <p style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.65, maxWidth: 580 }}>{currentPage.desc}</p>
                 </div>
               </div>
 
@@ -636,19 +636,19 @@ export default function HelpPage() {
               {/* Steps */}
               {currentPage.steps && currentPage.steps.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <PlayCircle size={12} style={{ color: currentSection.color }} />
                     Comment utiliser cette page
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {currentPage.steps.map((step, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', background: '#fff', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 18px' }}>
+                      <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10, padding: '14px 18px' }}>
                         <div style={{ width: 26, height: 26, borderRadius: 8, flexShrink: 0, background: currentSection.lightBg, border: `1px solid ${currentSection.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: currentSection.color }}>
                           {i + 1}
                         </div>
                         <div>
                           <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--fg)', marginBottom: 3 }}>{step.title}</div>
-                          <div style={{ fontSize: 13, color: 'var(--fg-muted)', lineHeight: 1.6 }}>{step.body}</div>
+                          <div style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.6 }}>{step.body}</div>
                         </div>
                       </div>
                     ))}
@@ -659,23 +659,23 @@ export default function HelpPage() {
               {/* Table */}
               {currentPage.table && (
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
                     Référence
                   </div>
-                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                  <div style={{ border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                       <thead>
-                        <tr style={{ background: 'var(--bg-muted)' }}>
+                        <tr style={{ background: 'var(--surface-2)' }}>
                           {currentPage.table.headers.map((h, i) => (
-                            <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 700, color: 'var(--fg)', fontSize: 12, borderBottom: '1px solid var(--border)' }}>{h}</th>
+                            <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 700, color: 'var(--fg)', fontSize: 12, borderBottom: '1px solid var(--line)' }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {currentPage.table.rows.map((row, ri) => (
-                          <tr key={ri} style={{ background: ri % 2 === 0 ? '#fff' : 'var(--bg-muted)' }}>
+                          <tr key={ri} style={{ background: ri % 2 === 0 ? '#fff' : 'var(--surface-2)' }}>
                             {row.map((cell, ci) => (
-                              <td key={ci} style={{ padding: '9px 16px', color: 'var(--fg-muted)', borderBottom: ri < currentPage.table!.rows.length - 1 ? '1px solid var(--border)' : 'none', fontFamily: ci === 0 ? 'monospace' : 'inherit', fontSize: ci === 0 ? 12 : 13 }}>
+                              <td key={ci} style={{ padding: '9px 16px', color: 'var(--ink-2)', borderBottom: ri < currentPage.table!.rows.length - 1 ? '1px solid var(--line)' : 'none', fontFamily: ci === 0 ? 'monospace' : 'inherit', fontSize: ci === 0 ? 12 : 13 }}>
                                 {cell}
                               </td>
                             ))}
@@ -689,14 +689,14 @@ export default function HelpPage() {
 
               {/* Tips */}
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Lightbulb size={12} style={{ color: '#d97706' }} />
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Lightbulb size={12} style={{ color: 'var(--warn)' }} />
                   Astuces & conseils
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {currentPage.tips.map((tip, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 9, padding: '11px 15px' }}>
-                      <Zap size={13} style={{ color: '#d97706', flexShrink: 0, marginTop: 2 }} />
+                    <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--warn-soft)', border: '1px solid #fde68a', borderRadius: 9, padding: '11px 15px' }}>
+                      <Zap size={13} style={{ color: 'var(--warn)', flexShrink: 0, marginTop: 2 }} />
                       <span style={{ fontSize: 13, color: '#78350f', lineHeight: 1.6 }}>{tip}</span>
                     </div>
                   ))}
@@ -710,23 +710,23 @@ export default function HelpPage() {
                 const next = idx < allPages.length - 1 ? allPages[idx + 1] : null;
                 if (!prev && !next) return null;
                 return (
-                  <div style={{ display: 'flex', gap: 12, marginTop: 8, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 8, paddingTop: 20, borderTop: '1px solid var(--line)' }}>
                     {prev && (
-                      <button onClick={() => openPage(prev.sectionId, prev.pageId)} style={{ flex: 1, border: '1px solid var(--border)', borderRadius: 10, padding: '12px 16px', background: '#fff', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <ArrowRight size={14} style={{ transform: 'rotate(180deg)', color: 'var(--fg-muted)' }} />
+                      <button onClick={() => openPage(prev.sectionId, prev.pageId)} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 10, padding: '12px 16px', background: 'var(--surface)', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <ArrowRight size={14} style={{ transform: 'rotate(180deg)', color: 'var(--ink-2)' }} />
                         <div>
-                          <div style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 2 }}>Précédent</div>
+                          <div style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 2 }}>Précédent</div>
                           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg)' }}>{prev.title}</div>
                         </div>
                       </button>
                     )}
                     {next && (
-                      <button onClick={() => openPage(next.sectionId, next.pageId)} style={{ flex: 1, border: '1px solid var(--border)', borderRadius: 10, padding: '12px 16px', background: '#fff', cursor: 'pointer', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
+                      <button onClick={() => openPage(next.sectionId, next.pageId)} style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 10, padding: '12px 16px', background: 'var(--surface)', cursor: 'pointer', textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
                         <div>
-                          <div style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 2 }}>Suivant</div>
+                          <div style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 2 }}>Suivant</div>
                           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg)' }}>{next.title}</div>
                         </div>
-                        <ArrowRight size={14} style={{ color: 'var(--fg-muted)' }} />
+                        <ArrowRight size={14} style={{ color: 'var(--ink-2)' }} />
                       </button>
                     )}
                   </div>
@@ -756,7 +756,7 @@ export default function HelpPage() {
 
             <div style={{ padding: '24px 32px' }}>
               {/* Quick access */}
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Accès rapide</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14 }}>Accès rapide</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 28 }}>
                 {HOME_CARDS.map((card, i) => (
                   <button
@@ -767,8 +767,8 @@ export default function HelpPage() {
                     onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; }}
                   >
                     <div style={{ width: 34, height: 34, borderRadius: 10, background: card.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', marginBottom: 10 }}>{card.icon}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 5 }}>{card.title}</div>
-                    <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.55 }}>{card.desc}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginBottom: 5 }}>{card.title}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.55 }}>{card.desc}</div>
                   </button>
                 ))}
               </div>
@@ -781,16 +781,16 @@ export default function HelpPage() {
                       <span style={{ display: 'inline-flex', transform: 'scale(0.73)', transformOrigin: 'center' }}>{section.icon}</span>
                     </div>
                     <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg)' }}>{section.label}</span>
-                    <span style={{ fontSize: 11, color: 'var(--fg-subtle)' }}>— {section.pages.length} pages</span>
+                    <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>— {section.pages.length} pages</span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 8 }}>
                     {section.pages.map(page => (
                       <button
                         key={page.id}
                         onClick={() => openPage(section.id, page.id)}
-                        style={{ textAlign: 'left', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.12s' }}
+                        style={{ textAlign: 'left', border: '1px solid var(--line)', borderRadius: 10, padding: '12px 14px', background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.12s' }}
                         onMouseEnter={e => { e.currentTarget.style.borderColor = section.color; e.currentTarget.style.background = section.lightBg; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = '#fff'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--line)'; e.currentTarget.style.background = '#fff'; }}
                       >
                         <div style={{ width: 28, height: 28, borderRadius: 8, background: section.lightBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: section.color, flexShrink: 0 }}>
                           {page.icon}
@@ -798,13 +798,13 @@ export default function HelpPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg)', display: 'flex', alignItems: 'center', gap: 5 }}>
                             {page.title}
-                            {page.badge && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 999, background: '#ecfeff', color: '#0891b2', border: '1px solid #a5f3fc' }}>{page.badge}</span>}
+                            {page.badge && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 999, background: 'var(--primary-soft)', color: 'var(--primary)', border: '1px solid #a5f3fc' }}>{page.badge}</span>}
                           </div>
-                          <div style={{ fontSize: 11.5, color: 'var(--fg-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: 11.5, color: 'var(--ink-2)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {page.desc.slice(0, 52)}…
                           </div>
                         </div>
-                        <ChevronRight size={12} style={{ color: 'var(--fg-subtle)', flexShrink: 0 }} />
+                        <ChevronRight size={12} style={{ color: 'var(--ink-3)', flexShrink: 0 }} />
                       </button>
                     ))}
                   </div>

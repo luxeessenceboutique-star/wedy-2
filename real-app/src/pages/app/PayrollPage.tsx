@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -23,8 +23,8 @@ function DonutChart({ segments, size = 110 }: {
 }) {
   const total = segments.reduce((s, seg) => s + seg.value, 0);
   if (total === 0) return (
-    <div style={{ width: size, height: size, borderRadius: '50%', background: 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <span style={{ fontSize: 10, color: 'var(--fg-subtle)' }}>N/A</span>
+    <div style={{ width: size, height: size, borderRadius: '50%', background: 'var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>N/A</span>
     </div>
   );
   const cx = size / 2, cy = size / 2, outerR = size / 2 - 5, innerR = outerR * 0.6;
@@ -124,7 +124,7 @@ function CreatePayrollModal({ defaultMonth, defaultYear, onClose }: { defaultMon
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'var(--bg-elev)', borderRadius: 'var(--radius-lg)', padding: 28, width: 460, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border)' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: 28, width: 460, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--line)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -132,7 +132,7 @@ function CreatePayrollModal({ defaultMonth, defaultYear, onClose }: { defaultMon
             </div>
             <h3 style={{ fontWeight: 600, fontSize: 16, margin: 0 }}>{t('payroll_new_slip')}</h3>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', padding: 4 }}><X size={18} /></button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 4 }}><X size={18} /></button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -175,9 +175,9 @@ function CreatePayrollModal({ defaultMonth, defaultYear, onClose }: { defaultMon
 
           {gross > 0 && (
             <div style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--primary-soft)', border: '1px solid var(--primary)20', fontSize: 12 }}>
-              <span style={{ color: 'var(--fg-muted)' }}>{t('payroll_est_gross')} : </span>
+              <span style={{ color: 'var(--ink-2)' }}>{t('payroll_est_gross')} : </span>
               <strong style={{ color: 'var(--primary)' }}>{fmt(gross)}</strong>
-              <span style={{ color: 'var(--fg-subtle)', marginLeft: 8 }}>{t('payroll_auto_calc')}</span>
+              <span style={{ color: 'var(--ink-3)', marginLeft: 8 }}>{t('payroll_auto_calc')}</span>
             </div>
           )}
 
@@ -188,7 +188,7 @@ function CreatePayrollModal({ defaultMonth, defaultYear, onClose }: { defaultMon
         </div>
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
-          <Button onClick={onClose} style={{ background: 'var(--bg-muted)', color: 'var(--fg)', border: '1px solid var(--border)' }}>{t('cancel')}</Button>
+          <Button onClick={onClose} style={{ background: 'var(--surface-2)', color: 'var(--fg)', border: '1px solid var(--line)' }}>{t('cancel')}</Button>
           <Button onClick={() => mutation.mutate()} loading={mutation.isPending}
             disabled={!form.employee_id || !form.base_salary || parseFloat(form.base_salary) < 0}>
             {t('save')}
@@ -279,37 +279,37 @@ export default function PayrollPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 3px' }}>{t('nav_payroll')}</h1>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: 0 }}>
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>
             {records.length} {t('payroll_slips')} · {allMonths ? t('payroll_all_months') : `${MONTHS[month]} ${year}`}
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {/* Month navigator */}
           {!allMonths && (
-            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-              <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', display: 'flex', alignItems: 'center', color: 'var(--fg-muted)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden' }}>
+              <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', display: 'flex', alignItems: 'center', color: 'var(--ink-2)' }}>
                 <ChevronLeft size={15} />
               </button>
               <span style={{ fontSize: 13, fontWeight: 600, minWidth: 130, textAlign: 'center' }}>{MONTHS[month]} {year}</span>
-              <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', display: 'flex', alignItems: 'center', color: 'var(--fg-muted)' }}>
+              <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', display: 'flex', alignItems: 'center', color: 'var(--ink-2)' }}>
                 <ChevronRight size={15} />
               </button>
             </div>
           )}
           <button
             onClick={() => setAllMonths(v => !v)}
-            style={{ padding: '7px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 500, border: '1px solid var(--border)', background: allMonths ? 'var(--primary)' : 'var(--bg-elev)', color: allMonths ? '#fff' : 'var(--fg)' }}>
+            style={{ padding: '7px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 500, border: '1px solid var(--line)', background: allMonths ? 'var(--primary)' : 'var(--surface)', color: allMonths ? '#fff' : 'var(--fg)' }}>
             {allMonths ? t('payroll_monthly_view') : t('payroll_all_months')}
           </button>
           <Button onClick={() => setShowCreate(true)} style={{ background: 'var(--primary)', color: '#fff', border: 'none' }}>
             <Plus size={14} /> {t('payroll_new_slip')}
           </Button>
           <Button onClick={() => bulkMutation.mutate()} loading={bulkMutation.isPending}
-            style={{ background: 'var(--bg-muted)', color: 'var(--fg)', border: '1px solid var(--border)' }}>
+            style={{ background: 'var(--surface-2)', color: 'var(--fg)', border: '1px solid var(--line)' }}>
             <Zap size={14} /> {t('payroll_bulk_generate')}
           </Button>
           {records.length > 0 && (
-            <Button onClick={() => exportCSV(records, month, year, t)} style={{ background: 'var(--bg-muted)', color: 'var(--fg)', border: '1px solid var(--border)' }}>
+            <Button onClick={() => exportCSV(records, month, year, t)} style={{ background: 'var(--surface-2)', color: 'var(--fg)', border: '1px solid var(--line)' }}>
               <Download size={14} /> Export CSV
             </Button>
           )}
@@ -319,19 +319,19 @@ export default function PayrollPage() {
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
-          { label: t('payroll_kpi_gross'), value: fmt(grossTotal), sub: `${records.length} ${t('employee')}(s)`, color: '#3B82F6', icon: <DollarSign size={16} /> },
+          { label: t('payroll_kpi_gross'), value: fmt(grossTotal), sub: `${records.length} ${t('employee')}(s)`, color: 'var(--primary)', icon: <DollarSign size={16} /> },
           { label: t('payroll_kpi_net'), value: fmt(netTotal), sub: grossTotal>0?`${Math.round((netTotal/grossTotal)*100)}% du brut`:'—', color: '#22C55E', icon: <TrendingUp size={16} /> },
           { label: t('payroll_kpi_charges'), value: fmt(cnssTotal+irTotal), sub: grossTotal>0?`${Math.round(((cnssTotal+irTotal)/grossTotal)*100)}% du brut`:'—', color: '#F97316', icon: <TrendingDown size={16} /> },
           { label: t('payroll_paid'), value: `${paidCount} / ${records.length}`, sub: paidCount===records.length&&records.length>0?'✓ '+t('payroll_all_paid'):`${draftCount} brouillon(s)`, color: paidCount===records.length&&records.length>0?'#22C55E':'var(--fg)', icon: <CheckCircle size={16} /> },
         ].map(stat => (
-          <div key={stat.label} style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div key={stat.label} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 10, background: stat.color+'18', display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color, flexShrink: 0 }}>
               {stat.icon}
             </div>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 10, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{stat.label}</div>
+              <div style={{ fontSize: 10, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{stat.label}</div>
               <div style={{ fontSize: 19, fontWeight: 700, color: stat.color, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stat.value}</div>
-              <div style={{ fontSize: 10, color: 'var(--fg-muted)', marginTop: 1 }}>{stat.sub}</div>
+              <div style={{ fontSize: 10, color: 'var(--ink-2)', marginTop: 1 }}>{stat.sub}</div>
             </div>
           </div>
         ))}
@@ -340,21 +340,21 @@ export default function PayrollPage() {
       {/* Pipeline + Donut */}
       {records.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: 14, marginBottom: 20 }}>
-          <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '18px 20px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '18px 20px' }}>
             <p style={{ fontWeight: 600, fontSize: 13, margin: '0 0 16px' }}>{t('payroll_pipeline')}</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               {[
                 { label: t('payroll_drafts'), count: draftCount, color: '#94A3B8', desc: t('payroll_to_validate') },
-                { label: t('payroll_validated'), count: validCount, color: '#F59E0B', desc: t('payroll_to_pay') },
+                { label: t('payroll_validated'), count: validCount, color: 'var(--warn)', desc: t('payroll_to_pay') },
                 { label: t('payroll_paid'), count: paidCount, color: '#22C55E', desc: t('payroll_done') },
               ].map((stage, i) => (
                 <React.Fragment key={stage.label}>
                   <div style={{ flex: 1, textAlign: 'center', padding: '14px 8px', borderRadius: 10, background: stage.color+'12', border: `1px solid ${stage.color}30` }}>
                     <div style={{ fontSize: 30, fontWeight: 700, color: stage.color, lineHeight: 1 }}>{stage.count}</div>
                     <div style={{ fontSize: 11, fontWeight: 600, color: stage.color, marginTop: 2 }}>{stage.label}</div>
-                    <div style={{ fontSize: 10, color: 'var(--fg-muted)', marginTop: 1 }}>{stage.desc}</div>
+                    <div style={{ fontSize: 10, color: 'var(--ink-2)', marginTop: 1 }}>{stage.desc}</div>
                   </div>
-                  {i < 2 && <ArrowRight size={16} style={{ color: 'var(--fg-subtle)', flexShrink: 0 }} />}
+                  {i < 2 && <ArrowRight size={16} style={{ color: 'var(--ink-3)', flexShrink: 0 }} />}
                 </React.Fragment>
               ))}
             </div>
@@ -365,7 +365,7 @@ export default function PayrollPage() {
               </button>
             )}
           </div>
-          <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '18px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '18px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <p style={{ fontWeight: 600, fontSize: 13, margin: '0 0 12px', alignSelf: 'flex-start' }}>{t('payroll_distribution')}</p>
             <DonutChart segments={donutSegments} size={110} />
             <div style={{ marginTop: 12, width: '100%' }}>
@@ -373,7 +373,7 @@ export default function PayrollPage() {
                 <div key={seg.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <div style={{ width: 9, height: 9, borderRadius: 2, background: seg.color }} />
-                    <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{seg.label}</span>
+                    <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>{seg.label}</span>
                   </div>
                   <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg)' }}>{fmt(seg.value)}</span>
                 </div>
@@ -384,8 +384,8 @@ export default function PayrollPage() {
       )}
 
       {/* Table */}
-      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        <div style={{ padding: '13px 20px', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: allMonths ? '140px 1fr 110px 120px 80px 80px 90px 120px' : '1fr 110px 120px 80px 80px 90px 120px', gap: 10, fontSize: 10, fontWeight: 700, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+        <div style={{ padding: '13px 20px', borderBottom: '1px solid var(--line)', display: 'grid', gridTemplateColumns: allMonths ? '140px 1fr 110px 120px 80px 80px 90px 120px' : '1fr 110px 120px 80px 80px 90px 120px', gap: 10, fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           {allMonths && <span>{t('col_date')}</span>}
           <span>{t('employee')}</span><span>Brut</span><span>Net</span><span>CNSS</span><span>IR</span><span>{t('status')}</span><span>Actions</span>
         </div>
@@ -393,18 +393,18 @@ export default function PayrollPage() {
         {isLoading ? (
           <div style={{ padding: 48, textAlign: 'center' }}><Spinner /></div>
         ) : records.length === 0 ? (
-          <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--fg-muted)' }}>
+          <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--ink-2)' }}>
             <BarChart3 size={36} style={{ margin: '0 auto 12px', opacity: 0.2 }} />
             <p style={{ fontSize: 14, marginBottom: 8 }}>{t('payroll_empty')}</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button onClick={() => setShowCreate(true)} style={{ padding: '8px 16px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
                 <span style={{ marginRight: 6 }}>+</span> {t('payroll_new_slip')}
               </button>
-              <button onClick={() => bulkMutation.mutate()} style={{ padding: '8px 16px', background: 'var(--bg-muted)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+              <button onClick={() => bulkMutation.mutate()} style={{ padding: '8px 16px', background: 'var(--surface-2)', color: 'var(--fg)', border: '1px solid var(--line)', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
                 {t('payroll_bulk_generate')}
               </button>
               {!allMonths && (
-                <button onClick={() => setAllMonths(true)} style={{ padding: '8px 16px', background: 'var(--bg-muted)', color: 'var(--fg)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+                <button onClick={() => setAllMonths(true)} style={{ padding: '8px 16px', background: 'var(--surface-2)', color: 'var(--fg)', border: '1px solid var(--line)', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
                   {t('payroll_all_months')}
                 </button>
               )}
@@ -417,13 +417,13 @@ export default function PayrollPage() {
             let paidDate = '';
             try { if (r.paid_at) paidDate = format(new Date(r.paid_at), 'dd/MM/yy'); } catch { /* noop */ }
             return (
-              <div key={r.id} style={{ padding: '12px 20px', borderBottom: i < records.length-1 ? '1px solid var(--border)' : 'none', display: 'grid', gridTemplateColumns: allMonths ? '140px 1fr 110px 120px 80px 80px 90px 120px' : '1fr 110px 120px 80px 80px 90px 120px', gap: 10, alignItems: 'center' }}>
+              <div key={r.id} style={{ padding: '12px 20px', borderBottom: i < records.length-1 ? '1px solid var(--line)' : 'none', display: 'grid', gridTemplateColumns: allMonths ? '140px 1fr 110px 120px 80px 80px 90px 120px' : '1fr 110px 120px 80px 80px 90px 120px', gap: 10, alignItems: 'center' }}>
                 {allMonths && (
                   <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--primary)' }}>{MONTHS[r.month]} {r.year}</span>
                 )}
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 500, margin: 0 }}>{r.employees?.full_name || '—'}</p>
-                  <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{r.employees?.department || r.employees?.position || '—'}</p>
+                  <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{r.employees?.department || r.employees?.position || '—'}</p>
                 </div>
                 <div>
                   <span style={{ fontSize: 13 }}>{fmt(gross)}</span>
@@ -431,7 +431,7 @@ export default function PayrollPage() {
                 </div>
                 <div>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#22C55E' }}>{fmt(r.net_salary)}</span>
-                  <div style={{ marginTop: 4, height: 3, borderRadius: 999, background: 'var(--border)', overflow: 'hidden' }}>
+                  <div style={{ marginTop: 4, height: 3, borderRadius: 999, background: 'var(--line)', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${netPct}%`, background: '#22C55E', borderRadius: 999 }} />
                   </div>
                 </div>
@@ -450,7 +450,7 @@ export default function PayrollPage() {
                       <CheckCircle size={11} /> {t('payroll_pay')}
                     </button>
                   )}
-                  {r.status === 'paid' && paidDate && <span style={{ fontSize: 10, color: 'var(--fg-muted)' }}>{paidDate}</span>}
+                  {r.status === 'paid' && paidDate && <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>{paidDate}</span>}
                   <button className="btn btn-ghost btn-sm" title={t('payroll_print')}
                     onClick={() => printBulletin(r, MONTHS[r.month], r.year, t)}
                     style={{ padding: '3px 6px' }}>

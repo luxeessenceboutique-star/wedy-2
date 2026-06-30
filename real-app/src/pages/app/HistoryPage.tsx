@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Download, Trash2, FileText, Eye } from 'lucide-react';
 import { listDocuments, deleteDocument, downloadDoc, printDocument, viewDocument } from '../../lib/api';
@@ -29,7 +29,7 @@ export default function HistoryPage() {
       <PageHeader title={t('document_history')} subtitle={`${data?.count ?? 0} ${t('recent_documents').toLowerCase()}`} />
 
       <div style={{ position: 'relative', maxWidth: 400, marginBottom: 20 }}>
-        <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)' }} />
+        <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} />
         <input className="input" style={{ paddingLeft: 32 }} placeholder={t('search_documents')} value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
@@ -41,16 +41,16 @@ export default function HistoryPage() {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              <tr>
                 {[t('col_type'), t('col_employee'), t('col_language'), t('col_date'), t('col_actions'), ''].map(h => (
-                  <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 500, color: 'var(--fg-muted)', fontSize: 12 }}>{h}</th>
+                  <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-3)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {docs.map(doc => (
-                <tr key={doc.id} style={{ borderBottom: '1px solid var(--border)' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
+                <tr key={doc.id} style={{ borderBottom: '1px solid var(--line)' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                   onMouseLeave={e => (e.currentTarget.style.background = '')}>
                   <td style={{ padding: '10px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -58,9 +58,9 @@ export default function HistoryPage() {
                       <span style={{ fontWeight: 500 }}>{doc.document_type}</span>
                     </div>
                   </td>
-                  <td style={{ padding: '10px 16px', color: 'var(--fg-muted)' }}>{doc.employees?.full_name || '—'}</td>
+                  <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>{doc.employees?.full_name || '—'}</td>
                   <td style={{ padding: '10px 16px' }}><Badge>{doc.language?.toUpperCase()}</Badge></td>
-                  <td style={{ padding: '10px 16px', color: 'var(--fg-muted)' }}>{new Date(doc.created_at).toLocaleDateString()}</td>
+                  <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>{new Date(doc.created_at).toLocaleDateString()}</td>
                   <td style={{ padding: '10px 16px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button className="btn btn-ghost btn-sm" title={t('preview')}

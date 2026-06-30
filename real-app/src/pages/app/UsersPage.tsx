@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, getApiError, listEmployees } from '../../lib/api';
 import { Spinner, Button, Badge, Avatar, Input, Modal } from '../../components/ui';
@@ -15,10 +15,10 @@ const updateDocRequest = (id: string, body: any) => api.patch(`/users/document-r
 
 // ── Role config ────────────────────────────────────────────────────────────────
 const ROLES = [
-  { value: 'hr',       label: 'Admin RH',  color: '#3b82f6', bg: '#eff6ff',  icon: Shield },
-  { value: 'admin',    label: 'Admin',      color: '#ef4444', bg: '#fef2f2',  icon: Shield },
-  { value: 'employee', label: 'Employé',    color: '#10b981', bg: '#ecfdf5',  icon: User   },
-  { value: 'rh',       label: 'Admin RH',  color: '#3b82f6', bg: '#eff6ff',  icon: Shield },
+  { value: 'hr',       label: 'Admin RH',  color: 'var(--primary)', bg: 'var(--primary-soft)',  icon: Shield },
+  { value: 'admin',    label: 'Admin',      color: 'var(--danger)', bg: '#fef2f2',  icon: Shield },
+  { value: 'employee', label: 'Employé',    color: 'var(--success)', bg: 'var(--success-soft)',  icon: User   },
+  { value: 'rh',       label: 'Admin RH',  color: 'var(--primary)', bg: 'var(--primary-soft)',  icon: Shield },
 ];
 
 function getRoleMeta(role: string) {
@@ -26,10 +26,10 @@ function getRoleMeta(role: string) {
 }
 
 const DOC_STATUS: Record<string, { label: string; color: string }> = {
-  pending:     { label: 'En attente', color: '#f59e0b' },
-  in_progress: { label: 'En cours',   color: '#3b82f6' },
-  completed:   { label: 'Complété',   color: '#10b981' },
-  rejected:    { label: 'Refusé',     color: '#ef4444' },
+  pending:     { label: 'En attente', color: 'var(--warn)' },
+  in_progress: { label: 'En cours',   color: 'var(--primary)' },
+  completed:   { label: 'Complété',   color: 'var(--success)' },
+  rejected:    { label: 'Refusé',     color: 'var(--danger)' },
 };
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -88,14 +88,14 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
   if (created) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ padding: '16px 18px', background: '#ecfdf5', borderRadius: 12, border: '1px solid #a7f3d0', display: 'flex', gap: 12 }}>
-          <CheckCircle size={22} style={{ color: '#10b981', flexShrink: 0, marginTop: 2 }} />
+        <div style={{ padding: '16px 18px', background: 'var(--success-soft)', borderRadius: 12, border: '1px solid #a7f3d0', display: 'flex', gap: 12 }}>
+          <CheckCircle size={22} style={{ color: 'var(--success)', flexShrink: 0, marginTop: 2 }} />
           <div>
             <p style={{ fontWeight: 700, margin: '0 0 4px', color: '#065f46' }}>Compte créé avec succès</p>
             <p style={{ fontSize: 13, color: '#065f46', margin: 0 }}>Transmettez ces identifiants à l'utilisateur.</p>
           </div>
         </div>
-        <div style={{ padding: '14px 16px', background: 'var(--bg-muted)', borderRadius: 10, fontFamily: 'monospace', fontSize: 14 }}>
+        <div style={{ padding: '14px 16px', background: 'var(--surface-2)', borderRadius: 10, fontFamily: 'monospace', fontSize: 14 }}>
           <div style={{ marginBottom: 8 }}><strong>Email :</strong> {created.email}</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span><strong>Mot de passe :</strong> {created.password}</span>
@@ -105,7 +105,7 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
             </button>
           </div>
         </div>
-        <div style={{ padding: '10px 12px', background: role === 'hr_admin' ? '#eff6ff' : '#ecfdf5', borderRadius: 8, fontSize: 12, color: role === 'hr_admin' ? '#1e40af' : '#065f46' }}>
+        <div style={{ padding: '10px 12px', background: role === 'hr_admin' ? 'var(--primary-soft)' : 'var(--success-soft)', borderRadius: 8, fontSize: 12, color: role === 'hr_admin' ? '#1e40af' : '#065f46' }}>
           {role === 'hr_admin'
             ? 'Cet Admin RH peut gérer les employés, documents, congés et toutes les permissions.'
             : "L'employé accède uniquement à son profil, ses documents et ses demandes."}
@@ -122,8 +122,8 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
         <label className="label" style={{ marginBottom: 8, display: 'block' }}>Type de compte *</label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {([
-            { value: 'employee', label: 'Employé',   desc: 'Portail employé uniquement',         icon: User,   color: '#10b981', bg: '#ecfdf5' },
-            { value: 'hr_admin', label: 'Admin RH',  desc: 'Accès complet à la plateforme RH',   icon: Shield, color: '#3b82f6', bg: '#eff6ff' },
+            { value: 'employee', label: 'Employé',   desc: 'Portail employé uniquement',         icon: User,   color: 'var(--success)', bg: 'var(--success-soft)' },
+            { value: 'hr_admin', label: 'Admin RH',  desc: 'Accès complet à la plateforme RH',   icon: Shield, color: 'var(--primary)', bg: 'var(--primary-soft)' },
           ] as const).map(opt => {
             const Icon = opt.icon;
             const active = role === opt.value;
@@ -131,15 +131,15 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
               <button key={opt.value} type="button" onClick={() => setRole(opt.value)}
                 style={{
                   padding: '14px 12px', borderRadius: 10, cursor: 'pointer', textAlign: 'left',
-                  border: active ? `2px solid ${opt.color}` : '2px solid var(--border)',
-                  background: active ? opt.bg : 'var(--bg-elev)',
+                  border: active ? `2px solid ${opt.color}` : '2px solid var(--line)',
+                  background: active ? opt.bg : 'var(--surface)',
                   transition: 'all 0.15s',
                 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <Icon size={16} style={{ color: opt.color }} />
                   <span style={{ fontWeight: 700, fontSize: 13, color: active ? opt.color : 'var(--fg)' }}>{opt.label}</span>
                 </div>
-                <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{opt.desc}</p>
+                <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{opt.desc}</p>
               </button>
             );
           })}
@@ -175,7 +175,7 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
             ))}
           </select>
           {linkedEmpId && (
-            <p style={{ fontSize: 11, color: '#10b981', marginTop: 4 }}>
+            <p style={{ fontSize: 11, color: 'var(--success)', marginTop: 4 }}>
               L'email du profil employé sera mis à jour pour permettre la connexion au portail.
             </p>
           )}
@@ -194,11 +194,11 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
             style={{ paddingRight: 88 }} />
           <div style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 4 }}>
             <button type="button" onClick={() => setShowPwd(!showPwd)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', padding: 4 }}>
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 4 }}>
               {showPwd ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
             <button type="button" onClick={generatePassword}
-              style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', borderRadius: 5, cursor: 'pointer', color: 'var(--primary)', padding: '2px 6px', fontSize: 11, fontWeight: 600 }}>
+              style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 5, cursor: 'pointer', color: 'var(--primary)', padding: '2px 6px', fontSize: 11, fontWeight: 600 }}>
               Générer
             </button>
           </div>
@@ -206,7 +206,7 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
       </div>
 
       {/* Info banner */}
-      <div style={{ padding: '10px 12px', background: role === 'hr_admin' ? '#eff6ff' : '#ecfdf5', borderRadius: 8, fontSize: 12, color: role === 'hr_admin' ? '#1e40af' : '#065f46' }}>
+      <div style={{ padding: '10px 12px', background: role === 'hr_admin' ? 'var(--primary-soft)' : 'var(--success-soft)', borderRadius: 8, fontSize: 12, color: role === 'hr_admin' ? '#1e40af' : '#065f46' }}>
         {role === 'hr_admin'
           ? 'L\'Admin RH aura accès complet : employés, documents, congés, recrutement, paie et permissions.'
           : "L'employé accède uniquement à son portail personnel (profil, congés, documents, formation)."}
@@ -301,19 +301,19 @@ export default function UsersPage() {
       {/* Stats strip */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Total utilisateurs', value: users.length, color: '#6366f1', bg: '#eef2ff' },
-          { label: 'Admins RH',          value: hrCount,      color: '#3b82f6', bg: '#eff6ff' },
-          { label: 'Employés',           value: empCount,     color: '#10b981', bg: '#ecfdf5' },
+          { label: 'Total utilisateurs', value: users.length, color: 'var(--violet)', bg: '#eef2ff' },
+          { label: 'Admins RH',          value: hrCount,      color: 'var(--primary)', bg: 'var(--primary-soft)' },
+          { label: 'Employés',           value: empCount,     color: 'var(--success)', bg: 'var(--success-soft)' },
         ].map(s => (
           <div key={s.label} style={{ flex: 1, padding: '14px 18px', background: s.bg, borderRadius: 12, border: `1px solid ${s.color}22` }}>
             <div style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 12, color: 'var(--fg-muted)', marginTop: 2 }}>{s.label}</div>
+            <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: 24, marginBottom: 20 }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', gap: 24, marginBottom: 20 }}>
         {[
           { id: 'users',        label: `Utilisateurs (${users.length})` },
           { id: 'doc-requests', label: `Demandes documents${pendingDocCount > 0 ? ` · ${pendingDocCount} en attente` : ''}` },
@@ -321,7 +321,7 @@ export default function UsersPage() {
           <button key={t.id} onClick={() => setTab(t.id as any)} style={{
             padding: '10px 0', fontWeight: 600, fontSize: 14,
             borderBottom: tab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-            color: tab === t.id ? 'var(--primary)' : 'var(--fg-muted)',
+            color: tab === t.id ? 'var(--primary)' : 'var(--ink-2)',
             background: 'none', border: 'none', cursor: 'pointer',
           }}>{t.label}</button>
         ))}
@@ -329,11 +329,11 @@ export default function UsersPage() {
 
       {/* ── Users tab ── */}
       {tab === 'users' && (
-        <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
           <div style={{
             display: 'grid', gridTemplateColumns: '2fr 2.5fr 1.2fr 1fr',
-            padding: '10px 20px', borderBottom: '1px solid var(--border)',
-            fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em',
+            padding: '10px 20px', borderBottom: '1px solid var(--line)',
+            fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.05em',
           }}>
             <span>Utilisateur</span><span>Email</span><span>Rôle</span><span>Statut</span>
           </div>
@@ -341,7 +341,7 @@ export default function UsersPage() {
           {isLoading ? (
             <div style={{ padding: 48, textAlign: 'center' }}><Spinner /></div>
           ) : users.length === 0 ? (
-            <div style={{ padding: 48, textAlign: 'center', color: 'var(--fg-muted)' }}>
+            <div style={{ padding: 48, textAlign: 'center', color: 'var(--ink-2)' }}>
               <ShieldCheck size={36} style={{ opacity: 0.2, margin: '0 auto 12px' }} />
               <p style={{ fontWeight: 600 }}>Aucun utilisateur trouvé.</p>
               <p style={{ fontSize: 13 }}>Créez des comptes pour qu'ils accèdent à la plateforme.</p>
@@ -354,17 +354,17 @@ export default function UsersPage() {
               <div key={u.user_id ?? i} style={{
                 display: 'grid', gridTemplateColumns: '2fr 2.5fr 1.2fr 1fr',
                 alignItems: 'center', padding: '14px 20px',
-                borderBottom: i < users.length - 1 ? '1px solid var(--border)' : 'none',
+                borderBottom: i < users.length - 1 ? '1px solid var(--line)' : 'none',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Avatar name={u.full_name || 'U'} size={36} />
                   <span style={{ fontSize: 13, fontWeight: 500 }}>{u.full_name || '—'}</span>
                 </div>
-                <span style={{ fontSize: 13, color: '#0891b2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 13, color: 'var(--primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {u.email || '—'}
                 </span>
                 <RoleDropdown userId={u.user_id} currentRole={u.role} onChanged={refresh} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981', background: '#ecfdf5', padding: '3px 10px', borderRadius: 20, width: 'fit-content' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '3px 10px', borderRadius: 20, width: 'fit-content' }}>
                   Actif
                 </span>
               </div>
@@ -379,7 +379,7 @@ export default function UsersPage() {
           {docLoading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
           ) : (docRequests as any[]).length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
               <ShieldCheck size={36} style={{ opacity: 0.2, margin: '0 auto 12px' }} />
               <p>Aucune demande de document.</p>
             </div>
@@ -390,15 +390,15 @@ export default function UsersPage() {
                 const docLabel = DOC_TYPE_LABELS[r.doc_type] ?? r.doc_type;
                 const emp = r.employees ?? {};
                 return (
-                  <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-elev)' }}>
+                  <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', border: '1px solid var(--line)', borderRadius: 12, background: 'var(--surface)' }}>
                     <Avatar name={emp.full_name ?? '?'} size={40} />
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3 }}>
                         <span style={{ fontWeight: 700, fontSize: 14 }}>{emp.full_name ?? '—'}</span>
-                        <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{emp.department}</span>
+                        <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>{emp.department}</span>
                       </div>
                       <p style={{ fontSize: 13, margin: '0 0 3px' }}>{docLabel}</p>
-                      {r.comment && <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>{r.comment}</p>}
+                      {r.comment && <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{r.comment}</p>}
                     </div>
                     <select value={r.status}
                       onChange={e => updateDocMut.mutate({ id: r.id, body: { status: e.target.value } })}

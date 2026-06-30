@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users, CheckCircle, Clock, FileSignature, Search, ChevronRight,
@@ -35,22 +35,22 @@ function ChecklistBlock({
     <div style={{ marginBottom: 18 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
         <span style={{ fontWeight: 700, fontSize: 13 }}>{label}</span>
-        <span style={{ fontSize: 12, color: pct === 100 ? '#10b981' : 'var(--fg-muted)', fontWeight: 600 }}>{done}/{items.length}</span>
+        <span style={{ fontSize: 12, color: pct === 100 ? 'var(--success)' : 'var(--ink-2)', fontWeight: 600 }}>{done}/{items.length}</span>
       </div>
-      <div style={{ height: 4, background: 'var(--border)', borderRadius: 4, marginBottom: 10 }}>
+      <div style={{ height: 4, background: 'var(--line)', borderRadius: 4, marginBottom: 10 }}>
         <div style={{ height: 4, width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 0.3s' }} />
       </div>
       {items.map(item => (
         <label key={item.id} style={{
           display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px',
-          background: item.done ? color + '15' : 'var(--bg-elev)',
-          border: `1px solid ${item.done ? color + '44' : 'var(--border)'}`,
+          background: item.done ? color + '15' : 'var(--surface)',
+          border: `1px solid ${item.done ? color + '44' : 'var(--line)'}`,
           borderRadius: 8, marginBottom: 5, cursor: 'pointer',
         }}>
           <input type="checkbox" checked={item.done}
             onChange={e => onChange(items.map(i => i.id === item.id ? { ...i, done: e.target.checked } : i))}
             style={{ accentColor: color, width: 15, height: 15 }} />
-          <span style={{ fontSize: 13, flex: 1, textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'var(--fg-muted)' : 'var(--fg)' }}>
+          <span style={{ fontSize: 13, flex: 1, textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'var(--ink-2)' : 'var(--fg)' }}>
             {item.label}
           </span>
           {item.done && <CheckCircle size={13} style={{ color }} />}
@@ -74,7 +74,7 @@ function PulseForm({ employeeId, onDone }: { employeeId: string; onDone: () => v
     <div style={{ display: 'flex', gap: 2 }}>
       {[1,2,3,4,5].map(n => (
         <button key={n} type="button" onClick={() => setForm(f => ({ ...f, [field]: n }))}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: n <= val ? '#f59e0b' : '#d1d5db' }}>★</button>
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: n <= val ? 'var(--warn)' : '#d1d5db' }}>★</button>
       ))}
     </div>
   );
@@ -83,7 +83,7 @@ function PulseForm({ employeeId, onDone }: { employeeId: string; onDone: () => v
       <Input label={`${t('week_label')} #`} type="number" value={form.week_number} onChange={e => setForm(f => ({ ...f, week_number: +e.target.value }))} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
         {[['satisfaction_score', t('pulse_sat')], ['integration_score', t('pulse_int')], ['clarity_score', t('pulse_cla')]].map(([field, lbl]) => (
-          <div key={field} style={{ padding: '10px 12px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 10, textAlign: 'center' }}>
+          <div key={field} style={{ padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10, textAlign: 'center' }}>
             <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>{lbl}</p>
             <StarIcon field={field} val={(form as any)[field]} />
           </div>
@@ -110,10 +110,10 @@ function EmployeeOnboardingDrawer({ employee, onClose }: { employee: any; onClos
   const [showPulseForm, setShowPulseForm] = useState(false);
 
   const PHASES = [
-    { id: 'day30', label: '30 '+t('days_short'), color: '#f59e0b', bg: '#fffbeb' },
-    { id: 'day60', label: '60 '+t('days_short'), color: '#3b82f6', bg: '#eff6ff' },
-    { id: 'day90', label: '90 '+t('days_short'), color: '#8b5cf6', bg: '#f5f3ff' },
-    { id: 'completed', label: t('status_completed_item'), color: '#10b981', bg: '#ecfdf5' },
+    { id: 'day30', label: '30 '+t('days_short'), color: 'var(--warn)', bg: 'var(--warn-soft)' },
+    { id: 'day60', label: '60 '+t('days_short'), color: 'var(--primary)', bg: 'var(--primary-soft)' },
+    { id: 'day90', label: '90 '+t('days_short'), color: 'var(--violet)', bg: 'var(--violet-soft)' },
+    { id: 'completed', label: t('status_completed_item'), color: 'var(--success)', bg: 'var(--success-soft)' },
   ];
   const phaseMeta = (p: string) => PHASES.find(x => x.id === p) ?? PHASES[0];
   const phaseIdx  = (p: string) => PHASES.findIndex(x => x.id === p);
@@ -156,19 +156,19 @@ function EmployeeOnboardingDrawer({ employee, onClose }: { employee: any; onClos
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }}>
       <div style={{ flex: 1, background: 'rgba(0,0,0,0.4)' }} onClick={onClose} />
-      <div style={{ width: 600, background: 'var(--bg)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      <div style={{ width: 600, background: 'var(--bg)', borderLeft: '1px solid var(--line)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         {/* Header */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 16, alignItems: 'center' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--line)', display: 'flex', gap: 16, alignItems: 'center' }}>
           <Avatar name={employee.full_name} src={employee.photo_url} size={52} />
           <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>{employee.full_name}</h2>
             <p style={{ fontSize: 13, color: 'var(--primary)', margin: '2px 0' }}>{employee.position}</p>
-            <div style={{ display: 'flex', gap: 10, fontSize: 12, color: 'var(--fg-muted)' }}>
+            <div style={{ display: 'flex', gap: 10, fontSize: 12, color: 'var(--ink-2)' }}>
               {daysSinceHire !== null && <span><Clock size={11} /> J+{daysSinceHire}</span>}
-              {ob?.contract_signed && <span style={{ color: '#10b981' }}><CheckCircle size={11} /> {t('status_signed')}</span>}
+              {ob?.contract_signed && <span style={{ color: 'var(--success)' }}><CheckCircle size={11} /> {t('status_signed')}</span>}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)' }}><X size={20} /></button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)' }}><X size={20} /></button>
         </div>
 
         {isLoading ? (
@@ -181,20 +181,20 @@ function EmployeeOnboardingDrawer({ employee, onClose }: { employee: any; onClos
                 <span style={{ fontWeight: 700, fontSize: 14 }}>{t('global_progress')}</span>
                 <span style={{ fontWeight: 800, fontSize: 22, color: '#667eea' }}>{globalPct}%</span>
               </div>
-              <div style={{ height: 8, background: 'var(--border)', borderRadius: 8 }}>
+              <div style={{ height: 8, background: 'var(--line)', borderRadius: 8 }}>
                 <div style={{ height: 8, width: `${globalPct}%`, background: 'linear-gradient(90deg,#667eea,#764ba2)', borderRadius: 8, transition: 'width 0.4s' }} />
               </div>
             </div>
 
             {/* Phase stepper */}
-            <div style={{ display: 'flex', gap: 0, background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', gap: 0, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
               {PHASES.map((p, i) => (
                 <button key={p.id} onClick={() => patchMut.mutate({ phase: p.id })}
                   style={{
                     flex: 1, padding: '9px 4px', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: phase === p.id ? 700 : 500,
                     background: phase === p.id ? p.color : i < pi ? p.bg : 'transparent',
-                    color: phase === p.id ? '#fff' : i < pi ? p.color : 'var(--fg-muted)',
-                    borderRight: i < 3 ? '1px solid var(--border)' : 'none', transition: 'all 0.2s',
+                    color: phase === p.id ? '#fff' : i < pi ? p.color : 'var(--ink-2)',
+                    borderRight: i < 3 ? '1px solid var(--line)' : 'none', transition: 'all 0.2s',
                   }}>
                   {i < pi && phase !== p.id && <CheckCircle size={11} style={{ display: 'inline', marginRight: 3 }} />}
                   {p.label}
@@ -204,10 +204,10 @@ function EmployeeOnboardingDrawer({ employee, onClose }: { employee: any; onClos
 
             {/* Contract + buddy */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div style={{ padding: '12px 14px', border: `1px solid ${ob?.contract_signed ? '#10b98144' : 'var(--border)'}`, borderRadius: 10, background: ob?.contract_signed ? '#ecfdf5' : 'var(--bg-elev)' }}>
-                <p style={{ fontSize: 12, fontWeight: 700, marginBottom: 8, color: 'var(--fg-muted)', textTransform: 'uppercase' }}>{t('file_contract')}</p>
+              <div style={{ padding: '12px 14px', border: `1px solid ${ob?.contract_signed ? '#10b98144' : 'var(--line)'}`, borderRadius: 10, background: ob?.contract_signed ? 'var(--success-soft)' : 'var(--surface)' }}>
+                <p style={{ fontSize: 12, fontWeight: 700, marginBottom: 8, color: 'var(--ink-2)', textTransform: 'uppercase' }}>{t('file_contract')}</p>
                 {ob?.contract_signed ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#10b981', fontWeight: 600, fontSize: 13 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--success)', fontWeight: 600, fontSize: 13 }}>
                     <CheckCircle size={14} /> {t('status_signed')} {safeFormat(ob.contract_signed_at)}
                   </div>
                 ) : (
@@ -216,8 +216,8 @@ function EmployeeOnboardingDrawer({ employee, onClose }: { employee: any; onClos
                   </Button>
                 )}
               </div>
-              <div style={{ padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--bg-elev)' }}>
-                <p style={{ fontSize: 12, fontWeight: 700, marginBottom: 8, color: 'var(--fg-muted)', textTransform: 'uppercase' }}>Buddy</p>
+              <div style={{ padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--surface)' }}>
+                <p style={{ fontSize: 12, fontWeight: 700, marginBottom: 8, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Buddy</p>
                 <Input placeholder="Buddy Name" value={ob?.buddy_name ?? ''}
                   onChange={e => patchMut.mutate({ buddy_name: e.target.value })}
                   style={{ marginBottom: 4 }} />
@@ -225,12 +225,12 @@ function EmployeeOnboardingDrawer({ employee, onClose }: { employee: any; onClos
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: 20 }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', gap: 20 }}>
               {[{ id: 'plan', label: 'Plan 30-60-90' }, { id: 'pulse', label: `Pulse surveys (${pulses.length})` }].map(t_item => (
                 <button key={t_item.id} onClick={() => setTab(t_item.id as any)} style={{
                   padding: '8px 0', fontSize: 13, fontWeight: 600,
                   borderBottom: tab === t_item.id ? '2px solid var(--primary)' : '2px solid transparent',
-                  color: tab === t_item.id ? 'var(--primary)' : 'var(--fg-muted)',
+                  color: tab === t_item.id ? 'var(--primary)' : 'var(--ink-2)',
                   background: 'none', border: 'none', cursor: 'pointer',
                 }}>{t_item.label}</button>
               ))}
@@ -238,11 +238,11 @@ function EmployeeOnboardingDrawer({ employee, onClose }: { employee: any; onClos
 
             {tab === 'plan' && ob && (
               <div>
-                <ChecklistBlock label={`30 ${t('days_short')}`} color="#f59e0b" items={ob.plan_30 ?? []}
+                <ChecklistBlock label={`30 ${t('days_short')}`} color="var(--warn)" items={ob.plan_30 ?? []}
                   onChange={items => patchMut.mutate({ plan_30: items })} />
-                <ChecklistBlock label={`60 ${t('days_short')}`} color="#3b82f6" items={ob.plan_60 ?? []}
+                <ChecklistBlock label={`60 ${t('days_short')}`} color="var(--primary)" items={ob.plan_60 ?? []}
                   onChange={items => patchMut.mutate({ plan_60: items })} />
-                <ChecklistBlock label={`90 ${t('days_short')}`} color="#8b5cf6" items={ob.plan_90 ?? []}
+                <ChecklistBlock label={`90 ${t('days_short')}`} color="var(--violet)" items={ob.plan_90 ?? []}
                   onChange={items => patchMut.mutate({ plan_90: items })} />
               </div>
             )}
@@ -250,7 +250,7 @@ function EmployeeOnboardingDrawer({ employee, onClose }: { employee: any; onClos
             {tab === 'pulse' && (
               <div>
                 {showPulseForm ? (
-                  <div style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 16 }}>
+                  <div style={{ padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 16 }}>
                     <PulseForm employeeId={employee.id} onDone={() => setShowPulseForm(false)} />
                   </div>
                 ) : (
@@ -259,27 +259,27 @@ function EmployeeOnboardingDrawer({ employee, onClose }: { employee: any; onClos
                   </Button>
                 )}
                 {pulses.length === 0 ? (
-                  <p style={{ color: 'var(--fg-muted)', fontSize: 13, textAlign: 'center', padding: 20 }}>{t('no_pulse')}</p>
+                  <p style={{ color: 'var(--ink-2)', fontSize: 13, textAlign: 'center', padding: 20 }}>{t('no_pulse')}</p>
                 ) : (
                   pulses.map((p: any) => {
                     const avg = ((p.satisfaction_score + p.integration_score + p.clarity_score) / 3).toFixed(1);
                     return (
-                      <div key={p.id} style={{ padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 8, background: 'var(--bg-elev)' }}>
+                      <div key={p.id} style={{ padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 8, background: 'var(--surface)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                           <span style={{ fontWeight: 700, fontSize: 13 }}>{t('week_label')} {p.week_number}</span>
                           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            <span style={{ fontWeight: 800, color: '#f59e0b' }}>★ {avg}/5</span>
-                            <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{safeFormat(p.created_at)}</span>
+                            <span style={{ fontWeight: 800, color: 'var(--warn)' }}>★ {avg}/5</span>
+                            <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>{safeFormat(p.created_at)}</span>
                             <button onClick={() => delPulseMut.mutate(p.id)}
                               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)' }}><Trash2 size={12} /></button>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--fg-muted)', marginBottom: p.comment ? 6 : 0 }}>
+                        <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--ink-2)', marginBottom: p.comment ? 6 : 0 }}>
                           <span>{t('pulse_sat')}: <b>{p.satisfaction_score}/5</b></span>
                           <span>{t('pulse_int')}: <b>{p.integration_score}/5</b></span>
                           <span>{t('pulse_cla')}: <b>{p.clarity_score}/5</b></span>
                         </div>
-                        {p.comment && <p style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--fg-muted)', margin: 0 }}>"{p.comment}"</p>}
+                        {p.comment && <p style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--ink-2)', margin: 0 }}>"{p.comment}"</p>}
                       </div>
                     );
                   })
@@ -318,11 +318,11 @@ export default function EmployeeOnboardingPage() {
   const display = recentHires.length > 0 ? recentHires : employees.slice(0, 20);
 
   const phaseColor = (days: number | null) => {
-    if (days === null) return '#64748b';
-    if (days <= 30) return '#f59e0b';
-    if (days <= 60) return '#3b82f6';
-    if (days <= 90) return '#8b5cf6';
-    return '#10b981';
+    if (days === null) return 'var(--ink-2)';
+    if (days <= 30) return 'var(--warn)';
+    if (days <= 60) return 'var(--primary)';
+    if (days <= 90) return 'var(--violet)';
+    return 'var(--success)';
   };
   const phaseLabel = (days: number | null) => {
     if (days === null) return '—';
@@ -347,7 +347,7 @@ export default function EmployeeOnboardingPage() {
 
       {/* Search */}
       <div style={{ position: 'relative', marginBottom: 20 }}>
-        <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
+        <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-2)' }} />
         <input className="input" style={{ paddingLeft: 36 }} placeholder={`${t('search')}...`}
           value={search} onChange={e => setSearch(e.target.value)} />
       </div>
@@ -355,7 +355,7 @@ export default function EmployeeOnboardingPage() {
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
       ) : display.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
           <UserCheck size={40} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
           <p style={{ fontWeight: 500 }}>{t('no_recent_hires')}</p>
           <p style={{ fontSize: 13 }}>{t('no_recent_hires_desc')}</p>
@@ -377,7 +377,7 @@ export default function EmployeeOnboardingPage() {
                   </div>
                   <span style={{ background: color + '22', color, fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 6 }}>{label}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--fg-muted)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--ink-2)' }}>
                   <span>{emp.department || '—'}</span>
                   <span>{t('hire_date_label')}: {safeFormat(emp.hire_date)}</span>
                 </div>

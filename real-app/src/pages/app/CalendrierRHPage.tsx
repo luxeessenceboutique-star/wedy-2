@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import {
     format, addMonths, subMonths, startOfMonth, endOfMonth,
     startOfWeek, endOfWeek, isSameMonth, isSameDay,
@@ -123,10 +123,10 @@ export default function CalendrierRHPage() {
         const weekDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
         return (
-            <div style={{ background: 'var(--bg)', borderRadius: 16, border: '1px solid var(--border)', overflow: 'hidden' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--bg-muted)', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ background: 'var(--bg)', borderRadius: 16, border: '1px solid var(--line)', overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>
                     {weekDays.map(d => (
-                        <div key={d} style={{ padding: '12px', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <div key={d} style={{ padding: '12px', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             {d}
                         </div>
                     ))}
@@ -147,12 +147,12 @@ export default function CalendrierRHPage() {
                                     setViewMode('day');
                                 }}
                                 style={{
-                                    minHeight: 120, padding: 8, borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)',
-                                    background: !isCurrentMonth ? 'var(--bg-muted)' : isToday ? 'var(--primary-soft)' : 'var(--bg)',
+                                    minHeight: 120, padding: 8, borderRight: '1px solid var(--line)', borderBottom: '1px solid var(--line)',
+                                    background: !isCurrentMonth ? 'var(--surface-2)' : isToday ? 'var(--primary-soft)' : 'var(--bg)',
                                     opacity: !isCurrentMonth ? 0.5 : 1, cursor: 'pointer', transition: 'all 0.2s'
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = isToday ? 'var(--primary-soft)' : 'var(--bg-elev)'}
-                                onMouseLeave={e => e.currentTarget.style.background = !isCurrentMonth ? 'var(--bg-muted)' : isToday ? 'var(--primary-soft)' : 'var(--bg)'}
+                                onMouseEnter={e => e.currentTarget.style.background = isToday ? 'var(--primary-soft)' : 'var(--surface)'}
+                                onMouseLeave={e => e.currentTarget.style.background = !isCurrentMonth ? 'var(--surface-2)' : isToday ? 'var(--primary-soft)' : 'var(--bg)'}
                             >
                                 <span style={{
                                     display: 'inline-flex', width: 24, height: 24, alignItems: 'center', justifyContent: 'center',
@@ -172,7 +172,7 @@ export default function CalendrierRHPage() {
                                             }}
                                             style={{
                                                 fontSize: 10, padding: '4px 8px', borderRadius: 6, cursor: 'pointer',
-                                                background: e.status === 'realized' ? '#dcfce7' : e.status === 'confirmed' ? '#eff6ff' : '#fef3c7',
+                                                background: e.status === 'realized' ? 'var(--success-soft)' : e.status === 'confirmed' ? 'var(--primary-soft)' : 'var(--warn-soft)',
                                                 color: e.status === 'realized' ? '#166534' : e.status === 'confirmed' ? '#1e40af' : '#92400e',
                                                 border: `1px solid ${e.status === 'realized' ? '#bbf7d0' : e.status === 'confirmed' ? '#bfdbfe' : '#fde68a'}`,
                                                 fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -208,7 +208,7 @@ export default function CalendrierRHPage() {
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                 <div style={{
-                    padding: 24, background: 'white', borderRadius: 20, border: '1px solid var(--border)',
+                    padding: 24, background: 'white', borderRadius: 20, border: '1px solid var(--line)',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     boxShadow: 'var(--shadow-sm)'
                 }}>
@@ -218,7 +218,7 @@ export default function CalendrierRHPage() {
                         </div>
                         <div>
                             <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{format(currentDate, 'EEEE d MMMM yyyy', { locale: fr })}</h2>
-                            <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: 0 }}>{t('cal_interviews_count').replace('{n}', String(dayInterviews.length))}</p>
+                            <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: 0 }}>{t('cal_interviews_count').replace('{n}', String(dayInterviews.length))}</p>
                         </div>
                     </div>
                     <Button variant="primary" onClick={() => setIsModalOpen(true)}>
@@ -229,12 +229,12 @@ export default function CalendrierRHPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                     {dayInterviews.length > 0 ? dayInterviews.map(interview => (
                         <div key={interview.id} style={{
-                            background: 'white', borderRadius: 20, border: '1px solid var(--border)', padding: 24,
+                            background: 'white', borderRadius: 20, border: '1px solid var(--line)', padding: 24,
                             display: 'flex', gap: 20, position: 'relative', overflow: 'hidden', boxShadow: 'var(--shadow-sm)'
                         }}>
                             <div style={{ position: 'absolute', left: 0, top: 0, width: 4, height: '100%', background: 'var(--primary)' }} />
-                            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Clock size={20} style={{ color: 'var(--fg-muted)' }} />
+                            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Clock size={20} style={{ color: 'var(--ink-2)' }} />
                             </div>
                             <div style={{ flex: 1 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -242,14 +242,14 @@ export default function CalendrierRHPage() {
                                         <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, textTransform: 'uppercase' }}>
                                             {(interview as any).candidate_name || t('cal_candidate_default')}
                                         </h3>
-                                        <div style={{ padding: '4px 8px', borderRadius: 6, background: '#eff6ff', color: '#1e40af', fontSize: 10, fontWeight: 700 }}>{t('cal_interview_rh')}</div>
-                                        <div style={{ padding: '4px 8px', borderRadius: 6, background: '#dcfce7', color: '#166534', fontSize: 10, fontWeight: 700 }}>{t('cal_done_badge')}</div>
+                                        <div style={{ padding: '4px 8px', borderRadius: 6, background: 'var(--primary-soft)', color: '#1e40af', fontSize: 10, fontWeight: 700 }}>{t('cal_interview_rh')}</div>
+                                        <div style={{ padding: '4px 8px', borderRadius: 6, background: 'var(--success-soft)', color: '#166534', fontSize: 10, fontWeight: 700 }}>{t('cal_done_badge')}</div>
                                     </div>
-                                    <button style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', fontSize: 12, fontWeight: 700 }}>
+                                    <button style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid var(--line)', background: 'transparent', fontSize: 12, fontWeight: 700 }}>
                                         {t('edit')}
                                     </button>
                                 </div>
-                                <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--fg-muted)', marginBottom: 12 }}>
+                                <div style={{ display: 'flex', gap: 24, fontSize: 13, color: 'var(--ink-2)', marginBottom: 12 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                         <Clock size={14} /> {interview.start_time} - {interview.end_time}
                                     </div>
@@ -257,7 +257,7 @@ export default function CalendrierRHPage() {
                                         <Users size={14} /> {t('cal_recruiter_short')}: RH Tython
                                     </div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--fg-muted)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-2)' }}>
                                     <Filter size={12} /> {t('cal_auto_planned')} {(interview as any).job_title || 'TEST'}
                                 </div>
                             </div>
@@ -275,7 +275,7 @@ export default function CalendrierRHPage() {
     };
 
     const renderWeekView = () => {
-        return <div style={{ padding: 40, textAlign: 'center', background: 'var(--bg-elev)', borderRadius: 16 }}>{t('cal_week_wip')}</div>;
+        return <div style={{ padding: 40, textAlign: 'center', background: 'var(--surface)', borderRadius: 16 }}>{t('cal_week_wip')}</div>;
     };
 
     if (loading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><Spinner /></div>;
@@ -287,12 +287,12 @@ export default function CalendrierRHPage() {
                     <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>
                         {viewMode === 'day' ? format(currentDate, 'd MMMM yyyy', { locale: fr }) : t('cal_title')}
                     </h1>
-                    <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: 0 }}>
+                    <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: 0 }}>
                         {viewMode === 'day' ? t('cal_subtitle_day') : t('cal_subtitle_month')}
                     </p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ display: 'flex', background: 'var(--bg-elev)', borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--line)', overflow: 'hidden' }}>
                         {(['month', 'week', 'day'] as const).map(mode => (
                             <button
                                 key={mode}
@@ -300,7 +300,7 @@ export default function CalendrierRHPage() {
                                 style={{
                                     padding: '8px 16px', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer',
                                     background: viewMode === mode ? 'white' : 'transparent',
-                                    color: viewMode === mode ? 'var(--primary)' : 'var(--fg-muted)',
+                                    color: viewMode === mode ? 'var(--primary)' : 'var(--ink-2)',
                                     boxShadow: viewMode === mode ? 'var(--shadow-sm)' : 'none'
                                 }}
                             >
@@ -308,21 +308,21 @@ export default function CalendrierRHPage() {
                             </button>
                         ))}
                     </div>
-                    <div style={{ display: 'flex', gap: 4, background: 'var(--bg-elev)', padding: 4, borderRadius: 10, border: '1px solid var(--border)' }}>
-                        <button onClick={prevPeriod} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)' }}><ChevronLeft size={18} /></button>
+                    <div style={{ display: 'flex', gap: 4, background: 'var(--surface)', padding: 4, borderRadius: 10, border: '1px solid var(--line)' }}>
+                        <button onClick={prevPeriod} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)' }}><ChevronLeft size={18} /></button>
                         <span style={{ padding: '4px 12px', fontSize: 14, fontWeight: 700, minWidth: 150, textAlign: 'center' }}>
                             {viewMode === 'day'
                                 ? format(currentDate, 'd MMMM yyyy', { locale: fr })
                                 : format(currentDate, 'MMMM yyyy', { locale: fr })}
                         </span>
-                        <button onClick={nextPeriod} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)' }}><ChevronRight size={18} /></button>
+                        <button onClick={nextPeriod} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)' }}><ChevronRight size={18} /></button>
                     </div>
                     <button
                         onClick={() => {
                             setNewInterview({ ...newInterview, date: format(currentDate, 'yyyy-MM-dd') });
                             setIsModalOpen(true);
                         }}
-                        style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', fontSize: 12, fontWeight: 700 }}
+                        style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid var(--line)', background: 'transparent', fontSize: 12, fontWeight: 700 }}
                     >
                         {t('cal_new_btn')}
                     </button>
@@ -337,20 +337,20 @@ export default function CalendrierRHPage() {
                                 <Users size={16} style={{ color: 'var(--primary)' }} /> {t('cal_available_candidates')}
                             </h3>
                             <div style={{ position: 'relative', marginBottom: 16 }}>
-                                <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
+                                <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-2)' }} />
                                 <input
                                     type="text" placeholder={t('search')}
-                                    style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: 10, border: '1px solid var(--border)', fontSize: 13 }}
+                                    style={{ width: '100%', padding: '8px 10px 8px 32px', borderRadius: 10, border: '1px solid var(--line)', fontSize: 13 }}
                                 />
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                                 {candidates.slice(0, 3).map(c => (
-                                    <div key={c.id} style={{ padding: 12, borderRadius: 12, background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
+                                    <div key={c.id} style={{ padding: 12, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--line)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <p style={{ fontSize: 12, fontWeight: 800, margin: 0 }}>{c.full_name || (c as any).candidate_name}</p>
-                                            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: '#dcfce7', color: '#166534', fontWeight: 700 }}>{t('cal_already_done')}</span>
+                                            <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'var(--success-soft)', color: '#166534', fontWeight: 700 }}>{t('cal_already_done')}</span>
                                         </div>
-                                        <p style={{ fontSize: 10, color: 'var(--fg-muted)', margin: '2px 0 0' }}>{c.position || 'TEST'}</p>
+                                        <p style={{ fontSize: 10, color: 'var(--ink-2)', margin: '2px 0 0' }}>{c.position || 'TEST'}</p>
                                     </div>
                                 ))}
                             </div>
@@ -389,19 +389,19 @@ export default function CalendrierRHPage() {
                     background: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
                     <div style={{
-                        background: 'white', border: '1px solid var(--border)', borderRadius: 20, width: 600, maxWidth: '90%',
+                        background: 'white', border: '1px solid var(--line)', borderRadius: 20, width: 600, maxWidth: '90%',
                         maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: 'var(--shadow-lg)'
                     }}>
-                        <div style={{ padding: 24, borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ padding: 24, borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>{t('cal_modal_title')}</h2>
-                            <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)' }}><X size={20} /></button>
+                            <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)' }}><X size={20} /></button>
                         </div>
 
                         <div style={{ padding: 24, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                 <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_candidate_default')}</label>
                                 <select
-                                    style={{ padding: 12, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elev)', fontSize: 14 }}
+                                    style={{ padding: 12, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', fontSize: 14 }}
                                     value={newInterview.candidate_id}
                                     onChange={e => setNewInterview({ ...newInterview, candidate_id: e.target.value })}
                                 >
@@ -417,7 +417,7 @@ export default function CalendrierRHPage() {
                                     <label style={{ fontSize: 13, fontWeight: 700 }}>{t('ef_hire_date')}</label>
                                     <input
                                         type="date"
-                                        style={{ padding: 12, borderRadius: 12, border: '1px solid var(--border)', fontSize: 14 }}
+                                        style={{ padding: 12, borderRadius: 12, border: '1px solid var(--line)', fontSize: 14 }}
                                         value={newInterview.date}
                                         onChange={e => setNewInterview({ ...newInterview, date: e.target.value })}
                                     />
@@ -425,7 +425,7 @@ export default function CalendrierRHPage() {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                     <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_interview_type')}</label>
                                     <select
-                                        style={{ padding: 12, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elev)', fontSize: 14 }}
+                                        style={{ padding: 12, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', fontSize: 14 }}
                                         value={newInterview.type}
                                         onChange={e => setNewInterview({ ...newInterview, type: e.target.value })}
                                     >
@@ -440,10 +440,10 @@ export default function CalendrierRHPage() {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                     <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_start_time')}</label>
                                     <div style={{ position: 'relative' }}>
-                                        <Clock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
+                                        <Clock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-2)' }} />
                                         <input
                                             type="time"
-                                            style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: 12, border: '1px solid var(--border)', fontSize: 14 }}
+                                            style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: 12, border: '1px solid var(--line)', fontSize: 14 }}
                                             value={newInterview.start_time}
                                             onChange={e => setNewInterview({ ...newInterview, start_time: e.target.value })}
                                         />
@@ -452,10 +452,10 @@ export default function CalendrierRHPage() {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                     <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_end_time')}</label>
                                     <div style={{ position: 'relative' }}>
-                                        <Clock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
+                                        <Clock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-2)' }} />
                                         <input
                                             type="time"
-                                            style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: 12, border: '1px solid var(--border)', fontSize: 14 }}
+                                            style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: 12, border: '1px solid var(--line)', fontSize: 14 }}
                                             value={newInterview.end_time}
                                             onChange={e => setNewInterview({ ...newInterview, end_time: e.target.value })}
                                         />
@@ -467,7 +467,7 @@ export default function CalendrierRHPage() {
                                 <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_recruiter_short')}</label>
                                 <input
                                     type="text" placeholder={t('cal_recruiter_ph')}
-                                    style={{ padding: 12, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elev)', fontSize: 14 }}
+                                    style={{ padding: 12, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', fontSize: 14 }}
                                     value={newInterview.recruiter_name}
                                     onChange={e => setNewInterview({ ...newInterview, recruiter_name: e.target.value })}
                                 />
@@ -476,10 +476,10 @@ export default function CalendrierRHPage() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                 <label style={{ fontSize: 13, fontWeight: 700 }}>{t('cal_meet_link')}</label>
                                 <div style={{ position: 'relative' }}>
-                                    <Video size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
+                                    <Video size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-2)' }} />
                                     <input
                                         type="text" placeholder="https://meet.google.com/..."
-                                        style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elev)', fontSize: 14 }}
+                                        style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)', fontSize: 14 }}
                                         value={newInterview.meet_link}
                                         onChange={e => setNewInterview({ ...newInterview, meet_link: e.target.value })}
                                     />
@@ -487,7 +487,7 @@ export default function CalendrierRHPage() {
                             </div>
                         </div>
 
-                        <div style={{ padding: 24, borderTop: '1px solid var(--border)', display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                        <div style={{ padding: 24, borderTop: '1px solid var(--line)', display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
                             <Button variant="ghost" onClick={() => setIsModalOpen(false)}>{t('cancel')}</Button>
                             <Button variant="primary" onClick={handleSaveInterview}>{t('cal_save_interview')}</Button>
                         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { api, getApiError } from '../../lib/api';
@@ -31,10 +31,10 @@ export default function MyDocumentsPage() {
   ];
 
   const STATUS_META: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-    pending:     { label: t('doc_status_pending'),     color: '#f59e0b', bg: '#fffbeb', icon: <Clock size={13} /> },
-    in_progress: { label: t('doc_status_in_progress'), color: '#3b82f6', bg: '#eff6ff', icon: <Clock size={13} /> },
-    completed:   { label: t('doc_status_completed'),   color: '#10b981', bg: '#ecfdf5', icon: <CheckCircle size={13} /> },
-    rejected:    { label: t('doc_status_rejected'),    color: '#ef4444', bg: '#fef2f2', icon: <XCircle size={13} /> },
+    pending:     { label: t('doc_status_pending'),     color: 'var(--warn)', bg: 'var(--warn-soft)', icon: <Clock size={13} /> },
+    in_progress: { label: t('doc_status_in_progress'), color: 'var(--primary)', bg: 'var(--primary-soft)', icon: <Clock size={13} /> },
+    completed:   { label: t('doc_status_completed'),   color: 'var(--success)', bg: 'var(--success-soft)', icon: <CheckCircle size={13} /> },
+    rejected:    { label: t('doc_status_rejected'),    color: 'var(--danger)', bg: '#fef2f2', icon: <XCircle size={13} /> },
   };
 
   const { data: requests = [], isLoading } = useQuery({
@@ -58,7 +58,7 @@ export default function MyDocumentsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>{t('mydoc_title')}</h1>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: 0 }}>{t('mydoc_subtitle')}</p>
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>{t('mydoc_subtitle')}</p>
         </div>
         <Button onClick={() => setShowForm(true)}>
           <Plus size={14} /> {t('mydoc_request_btn')}
@@ -72,7 +72,7 @@ export default function MyDocumentsPage() {
             <p style={{ fontSize: 22, fontWeight: 800, margin: '0 0 2px', color: meta.color }}>
               {(requests as any[]).filter((r: any) => r.status === key).length}
             </p>
-            <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{meta.label}</p>
+            <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{meta.label}</p>
           </div>
         ))}
       </div>
@@ -81,7 +81,7 @@ export default function MyDocumentsPage() {
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
       ) : (requests as any[]).length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
           <FileText size={40} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
           <p style={{ fontWeight: 500 }}>{t('mydoc_empty')}</p>
           <Button onClick={() => setShowForm(true)} style={{ marginTop: 8 }}>
@@ -96,9 +96,9 @@ export default function MyDocumentsPage() {
             return (
               <div key={r.id} style={{
                 display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 18px', border: '1px solid var(--border)',
+                padding: '14px 18px', border: '1px solid var(--line)',
                 borderLeft: `4px solid ${sm.color}`,
-                borderRadius: 12, background: 'var(--bg-elev)',
+                borderRadius: 12, background: 'var(--surface)',
               }}>
                 <div style={{
                   width: 40, height: 40, borderRadius: 10, flexShrink: 0,
@@ -108,12 +108,12 @@ export default function MyDocumentsPage() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontWeight: 700, fontSize: 14, margin: '0 0 3px' }}>{docLabel}</p>
-                  <div style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', gap: 14 }}>
+                  <div style={{ fontSize: 12, color: 'var(--ink-2)', display: 'flex', gap: 14 }}>
                     {r.comment && <span>{r.comment}</span>}
                     <span>{t('mydoc_requested_on')} {safeFormat(r.created_at)}</span>
                   </div>
                   {r.hr_note && (
-                    <p style={{ fontSize: 12, color: '#0891b2', padding: '4px 8px', background: '#ecfeff', borderRadius: 6, margin: '6px 0 0' }}>
+                    <p style={{ fontSize: 12, color: 'var(--primary)', padding: '4px 8px', background: 'var(--primary-soft)', borderRadius: 6, margin: '6px 0 0' }}>
                       {t('mydoc_hr_note_prefix')} {r.hr_note}
                     </p>
                   )}

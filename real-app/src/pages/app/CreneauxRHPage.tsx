@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     Clock, Calendar as CalendarIcon, Plus, Trash2,
     Save, ChevronLeft, ChevronRight, Check
@@ -130,15 +130,15 @@ export default function CreneauxRHPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
                 <div>
                     <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, color: 'var(--fg)' }}>{t('creneaux_title')}</h1>
-                    <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: '4px 0 0' }}>{t('creneaux_subtitle')}</p>
+                    <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: '4px 0 0' }}>{t('creneaux_subtitle')}</p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
-                    <div style={{ display: 'flex', gap: 4, background: 'var(--bg-elev)', padding: 4, borderRadius: 10, border: '1px solid var(--border)' }}>
-                        <button onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)' }}><ChevronLeft size={18} /></button>
+                    <div style={{ display: 'flex', gap: 4, background: 'var(--surface)', padding: 4, borderRadius: 10, border: '1px solid var(--line)' }}>
+                        <button onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)' }}><ChevronLeft size={18} /></button>
                         <span style={{ padding: '4px 12px', fontSize: 14, fontWeight: 700, minWidth: 200, textAlign: 'center', color: 'var(--fg)' }}>
                             {t('creneaux_week_of').replace('{date}', format(currentWeek, 'd MMMM', { locale: fr }))}
                         </span>
-                        <button onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)' }}><ChevronRight size={18} /></button>
+                        <button onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)' }}><ChevronRight size={18} /></button>
                     </div>
                     {newSlots.length > 0 && (
                         <Button onClick={handleSaveNewSlots} loading={saving} variant="primary">
@@ -161,10 +161,10 @@ export default function CreneauxRHPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Clock size={16} style={{ color: 'var(--primary)' }} />
                         <input type="time" value={bulkMode.start} onChange={e => setBulkMode({ ...bulkMode, start: e.target.value })}
-                            style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }} />
+                            style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }} />
                         <span>{t('creneaux_to')}</span>
                         <input type="time" value={bulkMode.end} onChange={e => setBulkMode({ ...bulkMode, end: e.target.value })}
-                            style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13 }} />
+                            style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }} />
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -172,7 +172,7 @@ export default function CreneauxRHPage() {
                         <select
                             value={bulkMode.duration}
                             onChange={e => setBulkMode({ ...bulkMode, duration: parseInt(e.target.value) })}
-                            style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 13, background: 'var(--bg-elev)' }}
+                            style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, background: 'var(--surface)' }}
                         >
                             <option value={10}>10 min</option>
                             <option value={20}>20 min</option>
@@ -203,35 +203,35 @@ export default function CreneauxRHPage() {
                                     toast.info(t('creneaux_interviews_for').replace('{date}', format(day, 'd MMMM', { locale: fr })));
                                 }}
                                 style={{
-                                    textAlign: 'center', padding: '12px', borderRadius: 12, border: '1px solid var(--border)',
+                                    textAlign: 'center', padding: '12px', borderRadius: 12, border: '1px solid var(--line)',
                                     cursor: 'pointer', transition: 'all 0.2s',
-                                    borderColor: selectedDay && format(selectedDay, 'yyyy-MM-dd') === dateStr ? 'var(--primary)' : 'var(--border)',
-                                    background: selectedDay && format(selectedDay, 'yyyy-MM-dd') === dateStr ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                                    borderColor: selectedDay && format(selectedDay, 'yyyy-MM-dd') === dateStr ? 'var(--primary)' : 'var(--line)',
+                                    background: selectedDay && format(selectedDay, 'yyyy-MM-dd') === dateStr ? 'var(--primary-soft)' : 'var(--surface)',
                                 }}
                                 onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
                                 onMouseLeave={e => {
                                     if (!(selectedDay && format(selectedDay, 'yyyy-MM-dd') === dateStr)) {
-                                        e.currentTarget.style.borderColor = 'var(--border)';
+                                        e.currentTarget.style.borderColor = 'var(--line)';
                                     }
                                 }}
                             >
-                                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', margin: 0 }}>{format(day, 'EEEE', { locale: fr })}</p>
+                                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase', margin: 0 }}>{format(day, 'EEEE', { locale: fr })}</p>
                                 <p style={{ fontSize: 18, fontWeight: 800, margin: '2px 0 0', color: 'var(--fg)' }}>{format(day, 'd')}</p>
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {daySlots.map(s => (
                                     <div key={s.id} style={{
-                                        padding: '10px', borderRadius: 10, background: 'var(--bg-elev)', border: '1px solid var(--border)',
+                                        padding: '10px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--line)',
                                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                                         boxShadow: 'var(--shadow-sm)'
                                     }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                            <Clock size={14} style={{ color: s.status === 'reserved' ? 'var(--primary)' : 'var(--fg-subtle)' }} />
+                                            <Clock size={14} style={{ color: s.status === 'reserved' ? 'var(--primary)' : 'var(--ink-3)' }} />
                                             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg)' }}>{s.start_time} - {s.end_time}</span>
                                         </div>
                                         {s.status === 'free' ? (
-                                            <button onClick={() => handleDeleteSlot(s.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+                                            <button onClick={() => handleDeleteSlot(s.id)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
                                                 <Trash2 size={14} />
                                             </button>
                                         ) : (
@@ -249,7 +249,7 @@ export default function CreneauxRHPage() {
                                             <Plus size={14} style={{ color: 'var(--primary)' }} />
                                             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary)' }}>{s.start} - {s.end}</span>
                                         </div>
-                                        <button onClick={() => setNewSlots(newSlots.filter(x => x !== s))} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
+                                        <button onClick={() => setNewSlots(newSlots.filter(x => x !== s))} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
@@ -258,8 +258,8 @@ export default function CreneauxRHPage() {
                                 <button
                                     onClick={() => handleAddSlot(day)}
                                     style={{
-                                        padding: '12px', borderRadius: 10, background: 'transparent', border: '1px dashed var(--border)',
-                                        color: 'var(--fg-muted)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                                        padding: '12px', borderRadius: 10, background: 'transparent', border: '1px dashed var(--line)',
+                                        color: 'var(--ink-2)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                                         transition: 'all 0.2s'
                                     }}
@@ -270,8 +270,8 @@ export default function CreneauxRHPage() {
                                     }}
                                     onMouseLeave={e => {
                                         e.currentTarget.style.background = 'transparent';
-                                        e.currentTarget.style.borderColor = 'var(--border)';
-                                        e.currentTarget.style.color = 'var(--fg-muted)';
+                                        e.currentTarget.style.borderColor = 'var(--line)';
+                                        e.currentTarget.style.color = 'var(--ink-2)';
                                     }}
                                 >
                                     <Plus size={14} /> {t('creneaux_add_btn')}
@@ -284,16 +284,16 @@ export default function CreneauxRHPage() {
 
             {selectedDay && (
                 <div style={{
-                    position: 'fixed', top: 0, right: 0, width: 400, height: '100vh', background: 'var(--bg-elev)',
+                    position: 'fixed', top: 0, right: 0, width: 400, height: '100vh', background: 'var(--surface)',
                     boxShadow: '-4px 0 24px rgba(0,0,0,0.2)', zIndex: 9999, display: 'flex', flexDirection: 'column',
-                    animation: 'slideIn 0.3s ease-out', borderLeft: '1px solid var(--border)'
+                    animation: 'slideIn 0.3s ease-out', borderLeft: '1px solid var(--line)'
                 }}>
-                    <div style={{ padding: 24, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ padding: 24, borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                             <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{t('creneaux_panel_title')}</h2>
-                            <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: '4px 0 0' }}>{format(selectedDay, 'EEEE d MMMM', { locale: fr })}</p>
+                            <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: '4px 0 0' }}>{format(selectedDay, 'EEEE d MMMM', { locale: fr })}</p>
                         </div>
-                        <button onClick={() => setSelectedDay(null)} style={{ background: 'var(--bg-muted)', border: 'none', padding: 8, borderRadius: '50%', cursor: 'pointer' }}>
+                        <button onClick={() => setSelectedDay(null)} style={{ background: 'var(--surface-2)', border: 'none', padding: 8, borderRadius: '50%', cursor: 'pointer' }}>
                             <X size={20} />
                         </button>
                     </div>
@@ -306,7 +306,7 @@ export default function CreneauxRHPage() {
                                     .sort((a, b) => a.start_time.localeCompare(b.start_time))
                                     .map(interview => (
                                         <div key={interview.id} style={{
-                                            padding: 16, borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-elev)',
+                                            padding: 16, borderRadius: 12, border: '1px solid var(--line)', background: 'var(--surface)',
                                             display: 'flex', flexDirection: 'column', gap: 12
                                         }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -316,7 +316,7 @@ export default function CreneauxRHPage() {
                                                     </div>
                                                     <div>
                                                         <p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>{interview.candidate_name || t('creneaux_anon')}</p>
-                                                        <p style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 4, margin: '2px 0 0' }}>
+                                                        <p style={{ fontSize: 12, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 4, margin: '2px 0 0' }}>
                                                             <Briefcase size={12} /> {interview.job_title || t('cand_no_position')}
                                                         </p>
                                                     </div>
@@ -330,7 +330,7 @@ export default function CreneauxRHPage() {
                                                 <div style={{
                                                     display: 'inline-flex', alignSelf: 'flex-start', padding: '4px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600,
                                                     background: interview.status === 'confirmed' ? 'var(--success-soft)' : 'var(--warning-soft)',
-                                                    color: interview.status === 'confirmed' ? 'var(--success)' : 'var(--warning)'
+                                                    color: interview.status === 'confirmed' ? 'var(--success)' : 'var(--warn)'
                                                 }}>
                                                     {interview.status === 'confirmed' ? t('creneaux_confirmed') : interview.status}
                                                 </div>
@@ -339,7 +339,7 @@ export default function CreneauxRHPage() {
                                     ))}
                             </div>
                         ) : (
-                            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--fg-muted)' }}>
+                            <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-2)' }}>
                                 <CalendarIcon size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
                                 <p style={{ fontSize: 14, fontWeight: 600 }}>{t('creneaux_no_interviews')}</p>
                             </div>

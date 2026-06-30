@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Star, TrendingUp, AlertTriangle, Users, Plus, X, Target,
@@ -33,15 +33,15 @@ const deletePDI    = (eid: string, iid: string) => api.delete(`/talents/${eid}/p
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 const TALENT_CATS: Record<string, { label: string; color: string; bg: string; desc: string }> = {
-  star:              { label: 'Star',            color: '#f59e0b', bg: '#fffbeb', desc: 'Haut potentiel + haute perf.' },
-  solid:             { label: 'Solid Performer', color: '#10b981', bg: '#ecfdf5', desc: 'Fiable, haute perf.' },
-  potential:         { label: 'Haut Potentiel',  color: '#8b5cf6', bg: '#f5f3ff', desc: 'Potentiel élevé, perf. en cours' },
-  key_player:        { label: 'Joueur Clé',      color: '#3b82f6', bg: '#eff6ff', desc: 'Profil équilibré' },
-  needs_improvement: { label: 'À développer',    color: '#ef4444', bg: '#fef2f2', desc: 'Accompagnement requis' },
+  star:              { label: 'Star',            color: 'var(--warn)', bg: 'var(--warn-soft)', desc: 'Haut potentiel + haute perf.' },
+  solid:             { label: 'Solid Performer', color: 'var(--success)', bg: 'var(--success-soft)', desc: 'Fiable, haute perf.' },
+  potential:         { label: 'Haut Potentiel',  color: 'var(--violet)', bg: 'var(--violet-soft)', desc: 'Potentiel élevé, perf. en cours' },
+  key_player:        { label: 'Joueur Clé',      color: 'var(--primary)', bg: 'var(--primary-soft)', desc: 'Profil équilibré' },
+  needs_improvement: { label: 'À développer',    color: 'var(--danger)', bg: '#fef2f2', desc: 'Accompagnement requis' },
 };
 const catMeta = (c: string) => TALENT_CATS[c] ?? TALENT_CATS.key_player;
 
-const RISK_COLORS: Record<string, string> = { low: '#10b981', medium: '#f59e0b', high: '#ef4444' };
+const RISK_COLORS: Record<string, string> = { low: 'var(--success)', medium: 'var(--warn)', high: 'var(--danger)' };
 const RISK_LABELS: Record<string, string> = { low: 'Faible',  medium: 'Moyen',   high: 'Élevé' };
 
 const MOOVWIN = [
@@ -53,18 +53,18 @@ const MOOVWIN = [
 ];
 
 const ACTION_TYPES: Record<string, { label: string; color: string; bg: string }> = {
-  formation:   { label: 'Formation',   color: '#3b82f6', bg: '#eff6ff' },
-  coaching:    { label: 'Coaching',    color: '#8b5cf6', bg: '#f5f3ff' },
-  mentorat:    { label: 'Mentorat',    color: '#10b981', bg: '#ecfdf5' },
-  projet:      { label: 'Projet',      color: '#f59e0b', bg: '#fffbeb' },
-  lecture:     { label: 'Lecture',     color: '#64748b', bg: '#f8fafc' },
-  conference:  { label: 'Conférence',  color: '#ec4899', bg: '#fdf2f8' },
+  formation:   { label: 'Formation',   color: 'var(--primary)', bg: 'var(--primary-soft)' },
+  coaching:    { label: 'Coaching',    color: 'var(--violet)', bg: 'var(--violet-soft)' },
+  mentorat:    { label: 'Mentorat',    color: 'var(--success)', bg: 'var(--success-soft)' },
+  projet:      { label: 'Projet',      color: 'var(--warn)', bg: 'var(--warn-soft)' },
+  lecture:     { label: 'Lecture',     color: 'var(--ink-2)', bg: 'var(--surface-2)' },
+  conference:  { label: 'Conférence',  color: 'var(--violet)', bg: '#fdf2f8' },
 };
 
 const PDI_STATUS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  pending:     { label: 'À faire',  color: '#64748b', icon: <Circle size={13} /> },
-  in_progress: { label: 'En cours', color: '#3b82f6', icon: <Clock size={13} /> },
-  completed:   { label: 'Terminé',  color: '#10b981', icon: <CheckCircle2 size={13} /> },
+  pending:     { label: 'À faire',  color: 'var(--ink-2)', icon: <Circle size={13} /> },
+  in_progress: { label: 'En cours', color: 'var(--primary)', icon: <Clock size={13} /> },
+  completed:   { label: 'Terminé',  color: 'var(--success)', icon: <CheckCircle2 size={13} /> },
 };
 
 const READINESS: Record<string, string> = {
@@ -82,12 +82,12 @@ const NINE_BOX = [
 
 function NineBoxGrid({ talents }: { talents: any[] }) {
   return (
-    <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 16, padding: 20, marginBottom: 24 }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 20, marginBottom: 24 }}>
       <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Matrice 9-box : Performance × Potentiel</p>
       <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: 24, paddingTop: 4 }}>
           {['Haut', 'Moyen', 'Faible'].map(l => (
-            <span key={l} style={{ fontSize: 11, color: 'var(--fg-muted)', fontWeight: 600 }}>{l}</span>
+            <span key={l} style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 600 }}>{l}</span>
           ))}
         </div>
         <div style={{ flex: 1 }}>
@@ -121,7 +121,7 @@ function NineBoxGrid({ talents }: { talents: any[] }) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, marginTop: 6 }}>
             {['Perf. Faible', 'Perf. Moyenne', 'Perf. Élevée'].map(l => (
-              <span key={l} style={{ fontSize: 10, color: 'var(--fg-muted)', fontWeight: 600, textAlign: 'center' }}>{l}</span>
+              <span key={l} style={{ fontSize: 10, color: 'var(--ink-2)', fontWeight: 600, textAlign: 'center' }}>{l}</span>
             ))}
           </div>
         </div>
@@ -134,7 +134,7 @@ function NineBoxGrid({ talents }: { talents: any[] }) {
 function MobilityView({ mobility, onOpenTalent }: { mobility: any[]; onOpenTalent: (t: any) => void }) {
   if (mobility.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
         <ArrowRight size={40} style={{ opacity: 0.3, margin: '0 auto 16px' }} />
         <p style={{ fontWeight: 500, marginBottom: 8 }}>Aucun candidat à la mobilité interne.</p>
         <p style={{ fontSize: 13 }}>Définissez un "Prochain rôle visé" dans le profil talent d'un collaborateur pour qu'il apparaisse ici.</p>
@@ -159,7 +159,7 @@ function MobilityView({ mobility, onOpenTalent }: { mobility: any[]; onOpenTalen
               <span style={{ fontSize: 12, fontWeight: 700, color: cm.color, background: cm.bg, padding: '3px 10px', borderRadius: 20 }}>
                 {cm.label}
               </span>
-              <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{(items as any[]).length} candidat(s)</span>
+              <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>{(items as any[]).length} candidat(s)</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
               {(items as any[]).map((t: any) => {
@@ -171,26 +171,26 @@ function MobilityView({ mobility, onOpenTalent }: { mobility: any[]; onOpenTalen
                       <Avatar name={emp.full_name} src={emp.photo_url} size={42} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontWeight: 700, fontSize: 14, margin: '0 0 2px' }}>{emp.full_name}</p>
-                        <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>{emp.department}</p>
+                        <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{emp.department}</p>
                       </div>
                       <span style={{ fontSize: 10, fontWeight: 700, color: rc, background: rc + '22', padding: '2px 7px', borderRadius: 5 }}>
                         {RISK_LABELS[t.flight_risk ?? 'low']}
                       </span>
                     </div>
                     {/* Career arrow */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'var(--bg-muted)', borderRadius: 8, fontSize: 13 }}>
-                      <span style={{ color: 'var(--fg-muted)', flex: 1, fontSize: 12 }}>{emp.position ?? '—'}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'var(--surface-2)', borderRadius: 8, fontSize: 13 }}>
+                      <span style={{ color: 'var(--ink-2)', flex: 1, fontSize: 12 }}>{emp.position ?? '—'}</span>
                       <ArrowRight size={16} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                       <span style={{ fontWeight: 700, color: 'var(--primary)', flex: 1, textAlign: 'right' }}>{t.next_role}</span>
                     </div>
                     {t.career_path && (
-                      <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: '8px 0 0' }}>
+                      <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: '8px 0 0' }}>
                         Trajectoire: {t.career_path}
                       </p>
                     )}
-                    <div style={{ display: 'flex', gap: 12, marginTop: 10, fontSize: 12, color: 'var(--fg-muted)' }}>
-                      <span>Perf. <strong style={{ color: '#10b981' }}>{t.performance_score}/5</strong></span>
-                      <span>Pot. <strong style={{ color: '#8b5cf6' }}>{t.potential_score}/5</strong></span>
+                    <div style={{ display: 'flex', gap: 12, marginTop: 10, fontSize: 12, color: 'var(--ink-2)' }}>
+                      <span>Perf. <strong style={{ color: 'var(--success)' }}>{t.performance_score}/5</strong></span>
+                      <span>Pot. <strong style={{ color: 'var(--violet)' }}>{t.potential_score}/5</strong></span>
                     </div>
                   </div>
                 );
@@ -301,9 +301,9 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }}>
       <div style={{ flex: 1, background: 'rgba(0,0,0,0.4)' }} onClick={onClose} />
-      <div style={{ width: 660, background: 'var(--bg)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      <div style={{ width: 660, background: 'var(--bg)', borderLeft: '1px solid var(--line)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
         {/* Header */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 14, alignItems: 'center' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--line)', display: 'flex', gap: 14, alignItems: 'center' }}>
           <Avatar name={emp.full_name} src={emp.photo_url} size={56} />
           <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>{emp.full_name}</h2>
@@ -314,7 +314,7 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
                 Risque: {RISK_LABELS[localScores.flight_risk]}
               </span>
               {localScores.is_critical_position && (
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#ef4444', background: '#fef2f2', padding: '2px 8px', borderRadius: 6 }}>⚠ Critique</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--danger)', background: '#fef2f2', padding: '2px 8px', borderRadius: 6 }}>⚠ Critique</span>
               )}
             </div>
           </div>
@@ -323,7 +323,7 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
 
         <div style={{ padding: '0 24px' }}>
           {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: 20, paddingTop: 4 }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', gap: 20, paddingTop: 4 }}>
             {[
               { id: 'profile', label: 'Profil Talent' },
               { id: 'okrs',    label: `OKRs (${okrs.length})` },
@@ -332,7 +332,7 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
               <button key={t.id} onClick={() => setTab(t.id as any)} style={{
                 padding: '10px 0', fontWeight: 600, fontSize: 13,
                 borderBottom: tab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-                color: tab === t.id ? 'var(--primary)' : 'var(--fg-muted)',
+                color: tab === t.id ? 'var(--primary)' : 'var(--ink-2)',
                 background: 'none', border: 'none', cursor: 'pointer',
               }}>{t.label}</button>
             ))}
@@ -347,8 +347,8 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
               {/* Performance & Potential */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 {[
-                  { key: 'performance_score', label: 'Performance', color: '#10b981' },
-                  { key: 'potential_score',   label: 'Potentiel',   color: '#8b5cf6' },
+                  { key: 'performance_score', label: 'Performance', color: 'var(--success)' },
+                  { key: 'potential_score',   label: 'Potentiel',   color: 'var(--violet)' },
                 ].map(s => (
                   <div key={s.key} style={{ padding: '14px 16px', border: `1px solid ${s.color}44`, borderRadius: 12, background: s.color + '0a' }}>
                     <p style={{ fontWeight: 700, fontSize: 13, color: s.color, marginBottom: 10 }}>{s.label}</p>
@@ -356,9 +356,9 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
                       {[1,2,3,4,5].map(n => (
                         <button key={n} onClick={() => set(s.key, n)}
                           style={{ width: 32, height: 32, borderRadius: 8,
-                            border: `2px solid ${n <= localScores[s.key] ? s.color : 'var(--border)'}`,
+                            border: `2px solid ${n <= localScores[s.key] ? s.color : 'var(--line)'}`,
                             background: n <= localScores[s.key] ? s.color : 'transparent',
-                            color: n <= localScores[s.key] ? '#fff' : 'var(--fg-muted)',
+                            color: n <= localScores[s.key] ? '#fff' : 'var(--ink-2)',
                             fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                           {n}
                         </button>
@@ -369,21 +369,21 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
               </div>
 
               {/* Moovwin */}
-              <div style={{ padding: '14px 16px', border: '1px solid #f59e0b44', borderRadius: 12, background: '#fffbeb' }}>
+              <div style={{ padding: '14px 16px', border: '1px solid #f59e0b44', borderRadius: 12, background: 'var(--warn-soft)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <p style={{ fontWeight: 700, fontSize: 13, color: '#f59e0b', margin: 0 }}>Scoring Moovwin</p>
-                  <span style={{ fontWeight: 800, color: '#f59e0b' }}>★ {moovwinAvg.toFixed(1)}/5</span>
+                  <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--warn)', margin: 0 }}>Scoring Moovwin</p>
+                  <span style={{ fontWeight: 800, color: 'var(--warn)' }}>★ {moovwinAvg.toFixed(1)}/5</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8 }}>
                   {MOOVWIN.map(m => (
                     <div key={m.key} style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4, color: '#f59e0b' }}>{m.icon}</div>
-                      <p style={{ fontSize: 10, fontWeight: 700, margin: '0 0 6px', color: 'var(--fg-muted)' }}>{m.label}</p>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4, color: 'var(--warn)' }}>{m.icon}</div>
+                      <p style={{ fontSize: 10, fontWeight: 700, margin: '0 0 6px', color: 'var(--ink-2)' }}>{m.label}</p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {[5,4,3,2,1].map(n => (
                           <button key={n} onClick={() => set(m.key, n)}
                             style={{ width: '100%', height: 14, borderRadius: 3, cursor: 'pointer', border: 'none',
-                              background: n <= localScores[m.key] ? '#f59e0b' : 'var(--border)' }} />
+                              background: n <= localScores[m.key] ? 'var(--warn)' : 'var(--line)' }} />
                         ))}
                       </div>
                       <p style={{ fontSize: 12, fontWeight: 700, marginTop: 4 }}>{localScores[m.key]}</p>
@@ -400,10 +400,10 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
                     {Object.entries(RISK_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
                 </div>
-                <div style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10, marginTop: 20 }}>
+                <div style={{ padding: '10px 14px', border: '1px solid var(--line)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10, marginTop: 20 }}>
                   <input type="checkbox" checked={localScores.is_critical_position}
                     onChange={e => set('is_critical_position', e.target.checked)}
-                    style={{ width: 16, height: 16, accentColor: '#ef4444' }} />
+                    style={{ width: 16, height: 16, accentColor: 'var(--danger)' }} />
                   <span style={{ fontSize: 13, fontWeight: 600 }}>Poste critique</span>
                 </div>
               </div>
@@ -417,18 +417,18 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
               </div>
 
               {/* Succession planning */}
-              <div style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 12 }}>
+              <div style={{ padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 12 }}>
                 <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Target size={14} /> Successeurs identifiés ({localScores.successor_names.length})
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
                   {localScores.successor_names.length === 0 && (
-                    <p style={{ fontSize: 12, color: 'var(--fg-muted)', textAlign: 'center', padding: '8px 0' }}>Aucun successeur défini.</p>
+                    <p style={{ fontSize: 12, color: 'var(--ink-2)', textAlign: 'center', padding: '8px 0' }}>Aucun successeur défini.</p>
                   )}
                   {localScores.successor_names.map((s: any, i: number) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'var(--bg-muted)', borderRadius: 8 }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'var(--surface-2)', borderRadius: 8 }}>
                       <span style={{ flex: 1, fontWeight: 500, fontSize: 13 }}>{s.name}</span>
-                      <span style={{ fontSize: 11, color: '#8b5cf6', background: '#f5f3ff', padding: '2px 7px', borderRadius: 5, fontWeight: 600 }}>
+                      <span style={{ fontSize: 11, color: 'var(--violet)', background: 'var(--violet-soft)', padding: '2px 7px', borderRadius: 5, fontWeight: 600 }}>
                         {READINESS[s.readiness] ?? s.readiness}
                       </span>
                       <button onClick={() => removeSuccessor(i)}
@@ -461,7 +461,7 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
           {tab === 'okrs' && (
             <div>
               {showOKRForm ? (
-                <div style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 16 }}>
+                <div style={{ padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 16 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <Input label="Objectif *" value={okrForm.title} onChange={e => setOKRForm(f => ({ ...f, title: e.target.value }))} placeholder="Améliorer la couverture de tests à 80%" />
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -492,16 +492,16 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
               )}
 
               {okrs.length === 0 ? (
-                <p style={{ color: 'var(--fg-muted)', fontSize: 13, textAlign: 'center', padding: 20 }}>Aucun OKR défini.</p>
+                <p style={{ color: 'var(--ink-2)', fontSize: 13, textAlign: 'center', padding: 20 }}>Aucun OKR défini.</p>
               ) : okrs.map((okr: any) => (
-                <div key={okr.id} style={{ padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 10 }}>
+                <div key={okr.id} style={{ padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 2 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: '#8b5cf6', background: '#f5f3ff', padding: '1px 6px', borderRadius: 4 }}>{okr.quarter}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--violet)', background: 'var(--violet-soft)', padding: '1px 6px', borderRadius: 4 }}>{okr.quarter}</span>
                         <span style={{ fontWeight: 600, fontSize: 13 }}>{okr.title}</span>
                       </div>
-                      {okr.description && <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>{okr.description}</p>}
+                      {okr.description && <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{okr.description}</p>}
                     </div>
                     <button onClick={() => deleteOKRMut.mutate(okr.id)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', marginLeft: 8 }}>
@@ -509,14 +509,14 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
                     </button>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ flex: 1, height: 6, background: 'var(--border)', borderRadius: 6 }}>
-                      <div style={{ height: 6, width: `${okr.progress}%`, background: okr.progress >= 100 ? '#10b981' : '#8b5cf6', borderRadius: 6, transition: 'width 0.3s' }} />
+                    <div style={{ flex: 1, height: 6, background: 'var(--line)', borderRadius: 6 }}>
+                      <div style={{ height: 6, width: `${okr.progress}%`, background: okr.progress >= 100 ? 'var(--success)' : 'var(--violet)', borderRadius: 6, transition: 'width 0.3s' }} />
                     </div>
                     <input type="range" min={0} max={100} value={okr.progress}
                       onChange={e => updateOKRMut.mutate({ id: okr.id, body: { progress: +e.target.value } })}
-                      style={{ width: 80, accentColor: '#8b5cf6' }} />
-                    <span style={{ fontWeight: 700, fontSize: 13, color: '#8b5cf6', minWidth: 36 }}>{okr.progress}%</span>
-                    {okr.progress >= 100 && <CheckCircle2 size={16} style={{ color: '#10b981' }} />}
+                      style={{ width: 80, accentColor: 'var(--violet)' }} />
+                    <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--violet)', minWidth: 36 }}>{okr.progress}%</span>
+                    {okr.progress >= 100 && <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />}
                   </div>
                 </div>
               ))}
@@ -528,16 +528,16 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
             <div>
               {/* Progress summary */}
               {pdiItems.length > 0 && (
-                <div style={{ padding: '12px 14px', background: 'var(--bg-muted)', borderRadius: 10, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ flex: 1, height: 6, background: 'var(--border)', borderRadius: 6 }}>
-                    <div style={{ height: 6, width: `${Math.round(completedPDI / pdiItems.length * 100)}%`, background: '#10b981', borderRadius: 6, transition: 'width 0.3s' }} />
+                <div style={{ padding: '12px 14px', background: 'var(--surface-2)', borderRadius: 10, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ flex: 1, height: 6, background: 'var(--line)', borderRadius: 6 }}>
+                    <div style={{ height: 6, width: `${Math.round(completedPDI / pdiItems.length * 100)}%`, background: 'var(--success)', borderRadius: 6, transition: 'width 0.3s' }} />
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#10b981' }}>{completedPDI}/{pdiItems.length} actions</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--success)' }}>{completedPDI}/{pdiItems.length} actions</span>
                 </div>
               )}
 
               {showPDIForm ? (
-                <div style={{ padding: '14px 16px', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 16 }}>
+                <div style={{ padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 16 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <Input label="Action de développement *" value={pdiForm.title}
                       onChange={e => setPDIForm(f => ({ ...f, title: e.target.value }))} placeholder="Maîtriser Python pour l'analyse de données" />
@@ -573,7 +573,7 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
               )}
 
               {pdiItems.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '30px 20px', color: 'var(--fg-muted)' }}>
+                <div style={{ textAlign: 'center', padding: '30px 20px', color: 'var(--ink-2)' }}>
                   <BookOpen size={32} style={{ opacity: 0.3, margin: '0 auto 10px' }} />
                   <p style={{ fontSize: 13 }}>Aucune action de développement définie.</p>
                 </div>
@@ -581,7 +581,7 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
                 const at = ACTION_TYPES[item.action_type] ?? ACTION_TYPES.formation;
                 const st = PDI_STATUS[item.status] ?? PDI_STATUS.pending;
                 return (
-                  <div key={item.id} style={{ padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 10 }}>
+                  <div key={item.id} style={{ padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
@@ -590,7 +590,7 @@ function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void })
                           </span>
                           <span style={{ fontWeight: 600, fontSize: 13 }}>{item.title}</span>
                         </div>
-                        <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--fg-muted)' }}>
+                        <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--ink-2)' }}>
                           {item.target_date && <span><Clock size={10} /> {safeFormat(item.target_date)}</span>}
                           {item.notes && <span style={{ fontStyle: 'italic' }}>{item.notes.slice(0, 50)}{item.notes.length > 50 ? '…' : ''}</span>}
                         </div>
@@ -656,23 +656,23 @@ export default function TalentsPage() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Profils totaux',      value: stats?.total ?? 0,              color: '#3b82f6', icon: <Users size={16} /> },
-          { label: 'Risque départ élevé', value: stats?.high_flight_risk ?? 0,   color: '#ef4444', icon: <AlertTriangle size={16} /> },
-          { label: 'Postes critiques',    value: stats?.critical_positions ?? 0, color: '#f59e0b', icon: <Shield size={16} /> },
-          { label: 'Perf. moyenne',       value: `${stats?.avg_performance ?? 0}/5`, color: '#10b981', icon: <TrendingUp size={16} /> },
+          { label: 'Profils totaux',      value: stats?.total ?? 0,              color: 'var(--primary)', icon: <Users size={16} /> },
+          { label: 'Risque départ élevé', value: stats?.high_flight_risk ?? 0,   color: 'var(--danger)', icon: <AlertTriangle size={16} /> },
+          { label: 'Postes critiques',    value: stats?.critical_positions ?? 0, color: 'var(--warn)', icon: <Shield size={16} /> },
+          { label: 'Perf. moyenne',       value: `${stats?.avg_performance ?? 0}/5`, color: 'var(--success)', icon: <TrendingUp size={16} /> },
         ].map(s => (
           <div key={s.label} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: s.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color }}>{s.icon}</div>
             <div>
               <p style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>{s.value}</p>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{s.label}</p>
+              <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{s.label}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Page tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: 24, marginBottom: 20 }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', gap: 24, marginBottom: 20 }}>
         {[
           { id: 'profiles', label: `Profils Talent (${talents.length})` },
           { id: 'mobility', label: `Mobilité Interne (${mobility.length})` },
@@ -680,7 +680,7 @@ export default function TalentsPage() {
           <button key={t.id} onClick={() => setPageTab(t.id as any)} style={{
             padding: '10px 0', fontWeight: 600, fontSize: 14,
             borderBottom: pageTab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-            color: pageTab === t.id ? 'var(--primary)' : 'var(--fg-muted)',
+            color: pageTab === t.id ? 'var(--primary)' : 'var(--ink-2)',
             background: 'none', border: 'none', cursor: 'pointer',
           }}>{t.label}</button>
         ))}
@@ -692,12 +692,12 @@ export default function TalentsPage() {
           {viewMode === 'grid' && <NineBoxGrid talents={filtered} />}
 
           <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: 4, background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 8, padding: 3 }}>
-              <button onClick={() => setViewMode('list')} style={{ padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: viewMode === 'list' ? 'var(--primary)' : 'transparent', color: viewMode === 'list' ? '#fff' : 'var(--fg-muted)' }}><List size={14} /></button>
-              <button onClick={() => setViewMode('grid')} style={{ padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: viewMode === 'grid' ? 'var(--primary)' : 'transparent', color: viewMode === 'grid' ? '#fff' : 'var(--fg-muted)' }}><LayoutGrid size={14} /></button>
+            <div style={{ display: 'flex', gap: 4, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: 3 }}>
+              <button onClick={() => setViewMode('list')} style={{ padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: viewMode === 'list' ? 'var(--primary)' : 'transparent', color: viewMode === 'list' ? '#fff' : 'var(--ink-2)' }}><List size={14} /></button>
+              <button onClick={() => setViewMode('grid')} style={{ padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: viewMode === 'grid' ? 'var(--primary)' : 'transparent', color: viewMode === 'grid' ? '#fff' : 'var(--ink-2)' }}><LayoutGrid size={14} /></button>
             </div>
             <button onClick={() => setCatFilter('')}
-              style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: !catFilter ? 'var(--primary)' : 'transparent', color: !catFilter ? '#fff' : 'var(--fg)' }}>
+              style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid var(--line)', background: !catFilter ? 'var(--primary)' : 'transparent', color: !catFilter ? '#fff' : 'var(--fg)' }}>
               Tous
             </button>
             {Object.entries(TALENT_CATS).map(([k, v]) => (
@@ -708,7 +708,7 @@ export default function TalentsPage() {
               </button>
             ))}
             <select value={riskFilter} onChange={e => setRiskFilter(e.target.value)}
-              style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12, cursor: 'pointer' }}>
+              style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 12, cursor: 'pointer' }}>
               <option value="">Risque: Tous</option>
               <option value="low">Faible</option>
               <option value="medium">Moyen</option>
@@ -719,7 +719,7 @@ export default function TalentsPage() {
           {isLoading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
           ) : filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
               <Award size={40} style={{ opacity: 0.3, margin: '0 auto 16px' }} />
               <p style={{ fontWeight: 500 }}>Aucun profil talent.</p>
               <p style={{ fontSize: 13, marginBottom: 16 }}>Cliquez "Initialiser profils" pour créer des profils pour tous les employés actifs.</p>
@@ -742,28 +742,28 @@ export default function TalentsPage() {
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3 }}>
                         <span style={{ fontWeight: 700, fontSize: 14 }}>{emp.full_name}</span>
                         <span style={{ fontSize: 11, fontWeight: 700, color: cm.color, background: cm.bg, padding: '1px 7px', borderRadius: 5 }}>{cm.label}</span>
-                        {t.is_critical_position && <span style={{ fontSize: 10, color: '#ef4444', fontWeight: 700 }}>⚠ Critique</span>}
+                        {t.is_critical_position && <span style={{ fontSize: 10, color: 'var(--danger)', fontWeight: 700 }}>⚠ Critique</span>}
                         {t.next_role && <span style={{ fontSize: 11, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 3 }}><ArrowRight size={10} />{t.next_role}</span>}
                       </div>
-                      <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>{emp.position} — {emp.department}</p>
+                      <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{emp.position} — {emp.department}</p>
                     </div>
                     <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 12 }}>
                       <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontWeight: 700, fontSize: 16, color: '#10b981', margin: 0 }}>{t.performance_score ?? '—'}</p>
-                        <p style={{ color: 'var(--fg-muted)', margin: 0 }}>Perf.</p>
+                        <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--success)', margin: 0 }}>{t.performance_score ?? '—'}</p>
+                        <p style={{ color: 'var(--ink-2)', margin: 0 }}>Perf.</p>
                       </div>
                       <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontWeight: 700, fontSize: 16, color: '#8b5cf6', margin: 0 }}>{t.potential_score ?? '—'}</p>
-                        <p style={{ color: 'var(--fg-muted)', margin: 0 }}>Pot.</p>
+                        <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--violet)', margin: 0 }}>{t.potential_score ?? '—'}</p>
+                        <p style={{ color: 'var(--ink-2)', margin: 0 }}>Pot.</p>
                       </div>
                       <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontWeight: 700, fontSize: 16, color: '#f59e0b', margin: 0 }}>★{moovAvg}</p>
-                        <p style={{ color: 'var(--fg-muted)', margin: 0 }}>Moovwin</p>
+                        <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--warn)', margin: 0 }}>★{moovAvg}</p>
+                        <p style={{ color: 'var(--ink-2)', margin: 0 }}>Moovwin</p>
                       </div>
                       <span style={{ fontSize: 11, fontWeight: 700, color: rc, background: rc + '22', padding: '3px 8px', borderRadius: 6 }}>
                         {RISK_LABELS[t.flight_risk ?? 'low']}
                       </span>
-                      <ChevronRight size={14} style={{ color: 'var(--fg-muted)' }} />
+                      <ChevronRight size={14} style={{ color: 'var(--ink-2)' }} />
                     </div>
                   </div>
                 );

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles.css'
 import App from './App.tsx'
@@ -15,7 +15,7 @@ class ErrorBoundary extends React.Component<
       return (
         <div style={{ padding: 40, fontFamily: 'monospace', background: '#fff1f2', minHeight: '100vh' }}>
           <h2 style={{ color: '#dc2626' }}>Runtime Error</h2>
-          <pre style={{ background: '#fee2e2', padding: 20, borderRadius: 8, overflow: 'auto', fontSize: 13 }}>
+          <pre style={{ background: 'var(--danger-soft)', padding: 20, borderRadius: 8, overflow: 'auto', fontSize: 13 }}>
             {err.message}
             {'\n\n'}
             {err.stack}

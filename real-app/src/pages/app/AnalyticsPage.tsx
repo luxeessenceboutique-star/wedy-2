@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAnalyticsOverview, getHeadcountTrend, getDocumentsTrend, getLeaveStats } from '../../lib/api';
 import { Card, Spinner } from '../../components/ui';
@@ -10,12 +10,12 @@ function StatCard({ label, value, sub, icon, color = 'var(--primary)' }: {
   label: string; value: string | number; sub?: string; icon: React.ReactNode; color?: string;
 }) {
   return (
-    <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '18px 20px' }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '18px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
+          <div style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
           <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--fg)' }}>{value}</div>
-          {sub && <div style={{ fontSize: 12, color: 'var(--fg-muted)', marginTop: 4 }}>{sub}</div>}
+          {sub && <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 4 }}>{sub}</div>}
         </div>
         <div style={{ width: 38, height: 38, borderRadius: 'var(--radius-md)', background: `color-mix(in oklab, ${color} 15%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
           {icon}
@@ -40,7 +40,7 @@ function BarChart({ data, color }: { data: { label: string; count: number }[]; c
               borderRadius: 4, cursor: 'default',
               transition: 'height 0.3s',
             }} />
-            <span style={{ fontSize: 9, color: 'var(--fg-subtle)', marginTop: 6, whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 9, color: 'var(--ink-3)', marginTop: 6, whiteSpace: 'nowrap' }}>
               {d.label.slice(5)}
             </span>
           </div>
@@ -53,7 +53,7 @@ function BarChart({ data, color }: { data: { label: string; count: number }[]; c
 function DonutChart({ data, colors }: { data: { label: string; value: number }[]; colors: string[] }) {
   const total = data.reduce((s, d) => s + d.value, 0);
   const { t: tLang } = useLang();
-  if (total === 0) return <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>{tLang('chart_no_data')}</p>;
+  if (total === 0) return <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>{tLang('chart_no_data')}</p>;
 
   let offset = 0;
   const r = 40, cx = 50, cy = 50, stroke = 18;
@@ -79,14 +79,14 @@ function DonutChart({ data, colors }: { data: { label: string; value: number }[]
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
       <svg width={100} height={100} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--line)" strokeWidth={stroke} />
         {slices}
       </svg>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {data.map((d, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
             <div style={{ width: 10, height: 10, borderRadius: 2, background: colors[i % colors.length], flexShrink: 0 }} />
-            <span style={{ color: 'var(--fg-muted)' }}>{d.label}</span>
+            <span style={{ color: 'var(--ink-2)' }}>{d.label}</span>
             <span style={{ color: 'var(--fg)', fontWeight: 600, marginLeft: 'auto' }}>{d.value}</span>
           </div>
         ))}
@@ -96,10 +96,10 @@ function DonutChart({ data, colors }: { data: { label: string; value: number }[]
 }
 
 const CONTRACT_COLORS: Record<string, string> = {
-  CDI: '#0891b2', CDD: '#7c3aed', Stage: '#f59e0b',
-  Freelance: '#10b981', ANAPEC: '#ec4899', Consultant: '#64748b',
+  CDI: 'var(--primary)', CDD: '#7c3aed', Stage: 'var(--warn)',
+  Freelance: 'var(--success)', ANAPEC: 'var(--violet)', Consultant: 'var(--ink-2)',
 };
-const DEPT_COLORS = ['#0891b2','#7c3aed','#f59e0b','#10b981','#ec4899','#64748b','#ef4444','#06b6d4'];
+const DEPT_COLORS = ['var(--primary)','#7c3aed','var(--warn)','var(--success)','var(--violet)','var(--ink-2)','var(--danger)','var(--accent)'];
 
 export default function AnalyticsPage() {
   const { t } = useLang();
@@ -123,7 +123,7 @@ export default function AnalyticsPage() {
   const ov = overview!;
 
   const contractData = Object.entries(ov?.contract_breakdown ?? {}).map(([label, value]) => ({ label, value }));
-  const contractColors = contractData.map(d => CONTRACT_COLORS[d.label] || '#94a3b8');
+  const contractColors = contractData.map(d => CONTRACT_COLORS[d.label] || 'var(--ink-3)');
 
   const deptData = Object.entries(ov?.department_breakdown ?? {})
     .sort((a, b) => b[1] - a[1])
@@ -138,10 +138,10 @@ export default function AnalyticsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 24 }}>
         <StatCard label={t('stat_active_workforce')} value={ov?.total_employees ?? 0} icon={<Users size={17} />} color="var(--primary)" />
         <StatCard label={t('stat_interns')} value={ov?.total_interns ?? 0} icon={<Users size={17} />} color="var(--accent)" />
-        <StatCard label={t('stat_on_leave')} value={ov?.on_leave ?? 0} icon={<Clock size={17} />} color="var(--warning)" />
+        <StatCard label={t('stat_on_leave')} value={ov?.on_leave ?? 0} icon={<Clock size={17} />} color="var(--warn)" />
         <StatCard label={t('stat_expiring_30')} value={ov?.expiring_contracts ?? 0} sub={t('in_30_days')} icon={<AlertTriangle size={17} />} color="var(--danger)" />
         <StatCard label={t('stat_docs_month')} value={ov?.docs_this_month ?? 0} icon={<FileText size={17} />} color="var(--success)" />
-        <StatCard label={t('stat_pending_leaves')} value={ov?.pending_leaves ?? 0} icon={<TrendingUp size={17} />} color="var(--warning)" />
+        <StatCard label={t('stat_pending_leaves')} value={ov?.pending_leaves ?? 0} icon={<TrendingUp size={17} />} color="var(--warn)" />
       </div>
 
       {/* Charts row 1 */}
@@ -167,7 +167,7 @@ export default function AnalyticsPage() {
           <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 20 }}>{t('chart_contracts')}</p>
           {contractData.length > 0 ? (
             <DonutChart data={contractData} colors={contractColors} />
-          ) : <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>{t('chart_no_data')}</p>}
+          ) : <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>{t('chart_no_data')}</p>}
         </Card>
 
         <Card>
@@ -179,9 +179,9 @@ export default function AnalyticsPage() {
                 <div key={i}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
                     <span style={{ color: 'var(--fg)' }}>{d.label}</span>
-                    <span style={{ color: 'var(--fg-muted)' }}>{d.value} ({pct}%)</span>
+                    <span style={{ color: 'var(--ink-2)' }}>{d.value} ({pct}%)</span>
                   </div>
-                  <div style={{ background: 'var(--border)', borderRadius: 999, height: 5 }}>
+                  <div style={{ background: 'var(--line)', borderRadius: 999, height: 5 }}>
                     <div style={{ height: '100%', borderRadius: 999, width: `${pct}%`, background: DEPT_COLORS[i % DEPT_COLORS.length] }} />
                   </div>
                 </div>
@@ -194,18 +194,18 @@ export default function AnalyticsPage() {
       {/* Expiring contracts */}
       {(ov?.expiring_list?.length ?? 0) > 0 && (
         <Card pad={false}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AlertTriangle size={14} style={{ color: 'var(--warning)' }} />
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertTriangle size={14} style={{ color: 'var(--warn)' }} />
             <span style={{ fontWeight: 600, fontSize: 13 }}>{t('chart_expiring_30')}</span>
           </div>
           <div>
             {ov.expiring_list.map((item, i) => (
-              <div key={i} style={{ padding: '12px 20px', borderBottom: i < ov.expiring_list.length - 1 ? '1px solid var(--border)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div key={i} style={{ padding: '12px 20px', borderBottom: i < ov.expiring_list.length - 1 ? '1px solid var(--line)' : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 500 }}>{item.employee.full_name}</p>
-                  <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{item.employee.position} · {item.employee.department}</p>
+                  <p style={{ fontSize: 12, color: 'var(--ink-2)' }}>{item.employee.position} · {item.employee.department}</p>
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: item.days_left <= 7 ? 'var(--danger)' : 'var(--warning)', background: item.days_left <= 7 ? '#fee2e2' : '#fef3c7', padding: '3px 10px', borderRadius: 999 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: item.days_left <= 7 ? 'var(--danger)' : 'var(--warn)', background: item.days_left <= 7 ? 'var(--danger-soft)' : 'var(--warn-soft)', padding: '3px 10px', borderRadius: 999 }}>
                   {t('days_left_prefix')}{item.days_left}
                 </span>
               </div>

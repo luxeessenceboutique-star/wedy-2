@@ -19,19 +19,19 @@ import { toast } from 'sonner';
 // ── Category config ────────────────────────────────────────────────────────────
 
 const CAT_META: Record<string, { color: string; bg: string; label: string }> = {
-  attestation: { color: '#059669', bg: '#ecfdf5', label: 'Attestation' },
-  contrat:     { color: '#0891b2', bg: '#ecfeff', label: 'Contrat' },
-  lettre:      { color: '#d97706', bg: '#fffbeb', label: 'Lettre' },
-  avenant:     { color: '#7c3aed', bg: '#f5f3ff', label: 'Avenant' },
-  autre:       { color: '#64748b', bg: '#f8fafc', label: 'Autre' },
+  attestation: { color: '#059669', bg: 'var(--success-soft)', label: 'Attestation' },
+  contrat:     { color: 'var(--primary)', bg: 'var(--primary-soft)', label: 'Contrat' },
+  lettre:      { color: 'var(--warn)', bg: 'var(--warn-soft)', label: 'Lettre' },
+  avenant:     { color: '#7c3aed', bg: 'var(--violet-soft)', label: 'Avenant' },
+  autre:       { color: 'var(--ink-2)', bg: 'var(--surface-2)', label: 'Autre' },
 };
 const catMeta = (cat: string) => CAT_META[cat] ?? CAT_META.autre;
 const CATEGORIES = Object.keys(CAT_META);
 
 const TARGET_TYPES = [
-  { value: 'employee', label: 'Employé',   Icon: Users,          color: '#0891b2', bg: '#ecfeff' },
-  { value: 'intern',   label: 'Stagiaire', Icon: GraduationCap,  color: '#7c3aed', bg: '#f5f3ff' },
-  { value: 'both',     label: 'Les deux',  Icon: null,           color: '#64748b', bg: '#f8fafc' },
+  { value: 'employee', label: 'Employé',   Icon: Users,          color: 'var(--primary)', bg: 'var(--primary-soft)' },
+  { value: 'intern',   label: 'Stagiaire', Icon: GraduationCap,  color: '#7c3aed', bg: 'var(--violet-soft)' },
+  { value: 'both',     label: 'Les deux',  Icon: null,           color: 'var(--ink-2)', bg: 'var(--surface-2)' },
 ] as const;
 const targetMeta = (t?: string) => TARGET_TYPES.find(x => x.value === t) ?? TARGET_TYPES[0];
 
@@ -132,7 +132,7 @@ function TB({
         minWidth: 26, justifyContent: 'center', lineHeight: 1,
         transition: 'background 0.1s',
       }}
-      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
+      onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
       onMouseLeave={e => (e.currentTarget.style.background = 'none')}
     >
       {children}
@@ -141,7 +141,7 @@ function TB({
 }
 
 const Sep = () => (
-  <span style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 4px', flexShrink: 0 }} />
+  <span style={{ width: 1, height: 16, background: 'var(--line)', margin: '0 4px', flexShrink: 0 }} />
 );
 
 // ── Rich WYSIWYG Editor ────────────────────────────────────────────────────────
@@ -196,12 +196,12 @@ function RichEditor({ value, onChange }: { value: string; onChange: (v: string) 
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0,
-      border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden',
+      border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden',
     }}>
       {/* ── Toolbar ── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 2, padding: '5px 8px',
-        borderBottom: '1px solid var(--border)', background: 'var(--bg-muted)',
+        borderBottom: '1px solid var(--line)', background: 'var(--surface-2)',
         flexWrap: 'wrap', flexShrink: 0,
       }}>
         {/* Bold / Italic / Underline */}
@@ -247,7 +247,7 @@ function RichEditor({ value, onChange }: { value: string; onChange: (v: string) 
           defaultValue=""
           style={{
             fontSize: 11, padding: '3px 5px', borderRadius: 4, cursor: 'pointer',
-            border: '1px solid var(--border)', background: 'var(--bg-elev)', color: 'var(--fg)',
+            border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--fg)',
           }}
         >
           <option value="" disabled>Taille</option>
@@ -297,7 +297,7 @@ function RichEditor({ value, onChange }: { value: string; onChange: (v: string) 
               />
               <div style={{
                 position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 99,
-                background: 'var(--bg-elev)', border: '1px solid var(--border)',
+                background: 'var(--surface)', border: '1px solid var(--line)',
                 borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
                 padding: 4, minWidth: 220, maxHeight: 290, overflowY: 'auto',
               }}>
@@ -311,17 +311,17 @@ function RichEditor({ value, onChange }: { value: string; onChange: (v: string) 
                       padding: '5px 8px', background: 'none', border: 'none',
                       cursor: 'pointer', borderRadius: 5, textAlign: 'left',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                   >
                     <span style={{
                       fontFamily: 'monospace', fontSize: 10, color: '#1d4ed8',
-                      background: '#eff6ff', padding: '1px 5px', borderRadius: 3,
+                      background: 'var(--primary-soft)', padding: '1px 5px', borderRadius: 3,
                       border: '1px solid #bfdbfe', whiteSpace: 'nowrap',
                     }}>
                       {'{{'}{v.key}{'}}'}
                     </span>
-                    <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{v.label}</span>
+                    <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>{v.label}</span>
                   </button>
                 ))}
               </div>
@@ -336,7 +336,7 @@ function RichEditor({ value, onChange }: { value: string; onChange: (v: string) 
         padding: '28px 20px 28px', display: 'flex', flexDirection: 'column',
         alignItems: 'center', minHeight: 0,
       }}>
-        <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 12, textAlign: 'center' }}>
+        <p style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 12, textAlign: 'center' }}>
           Cliquez dans le document pour commencer à écrire · Les variables en bleu ne sont pas modifiables directement — utilisez "Insérer variable" pour en ajouter
         </p>
         <div
@@ -347,7 +347,7 @@ function RichEditor({ value, onChange }: { value: string; onChange: (v: string) 
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); emit(); }}
           style={{
-            background: '#fff',
+            background: 'var(--surface)',
             boxShadow: focused
               ? '0 0 0 3px #3b82f6, 0 4px 28px rgba(0,0,0,0.18)'
               : '0 4px 28px rgba(0,0,0,0.18)',
@@ -361,7 +361,7 @@ function RichEditor({ value, onChange }: { value: string; onChange: (v: string) 
             lineHeight: '1.8',
             color: '#1a1a1a',
             borderRadius: 2,
-            caretColor: '#3b82f6',
+            caretColor: 'var(--primary)',
             cursor: 'text',
             transition: 'box-shadow 0.15s',
           }}
@@ -377,7 +377,7 @@ function VarPill({ v }: { v: string }) {
   return (
     <span style={{
       fontSize: 10, fontWeight: 600, padding: '2px 7px',
-      background: '#f0f9ff', color: '#0369a1',
+      background: 'var(--primary-soft)', color: 'var(--primary)',
       border: '1px solid #bae6fd', borderRadius: 999, fontFamily: 'monospace',
     }}>
       {'{{'}{v}{'}}'}
@@ -395,26 +395,26 @@ function PreviewModal({ tpl, onClose }: { tpl: Template; onClose: () => void }) 
       onClick={onClose}
     >
       <div
-        style={{ background: 'var(--bg-elev)', borderRadius: 14, border: '1px solid var(--border)', width: '100%', maxWidth: 760, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        style={{ background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--line)', width: '100%', maxWidth: 760, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ padding: '13px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ padding: '13px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <FileText size={15} style={{ color: m.color }} />
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>{tpl.name_fr}</p>
-            <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{tpl.category} · aperçu</p>
+            <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{tpl.category} · aperçu</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', padding: 4 }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 4 }}>
             <X size={16} />
           </button>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: '#f8fafc' }}>
-          <div style={{ background: '#fff', borderRadius: 8, border: '1px solid var(--border)', padding: '20px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: 'var(--surface-2)' }}>
+          <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--line)', padding: '20px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
             {tpl.body_template
               ? <div dangerouslySetInnerHTML={{ __html: tpl.body_template }} />
-              : <p style={{ color: 'var(--fg-muted)', fontStyle: 'italic', textAlign: 'center', padding: 40 }}>Aucun contenu</p>}
+              : <p style={{ color: 'var(--ink-2)', fontStyle: 'italic', textAlign: 'center', padding: 40 }}>Aucun contenu</p>}
           </div>
         </div>
       </div>
@@ -449,25 +449,25 @@ function TemplateEditorModal({
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--bg-elev)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Top bar */}
       <div style={{
-        padding: '8px 16px', borderBottom: '1px solid var(--border)',
+        padding: '8px 16px', borderBottom: '1px solid var(--line)',
         display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
-        background: 'var(--bg-elev)',
+        background: 'var(--surface)',
       }}>
         <button
           type="button"
           onClick={onClose}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', padding: 4, display: 'flex', alignItems: 'center', borderRadius: 6 }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 4, display: 'flex', alignItems: 'center', borderRadius: 6 }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'none')}
           title="Fermer"
         >
           <X size={16} />
         </button>
 
-        <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
+        <div style={{ width: 1, height: 20, background: 'var(--line)' }} />
 
         <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--fg)' }}>
           {initial ? 'Modifier le template' : 'Nouveau template'}
@@ -498,7 +498,7 @@ function TemplateEditorModal({
           </select>
 
           {/* Target type selector */}
-          <div style={{ display: 'flex', gap: 4, background: 'var(--bg-muted)', borderRadius: 8, padding: 3 }}>
+          <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', borderRadius: 8, padding: 3 }}>
             {TARGET_TYPES.map(({ value, label, Icon }) => (
               <button
                 key={value}
@@ -509,8 +509,8 @@ function TemplateEditorModal({
                   display: 'flex', alignItems: 'center', gap: 5,
                   padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
                   fontSize: 12, fontWeight: 600, border: 'none',
-                  background: targetType === value ? 'var(--bg-elev)' : 'transparent',
-                  color: targetType === value ? 'var(--primary)' : 'var(--fg-muted)',
+                  background: targetType === value ? 'var(--surface)' : 'transparent',
+                  color: targetType === value ? 'var(--primary)' : 'var(--ink-2)',
                   boxShadow: targetType === value ? 'var(--shadow-sm)' : 'none',
                   transition: 'all 0.15s',
                 }}
@@ -566,15 +566,15 @@ function ImportModal({ onClose, onImported }: { onClose: () => void; onImported:
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: 'var(--bg-elev)', borderRadius: 14, border: '1px solid var(--border)', width: '100%', maxWidth: 480 }}>
-        <div style={{ padding: '13px 18px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--line)', width: '100%', maxWidth: 480 }}>
+        <div style={{ padding: '13px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <FileUp size={14} style={{ color: 'var(--primary)' }} />
             </div>
             <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>Importer un document</p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', padding: 4 }}><X size={16} /></button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 4 }}><X size={16} /></button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ padding: '18px' }}>
@@ -583,17 +583,17 @@ function ImportModal({ onClose, onImported }: { onClose: () => void; onImported:
             onDragOver={e => e.preventDefault()}
             onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f); }}
             style={{
-              border: `2px dashed ${file ? 'var(--primary)' : 'var(--border)'}`,
+              border: `2px dashed ${file ? 'var(--primary)' : 'var(--line)'}`,
               borderRadius: 10, padding: '28px 20px', textAlign: 'center',
               cursor: 'pointer', marginBottom: 16,
-              background: file ? 'var(--primary-soft)' : 'var(--bg-muted)',
+              background: file ? 'var(--primary-soft)' : 'var(--surface-2)',
               transition: 'all 0.15s',
             }}
           >
-            <FileText size={28} style={{ color: file ? 'var(--primary)' : 'var(--fg-subtle)', margin: '0 auto 10px', display: 'block' }} />
+            <FileText size={28} style={{ color: file ? 'var(--primary)' : 'var(--ink-3)', margin: '0 auto 10px', display: 'block' }} />
             {file
-              ? <><p style={{ fontWeight: 600, color: 'var(--primary)', margin: '0 0 4px' }}>{file.name}</p><p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>Cliquez pour changer</p></>
-              : <><p style={{ fontWeight: 600, margin: '0 0 4px' }}>Déposer un PDF ou DOCX ici</p><p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>ou cliquer pour sélectionner</p></>
+              ? <><p style={{ fontWeight: 600, color: 'var(--primary)', margin: '0 0 4px' }}>{file.name}</p><p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>Cliquez pour changer</p></>
+              : <><p style={{ fontWeight: 600, margin: '0 0 4px' }}>Déposer un PDF ou DOCX ici</p><p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>ou cliquer pour sélectionner</p></>
             }
             <input
               ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt"
@@ -604,11 +604,11 @@ function ImportModal({ onClose, onImported }: { onClose: () => void; onImported:
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 4 }}>Nom du template *</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Nom du template *</label>
               <input className="input" style={{ fontSize: 13 }} value={nameFr} onChange={e => setNameFr(e.target.value)} required placeholder="ex: Attestation de travail" />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>Pour qui est ce modèle ? *</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 6 }}>Pour qui est ce modèle ? *</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {TARGET_TYPES.map(({ value, label, Icon }) => (
                   <button
@@ -618,9 +618,9 @@ function ImportModal({ onClose, onImported }: { onClose: () => void; onImported:
                     style={{
                       flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                       padding: '9px 0', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                      border: targetType === value ? `2px solid var(--primary)` : '1px solid var(--border)',
-                      background: targetType === value ? 'var(--primary-soft)' : 'var(--bg-elev)',
-                      color: targetType === value ? 'var(--primary)' : 'var(--fg-muted)',
+                      border: targetType === value ? `2px solid var(--primary)` : '1px solid var(--line)',
+                      background: targetType === value ? 'var(--primary-soft)' : 'var(--surface)',
+                      color: targetType === value ? 'var(--primary)' : 'var(--ink-2)',
                       transition: 'all 0.15s',
                     }}
                   >
@@ -630,14 +630,14 @@ function ImportModal({ onClose, onImported }: { onClose: () => void; onImported:
               </div>
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 4 }}>Catégorie</label>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Catégorie</label>
               <select className="select" style={{ fontSize: 13 }} value={category} onChange={e => setCategory(e.target.value)}>
                 {CATEGORIES.map(c => <option key={c} value={c}>{catMeta(c).label}</option>)}
               </select>
             </div>
           </div>
 
-          <div style={{ background: 'var(--bg-muted)', borderRadius: 8, padding: '9px 12px', marginBottom: 16, fontSize: 12, color: 'var(--fg-muted)', lineHeight: 1.6 }}>
+          <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '9px 12px', marginBottom: 16, fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.6 }}>
             Les champs <code>[Nom et prénom]</code>, <code>[CIN]</code>, <code>[poste]</code>, <code>[Date]</code>… seront automatiquement convertis en variables <code>{'{{full_name}}'}</code>, etc.
           </div>
 
@@ -668,7 +668,7 @@ function TemplateCard({
   return (
     <div
       style={{
-        background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 12,
+        background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12,
         overflow: 'hidden', display: 'flex', flexDirection: 'column',
         transition: 'box-shadow 0.15s, transform 0.15s',
       }}
@@ -684,7 +684,7 @@ function TemplateCard({
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontWeight: 700, fontSize: 13, margin: '0 0 2px', lineHeight: 1.3 }}>{tpl.name_fr}</p>
             {tpl.name_en && tpl.name_en !== tpl.name_fr && (
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{tpl.name_en}</p>
+              <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{tpl.name_en}</p>
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
@@ -701,23 +701,23 @@ function TemplateCard({
         {vars.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
             {vars.slice(0, 5).map(v => <VarPill key={v} v={v} />)}
-            {vars.length > 5 && <span style={{ fontSize: 10, color: 'var(--fg-subtle)' }}>+{vars.length - 5}</span>}
+            {vars.length > 5 && <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>+{vars.length - 5}</span>}
           </div>
         )}
       </div>
-      <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div style={{ padding: '10px 16px', borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 6 }}>
         <button
           onClick={onPreview}
-          style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--fg-muted)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
+          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'none')}
         >
           <Eye size={11} /> Aperçu
         </button>
         <button
           onClick={onEdit}
-          style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--fg-muted)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
+          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'none')}
         >
           <Pencil size={11} /> Modifier
@@ -820,7 +820,7 @@ export default function TemplatesPage() {
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)', pointerEvents: 'none' }} />
+          <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
           <input
             className="input" style={{ paddingLeft: 32, fontSize: 13 }}
             placeholder="Rechercher un template…"
@@ -832,7 +832,7 @@ export default function TemplatesPage() {
         <div style={{ display: 'flex', gap: 6 }}>
           <button
             onClick={() => setTypeFilter('')}
-            style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid var(--border)', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: !typeFilter ? 'var(--primary)' : 'var(--bg-elev)', color: !typeFilter ? '#fff' : 'var(--fg)' }}
+            style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid var(--line)', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: !typeFilter ? 'var(--primary)' : 'var(--surface)', color: !typeFilter ? '#fff' : 'var(--fg)' }}
           >
             Tous
           </button>
@@ -842,8 +842,8 @@ export default function TemplatesPage() {
               onClick={() => setTypeFilter(typeFilter === value ? '' : value)}
               style={{
                 padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                border: `1px solid ${typeFilter === value ? color : 'var(--border)'}`,
-                background: typeFilter === value ? bg : 'var(--bg-elev)',
+                border: `1px solid ${typeFilter === value ? color : 'var(--line)'}`,
+                background: typeFilter === value ? bg : 'var(--surface)',
                 color: typeFilter === value ? color : 'var(--fg)',
                 display: 'flex', alignItems: 'center', gap: 5,
               }}
@@ -861,7 +861,7 @@ export default function TemplatesPage() {
               <button
                 key={cat}
                 onClick={() => setCatFilter(cat === catFilter ? '' : cat)}
-                style={{ padding: '6px 12px', borderRadius: 7, border: `1px solid ${catFilter === cat ? m.color : 'var(--border)'}`, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: catFilter === cat ? m.bg : 'var(--bg-elev)', color: catFilter === cat ? m.color : 'var(--fg)' }}
+                style={{ padding: '6px 12px', borderRadius: 7, border: `1px solid ${catFilter === cat ? m.color : 'var(--line)'}`, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: catFilter === cat ? m.bg : 'var(--surface)', color: catFilter === cat ? m.color : 'var(--fg)' }}
               >
                 {m.label}
               </button>
@@ -874,7 +874,7 @@ export default function TemplatesPage() {
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
       ) : templates.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
           <FileText size={40} style={{ margin: '0 auto 16px', opacity: 0.2 }} />
           <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>Aucun template trouvé</p>
           <p style={{ fontSize: 13, marginBottom: 20 }}>Créez un template ou importez un PDF/DOCX.</p>

@@ -28,19 +28,19 @@ function StepIndicator({ step, labels }: { step: number; labels: string[] }) {
               width: 30, height: 30, borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 12, fontWeight: 700, flexShrink: 0,
-              background: i < step ? 'var(--primary)' : i === step ? 'var(--primary-soft)' : 'var(--bg-muted)',
-              color: i < step ? '#fff' : i === step ? 'var(--primary)' : 'var(--fg-muted)',
+              background: i < step ? 'var(--primary)' : i === step ? 'var(--primary-soft)' : 'var(--surface-2)',
+              color: i < step ? '#fff' : i === step ? 'var(--primary)' : 'var(--ink-2)',
               border: i === step ? '2px solid var(--primary)' : '2px solid transparent',
               transition: 'all 0.2s',
             }}>
               {i < step ? <Check size={13} /> : i + 1}
             </div>
-            <span style={{ fontSize: 10, fontWeight: 600, color: i === step ? 'var(--primary)' : 'var(--fg-subtle)', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: i === step ? 'var(--primary)' : 'var(--ink-3)', whiteSpace: 'nowrap' }}>
               {label}
             </span>
           </div>
           {i < labels.length - 1 && (
-            <div style={{ flex: 1, height: 2, background: i < step ? 'var(--primary)' : 'var(--border)', margin: '0 4px', marginBottom: 16 }} />
+            <div style={{ flex: 1, height: 2, background: i < step ? 'var(--primary)' : 'var(--line)', margin: '0 4px', marginBottom: 16 }} />
           )}
         </React.Fragment>
       ))}
@@ -54,7 +54,7 @@ function VarBadge({ name }: { name: string }) {
   return (
     <code style={{
       fontSize: 11, padding: '2px 7px', borderRadius: 5,
-      background: '#f0f9ff', color: '#0369a1',
+      background: 'var(--primary-soft)', color: 'var(--primary)',
       border: '1px solid #bae6fd', fontFamily: 'monospace',
     }}>
       {`{{${name}}}`}
@@ -79,24 +79,24 @@ function EditorToolbar({ onEdit, onOriginal, onPrint, modified }: {
         background: active ? 'var(--primary-soft)' : 'none',
         border: '1px solid transparent', borderRadius: 5,
         padding: '4px 7px', cursor: 'pointer',
-        color: active ? 'var(--primary)' : 'var(--fg-muted)',
+        color: active ? 'var(--primary)' : 'var(--ink-2)',
         display: 'flex', alignItems: 'center',
         transition: 'all 0.1s',
       }}
-      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-muted)'; }}
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
       onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'none'; }}
     >
       {icon}
     </button>
   );
 
-  const sep = <div style={{ width: 1, height: 20, background: 'var(--border)', margin: '0 4px' }} />;
+  const sep = <div style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px' }} />;
 
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 2,
-      padding: '6px 12px', background: 'var(--bg-elev)',
-      border: '1px solid var(--border)', borderRadius: '8px 8px 0 0',
+      padding: '6px 12px', background: 'var(--surface)',
+      border: '1px solid var(--line)', borderRadius: '8px 8px 0 0',
       borderBottom: 'none', flexWrap: 'wrap',
     }}>
       {btn(() => onEdit('bold'), <Bold size={13} />, 'Gras (Ctrl+B)')}
@@ -110,7 +110,7 @@ function EditorToolbar({ onEdit, onOriginal, onPrint, modified }: {
       {btn(onOriginal, <RotateCcw size={13} />, t('resend'))}
       {btn(onPrint, <Printer size={13} />, 'Print')}
       {sep}
-      <span style={{ fontSize: 11, color: modified ? '#d97706' : 'var(--fg-subtle)', display: 'flex', alignItems: 'center', gap: 4 }}>
+      <span style={{ fontSize: 11, color: modified ? 'var(--warn)' : 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 4 }}>
         {modified ? <><AlertCircle size={11} /> {t('status_pending_item')}</> : <><Check size={11} /> {t('status_active_item')}</>}
       </span>
     </div>
@@ -347,7 +347,7 @@ export default function GeneratePage() {
       {step === 0 && (
         <Card>
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Type &amp; {t('employee')}</h2>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 18 }}>
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 18 }}>
             {t('generate_step0_desc')}
           </p>
 
@@ -364,9 +364,9 @@ export default function GeneratePage() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '10px 20px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-                  border: personType === value ? '2px solid var(--primary)' : '1px solid var(--border)',
-                  background: personType === value ? 'var(--primary-soft)' : 'var(--bg-elev)',
-                  color: personType === value ? 'var(--primary)' : 'var(--fg-muted)',
+                  border: personType === value ? '2px solid var(--primary)' : '1px solid var(--line)',
+                  background: personType === value ? 'var(--primary-soft)' : 'var(--surface)',
+                  color: personType === value ? 'var(--primary)' : 'var(--ink-2)',
                   transition: 'all 0.15s',
                 }}
               >
@@ -384,14 +384,14 @@ export default function GeneratePage() {
                 <div key={p.id} onClick={() => setEmployeeId(p.id)}
                   style={{
                     padding: '12px 14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                    border: employeeId === p.id ? '2px solid var(--primary)' : '1px solid var(--border)',
-                    background: employeeId === p.id ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                    border: employeeId === p.id ? '2px solid var(--primary)' : '1px solid var(--line)',
+                    background: employeeId === p.id ? 'var(--primary-soft)' : 'var(--surface)',
                     display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.15s',
                   }}>
                   <Avatar name={p.full_name} size={32} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontWeight: 600, fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.full_name}</p>
-                    <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>
+                    <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>
                       {personType === 'intern'
                         ? ((p as any).school || p.department || p.cin || '—')
                         : (p.position || p.department || p.cin || '—')}
@@ -416,17 +416,17 @@ export default function GeneratePage() {
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{t('select_template')}</h2>
-            <span style={{ fontSize: 12, color: 'var(--fg-muted)', background: 'var(--bg-muted)', padding: '3px 10px', borderRadius: 20 }}>
+            <span style={{ fontSize: 12, color: 'var(--ink-2)', background: 'var(--surface-2)', padding: '3px 10px', borderRadius: 20 }}>
               {personType === 'intern' ? '🎓 '+t('intern') : '👤 '+t('employee')} · {filteredTemplates.length} {t('tab_docs')}
             </span>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 16 }}>
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 16 }}>
             {t('generate_step1_desc')}
           </p>
 
           {/* Search */}
           <div style={{ position: 'relative', marginBottom: 14 }}>
-            <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)', pointerEvents: 'none' }} />
+            <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
             <input
               className="input"
               placeholder={`${t('search')}...`}
@@ -446,8 +446,8 @@ export default function GeneratePage() {
                 style={{
                   padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 500,
                   cursor: 'pointer', border: 'none',
-                  background: tplCategory === cat.value ? 'var(--primary)' : 'var(--bg-muted)',
-                  color: tplCategory === cat.value ? '#fff' : 'var(--fg-muted)',
+                  background: tplCategory === cat.value ? 'var(--primary)' : 'var(--surface-2)',
+                  color: tplCategory === cat.value ? '#fff' : 'var(--ink-2)',
                   transition: 'all 0.15s',
                 }}
               >
@@ -458,7 +458,7 @@ export default function GeneratePage() {
 
           {/* Template grid */}
           {filteredTemplates.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--fg-muted)', fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-2)', fontSize: 13 }}>
               {t('no_results')}
             </div>
           ) : (
@@ -469,20 +469,20 @@ export default function GeneratePage() {
                   <div key={tpl.id} onClick={() => setTemplateId(tpl.id)}
                     style={{
                       padding: '14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                      border: templateId === tpl.id ? '2px solid var(--primary)' : '1px solid var(--border)',
-                      background: templateId === tpl.id ? 'var(--primary-soft)' : 'var(--bg-elev)',
+                      border: templateId === tpl.id ? '2px solid var(--primary)' : '1px solid var(--line)',
+                      background: templateId === tpl.id ? 'var(--primary-soft)' : 'var(--surface)',
                       transition: 'all 0.15s',
                     }}>
                     <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tpl.name_fr}</p>
                     {tpl.name_en && tpl.name_en !== tpl.name_fr && (
-                      <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tpl.name_en}</p>
+                      <p style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tpl.name_en}</p>
                     )}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <Badge>{tpl.category}</Badge>
                       {templateId === tpl.id && <Check size={12} style={{ color: 'var(--primary)' }} />}
                     </div>
                     {vars.length > 0 && (
-                      <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 6 }}>
+                      <p style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 6 }}>
                         {vars.length} variables
                       </p>
                     )}
@@ -505,18 +505,18 @@ export default function GeneratePage() {
       {step === 2 && selectedEmp && selectedTpl && (
         <Card>
           <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Variables &amp; Options</h2>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 20 }}>
             {t('generate_step2_desc')}
           </p>
 
           {/* Summary */}
-          <div style={{ background: 'var(--bg-muted)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 24, flexWrap: 'wrap', borderLeft: '3px solid var(--primary)' }}>
+          <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 24, flexWrap: 'wrap', borderLeft: '3px solid var(--primary)' }}>
             <div>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: '0 0 2px' }}>{t('employee')}</p>
+              <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: '0 0 2px' }}>{t('employee')}</p>
               <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>{selectedEmp.full_name}</p>
             </div>
             <div>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: '0 0 2px' }}>Template</p>
+              <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: '0 0 2px' }}>Template</p>
               <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>{selectedTpl.name_fr}</p>
             </div>
           </div>
@@ -537,8 +537,8 @@ export default function GeneratePage() {
                     <div key={v} style={{
                       display: 'flex', alignItems: 'center', gap: 12,
                       padding: '10px 14px', borderRadius: 8,
-                      background: isAuto ? '#f0fdf4' : current ? '#fffbeb' : 'var(--bg-muted)',
-                      border: `1px solid ${isAuto ? '#bbf7d0' : current ? '#fde68a' : 'var(--border)'}`,
+                      background: isAuto ? '#f0fdf4' : current ? 'var(--warn-soft)' : 'var(--surface-2)',
+                      border: `1px solid ${isAuto ? '#bbf7d0' : current ? '#fde68a' : 'var(--line)'}`,
                     }}>
                       <VarBadge name={v} />
                       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -548,7 +548,7 @@ export default function GeneratePage() {
                           onChange={e => setExtraVars(ev => ({ ...ev, [v]: e.target.value }))}
                           style={{
                             flex: 1, padding: '5px 10px', fontSize: 13,
-                            border: `1px solid ${isAuto ? '#86efac' : current ? '#fdba74' : 'var(--border)'}`,
+                            border: `1px solid ${isAuto ? '#86efac' : current ? '#fdba74' : 'var(--line)'}`,
                             borderRadius: 6,
                             background: isAuto ? '#f0fdf4' : current ? '#fff7ed' : '#fff',
                             color: isAuto ? '#15803d' : current ? '#92400e' : 'var(--fg)',
@@ -577,7 +577,7 @@ export default function GeneratePage() {
           {/* Language + AI */}
           <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 180 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6 }}>{t('languages')}</label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 6 }}>{t('languages')}</label>
               <select className="select" value={language} onChange={e => setLanguage(e.target.value)}>
                 {LANG_OPTIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
               </select>
@@ -607,15 +607,15 @@ export default function GeneratePage() {
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             marginBottom: 12, padding: '12px 18px',
-            background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 10,
+            background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--success-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Check size={15} style={{ color: '#16a34a' }} />
               </div>
               <div>
                 <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>{t('status_active_item')}</p>
-                <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>
+                <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>
                   {result.document_type} · {LANG_OPTIONS.find(l => l.value === language)?.label}
                 </p>
               </div>
@@ -651,7 +651,7 @@ export default function GeneratePage() {
 
           {/* Document preview / editor */}
           <div style={{
-            border: '1px solid var(--border)',
+            border: '1px solid var(--line)',
             borderRadius: editMode ? '0 0 10px 10px' : 10,
             background: '#e5e7eb',
             padding: 20,
@@ -674,7 +674,7 @@ export default function GeneratePage() {
           </div>
 
           {editMode && (
-            <p style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 6, textAlign: 'center' }}>
+            <p style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 6, textAlign: 'center' }}>
               {t('edit_instruction')}
             </p>
           )}

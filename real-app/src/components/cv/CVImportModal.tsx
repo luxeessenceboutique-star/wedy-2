@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+﻿import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Upload, ChevronLeft, ChevronRight, X, Check, Trash2,
   User, Briefcase, GraduationCap, Wrench, Globe, Award,
@@ -46,15 +46,15 @@ const EMPTY_EXT: Extraction = {
 };
 
 const FIELD_OPTIONS = [
-  { key: 'full_name',          label: 'Nom complet',    color: '#0891b2' },
+  { key: 'full_name',          label: 'Nom complet',    color: 'var(--primary)' },
   { key: 'email',              label: 'Email',          color: '#7c3aed' },
-  { key: 'phone',              label: 'Téléphone',      color: '#10b981' },
-  { key: 'address',            label: 'Adresse',        color: '#f59e0b' },
-  { key: 'nationality',        label: 'Nationalité',    color: '#06b6d4' },
+  { key: 'phone',              label: 'Téléphone',      color: 'var(--success)' },
+  { key: 'address',            label: 'Adresse',        color: 'var(--warn)' },
+  { key: 'nationality',        label: 'Nationalité',    color: 'var(--accent)' },
   { key: 'linkedin',           label: 'LinkedIn',       color: '#0077b5' },
-  { key: 'summary',            label: 'Résumé',         color: '#6366f1' },
+  { key: 'summary',            label: 'Résumé',         color: 'var(--violet)' },
   { key: 'skills_add',         label: '+ Compétences',  color: '#84cc16' },
-  { key: 'certifications_add', label: '+ Certification',color: '#ef4444' },
+  { key: 'certifications_add', label: '+ Certification',color: 'var(--danger)' },
 ];
 
 // ── Error Boundary ────────────────────────────────────────────────────────────
@@ -69,10 +69,10 @@ class CVErrorBoundary extends React.Component<
   render() {
     if (this.state.err) return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ background: 'var(--bg-elev)', borderRadius: 16, padding: '40px 48px', maxWidth: 440, textAlign: 'center', border: '1px solid var(--border)' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 16, padding: '40px 48px', maxWidth: 440, textAlign: 'center', border: '1px solid var(--line)' }}>
           <AlertTriangle size={40} style={{ color: 'var(--danger)', margin: '0 auto 16px' }} />
           <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>Erreur dans l'importateur CV</p>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20 }}>{this.state.err}</p>
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 20 }}>{this.state.err}</p>
           <Button onClick={this.props.onClose}>Fermer</Button>
         </div>
       </div>
@@ -85,7 +85,7 @@ class CVErrorBoundary extends React.Component<
 
 function FL({ label, auto }: { label: string; auto?: boolean }) {
   return (
-    <label style={{ fontSize: 11, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, fontWeight: 500 }}>
+    <label style={{ fontSize: 11, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4, fontWeight: 500 }}>
       {label}
       {auto && (
         <span style={{ fontSize: 9, background: 'var(--primary-soft)', color: 'var(--primary)', border: '1px solid var(--primary-border)', borderRadius: 4, padding: '1px 5px', fontWeight: 700 }}>
@@ -218,7 +218,7 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
     });
 
     if (drawing) {
-      ctx.strokeStyle = '#0891b2'; ctx.lineWidth = 2;
+      ctx.strokeStyle = 'var(--primary)'; ctx.lineWidth = 2;
       ctx.setLineDash([5, 3]);
       ctx.strokeRect(drawing.x * c.width, drawing.y * c.height, drawing.w * c.width, drawing.h * c.height);
       ctx.fillStyle = 'rgba(8,145,178,0.08)';
@@ -296,29 +296,29 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.62)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{ background: 'var(--bg-elev)', borderRadius: 16, boxShadow: '0 30px 70px rgba(0,0,0,0.4)', border: '1px solid var(--border)', width: '100%', maxWidth: 1200, height: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 16, boxShadow: '0 30px 70px rgba(0,0,0,0.4)', border: '1px solid var(--line)', width: '100%', maxWidth: 1200, height: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 20px', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--primary-border)' }}>
               <FileText size={17} style={{ color: 'var(--primary)' }} />
             </div>
             <div>
               <p style={{ fontWeight: 700, fontSize: 15, margin: 0 }}>Importer un CV</p>
-              <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>
+              <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>
                 {showRight ? `${autoFilled.size} champ(s) extrait(s) · Sélectionnez des zones pour compléter` : 'PDF · DOCX · JPG · PNG'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', padding: 6, borderRadius: 8 }}><X size={18} /></button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 6, borderRadius: 8 }}><X size={18} /></button>
         </div>
 
         {/* Body */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex' }}>
 
           {/* ── LEFT: CV Viewer ── */}
-          <div style={{ width: 440, flexShrink: 0, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: '#14151f' }}>
+          <div style={{ width: 440, flexShrink: 0, borderRight: '1px solid var(--line)', display: 'flex', flexDirection: 'column', background: '#14151f' }}>
 
             {!hasPages ? (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 28, gap: 16 }}>
@@ -418,9 +418,9 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
                             placeholder="Champ personnalisé…"
                             value={customLabel}
                             onChange={e => setCustomLabel(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && customLabel && confirmZone('custom', customLabel, '#94a3b8')}
+                            onKeyDown={e => e.key === 'Enter' && customLabel && confirmZone('custom', customLabel, 'var(--ink-3)')}
                           />
-                          <button onClick={() => customLabel && confirmZone('custom', customLabel, '#94a3b8')} disabled={!customLabel}
+                          <button onClick={() => customLabel && confirmZone('custom', customLabel, 'var(--ink-3)')} disabled={!customLabel}
                             style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6, padding: '5px 10px', cursor: customLabel ? 'pointer' : 'not-allowed', color: customLabel ? '#fff' : 'rgba(255,255,255,0.25)' }}>
                             <Check size={13} />
                           </button>
@@ -458,7 +458,7 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
             {!showRight ? (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--fg-muted)', padding: 40, textAlign: 'center' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-2)', padding: 40, textAlign: 'center' }}>
                 <Upload size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
                 <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>Importez un CV pour commencer</p>
                 <p style={{ fontSize: 13, maxWidth: 280, lineHeight: 1.6 }}>Les données seront extraites automatiquement. Vous pourrez ensuite compléter manuellement.</p>
@@ -466,12 +466,12 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
             ) : loading ? (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
                 <Spinner />
-                <p style={{ fontWeight: 500, color: 'var(--fg-muted)' }}>Analyse du CV en cours…</p>
+                <p style={{ fontWeight: 500, color: 'var(--ink-2)' }}>Analyse du CV en cours…</p>
               </div>
             ) : (
               <>
                 {/* Profile header */}
-                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0, background: 'linear-gradient(135deg, var(--primary-soft) 0%, transparent 80%)' }}>
+                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0, background: 'linear-gradient(135deg, var(--primary-soft) 0%, transparent 80%)' }}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div style={{ width: 62, height: 62, borderRadius: '50%', border: '3px solid var(--primary-border)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--primary-soft)' }}>
                       {photo
@@ -479,7 +479,7 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
                         : <User size={26} style={{ color: 'var(--primary)', opacity: 0.5 }} />}
                     </div>
                     <button onClick={() => photoRef.current?.click()}
-                      style={{ position: 'absolute', bottom: -2, right: -2, width: 22, height: 22, borderRadius: '50%', background: 'var(--primary)', border: '2px solid var(--bg-elev)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}
+                      style={{ position: 'absolute', bottom: -2, right: -2, width: 22, height: 22, borderRadius: '50%', background: 'var(--primary)', border: '2px solid var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}
                       title="Changer la photo">
                       <Camera size={11} />
                     </button>
@@ -487,7 +487,7 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontWeight: 700, fontSize: 16, margin: '0 0 2px' }}>{ext.full_name || 'Nom non détecté'}</p>
-                    <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>{ext.email || ext.phone || 'Contact non détecté'}</p>
+                    <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{ext.email || ext.phone || 'Contact non détecté'}</p>
                     {photo && <p style={{ fontSize: 11, color: 'var(--primary)', margin: '3px 0 0', fontWeight: 600 }}>✓ Photo {autoFilled.size > 0 ? 'extraite du CV' : 'importée'}</p>}
                   </div>
                   {autoFilled.size > 0 && (
@@ -499,13 +499,13 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
                 </div>
 
                 {/* Tabs */}
-                <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', flexShrink: 0, padding: '0 20px' }}>
+                <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', flexShrink: 0, padding: '0 20px' }}>
                   {TABS.map((t, i) => (
                     <button key={i} onClick={() => setTab(i)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '10px 13px', fontSize: 12, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', color: tab === i ? 'var(--primary)' : 'var(--fg-muted)', borderBottom: `2px solid ${tab === i ? 'var(--primary)' : 'transparent'}`, transition: 'all 0.15s' }}>
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '10px 13px', fontSize: 12, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', color: tab === i ? 'var(--primary)' : 'var(--ink-2)', borderBottom: `2px solid ${tab === i ? 'var(--primary)' : 'transparent'}`, transition: 'all 0.15s' }}>
                       {t.icon} {t.label}
                       {t.count !== undefined && t.count > 0 && (
-                        <span style={{ fontSize: 10, background: tab === i ? 'var(--primary-soft)' : 'var(--bg-muted)', color: tab === i ? 'var(--primary)' : 'var(--fg-muted)', border: '1px solid var(--border)', borderRadius: 999, padding: '0 5px', fontWeight: 700 }}>{t.count}</span>
+                        <span style={{ fontSize: 10, background: tab === i ? 'var(--primary-soft)' : 'var(--surface-2)', color: tab === i ? 'var(--primary)' : 'var(--ink-2)', border: '1px solid var(--line)', borderRadius: 999, padding: '0 5px', fontWeight: 700 }}>{t.count}</span>
                       )}
                     </button>
                   ))}
@@ -558,22 +558,22 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
                   {tab === 1 && (
                     <div>
                       {ext.experience.length === 0
-                        ? <div style={{ textAlign: 'center', padding: '36px 20px', color: 'var(--fg-muted)' }}><Briefcase size={32} style={{ opacity: 0.15, marginBottom: 12 }} /><p style={{ fontWeight: 500 }}>Aucune expérience extraite</p><p style={{ fontSize: 12, marginTop: 6 }}>Utilisez "Sélect. zone" pour extraire depuis le CV.</p></div>
+                        ? <div style={{ textAlign: 'center', padding: '36px 20px', color: 'var(--ink-2)' }}><Briefcase size={32} style={{ opacity: 0.15, marginBottom: 12 }} /><p style={{ fontWeight: 500 }}>Aucune expérience extraite</p><p style={{ fontSize: 12, marginTop: 6 }}>Utilisez "Sélect. zone" pour extraire depuis le CV.</p></div>
                         : ext.experience.map((exp, i) => (
-                          <div key={i} style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', borderLeft: '3px solid var(--primary)', borderRadius: 10, padding: '12px 14px', marginBottom: 10 }}>
+                          <div key={i} style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', borderLeft: '3px solid var(--primary)', borderRadius: 10, padding: '12px 14px', marginBottom: 10 }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', marginBottom: 6 }}>
                               {([['title','Titre'],['company','Entreprise']] as [keyof Experience,string][]).map(([k,l]) => (
                                 <div key={k}>
-                                  <label style={{ fontSize: 10, color: 'var(--fg-muted)', display: 'block', marginBottom: 2 }}>{l}</label>
+                                  <label style={{ fontSize: 10, color: 'var(--ink-2)', display: 'block', marginBottom: 2 }}>{l}</label>
                                   <input className="input" style={{ fontSize: 12, padding: '5px 8px', width: '100%', boxSizing: 'border-box' }} value={exp[k]} onChange={e => updExp(i, k, e.target.value)} />
                                 </div>
                               ))}
                             </div>
                             <div>
-                              <label style={{ fontSize: 10, color: 'var(--fg-muted)', display: 'block', marginBottom: 2 }}>Dates</label>
+                              <label style={{ fontSize: 10, color: 'var(--ink-2)', display: 'block', marginBottom: 2 }}>Dates</label>
                               <input className="input" style={{ fontSize: 12, padding: '5px 8px', width: '100%', boxSizing: 'border-box', marginBottom: 6 }} value={exp.dates} onChange={e => updExp(i, 'dates', e.target.value)} />
                             </div>
-                            {exp.description && <p style={{ fontSize: 12, color: 'var(--fg-muted)', lineHeight: 1.5 }}>{exp.description.slice(0, 150)}{exp.description.length > 150 ? '…' : ''}</p>}
+                            {exp.description && <p style={{ fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.5 }}>{exp.description.slice(0, 150)}{exp.description.length > 150 ? '…' : ''}</p>}
                             <button onClick={() => setExt(ex => ({ ...ex, experience: ex.experience.filter((_, j) => j !== i) }))}
                               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: '4px 0', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
                               <Trash2 size={10} /> Supprimer
@@ -587,13 +587,13 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
                   {tab === 2 && (
                     <div>
                       {ext.education.length === 0
-                        ? <div style={{ textAlign: 'center', padding: '36px 20px', color: 'var(--fg-muted)' }}><GraduationCap size={32} style={{ opacity: 0.15, marginBottom: 12 }} /><p style={{ fontWeight: 500 }}>Aucune formation extraite</p><p style={{ fontSize: 12, marginTop: 6 }}>Utilisez "Sélect. zone" pour extraire depuis le CV.</p></div>
+                        ? <div style={{ textAlign: 'center', padding: '36px 20px', color: 'var(--ink-2)' }}><GraduationCap size={32} style={{ opacity: 0.15, marginBottom: 12 }} /><p style={{ fontWeight: 500 }}>Aucune formation extraite</p><p style={{ fontSize: 12, marginTop: 6 }}>Utilisez "Sélect. zone" pour extraire depuis le CV.</p></div>
                         : ext.education.map((edu, i) => (
-                          <div key={i} style={{ background: 'var(--bg-muted)', border: '1px solid var(--border)', borderLeft: '3px solid #10b981', borderRadius: 10, padding: '12px 14px', marginBottom: 10 }}>
+                          <div key={i} style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', borderLeft: '3px solid #10b981', borderRadius: 10, padding: '12px 14px', marginBottom: 10 }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px' }}>
                               {([['degree','Diplôme'],['institution','Établissement'],['dates','Dates']] as [keyof Education,string][]).map(([k,l]) => (
                                 <div key={k} style={k === 'dates' ? {} : {}}>
-                                  <label style={{ fontSize: 10, color: 'var(--fg-muted)', display: 'block', marginBottom: 2 }}>{l}</label>
+                                  <label style={{ fontSize: 10, color: 'var(--ink-2)', display: 'block', marginBottom: 2 }}>{l}</label>
                                   <input className="input" style={{ fontSize: 12, padding: '5px 8px', width: '100%', boxSizing: 'border-box' }} value={edu[k]} onChange={e => updEdu(i, k, e.target.value)} />
                                 </div>
                               ))}
@@ -612,9 +612,9 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
                     <div>
                       <div style={{ marginBottom: 20 }}>
                         <FL label="Compétences" auto={autoFilled.has('skills')} />
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minHeight: 44, padding: '8px 10px', background: 'var(--bg-muted)', border: '1px solid var(--border)', borderRadius: 10 }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, minHeight: 44, padding: '8px 10px', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 10 }}>
                           {ext.skills.length === 0
-                            ? <span style={{ fontSize: 12, color: 'var(--fg-muted)', alignSelf: 'center' }}>Aucune compétence — sélectionnez une zone</span>
+                            ? <span style={{ fontSize: 12, color: 'var(--ink-2)', alignSelf: 'center' }}>Aucune compétence — sélectionnez une zone</span>
                             : ext.skills.map((s, i) => (
                               <span key={i} style={{ fontSize: 12, padding: '3px 10px', background: 'var(--primary-soft)', color: 'var(--primary)', border: '1px solid var(--primary-border)', borderRadius: 999, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 5 }}>
                                 {s}
@@ -626,13 +626,13 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
                       <div style={{ marginBottom: 20 }}>
                         <FL label="Langues" auto={autoFilled.has('languages')} />
                         {ext.languages.length === 0
-                          ? <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Aucune langue détectée</p>
+                          ? <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>Aucune langue détectée</p>
                           : <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                             {ext.languages.filter(l => l.name).map((l, i) => (
-                              <span key={i} style={{ fontSize: 12, padding: '4px 12px', background: 'var(--bg-muted)', border: '1px solid var(--border)', borderRadius: 999, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span key={i} style={{ fontSize: 12, padding: '4px 12px', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 999, display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <Globe size={11} style={{ color: 'var(--primary)' }} />
                                 <b>{l.name}</b>
-                                {l.level !== 'Non précisé' && <span style={{ color: 'var(--fg-muted)' }}>— {l.level}</span>}
+                                {l.level !== 'Non précisé' && <span style={{ color: 'var(--ink-2)' }}>— {l.level}</span>}
                               </span>
                             ))}
                           </div>}
@@ -640,11 +640,11 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
                       <div>
                         <FL label="Certifications" auto={autoFilled.has('certifications')} />
                         {ext.certifications.length === 0
-                          ? <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>Aucune certification détectée</p>
+                          ? <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>Aucune certification détectée</p>
                           : <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                             {ext.certifications.map((c, i) => (
-                              <div key={i} style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', background: 'var(--bg-muted)', border: '1px solid var(--border)', borderRadius: 8 }}>
-                                <Award size={13} style={{ color: '#f59e0b', flexShrink: 0 }} /> {c}
+                              <div key={i} style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 8 }}>
+                                <Award size={13} style={{ color: 'var(--warn)', flexShrink: 0 }} /> {c}
                                 <button onClick={() => setExt(ex => ({ ...ex, certifications: ex.certifications.filter((_, j) => j !== i) }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: 0, marginLeft: 'auto', display: 'flex' }}><X size={11} /></button>
                               </div>
                             ))}
@@ -660,7 +660,7 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '11px 20px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: 'var(--bg-elev)' }}>
+        <div style={{ padding: '11px 20px', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, background: 'var(--surface)' }}>
           <button className="btn btn-ghost" onClick={onClose}>Annuler</button>
           {(hasPages || hasExt) && (
             <div style={{ display: 'flex', gap: 10 }}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Video, Copy, ExternalLink, Plus, Users, Zap,
@@ -46,7 +46,7 @@ function ProjectMeetingCard({
   return (
     <div style={{
       borderRadius: 14,
-      background: '#fff',
+      background: 'var(--surface)',
       border: isActive ? `2px solid ${project.color}` : '1.5px solid #e2e8f0',
       boxShadow: isActive
         ? `0 0 0 3px ${project.color}22, 0 8px 28px rgba(0,0,0,0.10)`
@@ -71,22 +71,22 @@ function ProjectMeetingCard({
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: '#0f172a' }}>{project.name}</p>
+              <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{project.name}</p>
               {isActive && (
                 <span style={{
                   fontSize: 10, fontWeight: 700, color: '#fff',
-                  background: '#22c55e', borderRadius: 999,
+                  background: 'var(--success)', borderRadius: 999,
                   padding: '2px 8px', display: 'flex', alignItems: 'center', gap: 4,
                 }}>
                   <span style={{
-                    width: 6, height: 6, borderRadius: '50%', background: '#fff',
+                    width: 6, height: 6, borderRadius: '50%', background: 'var(--surface)',
                     animation: 'pulse 1.5s infinite',
                   }} />
                   {t('meeting_ongoing')}
                 </span>
               )}
             </div>
-            <p style={{ margin: '3px 0 0', fontSize: 12, color: '#94a3b8' }}>
+            <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--ink-3)' }}>
               {project.description || t('meeting_dedicated_room')}
             </p>
           </div>
@@ -103,22 +103,22 @@ function ProjectMeetingCard({
                 </div>
               ))}
             </div>
-            <span style={{ fontSize: 12, color: '#64748b' }}>
+            <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>
               {project.members.length} {t('members_label')}
             </span>
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Users size={13} style={{ color: '#cbd5e1' }} />
-            <span style={{ fontSize: 12, color: '#94a3b8' }}>{t('org_all_assigned')}</span>
+            <Users size={13} style={{ color: 'var(--line-2)' }} />
+            <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>{t('org_all_assigned')}</span>
           </div>
         )}
 
         {/* Room URL */}
         <div style={{
           padding: '7px 10px', borderRadius: 8,
-          background: '#f8fafc', border: '1px solid #e2e8f0',
-          fontSize: 11, color: '#64748b',
+          background: 'var(--surface-2)', border: '1px solid #e2e8f0',
+          fontSize: 11, color: 'var(--ink-2)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           fontFamily: 'monospace',
         }}>
@@ -148,8 +148,8 @@ function ProjectMeetingCard({
                 style={{
                   width: 40, height: 40,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: '#fee2e2', border: '1px solid #fca5a5',
-                  borderRadius: 8, cursor: 'pointer', color: '#ef4444', flexShrink: 0,
+                  background: 'var(--danger-soft)', border: '1px solid #fca5a5',
+                  borderRadius: 8, cursor: 'pointer', color: 'var(--danger)', flexShrink: 0,
                 }}
               ><PhoneOff size={14} /></button>
             </>
@@ -190,8 +190,8 @@ function ProjectMeetingCard({
 const iconBtn: React.CSSProperties = {
   width: 40, height: 40,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
-  background: 'var(--bg-muted)', border: '1px solid var(--border)',
-  borderRadius: 8, cursor: 'pointer', color: '#64748b', flexShrink: 0,
+  background: 'var(--surface-2)', border: '1px solid var(--line)',
+  borderRadius: 8, cursor: 'pointer', color: 'var(--ink-2)', flexShrink: 0,
 };
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -233,7 +233,7 @@ export default function MeetingsPage() {
   const startQuickMeeting = () => {
     if (!quickName.trim()) return;
     const roomName = `wedy-rh-${slugify(quickName.trim())}-${Date.now().toString(36)}`;
-    launchMeeting(roomName, quickName.trim(), '#6366f1');
+    launchMeeting(roomName, quickName.trim(), 'var(--violet)');
     setQuickModal(false);
     setQuickName('');
   };
@@ -263,7 +263,7 @@ export default function MeetingsPage() {
         }}>
           <div style={{
             width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-            background: '#0891b2', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <Video size={18} color="white" />
           </div>
@@ -271,7 +271,7 @@ export default function MeetingsPage() {
             <p style={{ margin: 0, fontWeight: 600, fontSize: 13, color: '#0c4a6e' }}>
               {t('meeting_banner_title')}
             </p>
-            <p style={{ margin: '2px 0 0', fontSize: 12, color: '#0891b2' }}>
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--primary)' }}>
               {t('meeting_banner_desc')}
             </p>
           </div>
@@ -279,7 +279,7 @@ export default function MeetingsPage() {
             onClick={() => setQuickModal(true)}
             style={{
               flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
-              background: '#0891b2', border: 'none', borderRadius: 8,
+              background: 'var(--primary)', border: 'none', borderRadius: 8,
               padding: '8px 16px', color: 'white', fontWeight: 600, fontSize: 12, cursor: 'pointer',
             }}
             onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(0.9)')}
@@ -296,7 +296,7 @@ export default function MeetingsPage() {
             padding: '12px 18px', borderRadius: 10, marginBottom: 20,
             background: '#f0fdf4', border: '1px solid #86efac',
           }}>
-            <CheckCircle2 size={18} style={{ color: '#22c55e', flexShrink: 0 }} />
+            <CheckCircle2 size={18} style={{ color: 'var(--success)', flexShrink: 0 }} />
             <p style={{ margin: 0, fontSize: 13, color: '#14532d' }}>
               <strong>{activeRooms.size} {t('meeting_active_count')}</strong> — {t('meeting_active_desc')}
             </p>
@@ -309,11 +309,11 @@ export default function MeetingsPage() {
         ) : projects.length === 0 ? (
           <div style={{
             textAlign: 'center', padding: '60px 24px',
-            background: '#fff', borderRadius: 16, border: '1px dashed #e2e8f0',
+            background: 'var(--surface)', borderRadius: 16, border: '1px dashed #e2e8f0',
           }}>
-            <Users size={40} style={{ color: '#cbd5e1', marginBottom: 14 }} />
+            <Users size={40} style={{ color: 'var(--line-2)', marginBottom: 14 }} />
             <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>{t('org_empty_title')}</p>
-            <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>
+            <p style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 20 }}>
               {t('meeting_empty_desc')}
             </p>
             <Button variant="soft" onClick={() => setQuickModal(true)}>
@@ -348,8 +348,8 @@ export default function MeetingsPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '4px 0 8px' }}>
           <div style={{
             padding: '12px 14px', borderRadius: 10,
-            background: '#f8fafc', border: '1px solid #e2e8f0',
-            fontSize: 12, color: '#64748b', lineHeight: 1.6,
+            background: 'var(--surface-2)', border: '1px solid #e2e8f0',
+            fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.6,
           }}>
             {t('meeting_quick_desc')}
           </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Search, Play, Square, Trash2, RefreshCw, ExternalLink,
   Clock, Building2, Zap, ChevronDown, ChevronUp,
@@ -87,16 +87,16 @@ function daysUntil(dateStr: string): number | null {
 
 function complexityColor(level?: string): { bg: string; fg: string } {
   switch (level) {
-    case 'high':   return { bg: '#fee2e2', fg: '#dc2626' };
-    case 'medium': return { bg: '#fef3c7', fg: '#d97706' };
-    case 'low':    return { bg: '#dcfce7', fg: '#16a34a' };
-    default:       return { bg: 'var(--bg-muted)', fg: 'var(--fg-muted)' };
+    case 'high':   return { bg: 'var(--danger-soft)', fg: '#dc2626' };
+    case 'medium': return { bg: 'var(--warn-soft)', fg: 'var(--warn)' };
+    case 'low':    return { bg: 'var(--success-soft)', fg: '#16a34a' };
+    default:       return { bg: 'var(--surface-2)', fg: 'var(--ink-2)' };
   }
 }
 
 const TECH_COLORS = [
   { bg: '#ede9fe', fg: '#7c3aed' },
-  { bg: '#cffafe', fg: '#0891b2' },
+  { bg: '#cffafe', fg: 'var(--primary)' },
   { bg: '#fce7f3', fg: '#be185d' },
   { bg: '#d1fae5', fg: '#059669' },
   { bg: '#fef9c3', fg: '#a16207' },
@@ -107,8 +107,8 @@ const TECH_COLORS = [
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number | string; color: string }) {
   return (
     <div style={{
-      background: 'var(--bg-elev)',
-      border: '1px solid var(--border)',
+      background: 'var(--surface)',
+      border: '1px solid var(--line)',
       borderRadius: 12,
       padding: '14px 18px',
       display: 'flex',
@@ -127,7 +127,7 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
       </div>
       <div>
         <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--fg)', lineHeight: 1 }}>{value}</div>
-        <div style={{ fontSize: 11, color: 'var(--fg-muted)', marginTop: 2 }}>{label}</div>
+        <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>{label}</div>
       </div>
     </div>
   );
@@ -136,7 +136,7 @@ function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label:
 function ProgressBar({ value }: { value: number }) {
   return (
     <div style={{
-      height: 6, background: 'var(--bg-muted)',
+      height: 6, background: 'var(--surface-2)',
       borderRadius: 99, overflow: 'hidden', marginTop: 8,
     }}>
       <div style={{
@@ -171,16 +171,16 @@ function AgentTimeline({ progress }: { progress?: number }) {
             <div style={{
               width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: done ? '#7c3aed' : active ? '#ede9fe' : 'var(--bg-muted)',
+              background: done ? '#7c3aed' : active ? '#ede9fe' : 'var(--surface-2)',
               border: active ? '2px solid #7c3aed' : '2px solid transparent',
-              color: done ? '#fff' : active ? '#7c3aed' : 'var(--fg-subtle)',
+              color: done ? '#fff' : active ? '#7c3aed' : 'var(--ink-3)',
               transition: 'all 0.3s ease',
             }}>
               {done ? <CheckCircle2 size={13} /> : step.icon}
             </div>
             <span style={{
               fontSize: 12,
-              color: done ? 'var(--fg)' : active ? '#7c3aed' : 'var(--fg-subtle)',
+              color: done ? 'var(--fg)' : active ? '#7c3aed' : 'var(--ink-3)',
               fontWeight: active ? 600 : 400,
               transition: 'color 0.3s ease',
             }}>
@@ -231,8 +231,8 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'var(--bg-elev)',
-        border: '1px solid var(--border)',
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
         borderRadius: 14,
         overflow: 'hidden',
         display: 'flex',
@@ -282,9 +282,9 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
 
         {/* Organization */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Building2 size={12} style={{ color: 'var(--fg-subtle)', flexShrink: 0 }} />
+          <Building2 size={12} style={{ color: 'var(--ink-3)', flexShrink: 0 }} />
           <span style={{
-            fontSize: 11, color: 'var(--fg-muted)', fontWeight: 500,
+            fontSize: 11, color: 'var(--ink-2)', fontWeight: 500,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {ar?.organisme || tender.organization || t('tender_no_org')}
@@ -316,15 +316,15 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
         {/* Type de projet */}
         {ar?.type_projet && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Briefcase size={11} style={{ color: 'var(--fg-subtle)', flexShrink: 0 }} />
-            <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{ar.type_projet}</span>
+            <Briefcase size={11} style={{ color: 'var(--ink-3)', flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>{ar.type_projet}</span>
           </div>
         )}
 
         {/* Resume */}
         {ar?.resume && (
           <p style={{
-            fontSize: 12, color: 'var(--fg-muted)', lineHeight: 1.55, margin: 0,
+            fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.55, margin: 0,
             display: '-webkit-box',
             WebkitLineClamp: 3,
             WebkitBoxOrient: 'vertical',
@@ -341,7 +341,7 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
               <TechChip key={i} tech={tech} idx={i} />
             ))}
             {ar.technologies.length > 5 && (
-              <span style={{ fontSize: 10, color: 'var(--fg-subtle)', alignSelf: 'center' }}>
+              <span style={{ fontSize: 10, color: 'var(--ink-3)', alignSelf: 'center' }}>
                 +{ar.technologies.length - 5}
               </span>
             )}
@@ -366,10 +366,10 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
 
         {/* Deadline */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Clock size={11} style={{ color: urgent || overdue ? '#dc2626' : 'var(--fg-subtle)', flexShrink: 0 }} />
+          <Clock size={11} style={{ color: urgent || overdue ? '#dc2626' : 'var(--ink-3)', flexShrink: 0 }} />
           <span style={{
             fontSize: 11, fontWeight: 600,
-            color: overdue ? '#dc2626' : urgent ? '#d97706' : 'var(--fg-muted)',
+            color: overdue ? '#dc2626' : urgent ? 'var(--warn)' : 'var(--ink-2)',
           }}>
             {ar?.date_limite || tender.deadline
               ? overdue
@@ -384,12 +384,12 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
 
       {/* Action bar */}
       <div style={{
-        borderTop: '1px solid var(--border)',
+        borderTop: '1px solid var(--line)',
         padding: '10px 14px',
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        background: 'var(--bg-muted)',
+        background: 'var(--surface-2)',
       }}>
         <a
           href={tender.source_url}
@@ -417,13 +417,13 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '6px 12px', borderRadius: 8,
               fontSize: 12, fontWeight: 600,
-              background: 'var(--bg-elev)', color: 'var(--fg)',
-              border: '1px solid var(--border)',
+              background: 'var(--surface)', color: 'var(--fg)',
+              border: '1px solid var(--line)',
               cursor: 'pointer',
               transition: 'background 0.15s',
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-elev)')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}
           >
             <Download size={11} />
             DCE
@@ -436,7 +436,7 @@ function TenderCard({ tender, onShowFiles }: { tender: TenderResult; onShowFiles
           rel="noopener noreferrer"
           style={{
             marginLeft: 'auto',
-            fontSize: 10, color: 'var(--fg-subtle)',
+            fontSize: 10, color: 'var(--ink-3)',
             textDecoration: 'none',
             maxWidth: 100,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -678,12 +678,12 @@ export default function TendersPage() {
                 display: 'inline-flex', alignItems: 'center', gap: 6,
                 padding: '7px 14px', borderRadius: 8,
                 fontSize: 12, fontWeight: 600,
-                background: 'var(--bg-elev)', color: 'var(--fg-muted)',
-                border: '1px solid var(--border)', cursor: 'pointer',
+                background: 'var(--surface)', color: 'var(--ink-2)',
+                border: '1px solid var(--line)', cursor: 'pointer',
                 transition: 'all 0.15s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#dc2626'; e.currentTarget.style.borderColor = '#fca5a5'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-elev)'; e.currentTarget.style.color = 'var(--fg-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--danger-soft)'; e.currentTarget.style.color = '#dc2626'; e.currentTarget.style.borderColor = '#fca5a5'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--ink-2)'; e.currentTarget.style.borderColor = 'var(--line)'; }}
             >
               <Trash2 size={12} />
               {t('tender_clear_results')}
@@ -705,8 +705,8 @@ export default function TendersPage() {
 
           {/* Config card */}
           <div style={{
-            background: 'var(--bg-elev)',
-            border: '1px solid var(--border)',
+            background: 'var(--surface)',
+            border: '1px solid var(--line)',
             borderRadius: 14,
             overflow: 'hidden',
             boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
@@ -733,7 +733,7 @@ export default function TendersPage() {
             <div style={{ padding: '18px' }}>
               {/* Keywords */}
               <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   {t('tender_keywords_label')}
                 </label>
                 <textarea
@@ -746,8 +746,8 @@ export default function TendersPage() {
                     width: '100%',
                     padding: '9px 12px',
                     borderRadius: 8,
-                    border: '1px solid var(--border)',
-                    background: 'var(--bg-muted)',
+                    border: '1px solid var(--line)',
+                    background: 'var(--surface-2)',
                     color: 'var(--fg)',
                     fontSize: 13,
                     resize: 'vertical',
@@ -758,13 +758,13 @@ export default function TendersPage() {
                     opacity: isRunning ? 0.6 : 1,
                   }}
                   onFocus={e => (e.target.style.borderColor = '#7c3aed')}
-                  onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+                  onBlur={e => (e.target.style.borderColor = 'var(--line)')}
                 />
               </div>
 
               {/* Name / Email / Company grid */}
               <div style={{ marginBottom: 14 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   {t('tender_contact_label')}
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -773,7 +773,7 @@ export default function TendersPage() {
                     { key: 'nom', label: t('tender_nom'), placeholder: 'Alaoui' },
                   ] as const).map(f => (
                     <div key={f.key}>
-                      <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', display: 'block', marginBottom: 4 }}>{f.label}</label>
+                      <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>{f.label}</label>
                       <input
                         value={form[f.key]}
                         onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
@@ -783,8 +783,8 @@ export default function TendersPage() {
                           width: '100%',
                           padding: '7px 10px',
                           borderRadius: 7,
-                          border: '1px solid var(--border)',
-                          background: 'var(--bg-muted)',
+                          border: '1px solid var(--line)',
+                          background: 'var(--surface-2)',
                           color: 'var(--fg)',
                           fontSize: 12,
                           outline: 'none',
@@ -792,12 +792,12 @@ export default function TendersPage() {
                           opacity: isRunning ? 0.6 : 1,
                         }}
                         onFocus={e => (e.target.style.borderColor = '#7c3aed')}
-                        onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+                        onBlur={e => (e.target.style.borderColor = 'var(--line)')}
                       />
                     </div>
                   ))}
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', display: 'block', marginBottom: 4 }}>{t('tender_email_label')}</label>
+                    <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>{t('tender_email_label')}</label>
                     <input
                       type="email"
                       value={form.email}
@@ -808,8 +808,8 @@ export default function TendersPage() {
                         width: '100%',
                         padding: '7px 10px',
                         borderRadius: 7,
-                        border: '1px solid var(--border)',
-                        background: 'var(--bg-muted)',
+                        border: '1px solid var(--line)',
+                        background: 'var(--surface-2)',
                         color: 'var(--fg)',
                         fontSize: 12,
                         outline: 'none',
@@ -817,11 +817,11 @@ export default function TendersPage() {
                         opacity: isRunning ? 0.6 : 1,
                       }}
                       onFocus={e => (e.target.style.borderColor = '#7c3aed')}
-                      onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+                      onBlur={e => (e.target.style.borderColor = 'var(--line)')}
                     />
                   </div>
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', display: 'block', marginBottom: 4 }}>{t('tender_company_label')}</label>
+                    <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>{t('tender_company_label')}</label>
                     <input
                       value={form.company}
                       onChange={e => setForm(prev => ({ ...prev, company: e.target.value }))}
@@ -831,8 +831,8 @@ export default function TendersPage() {
                         width: '100%',
                         padding: '7px 10px',
                         borderRadius: 7,
-                        border: '1px solid var(--border)',
-                        background: 'var(--bg-muted)',
+                        border: '1px solid var(--line)',
+                        background: 'var(--surface-2)',
                         color: 'var(--fg)',
                         fontSize: 12,
                         outline: 'none',
@@ -840,7 +840,7 @@ export default function TendersPage() {
                         opacity: isRunning ? 0.6 : 1,
                       }}
                       onFocus={e => (e.target.style.borderColor = '#7c3aed')}
-                      onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+                      onBlur={e => (e.target.style.borderColor = 'var(--line)')}
                     />
                   </div>
                 </div>
@@ -853,7 +853,7 @@ export default function TendersPage() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     background: 'none', border: 'none',
-                    color: 'var(--fg-muted)', cursor: 'pointer',
+                    color: 'var(--ink-2)', cursor: 'pointer',
                     fontSize: 11, fontWeight: 600,
                     padding: '4px 0',
                     textTransform: 'uppercase', letterSpacing: '0.05em',
@@ -866,7 +866,7 @@ export default function TendersPage() {
                 {showAiConfig && (
                   <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div>
-                      <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', display: 'block', marginBottom: 4 }}>
+                      <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>
                         <Key size={10} style={{ display: 'inline', marginRight: 4 }} />
                         LiteLLM API Key
                       </label>
@@ -880,19 +880,19 @@ export default function TendersPage() {
                           width: '100%',
                           padding: '7px 10px',
                           borderRadius: 7,
-                          border: '1px solid var(--border)',
-                          background: 'var(--bg-muted)',
+                          border: '1px solid var(--line)',
+                          background: 'var(--surface-2)',
                           color: 'var(--fg)',
                           fontSize: 12,
                           outline: 'none',
                           boxSizing: 'border-box',
                         }}
                         onFocus={e => (e.target.style.borderColor = '#7c3aed')}
-                        onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+                        onBlur={e => (e.target.style.borderColor = 'var(--line)')}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--fg-subtle)', display: 'block', marginBottom: 4 }}>
+                      <label style={{ fontSize: 10, fontWeight: 600, color: 'var(--ink-3)', display: 'block', marginBottom: 4 }}>
                         Modèle LiteLLM
                       </label>
                       <input
@@ -904,15 +904,15 @@ export default function TendersPage() {
                           width: '100%',
                           padding: '7px 10px',
                           borderRadius: 7,
-                          border: '1px solid var(--border)',
-                          background: 'var(--bg-muted)',
+                          border: '1px solid var(--line)',
+                          background: 'var(--surface-2)',
                           color: 'var(--fg)',
                           fontSize: 12,
                           outline: 'none',
                           boxSizing: 'border-box',
                         }}
                         onFocus={e => (e.target.style.borderColor = '#7c3aed')}
-                        onBlur={e => (e.target.style.borderColor = 'var(--border)')}
+                        onBlur={e => (e.target.style.borderColor = 'var(--line)')}
                       />
                     </div>
                   </div>
@@ -977,8 +977,8 @@ export default function TendersPage() {
           {/* Status card (left panel) */}
           {(agentStatus.state !== 'idle' || isRunning) && (
             <div style={{
-              background: 'var(--bg-elev)',
-              border: `1px solid ${isRunning ? '#c4b5fd' : agentStatus.state === 'done' ? '#a7f3d0' : agentStatus.state === 'error' ? '#fca5a5' : 'var(--border)'}`,
+              background: 'var(--surface)',
+              border: `1px solid ${isRunning ? '#c4b5fd' : agentStatus.state === 'done' ? '#a7f3d0' : agentStatus.state === 'error' ? '#fca5a5' : 'var(--line)'}`,
               borderRadius: 12,
               padding: 16,
             }}>
@@ -991,19 +991,19 @@ export default function TendersPage() {
                 </span>
               </div>
               {agentStatus.message && (
-                <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: '0 0 8px' }}>{agentStatus.message}</p>
+                <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: '0 0 8px' }}>{agentStatus.message}</p>
               )}
               {isRunning && (
                 <>
                   <ProgressBar value={agentStatus.progress ?? 20} />
-                  <div style={{ fontSize: 10, color: 'var(--fg-subtle)', marginTop: 4, textAlign: 'right' }}>
+                  <div style={{ fontSize: 10, color: 'var(--ink-3)', marginTop: 4, textAlign: 'right' }}>
                     {agentStatus.progress ?? 0}%
                   </div>
                   <AgentTimeline progress={agentStatus.progress} />
                 </>
               )}
               {agentStatus.state === 'error' && agentStatus.error && (
-                <p style={{ fontSize: 11, color: '#dc2626', margin: '6px 0 0', background: '#fee2e2', padding: '6px 10px', borderRadius: 6 }}>
+                <p style={{ fontSize: 11, color: '#dc2626', margin: '6px 0 0', background: 'var(--danger-soft)', padding: '6px 10px', borderRadius: 6 }}>
                   {agentStatus.error}
                 </p>
               )}
@@ -1061,13 +1061,13 @@ export default function TendersPage() {
 
           {agentStatus.state === 'error' && (
             <div style={{
-              background: '#fee2e2', border: '1px solid #fca5a5',
+              background: 'var(--danger-soft)', border: '1px solid #fca5a5',
               borderRadius: 12, padding: '12px 18px',
               display: 'flex', alignItems: 'center', gap: 10,
             }}>
               <AlertCircle size={18} style={{ color: '#dc2626', flexShrink: 0 }} />
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#991b1b' }}>{t('tender_agent_error_title')}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--danger)' }}>{t('tender_agent_error_title')}</div>
                 {agentStatus.error && <div style={{ fontSize: 12, color: '#b91c1c' }}>{agentStatus.error}</div>}
               </div>
             </div>
@@ -1076,8 +1076,8 @@ export default function TendersPage() {
           {/* Search, filter, sort bar */}
           {results.length > 0 && (
             <div style={{
-              background: 'var(--bg-elev)',
-              border: '1px solid var(--border)',
+              background: 'var(--surface)',
+              border: '1px solid var(--line)',
               borderRadius: 12,
               padding: '12px 14px',
               display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
@@ -1085,12 +1085,12 @@ export default function TendersPage() {
               {/* Search input */}
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 7,
-                background: 'var(--bg-muted)', borderRadius: 8,
+                background: 'var(--surface-2)', borderRadius: 8,
                 padding: '7px 12px',
-                border: '1px solid var(--border)',
+                border: '1px solid var(--line)',
                 flex: 1, minWidth: 180,
               }}>
-                <Search size={13} style={{ color: 'var(--fg-subtle)', flexShrink: 0 }} />
+                <Search size={13} style={{ color: 'var(--ink-3)', flexShrink: 0 }} />
                 <input
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
@@ -1101,7 +1101,7 @@ export default function TendersPage() {
                   }}
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-subtle)', display: 'flex', padding: 0 }}>
+                  <button onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', display: 'flex', padding: 0 }}>
                     <X size={12} />
                   </button>
                 )}
@@ -1109,14 +1109,14 @@ export default function TendersPage() {
 
               {/* Complexity filter */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Filter size={12} style={{ color: 'var(--fg-subtle)' }} />
+                <Filter size={12} style={{ color: 'var(--ink-3)' }} />
                 <select
                   value={filterComplexity}
                   onChange={e => setFilterComplexity(e.target.value as FilterComplexity)}
                   style={{
                     padding: '6px 10px', borderRadius: 7,
-                    border: '1px solid var(--border)',
-                    background: 'var(--bg-muted)', color: 'var(--fg)',
+                    border: '1px solid var(--line)',
+                    background: 'var(--surface-2)', color: 'var(--fg)',
                     fontSize: 12, outline: 'none', cursor: 'pointer',
                   }}
                 >
@@ -1129,14 +1129,14 @@ export default function TendersPage() {
 
               {/* Sort */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <SortAsc size={12} style={{ color: 'var(--fg-subtle)' }} />
+                <SortAsc size={12} style={{ color: 'var(--ink-3)' }} />
                 <select
                   value={sortKey}
                   onChange={e => setSortKey(e.target.value as SortKey)}
                   style={{
                     padding: '6px 10px', borderRadius: 7,
-                    border: '1px solid var(--border)',
-                    background: 'var(--bg-muted)', color: 'var(--fg)',
+                    border: '1px solid var(--line)',
+                    background: 'var(--surface-2)', color: 'var(--fg)',
                     fontSize: 12, outline: 'none', cursor: 'pointer',
                   }}
                 >
@@ -1146,7 +1146,7 @@ export default function TendersPage() {
                 </select>
               </div>
 
-              <span style={{ fontSize: 11, color: 'var(--fg-subtle)', marginLeft: 'auto' }}>
+              <span style={{ fontSize: 11, color: 'var(--ink-3)', marginLeft: 'auto' }}>
                 {t('tender_count_tpl').replace('{n}', String(filteredResults.length)).replace('{total}', String(results.length))}
               </span>
             </div>
@@ -1174,8 +1174,8 @@ export default function TendersPage() {
             <div style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               padding: '80px 40px',
-              background: 'var(--bg-elev)',
-              border: '1px solid var(--border)',
+              background: 'var(--surface)',
+              border: '1px solid var(--line)',
               borderRadius: 16,
               textAlign: 'center',
             }}>
@@ -1190,7 +1190,7 @@ export default function TendersPage() {
               <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--fg)', marginBottom: 8 }}>
                 {t('tender_empty_title')}
               </h3>
-              <p style={{ fontSize: 13, color: 'var(--fg-muted)', maxWidth: 340, lineHeight: 1.6, marginBottom: 0 }}>
+              <p style={{ fontSize: 13, color: 'var(--ink-2)', maxWidth: 340, lineHeight: 1.6, marginBottom: 0 }}>
                 {t('tender_empty_text')}
               </p>
               <div style={{ display: 'flex', gap: 8, marginTop: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -1220,7 +1220,7 @@ export default function TendersPage() {
             <div style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               padding: '60px 40px',
-              background: 'var(--bg-elev)',
+              background: 'var(--surface)',
               border: '1px solid #c4b5fd',
               borderRadius: 16,
               textAlign: 'center',
@@ -1237,7 +1237,7 @@ export default function TendersPage() {
               <h3 style={{ fontSize: 16, fontWeight: 700, color: '#7c3aed', marginBottom: 8 }}>
                 {t('tender_running_title')}
               </h3>
-              <p style={{ fontSize: 12, color: 'var(--fg-muted)', maxWidth: 300 }}>
+              <p style={{ fontSize: 12, color: 'var(--ink-2)', maxWidth: 300 }}>
                 {t('tender_running_text')}
               </p>
             </div>
@@ -1246,19 +1246,19 @@ export default function TendersPage() {
           {agentStatus.state === 'done' && filteredResults.length === 0 && results.length > 0 && (
             <div style={{
               textAlign: 'center', padding: '40px 20px',
-              background: 'var(--bg-elev)',
-              border: '1px solid var(--border)',
+              background: 'var(--surface)',
+              border: '1px solid var(--line)',
               borderRadius: 12,
             }}>
-              <Filter size={28} style={{ color: 'var(--fg-subtle)', marginBottom: 12 }} />
+              <Filter size={28} style={{ color: 'var(--ink-3)', marginBottom: 12 }} />
               <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg)', marginBottom: 6 }}>{t('tender_no_filter_title')}</p>
-              <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{t('tender_no_filter_text')}</p>
+              <p style={{ fontSize: 12, color: 'var(--ink-2)' }}>{t('tender_no_filter_text')}</p>
               <button
                 onClick={() => { setSearchQuery(''); setFilterComplexity('all'); }}
                 style={{
                   marginTop: 12, padding: '7px 16px', borderRadius: 8,
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-muted)', color: 'var(--fg)',
+                  border: '1px solid var(--line)',
+                  background: 'var(--surface-2)', color: 'var(--fg)',
                   fontSize: 12, fontWeight: 600, cursor: 'pointer',
                 }}
               >
@@ -1278,11 +1278,11 @@ export default function TendersPage() {
       >
         {filesModal && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <p style={{ fontSize: 12, color: 'var(--fg-muted)', marginBottom: 8 }}>
+            <p style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 8 }}>
               {t('tender_files_downloaded_tpl').replace('{n}', String(filesModal.file_count))}
             </p>
             {filesModal.downloaded_files.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px', color: 'var(--fg-muted)', fontSize: 12 }}>
+              <div style={{ textAlign: 'center', padding: '20px', color: 'var(--ink-2)', fontSize: 12 }}>
                 {t('tender_no_files_listed')}
               </div>
             ) : (
@@ -1293,8 +1293,8 @@ export default function TendersPage() {
                   <div key={i} style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '10px 14px', borderRadius: 8,
-                    background: 'var(--bg-muted)',
-                    border: '1px solid var(--border)',
+                    background: 'var(--surface-2)',
+                    border: '1px solid var(--line)',
                   }}>
                     <div style={{
                       width: 32, height: 32, borderRadius: 7, flexShrink: 0,
@@ -1308,7 +1308,7 @@ export default function TendersPage() {
                       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {name}
                       </div>
-                      <div style={{ fontSize: 10, color: 'var(--fg-subtle)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 10, color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {file}
                       </div>
                     </div>
@@ -1335,7 +1335,7 @@ export default function TendersPage() {
                 );
               })
             )}
-            <div style={{ marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+            <div style={{ marginTop: 8, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
               <a
                 href={filesModal.source_url}
                 target="_blank"

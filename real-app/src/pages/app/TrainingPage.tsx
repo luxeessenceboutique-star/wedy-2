@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen, Plus, Pencil, Trash2, Search, X, CheckCircle,
@@ -36,29 +36,29 @@ const removeEmpSkill   = (id: string) => api.delete(`/training/employee-skills/$
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 const CATS: Record<string, { label: string; color: string; bg: string }> = {
-  technique:   { label: 'Technique',   color: '#3b82f6', bg: '#eff6ff' },
-  soft_skills: { label: 'Soft Skills', color: '#8b5cf6', bg: '#f5f3ff' },
-  compliance:  { label: 'Conformité',  color: '#ef4444', bg: '#fef2f2' },
-  management:  { label: 'Management',  color: '#f59e0b', bg: '#fffbeb' },
-  langue:      { label: 'Langue',      color: '#10b981', bg: '#ecfdf5' },
-  securite:    { label: 'Sécurité',    color: '#64748b', bg: '#f8fafc' },
-  leadership:  { label: 'Leadership',  color: '#ec4899', bg: '#fdf2f8' },
-  digital:     { label: 'Digital',     color: '#06b6d4', bg: '#ecfeff' },
+  technique:   { label: 'Technique',   color: 'var(--primary)', bg: 'var(--primary-soft)' },
+  soft_skills: { label: 'Soft Skills', color: 'var(--violet)', bg: 'var(--violet-soft)' },
+  compliance:  { label: 'Conformité',  color: 'var(--danger)', bg: '#fef2f2' },
+  management:  { label: 'Management',  color: 'var(--warn)', bg: 'var(--warn-soft)' },
+  langue:      { label: 'Langue',      color: 'var(--success)', bg: 'var(--success-soft)' },
+  securite:    { label: 'Sécurité',    color: 'var(--ink-2)', bg: 'var(--surface-2)' },
+  leadership:  { label: 'Leadership',  color: 'var(--violet)', bg: '#fdf2f8' },
+  digital:     { label: 'Digital',     color: 'var(--accent)', bg: 'var(--primary-soft)' },
   metier:      { label: 'Métier',      color: '#84cc16', bg: '#f7fee7' },
 };
 const catMeta = (c: string) => CATS[c] ?? CATS.technique;
 
 const STATUS_COLORS: Record<string, string> = {
-  planned: '#f59e0b', in_progress: '#3b82f6', completed: '#10b981', cancelled: '#ef4444',
+  planned: 'var(--warn)', in_progress: 'var(--primary)', completed: 'var(--success)', cancelled: 'var(--danger)',
 };
 const STATUS_LABELS: Record<string, string> = {
   planned: 'Planifié', in_progress: 'En cours', completed: 'Terminé', cancelled: 'Annulé',
 };
 
 const LEVELS: Record<string, { label: string; color: string; bg: string }> = {
-  beginner:     { label: 'Débutant',      color: '#64748b', bg: '#f8fafc' },
-  intermediate: { label: 'Intermédiaire', color: '#3b82f6', bg: '#eff6ff' },
-  expert:       { label: 'Expert',        color: '#f59e0b', bg: '#fffbeb' },
+  beginner:     { label: 'Débutant',      color: 'var(--ink-2)', bg: 'var(--surface-2)' },
+  intermediate: { label: 'Intermédiaire', color: 'var(--primary)', bg: 'var(--primary-soft)' },
+  expert:       { label: 'Expert',        color: 'var(--warn)', bg: 'var(--warn-soft)' },
 };
 
 // ── Training form ──────────────────────────────────────────────────────────────
@@ -173,10 +173,10 @@ function SkillDetailModal({ skill, employees, onClose }: any) {
         <span style={{ fontSize: 12, fontWeight: 700, color: cm.color, background: cm.bg, padding: '2px 8px', borderRadius: 6 }}>{cm.label}</span>
         <p style={{ fontWeight: 700, fontSize: 16, margin: 0 }}>{skill.name}</p>
       </div>
-      {skill.description && <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 16 }}>{skill.description}</p>}
+      {skill.description && <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 16 }}>{skill.description}</p>}
 
       {/* Assign */}
-      <div style={{ padding: '12px 14px', background: 'var(--bg-muted)', borderRadius: 10, marginBottom: 16 }}>
+      <div style={{ padding: '12px 14px', background: 'var(--surface-2)', borderRadius: 10, marginBottom: 16 }}>
         <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 10 }}>Ajouter un collaborateur</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 8, alignItems: 'end' }}>
           <div>
@@ -201,12 +201,12 @@ function SkillDetailModal({ skill, employees, onClose }: any) {
       {/* Employee list */}
       {isLoading ? <Spinner /> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {empSkills.length === 0 && <p style={{ fontSize: 13, color: 'var(--fg-muted)', textAlign: 'center', padding: 16 }}>Aucun collaborateur assigné.</p>}
+          {empSkills.length === 0 && <p style={{ fontSize: 13, color: 'var(--ink-2)', textAlign: 'center', padding: 16 }}>Aucun collaborateur assigné.</p>}
           {empSkills.map((es: any) => {
             const lm = LEVELS[es.level] ?? LEVELS.beginner;
             const emp = employees.find((e: any) => e.id === es.employee_id) ?? {};
             return (
-              <div key={es.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 8 }}>
+              <div key={es.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', border: '1px solid var(--line)', borderRadius: 8 }}>
                 <Avatar name={emp.full_name ?? '?'} size={30} />
                 <span style={{ flex: 1, fontWeight: 500, fontSize: 13 }}>{emp.full_name ?? es.employee_id}</span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: lm.color, background: lm.bg, padding: '2px 8px', borderRadius: 5 }}>{lm.label}</span>
@@ -323,10 +323,10 @@ export default function TrainingPage() {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Total assignations', value: stats?.total ?? 0,                         icon: <Users size={16} />,    color: '#3b82f6' },
-          { label: 'Taux de complétion', value: `${stats?.completion_rate ?? 0}%`,          icon: <TrendingUp size={16} />, color: '#10b981' },
-          { label: 'Budget total (DH)',  value: `${(stats?.total_budget_dh ?? 0).toLocaleString()}`, icon: <DollarSign size={16} />, color: '#f59e0b' },
-          { label: 'Heures complétées', value: `${stats?.total_hours_completed ?? 0}h`,    icon: <Clock size={16} />,    color: '#8b5cf6' },
+          { label: 'Total assignations', value: stats?.total ?? 0,                         icon: <Users size={16} />,    color: 'var(--primary)' },
+          { label: 'Taux de complétion', value: `${stats?.completion_rate ?? 0}%`,          icon: <TrendingUp size={16} />, color: 'var(--success)' },
+          { label: 'Budget total (DH)',  value: `${(stats?.total_budget_dh ?? 0).toLocaleString()}`, icon: <DollarSign size={16} />, color: 'var(--warn)' },
+          { label: 'Heures complétées', value: `${stats?.total_hours_completed ?? 0}h`,    icon: <Clock size={16} />,    color: 'var(--violet)' },
         ].map(s => (
           <div key={s.label} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: s.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color }}>
@@ -334,7 +334,7 @@ export default function TrainingPage() {
             </div>
             <div>
               <p style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>{s.value}</p>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{s.label}</p>
+              <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{s.label}</p>
             </div>
           </div>
         ))}
@@ -348,7 +348,7 @@ export default function TrainingPage() {
           { id: 'skills',      label: `Compétences (${skills.length})` },
         ].map(v => (
           <button key={v.id} onClick={() => { setView(v.id as any); setSearch(''); setCatFilter(''); }}
-            style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: 13,
+            style={{ padding: '7px 16px', borderRadius: 8, border: '1px solid var(--line)', cursor: 'pointer', fontWeight: 600, fontSize: 13,
               background: view === v.id ? 'var(--primary)' : 'transparent', color: view === v.id ? '#fff' : 'var(--fg)' }}>
             {v.label}
           </button>
@@ -360,12 +360,12 @@ export default function TrainingPage() {
         <>
           <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
             <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-              <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
+              <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-2)' }} />
               <input className="input" style={{ paddingLeft: 32 }} placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button onClick={() => setCatFilter('')}
-                style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)',
+                style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid var(--line)',
                   background: !catFilter ? 'var(--primary)' : 'transparent', color: !catFilter ? '#fff' : 'var(--fg)' }}>
                 Tout
               </button>
@@ -389,7 +389,7 @@ export default function TrainingPage() {
                       <div style={{ flex: 1 }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: cm.color, background: cm.bg, padding: '2px 8px', borderRadius: 6 }}>{cm.label}</span>
                         <p style={{ fontWeight: 700, fontSize: 14, margin: '6px 0 2px' }}>{t.title}</p>
-                        {t.provider && <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>{t.provider}</p>}
+                        {t.provider && <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{t.provider}</p>}
                       </div>
                       <div style={{ display: 'flex', gap: 4 }}>
                         <button className="btn btn-ghost btn-sm" onClick={() => setEditingTraining(t)}><Pencil size={12} /></button>
@@ -397,8 +397,8 @@ export default function TrainingPage() {
                           onClick={() => { if (confirm('Supprimer ?')) deleteMut.mutate(t.id); }}><Trash2 size={12} /></button>
                       </div>
                     </div>
-                    {t.description && <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0, lineHeight: 1.5 }}>{t.description}</p>}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--fg-muted)', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
+                    {t.description && <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0, lineHeight: 1.5 }}>{t.description}</p>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--ink-2)', paddingTop: 8, borderTop: '1px solid var(--line)' }}>
                       <span><Clock size={11} /> {t.duration_hours}h</span>
                       <span><DollarSign size={11} /> {Number(t.cost_dh).toLocaleString()} DH</span>
                       <Button size="sm" variant="soft" onClick={() => setAssigningTo(t.id)}>
@@ -409,7 +409,7 @@ export default function TrainingPage() {
                 );
               })}
               {filteredCatalog.length === 0 && (
-                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
+                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px 20px', color: 'var(--ink-2)' }}>
                   <BookOpen size={36} style={{ opacity: 0.3, margin: '0 auto 12px' }} />
                   <p>Aucune formation dans le catalogue.</p>
                   <Button onClick={() => setShowCreate(true)}><Plus size={13} /> Créer une formation</Button>
@@ -426,22 +426,22 @@ export default function TrainingPage() {
           {assignLoading ? <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner /></div> : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {assignments.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--fg-muted)' }}>
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--ink-2)' }}>
                   <Award size={36} style={{ opacity: 0.3, margin: '0 auto 12px' }} />
                   <p>Aucune formation assignée.</p>
                 </div>
               )}
               {assignments.map((a: any) => {
-                const statusColor = STATUS_COLORS[a.status] ?? '#64748b';
+                const statusColor = STATUS_COLORS[a.status] ?? 'var(--ink-2)';
                 const cat = catMeta(a.training_catalog?.category ?? '');
                 return (
-                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-elev)' }}>
+                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 12, background: 'var(--surface)' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: cat.color, background: cat.bg, padding: '1px 6px', borderRadius: 4 }}>{cat.label}</span>
                         <span style={{ fontWeight: 700, fontSize: 14 }}>{a.training_catalog?.title ?? '—'}</span>
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--fg-muted)', display: 'flex', gap: 12 }}>
+                      <div style={{ fontSize: 12, color: 'var(--ink-2)', display: 'flex', gap: 12 }}>
                         <span><Users size={11} /> {a.employees?.full_name ?? '—'}</span>
                         <span>{a.employees?.department ?? ''}</span>
                         <span>Assigné {safeFormat(a.assigned_at)}</span>
@@ -454,7 +454,7 @@ export default function TrainingPage() {
                         style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, border: `1px solid ${statusColor}44`, background: statusColor + '22', color: statusColor, fontWeight: 700, cursor: 'pointer' }}>
                         {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </select>
-                      {a.status === 'completed' && <CheckCircle size={16} style={{ color: '#10b981' }} />}
+                      {a.status === 'completed' && <CheckCircle size={16} style={{ color: 'var(--success)' }} />}
                       <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }}
                         onClick={() => { if (confirm('Supprimer cette assignation ?')) deleteAssignMut.mutate(a.id); }}>
                         <Trash2 size={12} />
@@ -473,7 +473,7 @@ export default function TrainingPage() {
         <>
           <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
             <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-              <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
+              <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-2)' }} />
               <input className="input" style={{ paddingLeft: 32 }} placeholder="Rechercher une compétence..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
           </div>
@@ -481,7 +481,7 @@ export default function TrainingPage() {
           {skillsLoading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner /></div>
           ) : skills.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
               <Brain size={40} style={{ opacity: 0.3, margin: '0 auto 16px' }} />
               <p style={{ fontWeight: 500 }}>Aucune compétence dans le référentiel.</p>
               <Button onClick={() => setShowCreateSkill(true)} style={{ marginTop: 8 }}><Plus size={13} /> Créer une compétence</Button>
@@ -496,7 +496,7 @@ export default function TrainingPage() {
                       <span style={{ fontSize: 12, fontWeight: 700, color: cm.color, background: cm.bg, padding: '3px 10px', borderRadius: 20, border: `1px solid ${cm.color}44` }}>
                         {cm.label}
                       </span>
-                      <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{(catSkills as any[]).length} compétences</span>
+                      <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>{(catSkills as any[]).length} compétences</span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
                       {(catSkills as any[]).map((skill: any) => (
@@ -509,7 +509,7 @@ export default function TrainingPage() {
                             <div style={{ flex: 1 }}>
                               <p style={{ fontWeight: 700, fontSize: 14, margin: '0 0 4px' }}>{skill.name}</p>
                               {skill.description && (
-                                <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0, lineHeight: 1.4 }}>
+                                <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0, lineHeight: 1.4 }}>
                                   {skill.description.length > 60 ? skill.description.slice(0, 60) + '…' : skill.description}
                                 </p>
                               )}

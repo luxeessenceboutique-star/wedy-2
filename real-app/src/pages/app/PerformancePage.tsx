@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Star, Plus, TrendingUp, Pencil, Trash2, X, Save } from 'lucide-react';
 import { listPerformanceReviews, createPerformanceReview, updatePerformanceReview, listEmployees, getApiError } from '../../lib/api';
@@ -17,14 +17,14 @@ function StarPicker({ value, onChange }: { value: number; onChange: (v: number) 
         <Star
           key={i}
           size={22}
-          style={{ cursor: 'pointer', transition: 'all 0.1s', color: i <= (hover || value) ? '#f59e0b' : 'var(--border)' }}
-          fill={i <= (hover || value) ? '#f59e0b' : 'none'}
+          style={{ cursor: 'pointer', transition: 'all 0.1s', color: i <= (hover || value) ? 'var(--warn)' : 'var(--line)' }}
+          fill={i <= (hover || value) ? 'var(--warn)' : 'none'}
           onMouseEnter={() => setHover(i)}
           onMouseLeave={() => setHover(0)}
           onClick={() => onChange(i)}
         />
       ))}
-      <span style={{ fontSize: 13, color: 'var(--fg-muted)', alignSelf: 'center', marginLeft: 6 }}>
+      <span style={{ fontSize: 13, color: 'var(--ink-2)', alignSelf: 'center', marginLeft: 6 }}>
         {value > 0 ? ['', 'Insuffisant', 'À améliorer', 'Satisfaisant', 'Très bien', 'Exceptionnel'][value] : '—'}
       </span>
     </div>
@@ -35,7 +35,7 @@ function Stars({ score }: { score: number }) {
   return (
     <div style={{ display: 'flex', gap: 2 }}>
       {[1, 2, 3, 4, 5].map(i => (
-        <Star key={i} size={13} fill={i <= score ? '#f59e0b' : 'none'} style={{ color: i <= score ? '#f59e0b' : 'var(--border)' }} />
+        <Star key={i} size={13} fill={i <= score ? 'var(--warn)' : 'none'} style={{ color: i <= score ? 'var(--warn)' : 'var(--line)' }} />
       ))}
     </div>
   );
@@ -227,8 +227,8 @@ export default function PerformancePage() {
           { label: 'Effectif évalué', value: `${reviews.length} / ${employees.length}`,    color: 'var(--fg)' },
           { label: 'Top performers',  value: reviews.filter(r => Number(r.score) >= 4).length, color: 'var(--success)' },
         ].map(s => (
-          <div key={s.label} style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px 18px' }}>
-            <div style={{ fontSize: 11, color: 'var(--fg-subtle)', marginBottom: 4 }}>{s.label}</div>
+          <div key={s.label} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '16px 18px' }}>
+            <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 4 }}>{s.label}</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
           </div>
         ))}
@@ -236,14 +236,14 @@ export default function PerformancePage() {
 
       {/* Reviews table */}
       <Card pad={false}>
-        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 120px 120px 140px 80px', gap: 12, fontSize: 11, fontWeight: 700, color: 'var(--fg-subtle)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--line)', display: 'grid', gridTemplateColumns: '1fr 120px 120px 140px 80px', gap: 12, fontSize: 11, fontWeight: 700, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           <span>Employé</span><span>Département</span><span>Score</span><span>Statut</span><span></span>
         </div>
 
         {isLoading ? (
           <div style={{ padding: 48, textAlign: 'center' }}><Spinner /></div>
         ) : reviews.length === 0 ? (
-          <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--fg-muted)' }}>
+          <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--ink-2)' }}>
             <TrendingUp size={36} style={{ margin: '0 auto 12px', opacity: 0.2 }} />
             <p style={{ fontWeight: 600, marginBottom: 6 }}>Aucun entretien pour {period}</p>
             <p style={{ fontSize: 13, marginBottom: 16 }}>Créez le premier entretien de la période.</p>
@@ -255,15 +255,15 @@ export default function PerformancePage() {
           return (
             <div key={rev.id} style={{
               padding: '13px 20px',
-              borderBottom: i < reviews.length - 1 ? '1px solid var(--border)' : 'none',
+              borderBottom: i < reviews.length - 1 ? '1px solid var(--line)' : 'none',
               display: 'grid', gridTemplateColumns: '1fr 120px 120px 140px 80px',
               gap: 12, alignItems: 'center',
             }}>
               <div>
                 <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{rev.employees?.full_name ?? '—'}</p>
-                <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>{rev.employees?.position ?? ''}</p>
+                <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{rev.employees?.position ?? ''}</p>
               </div>
-              <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{rev.employees?.department ?? '—'}</span>
+              <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>{rev.employees?.department ?? '—'}</span>
               <Stars score={scoreNum} />
               <Badge variant={info.variant as any}>{info.label}</Badge>
               <div style={{ display: 'flex', gap: 4 }}>

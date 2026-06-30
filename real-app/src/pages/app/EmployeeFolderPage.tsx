@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+﻿import React, { useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -50,8 +50,8 @@ function daysUntil(d?: string): number | null {
 function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
   if (!value && value !== 0) return null;
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
-      <span style={{ color: 'var(--fg-muted)', flexShrink: 0, marginRight: 12 }}>{label}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--line)', fontSize: 13 }}>
+      <span style={{ color: 'var(--ink-2)', flexShrink: 0, marginRight: 12 }}>{label}</span>
       <span style={{ fontWeight: 450, textAlign: 'right' }}>{value}</span>
     </div>
   );
@@ -59,7 +59,7 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--fg-muted)', margin: '20px 0 8px' }}>
+    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--ink-2)', margin: '20px 0 8px' }}>
       {children}
     </p>
   );
@@ -75,7 +75,7 @@ function MiniSpinner() {
 }
 
 function Empty({ text }: { text: string }) {
-  return <p style={{ textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13, padding: '32px 0' }}>{text}</p>;
+  return <p style={{ textAlign: 'center', color: 'var(--ink-2)', fontSize: 13, padding: '32px 0' }}>{text}</p>;
 }
 
 // ── Edit form ─────────────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ function EditForm({ employee, departments, onSave, onCancel, loading }: {
 
   return (
     <form onSubmit={ev => { ev.preventDefault(); onSave(form); }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{t('identity')}</p>
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{t('identity')}</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <Input label={`${t('full_name_label')} *`} value={form.full_name ?? ''} onChange={set('full_name')} required />
         <Input label="CIN" value={form.cin ?? ''} onChange={set('cin')} />
@@ -104,7 +104,7 @@ function EditForm({ employee, departments, onSave, onCancel, loading }: {
         <Input label={t('phone_label')} value={form.phone ?? ''} onChange={set('phone')} />
       </div>
 
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{t('contract_section')}</p>
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{t('contract_section')}</p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <Input label={t('position_label')} value={form.position ?? ''} onChange={set('position')} />
         <Select label={t('department_label')} value={form.department ?? ''} onChange={set('department')}>
@@ -127,7 +127,7 @@ function EditForm({ employee, departments, onSave, onCancel, loading }: {
         <Input label={t('contract_end_label')} type="date" value={form.contract_end ?? ''} onChange={set('contract_end')} />
       </div>
 
-      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{t('address')}</p>
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>{t('address')}</p>
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
         <Input label={t('address')} value={form.address ?? ''} onChange={set('address')} />
         <Input label={t('city')} value={form.city ?? ''} onChange={set('city')} />
@@ -151,11 +151,11 @@ function FilesTab({ employeeId }: { employeeId: string }) {
   const [dragging, setDragging] = useState(false);
 
   const FILE_TYPES = [
-    { value: 'cv', label: 'CV', color: '#0891b2', bg: '#ecfeff' },
-    { value: 'diplome', label: t('file_diploma'), color: '#7c3aed', bg: '#f5f3ff' },
-    { value: 'certificat', label: t('file_cert'), color: '#059669', bg: '#ecfdf5' },
-    { value: 'contrat', label: t('file_contract'), color: '#d97706', bg: '#fffbeb' },
-    { value: 'autre', label: t('file_other'), color: '#64748b', bg: '#f8fafc' },
+    { value: 'cv', label: 'CV', color: 'var(--primary)', bg: 'var(--primary-soft)' },
+    { value: 'diplome', label: t('file_diploma'), color: '#7c3aed', bg: 'var(--violet-soft)' },
+    { value: 'certificat', label: t('file_cert'), color: '#059669', bg: 'var(--success-soft)' },
+    { value: 'contrat', label: t('file_contract'), color: 'var(--warn)', bg: 'var(--warn-soft)' },
+    { value: 'autre', label: t('file_other'), color: 'var(--ink-2)', bg: 'var(--surface-2)' },
   ];
 
   const { data: files = [], isLoading } = useQuery({
@@ -193,25 +193,25 @@ function FilesTab({ employeeId }: { employeeId: string }) {
         onDragLeave={() => setDragging(false)}
         onDrop={e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
         style={{
-          border: `2px dashed ${dragging ? 'var(--primary)' : '#cbd5e1'}`,
+          border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--line-2)'}`,
           borderRadius: 12, padding: '28px 20px',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-          cursor: 'pointer', background: dragging ? 'var(--primary-soft)' : '#f8fafc',
+          cursor: 'pointer', background: dragging ? 'var(--primary-soft)' : 'var(--surface-2)',
           transition: 'all 0.15s',
         }}
       >
-        <Upload size={28} style={{ color: dragging ? 'var(--primary)' : '#94a3b8' }} />
+        <Upload size={28} style={{ color: dragging ? 'var(--primary)' : 'var(--ink-3)' }} />
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontWeight: 600, color: '#334155', margin: 0 }}>{t('file_drop_here')}</p>
-          <p style={{ fontSize: 12, color: '#64748b', margin: '4px 0 0' }}>PDF, DOCX, JPG, PNG — {t('file_click_select')}</p>
+          <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: '4px 0 0' }}>PDF, DOCX, JPG, PNG — {t('file_click_select')}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, color: '#64748b' }}>Type :</span>
+          <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>Type :</span>
           <select
             value={uploadType}
             onChange={e => { e.stopPropagation(); setUploadType(e.target.value); }}
             onClick={e => e.stopPropagation()}
-            style={{ padding: '4px 10px', fontSize: 12, borderRadius: 6, border: '1px solid var(--border)', background: '#fff', cursor: 'pointer' }}
+            style={{ padding: '4px 10px', fontSize: 12, borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface)', cursor: 'pointer' }}
           >
             {FILE_TYPES.map(ft => <option key={ft.value} value={ft.value}>{ft.label}</option>)}
           </select>
@@ -231,25 +231,25 @@ function FilesTab({ employeeId }: { employeeId: string }) {
                 padding: '2px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600,
                 background: group.bg, color: group.color,
               }}>{group.label}</span>
-              <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{group.items.length}</span>
+              <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>{group.items.length}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {group.items.map((f: EmployeeFile) => (
                 <div key={f.id} style={{
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '10px 14px', borderRadius: 8,
-                  border: '1px solid var(--border)', background: '#fff',
+                  border: '1px solid var(--line)', background: 'var(--surface)',
                 }}>
                   <FileText size={16} style={{ color: group.color, flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--fg-muted)' }}>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--ink-2)' }}>
                       {fmtSize(f.file_size)} · {fmt(f.created_at)}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                     <a href={getEmployeeFileUrl(f.file_path)} target="_blank" rel="noreferrer">
-                      <button style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <button style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
                         <Download size={12} /> {t('download')}
                       </button>
                     </a>
@@ -337,17 +337,17 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
       {applicableFields.length === 0 ? (
-        <p style={{ textAlign: 'center', color: 'var(--fg-muted)', padding: '24px 0' }}>{t('no_data_extracted')}</p>
+        <p style={{ textAlign: 'center', color: 'var(--ink-2)', padding: '24px 0' }}>{t('no_data_extracted')}</p>
       ) : (
         <>
-          <p style={{ fontSize: 12, color: 'var(--fg-muted)', marginBottom: 10 }}>
+          <p style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 10 }}>
             {selected.size} {t('fields_selected')} — {t('fields_apply_desc')}
           </p>
           {/* Header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '24px 110px 1fr 1fr', gap: 8, padding: '6px 6px', borderBottom: '1px solid var(--border)', marginBottom: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '24px 110px 1fr 1fr', gap: 8, padding: '6px 6px', borderBottom: '1px solid var(--line)', marginBottom: 4 }}>
             <div />
             {[t('field'), t('current_value'), t('extracted_value')].map(h => (
-              <span key={h} style={{ fontSize: 10, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
+              <span key={h} style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
             ))}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3, maxHeight: 340, overflowY: 'auto', paddingRight: 4 }}>
@@ -364,7 +364,7 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
                   style={{
                     display: 'grid', gridTemplateColumns: '24px 110px 1fr 1fr', gap: 8, alignItems: 'center',
                     padding: '7px 6px', borderRadius: 6, cursor: 'pointer',
-                    background: isChecked ? (isNew ? '#f0fdf4' : '#eff6ff') : '#fafafa',
+                    background: isChecked ? (isNew ? '#f0fdf4' : 'var(--primary-soft)') : '#fafafa',
                     border: `1px solid ${isChecked ? (isNew ? '#86efac' : '#bfdbfe') : 'transparent'}`,
                     transition: 'all 0.1s',
                   }}
@@ -372,13 +372,13 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     {isChecked
                       ? <CheckCircle2 size={15} style={{ color: isNew ? '#16a34a' : '#2563eb' }} />
-                      : <Circle size={15} style={{ color: '#cbd5e1' }} />}
+                      : <Circle size={15} style={{ color: 'var(--line-2)' }} />}
                   </div>
                   <span style={{ fontSize: 12, fontWeight: 500 }}>{f.label}</span>
-                  <span style={{ fontSize: 12, color: current ? '#475569' : '#94a3b8', fontStyle: current ? 'normal' : 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 12, color: current ? 'var(--ink-2)' : 'var(--ink-3)', fontStyle: current ? 'normal' : 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {current || '—'}
                   </span>
-                  <span style={{ fontSize: 12, fontWeight: isDiff ? 600 : 400, color: isNew ? '#15803d' : isDiff ? '#1d4ed8' : '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 12, fontWeight: isDiff ? 600 : 400, color: isNew ? '#15803d' : isDiff ? '#1d4ed8' : 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {extracted}
                   </span>
                 </div>
@@ -390,8 +390,8 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
 
       {/* Extra info */}
       {(result.education?.length || result.certifications?.length || result.skills?.length || result.languages?.length) ? (
-        <div style={{ marginTop: 18, padding: '14px 0 0', borderTop: '1px solid var(--border)' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--fg-muted)', marginBottom: 10 }}>
+        <div style={{ marginTop: 18, padding: '14px 0 0', borderTop: '1px solid var(--line)' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--ink-2)', marginBottom: 10 }}>
             {t('extra_info')} ({t('read_only')})
           </p>
           {result.education?.length ? (
@@ -401,7 +401,7 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
                 <span style={{ fontSize: 12, fontWeight: 600 }}>{t('education')}</span>
               </div>
               {result.education.map((e, i) => (
-                <p key={i} style={{ margin: 0, fontSize: 12, color: '#475569', paddingLeft: 20, lineHeight: 1.7 }}>
+                <p key={i} style={{ margin: 0, fontSize: 12, color: 'var(--ink-2)', paddingLeft: 20, lineHeight: 1.7 }}>
                   {[e.degree, e.field, e.school, e.year].filter(Boolean).join(' · ')}
                 </p>
               ))}
@@ -411,7 +411,7 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
             <div style={{ marginBottom: 10 }}>
               <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Certifications</p>
               {result.certifications.map((c, i) => (
-                <p key={i} style={{ margin: 0, fontSize: 12, color: '#475569', paddingLeft: 20, lineHeight: 1.7 }}>
+                <p key={i} style={{ margin: 0, fontSize: 12, color: 'var(--ink-2)', paddingLeft: 20, lineHeight: 1.7 }}>
                   {[c.name, c.issuer, c.year].filter(Boolean).join(' · ')}
                 </p>
               ))}
@@ -422,7 +422,7 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
               <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>{t('skills')}</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, paddingLeft: 20 }}>
                 {result.skills.map((s, i) => (
-                  <span key={i} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: '#f1f5f9', color: '#475569' }}>{s}</span>
+                  <span key={i} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: 'var(--surface-2)', color: 'var(--ink-2)' }}>{s}</span>
                 ))}
               </div>
             </div>
@@ -432,7 +432,7 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
               <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>{t('languages')}</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, paddingLeft: 20 }}>
                 {result.languages.map((l, i) => (
-                  <span key={i} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: '#eff6ff', color: '#1d4ed8' }}>{l}</span>
+                  <span key={i} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: 'var(--primary-soft)', color: '#1d4ed8' }}>{l}</span>
                 ))}
               </div>
             </div>
@@ -441,7 +441,7 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
       ) : null}
 
       {/* Footer */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
         <Button variant="ghost" onClick={onClose}>{t('cancel')}</Button>
         <Button onClick={handleApply} loading={applying} disabled={selected.size === 0}>
           <CheckCircle2 size={13} /> {t('apply_selected_fields')}
@@ -538,7 +538,7 @@ export default function EmployeeFolderPage() {
     <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spinner /></div>
   );
   if (isError || !employee) return (
-    <div style={{ padding: 40, textAlign: 'center', color: 'var(--fg-muted)' }}>
+    <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-2)' }}>
       <p>{t('employee_not_found')}</p>
       <Button variant="ghost" onClick={() => navigate('/app/employees')}>← {t('cancel')}</Button>
     </div>
@@ -557,16 +557,16 @@ export default function EmployeeFolderPage() {
   ];
 
   const LEAVE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-    pending: { bg: '#fef3c7', color: '#92400e', label: t('status_pending_item') },
+    pending: { bg: 'var(--warn-soft)', color: '#92400e', label: t('status_pending_item') },
     approved: { bg: '#d1fae5', color: '#065f46', label: t('status_approved_item') },
-    rejected: { bg: '#fee2e2', color: '#991b1b', label: t('status_rejected_item') },
+    rejected: { bg: 'var(--danger-soft)', color: 'var(--danger)', label: t('status_rejected_item') },
   };
 
   const GOAL_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-    pending: { bg: '#f1f5f9', color: '#475569', label: t('status_pending_item') },
-    in_progress: { bg: '#eff6ff', color: '#1d4ed8', label: t('status_active_item') },
+    pending: { bg: 'var(--surface-2)', color: 'var(--ink-2)', label: t('status_pending_item') },
+    in_progress: { bg: 'var(--primary-soft)', color: '#1d4ed8', label: t('status_active_item') },
     completed: { bg: '#d1fae5', color: '#065f46', label: t('status_completed_item') },
-    cancelled: { bg: '#fee2e2', color: '#991b1b', label: t('status_rejected_item') },
+    cancelled: { bg: 'var(--danger-soft)', color: 'var(--danger)', label: t('status_rejected_item') },
   };
 
   return (
@@ -574,7 +574,7 @@ export default function EmployeeFolderPage() {
       {/* Back link */}
       <button
         onClick={() => navigate('/app/employees')}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', fontSize: 13, marginBottom: 20, padding: 0 }}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 13, marginBottom: 20, padding: 0 }}
       >
         <ArrowLeft size={14} /> {t('nav_people')}
       </button>
@@ -594,14 +594,14 @@ export default function EmployeeFolderPage() {
                 </Badge>
               )}
             </div>
-            <p style={{ margin: 0, fontSize: 14, color: 'var(--fg-muted)' }}>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-2)' }}>
               {[employee.position, employee.department].filter(Boolean).join(' · ') || '—'}
             </p>
             <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
-              {employee.cin && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}><strong>CIN:</strong> {employee.cin}</span>}
-              {employee.matricule && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}><strong>Matricule:</strong> {employee.matricule}</span>}
-              {employee.hire_date && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}><strong>{t('hire_date_label')}:</strong> {fmt(employee.hire_date)}</span>}
-              {employee.contract_type && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}><strong>Contrat:</strong> {employee.contract_type}</span>}
+              {employee.cin && <span style={{ fontSize: 12, color: 'var(--ink-2)' }}><strong>CIN:</strong> {employee.cin}</span>}
+              {employee.matricule && <span style={{ fontSize: 12, color: 'var(--ink-2)' }}><strong>Matricule:</strong> {employee.matricule}</span>}
+              {employee.hire_date && <span style={{ fontSize: 12, color: 'var(--ink-2)' }}><strong>{t('hire_date_label')}:</strong> {fmt(employee.hire_date)}</span>}
+              {employee.contract_type && <span style={{ fontSize: 12, color: 'var(--ink-2)' }}><strong>Contrat:</strong> {employee.contract_type}</span>}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
@@ -627,8 +627,8 @@ export default function EmployeeFolderPage() {
       {expiryWarn && (
         <div style={{
           marginBottom: 16, padding: '12px 16px', borderRadius: 10,
-          background: days! < 0 ? '#fef2f2' : '#fffbeb',
-          border: `1px solid ${days! < 0 ? '#fecaca' : '#fde68a'}`,
+          background: days! < 0 ? '#fef2f2' : 'var(--warn-soft)',
+          border: `1px solid ${days! < 0 ? 'color-mix(in srgb,var(--danger) 30%,transparent)' : '#fde68a'}`,
           display: 'flex', alignItems: 'center', gap: 10, fontSize: 13,
           color: days! < 0 ? '#dc2626' : '#92400e',
         }}>
@@ -641,12 +641,12 @@ export default function EmployeeFolderPage() {
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 20, gap: 0, overflowX: 'auto' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', marginBottom: 20, gap: 0, overflowX: 'auto' }}>
         {TABS.map(t_item => (
           <button key={t_item.key} onClick={() => setTab(t_item.key)} style={{
             padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer',
             fontSize: 13, fontWeight: tab === t_item.key ? 600 : 400, whiteSpace: 'nowrap',
-            color: tab === t_item.key ? 'var(--primary)' : 'var(--fg-muted)',
+            color: tab === t_item.key ? 'var(--primary)' : 'var(--ink-2)',
             borderBottom: tab === t_item.key ? '2px solid var(--primary)' : '2px solid transparent',
             marginBottom: -1,
           }}>
@@ -711,8 +711,8 @@ export default function EmployeeFolderPage() {
               <span style={{ fontWeight: 600, fontSize: 14 }}>{t('custom_fields')}</span>
               <div style={{ marginTop: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {Object.entries(employee.custom_fields).map(([key, value]) => (
-                  <div key={key} style={{ padding: '10px 12px', borderRadius: 8, background: 'var(--bg-muted)', border: '1px solid var(--border)' }}>
-                    <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>{key}</p>
+                  <div key={key} style={{ padding: '10px 12px', borderRadius: 8, background: 'var(--surface-2)', border: '1px solid var(--line)' }}>
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>{key}</p>
                     <p style={{ margin: 0, fontSize: 13, color: 'var(--fg)', fontWeight: 500 }}>{String(value)}</p>
                   </div>
                 ))}
@@ -741,18 +741,18 @@ export default function EmployeeFolderPage() {
                 <div key={doc.id} style={{
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '12px 16px', borderRadius: 8,
-                  border: '1px solid var(--border)', background: '#fff',
+                  border: '1px solid var(--line)', background: 'var(--surface)',
                 }}>
                   <FileText size={16} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontWeight: 500, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.document_type}</p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--fg-muted)' }}>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--ink-2)' }}>
                       {new Date(doc.created_at).toLocaleDateString()} · {doc.language.toUpperCase()}
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button
-                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
                       onClick={() => printDocument(doc.id, doc.document_type).catch(e => toast.error(e.message))}
                     >
                       <Download size={11} /> PDF
@@ -796,10 +796,10 @@ export default function EmployeeFolderPage() {
             {(leaves as LeaveRequest[]).map(l => {
               const s = LEAVE_STYLE[l.status] ?? LEAVE_STYLE.pending;
               return (
-                <div key={l.id} style={{ padding: '12px 16px', borderRadius: 8, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div key={l.id} style={{ padding: '12px 16px', borderRadius: 8, border: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ flex: 1 }}>
                     <p style={{ margin: 0, fontWeight: 500, fontSize: 13 }}>{l.type}</p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--fg-muted)', marginTop: 2 }}>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--ink-2)', marginTop: 2 }}>
                       {fmt(l.start_date)} → {fmt(l.end_date)} · {l.days} jour{l.days !== 1 ? 's' : ''}
                     </p>
                   </div>
@@ -818,15 +818,15 @@ export default function EmployeeFolderPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {(payslips as Payslip[]).map(p => (
-              <div key={p.id} style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--border)' }}>
+              <div key={p.id} style={{ padding: '14px 16px', borderRadius: 8, border: '1px solid var(--line)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Mois {p.period_month} / {p.period_year}</p>
                   <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--primary)' }}>{p.net_salary.toLocaleString()} MAD</p>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                   {[['Brut', p.gross_salary], ['CNSS', p.cnss_deduction], ['AMO', p.amo_deduction], ['IR', p.ir_deduction]].map(([l, v]) => (
-                    <div key={String(l)} style={{ background: 'var(--bg-muted)', borderRadius: 6, padding: '6px 10px', textAlign: 'center' as const }}>
-                      <p style={{ margin: 0, fontSize: 10, color: 'var(--fg-subtle)', textTransform: 'uppercase' as const }}>{l}</p>
+                    <div key={String(l)} style={{ background: 'var(--surface-2)', borderRadius: 6, padding: '6px 10px', textAlign: 'center' as const }}>
+                      <p style={{ margin: 0, fontSize: 10, color: 'var(--ink-3)', textTransform: 'uppercase' as const }}>{l}</p>
                       <p style={{ margin: 0, fontSize: 12, fontWeight: 500 }}>{Number(v).toLocaleString()}</p>
                     </div>
                   ))}
@@ -841,7 +841,7 @@ export default function EmployeeFolderPage() {
       {tab === 'performance' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--fg-muted)', marginBottom: 10 }}>{t('goals')}</p>
+            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--ink-2)', marginBottom: 10 }}>{t('goals')}</p>
             {goalsLoading ? <MiniSpinner /> : goals.length === 0 ? (
               <Empty text={t('no_goals')} />
             ) : (
@@ -849,15 +849,15 @@ export default function EmployeeFolderPage() {
                 {(goals as PerformanceGoal[]).map(g => {
                   const gs = GOAL_STYLE[g.status] ?? GOAL_STYLE.pending;
                   return (
-                    <div key={g.id} style={{ padding: '12px 16px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                    <div key={g.id} style={{ padding: '12px 16px', borderRadius: 8, border: '1px solid var(--line)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                         <p style={{ margin: 0, fontWeight: 500, fontSize: 13 }}>{g.title}</p>
                         <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 5, background: gs.bg, color: gs.color }}>{gs.label}</span>
                       </div>
-                      <div style={{ height: 5, borderRadius: 3, background: '#e2e8f0', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', borderRadius: 3, background: g.progress === 100 ? '#10b981' : 'var(--primary)', width: `${g.progress}%` }} />
+                      <div style={{ height: 5, borderRadius: 3, background: 'var(--line)', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', borderRadius: 3, background: g.progress === 100 ? 'var(--success)' : 'var(--primary)', width: `${g.progress}%` }} />
                       </div>
-                      <p style={{ margin: '5px 0 0', fontSize: 11, color: 'var(--fg-muted)' }}>{g.progress}%</p>
+                      <p style={{ margin: '5px 0 0', fontSize: 11, color: 'var(--ink-2)' }}>{g.progress}%</p>
                     </div>
                   );
                 })}
@@ -866,21 +866,21 @@ export default function EmployeeFolderPage() {
           </div>
 
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--fg-muted)', marginBottom: 10 }}>{t('reviews')}</p>
+            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--ink-2)', marginBottom: 10 }}>{t('reviews')}</p>
             {reviewsLoading ? <MiniSpinner /> : reviews.length === 0 ? (
               <Empty text={t('no_reviews')} />
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {(reviews as PerformanceReview[]).map(r => (
-                  <div key={r.id} style={{ padding: '12px 16px', borderRadius: 8, border: '1px solid var(--border)' }}>
+                  <div key={r.id} style={{ padding: '12px 16px', borderRadius: 8, border: '1px solid var(--line)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <p style={{ margin: 0, fontWeight: 500, fontSize: 13 }}>Cycle {r.cycle}</p>
                       {r.overall_score
-                        ? <span style={{ display: 'flex', gap: 2 }}>{[1, 2, 3, 4, 5].map(i => <span key={i} style={{ fontSize: 14, color: i <= r.overall_score! ? '#f59e0b' : '#e2e8f0' }}>★</span>)}</span>
-                        : <span style={{ fontSize: 11, color: 'var(--fg-muted)', fontStyle: 'italic' }}>{t('status_pending_item')}</span>
+                        ? <span style={{ display: 'flex', gap: 2 }}>{[1, 2, 3, 4, 5].map(i => <span key={i} style={{ fontSize: 14, color: i <= r.overall_score! ? 'var(--warn)' : 'var(--line)' }}>★</span>)}</span>
+                        : <span style={{ fontSize: 11, color: 'var(--ink-2)', fontStyle: 'italic' }}>{t('status_pending_item')}</span>
                       }
                     </div>
-                    {r.comments && <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--fg-muted)', lineHeight: 1.5 }}>{r.comments}</p>}
+                    {r.comments && <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.5 }}>{r.comments}</p>}
                   </div>
                 ))}
               </div>

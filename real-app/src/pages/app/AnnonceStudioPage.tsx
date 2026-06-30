@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import axios from 'axios';
 import {
     Sparkles, Send, Copy, Check, Eye, PenTool,
@@ -74,7 +74,7 @@ export default function AnnonceStudioPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
                 <div>
                     <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, color: 'var(--fg)' }}>Studio d'Annonces</h1>
-                    <p style={{ color: 'var(--fg-muted)', fontSize: 15 }}>Générez des annonces de recrutement percutantes avec l'IA</p>
+                    <p style={{ color: 'var(--ink-2)', fontSize: 15 }}>Générez des annonces de recrutement percutantes avec l'IA</p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     {content && (
@@ -107,7 +107,7 @@ export default function AnnonceStudioPage() {
                                 <div>
                                     <label className="label">Expérience souhaitée</label>
                                     <div style={{ position: 'relative' }}>
-                                        <Clock size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)' }} />
+                                        <Clock size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} />
                                         <input
                                             className="input"
                                             style={{ paddingLeft: 32 }}
@@ -120,7 +120,7 @@ export default function AnnonceStudioPage() {
                                 <div>
                                     <label className="label">Formation</label>
                                     <div style={{ position: 'relative' }}>
-                                        <GraduationCap size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)' }} />
+                                        <GraduationCap size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} />
                                         <input
                                             className="input"
                                             style={{ paddingLeft: 32 }}
@@ -172,7 +172,7 @@ export default function AnnonceStudioPage() {
                                 <Sparkles size={20} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                                 <div>
                                     <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--primary)', marginBottom: 4 }}>Conseil IA</p>
-                                    <p style={{ fontSize: 13, color: 'var(--fg-muted)', lineHeight: 1.5 }}>
+                                    <p style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.5 }}>
                                         Plus vous donnez de détails sur le poste et la culture de votre entreprise, plus l'IA sera capable de créer une annonce personnalisée et attractive.
                                     </p>
                                 </div>
@@ -185,14 +185,14 @@ export default function AnnonceStudioPage() {
                 {content && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                         <Card pad={false} style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 600 }}>
-                            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', gap: 4, background: 'var(--bg-muted)', padding: 3, borderRadius: 'var(--radius-md)' }}>
+                            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', padding: 3, borderRadius: 'var(--radius-md)' }}>
                                     <button
                                         onClick={() => setView('edit')}
                                         style={{
                                             padding: '6px 12px', fontSize: 13, fontWeight: 600, borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
-                                            background: view === 'edit' ? 'var(--bg-elev)' : 'transparent',
-                                            color: view === 'edit' ? 'var(--primary)' : 'var(--fg-muted)',
+                                            background: view === 'edit' ? 'var(--surface)' : 'transparent',
+                                            color: view === 'edit' ? 'var(--primary)' : 'var(--ink-2)',
                                             boxShadow: view === 'edit' ? 'var(--shadow-sm)' : 'none'
                                         }}
                                     >
@@ -202,8 +202,8 @@ export default function AnnonceStudioPage() {
                                         onClick={() => setView('preview')}
                                         style={{
                                             padding: '6px 12px', fontSize: 13, fontWeight: 600, borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer',
-                                            background: view === 'preview' ? 'var(--bg-elev)' : 'transparent',
-                                            color: view === 'preview' ? 'var(--primary)' : 'var(--fg-muted)',
+                                            background: view === 'preview' ? 'var(--surface)' : 'transparent',
+                                            color: view === 'preview' ? 'var(--primary)' : 'var(--ink-2)',
                                             boxShadow: view === 'preview' ? 'var(--shadow-sm)' : 'none'
                                         }}
                                     >
@@ -240,7 +240,7 @@ export default function AnnonceStudioPage() {
                                 ) : (
                                     <div style={{
                                         padding: 32, fontSize: 15, lineHeight: 1.7,
-                                        overflowY: 'auto', background: 'var(--bg-elev)',
+                                        overflowY: 'auto', background: 'var(--surface)',
                                         whiteSpace: 'pre-wrap', color: 'var(--fg)'
                                     }}>
                                         {content}
@@ -250,7 +250,7 @@ export default function AnnonceStudioPage() {
                         </Card>
 
                         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--fg-muted)', fontSize: 12 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink-2)', fontSize: 12 }}>
                                 <Layout size={14} />
                                 <span>Lien public généré automatiquement après enregistrement</span>
                             </div>

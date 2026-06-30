@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef } from 'react';
 import { Download, Upload, FileSpreadsheet, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Modal, Button, Spinner } from './ui';
 import { getApiError } from '../lib/api';
@@ -291,12 +291,12 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
     <Modal open={open} onClose={() => { reset(); onClose(); }} title={`Import / Export — ${entityName}`} width={740}>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: 24, marginBottom: 24 }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', gap: 24, marginBottom: 24 }}>
         {(['export', 'import'] as const).map(t => (
           <button key={t} onClick={() => switchTab(t)} style={{
             padding: '8px 4px', fontSize: 13, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer',
             borderBottom: tab === t ? '2px solid var(--primary)' : '2px solid transparent',
-            color: tab === t ? 'var(--primary)' : 'var(--fg-muted)',
+            color: tab === t ? 'var(--primary)' : 'var(--ink-2)',
           }}>
             {t === 'export' ? 'Exporter' : 'Importer'}
           </button>
@@ -306,7 +306,7 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
       {/* ── Export ── */}
       {tab === 'export' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>
+          <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>
             Exporte les <strong>{rows.length}</strong> enregistrements affichés ({cols.length} colonnes).
           </p>
           <div style={{ display: 'flex', gap: 12 }}>
@@ -317,8 +317,8 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
               <FileSpreadsheet size={14} /> Exporter Excel (.xlsx)
             </Button>
           </div>
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-            <p style={{ fontSize: 12, color: 'var(--fg-muted)', marginBottom: 10 }}>
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16 }}>
+            <p style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 10 }}>
               Pour importer, téléchargez le modèle avec les colonnes attendues, remplissez-le, puis utilisez l'onglet Importer.
             </p>
             <Button variant="ghost" onClick={downloadTemplate}>
@@ -336,8 +336,8 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
           {previewRows.length === 0 && (
             <div
               style={{
-                border: '2px dashed var(--border)', borderRadius: 12, padding: '40px 24px',
-                textAlign: 'center', cursor: 'pointer', color: 'var(--fg-muted)',
+                border: '2px dashed var(--line)', borderRadius: 12, padding: '40px 24px',
+                textAlign: 'center', cursor: 'pointer', color: 'var(--ink-2)',
               }}
               onClick={() => fileRef.current?.click()}
               onDragOver={e => e.preventDefault()}
@@ -357,31 +357,31 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 2px' }}>Correspondance des colonnes</p>
-                  <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0 }}>
+                  <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>
                     {previewRows.length} ligne{previewRows.length > 1 ? 's' : ''} détectée{previewRows.length > 1 ? 's' : ''} · associez chaque colonne au champ correspondant.
                   </p>
                 </div>
-                <button onClick={reset} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                <button onClick={reset} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
                   <X size={12} /> Changer de fichier
                 </button>
               </div>
 
-              <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', maxHeight: 360, overflowY: 'auto' }}>
+              <div style={{ border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden', maxHeight: 360, overflowY: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                   <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-                    <tr style={{ background: 'var(--bg-muted)' }}>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--fg-muted)', borderBottom: '1px solid var(--border)' }}>Colonne fichier</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--fg-muted)', borderBottom: '1px solid var(--border)' }}>1ère valeur</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--fg-muted)', borderBottom: '1px solid var(--border)' }}>Champ cible</th>
+                    <tr style={{ background: 'var(--surface-2)' }}>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-2)', borderBottom: '1px solid var(--line)' }}>Colonne fichier</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-2)', borderBottom: '1px solid var(--line)' }}>1ère valeur</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-2)', borderBottom: '1px solid var(--line)' }}>Champ cible</th>
                     </tr>
                   </thead>
                   <tbody>
                     {headers.map(h => {
                       const isMapped = colMapping[h] && colMapping[h] !== SKIP;
                       return (
-                        <tr key={h} style={{ borderBottom: '1px solid var(--border)', background: isMapped ? 'var(--success-soft, #f0fdf4)' : '' }}>
+                        <tr key={h} style={{ borderBottom: '1px solid var(--line)', background: isMapped ? 'var(--success-soft, #f0fdf4)' : '' }}>
                           <td style={{ padding: '6px 12px', color: 'var(--fg)', fontWeight: 500, whiteSpace: 'nowrap' }}>{h}</td>
-                          <td style={{ padding: '6px 12px', color: 'var(--fg-muted)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <td style={{ padding: '6px 12px', color: 'var(--ink-2)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {String(sampleRow[h] ?? '')}
                           </td>
                           <td style={{ padding: '6px 12px' }}>
@@ -389,7 +389,7 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
                               value={colMapping[h] ?? SKIP}
                               onChange={e => setColMapping(prev => ({ ...prev, [h]: e.target.value }))}
                               style={{
-                                padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)',
+                                padding: '4px 8px', borderRadius: 6, border: '1px solid var(--line)',
                                 background: 'var(--bg)', color: 'var(--fg)', fontSize: 12, width: '100%',
                               }}
                             >
@@ -431,22 +431,22 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
                   {previewRows.length} ligne{previewRows.length > 1 ? 's' : ''} prête{previewRows.length > 1 ? 's' : ''} à importer
                 </p>
                 {!importing && (
-                  <button onClick={reset} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+                  <button onClick={reset} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
                     <X size={12} /> Recommencer
                   </button>
                 )}
               </div>
 
-              <div style={{ overflowX: 'auto', maxHeight: 280, border: '1px solid var(--border)', borderRadius: 8 }}>
+              <div style={{ overflowX: 'auto', maxHeight: 280, border: '1px solid var(--line)', borderRadius: 8 }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                   <thead>
-                    <tr style={{ background: 'var(--bg-muted)' }}>
-                      <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: 'var(--fg-muted)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-muted)', whiteSpace: 'nowrap' }}>#</th>
+                    <tr style={{ background: 'var(--surface-2)' }}>
+                      <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-2)', borderBottom: '1px solid var(--line)', position: 'sticky', top: 0, background: 'var(--surface-2)', whiteSpace: 'nowrap' }}>#</th>
                       {statuses.length > 0 && (
-                        <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: 'var(--fg-muted)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-muted)' }}>Statut</th>
+                        <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-2)', borderBottom: '1px solid var(--line)', position: 'sticky', top: 0, background: 'var(--surface-2)' }}>Statut</th>
                       )}
                       {previewCols.map(c => (
-                        <th key={c.key} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: 'var(--fg-muted)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-muted)', whiteSpace: 'nowrap' }}>
+                        <th key={c.key} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-2)', borderBottom: '1px solid var(--line)', position: 'sticky', top: 0, background: 'var(--surface-2)', whiteSpace: 'nowrap' }}>
                           {c.label}{c.required ? ' *' : ''}
                         </th>
                       ))}
@@ -457,13 +457,13 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
                       const mapped = applyMapping(row);
                       const st = statuses[i];
                       return (
-                        <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: st?.status === 'success' ? '#f0fdf4' : st?.status === 'error' ? '#fff1f2' : '' }}>
-                          <td style={{ padding: '6px 10px', color: 'var(--fg-muted)' }}>{i + 1}</td>
+                        <tr key={i} style={{ borderBottom: '1px solid var(--line)', background: st?.status === 'success' ? '#f0fdf4' : st?.status === 'error' ? '#fff1f2' : '' }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--ink-2)' }}>{i + 1}</td>
                           {statuses.length > 0 && (
                             <td style={{ padding: '6px 10px' }}>
                               {st?.status === 'pending' && <Spinner size={14} />}
-                              {st?.status === 'success' && <CheckCircle2 size={14} style={{ color: '#10b981' }} />}
-                              {st?.status === 'error' && <span title={st.message} style={{ color: '#ef4444', display: 'flex', alignItems: 'center' }}><AlertCircle size={14} /></span>}
+                              {st?.status === 'success' && <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />}
+                              {st?.status === 'error' && <span title={st.message} style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center' }}><AlertCircle size={14} /></span>}
                             </td>
                           )}
                           {previewCols.map(c => (
@@ -478,7 +478,7 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
                 </table>
               </div>
               {previewRows.length > 50 && (
-                <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>… et {previewRows.length - 50} lignes supplémentaires</p>
+                <p style={{ fontSize: 12, color: 'var(--ink-2)' }}>… et {previewRows.length - 50} lignes supplémentaires</p>
               )}
 
               {!importing && statuses.length === 0 && (
@@ -490,7 +490,7 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
                 </div>
               )}
               {importing && (
-                <p style={{ fontSize: 13, color: 'var(--fg-muted)', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <p style={{ fontSize: 13, color: 'var(--ink-2)', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   <Spinner size={14} /> Import en cours… {statuses.filter(s => s.status !== 'pending').length} / {previewRows.length}
                 </p>
               )}
@@ -502,13 +502,13 @@ export function ImportExportModal({ open, onClose, cols, rows, entityName, array
             <div style={{ textAlign: 'center', padding: '24px 0' }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>{errorCount === 0 ? '✅' : '⚠️'}</div>
               <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>Import terminé</p>
-              <p style={{ fontSize: 14, color: 'var(--fg-muted)', marginBottom: 20 }}>
+              <p style={{ fontSize: 14, color: 'var(--ink-2)', marginBottom: 20 }}>
                 {successCount} succès · {errorCount} erreur{errorCount !== 1 ? 's' : ''}
               </p>
               {errorCount > 0 && (
-                <div style={{ textAlign: 'left', maxHeight: 160, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 8, padding: 10, marginBottom: 16 }}>
+                <div style={{ textAlign: 'left', maxHeight: 160, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 8, padding: 10, marginBottom: 16 }}>
                   {statuses.filter(s => s.status === 'error').map(s => (
-                    <p key={s.row} style={{ fontSize: 12, color: '#ef4444', marginBottom: 4 }}>
+                    <p key={s.row} style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 4 }}>
                       Ligne {s.row + 1}: {s.message}
                     </p>
                   ))}

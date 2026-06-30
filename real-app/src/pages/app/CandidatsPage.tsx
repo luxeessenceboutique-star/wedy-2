@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     Users, Search, UserPlus, GraduationCap,
     RefreshCw, Mail, Phone, XCircle, Trash2, Plus, X
@@ -45,27 +45,27 @@ function AddCandidateModal({ open, onClose, onCreated }: { open: boolean; onClos
         <Modal open={open} onClose={onClose} title="Ajouter un candidat" width={480}>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 4 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>
                         Nom complet <span style={{ color: 'var(--danger)' }}>*</span>
                     </label>
                     <input className="input" value={form.full_name} onChange={set('full_name')} placeholder="Mohammed El Fassi" required />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div>
-                        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 4 }}>Email</label>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Email</label>
                         <input className="input" type="email" value={form.email} onChange={set('email')} placeholder="email@exemple.com" />
                     </div>
                     <div>
-                        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 4 }}>Téléphone</label>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Téléphone</label>
                         <input className="input" value={form.phone} onChange={set('phone')} placeholder="+212 6xx xxx xxx" />
                     </div>
                 </div>
                 <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 4 }}>Poste visé</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Poste visé</label>
                     <input className="input" value={form.position} onChange={set('position')} placeholder="Développeur Full Stack" />
                 </div>
                 <div>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', display: 'block', marginBottom: 4 }}>Notes</label>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Notes</label>
                     <textarea
                         className="input"
                         value={form.notes}
@@ -158,11 +158,11 @@ export default function CandidatsPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
                 <div>
                     <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{t('cand_title')}</h1>
-                    <p style={{ fontSize: 14, color: 'var(--fg-muted)', margin: 0 }}>{t('cand_subtitle')}</p>
+                    <p style={{ fontSize: 14, color: 'var(--ink-2)', margin: 0 }}>{t('cand_subtitle')}</p>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                     <div style={{ position: 'relative' }}>
-                        <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-subtle)', pointerEvents: 'none' }} />
+                        <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
                         <input
                             className="input"
                             style={{ paddingLeft: 32, width: 220 }}
@@ -193,7 +193,7 @@ export default function CandidatsPage() {
                         <p style={{ fontWeight: 700, fontSize: 16, margin: '0 0 6px', color: 'var(--fg)' }}>
                             {search ? 'Aucun candidat trouvé' : 'Aucun candidat pour le moment'}
                         </p>
-                        <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: 0 }}>
+                        <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>
                             {search ? 'Essayez un autre terme de recherche.' : 'Ajoutez votre premier candidat en cliquant sur le bouton ci-dessus.'}
                         </p>
                     </div>
@@ -206,7 +206,7 @@ export default function CandidatsPage() {
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18 }}>
                     {filtered.map(c => (
-                        <div key={c.id} style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: 'var(--shadow-sm)' }}>
+                        <div key={c.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: 18, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: 'var(--shadow-sm)' }}>
                             {/* Card header */}
                             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                                 <Avatar name={c.full_name} size={44} />
@@ -216,9 +216,9 @@ export default function CandidatsPage() {
                                 </div>
                                 <button
                                     onClick={() => handleDelete(c.id, c.full_name)}
-                                    style={{ background: 'none', border: 'none', padding: 5, cursor: 'pointer', color: 'var(--fg-subtle)', borderRadius: 6, display: 'flex' }}
+                                    style={{ background: 'none', border: 'none', padding: 5, cursor: 'pointer', color: 'var(--ink-3)', borderRadius: 6, display: 'flex' }}
                                     onMouseEnter={e => (e.currentTarget.style.color = 'var(--danger)')}
-                                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--fg-subtle)')}
+                                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-3)')}
                                     title="Supprimer"
                                 >
                                     <Trash2 size={14} />
@@ -227,12 +227,12 @@ export default function CandidatsPage() {
 
                             {/* Contact info */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                                {c.email && <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--fg-muted)' }}><Mail size={12} />{c.email}</div>}
-                                {c.phone && <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--fg-muted)' }}><Phone size={12} />{c.phone}</div>}
+                                {c.email && <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--ink-2)' }}><Mail size={12} />{c.email}</div>}
+                                {c.phone && <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--ink-2)' }}><Phone size={12} />{c.phone}</div>}
                             </div>
 
                             {/* Promote actions */}
-                            <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid var(--border)', marginTop: 'auto' }}>
+                            <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid var(--line)', marginTop: 'auto' }}>
                                 <Button size="sm" style={{ flex: 1 }} onClick={() => handlePromote(c, 'employee')} loading={promoting && selectedCand?.id === c.id} onMouseEnter={() => setSelectedCand(c)}>
                                     <UserPlus size={13} /> Embaucher
                                 </Button>

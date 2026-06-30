@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Plus, Trash2, Send, X, Zap } from 'lucide-react';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Card, Button, Badge } from '../../components/ui';
@@ -78,9 +78,9 @@ function WebhookForm({ onAdd }: { onAdd: (w: Webhook) => void }) {
             <button key={ev} onClick={() => toggle(ev)}
               style={{
                 fontSize: 11, padding: '3px 10px', borderRadius: 999,
-                border: `1px solid ${events.includes(ev) ? 'var(--primary)' : 'var(--border)'}`,
-                background: events.includes(ev) ? 'var(--primary-soft)' : 'var(--bg-muted)',
-                color: events.includes(ev) ? 'var(--primary)' : 'var(--fg-muted)',
+                border: `1px solid ${events.includes(ev) ? 'var(--primary)' : 'var(--line)'}`,
+                background: events.includes(ev) ? 'var(--primary-soft)' : 'var(--surface-2)',
+                color: events.includes(ev) ? 'var(--primary)' : 'var(--ink-2)',
                 cursor: 'pointer', fontWeight: events.includes(ev) ? 600 : 400,
               }}>{ev}</button>
           ))}
@@ -141,7 +141,7 @@ export default function IntegrationsPage() {
           <Zap size={15} style={{ color: 'var(--primary)' }} /> {t('webhooks_section')} ({webhooks.length})
         </h2>
         {webhooks.length === 0 ? (
-          <div style={{ padding: '28px 20px', textAlign: 'center', color: 'var(--fg-muted)', background: 'var(--bg-elev)', border: '1px dashed var(--border)', borderRadius: 10, fontSize: 13 }}>
+          <div style={{ padding: '28px 20px', textAlign: 'center', color: 'var(--ink-2)', background: 'var(--surface)', border: '1px dashed var(--line)', borderRadius: 10, fontSize: 13 }}>
             <Zap size={28} style={{ margin: '0 auto 10px', opacity: 0.15 }} />
             <p style={{ fontWeight: 600 }}>{t('wh_none_title')}</p>
             <p style={{ fontSize: 12, marginTop: 4 }}>{t('wh_none_desc')}</p>
@@ -150,12 +150,12 @@ export default function IntegrationsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {webhooks.map(w => (
               <div key={w.id} style={{
-                background: 'var(--bg-elev)', border: '1px solid var(--border)',
+                background: 'var(--surface)', border: '1px solid var(--line)',
                 borderRadius: 10, padding: '12px 16px',
                 display: 'flex', alignItems: 'flex-start', gap: 12,
                 opacity: w.active ? 1 : 0.55,
               }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', marginTop: 4, flexShrink: 0, background: w.active ? '#10b981' : '#94a3b8' }} />
+                <div style={{ width: 10, height: 10, borderRadius: '50%', marginTop: 4, flexShrink: 0, background: w.active ? 'var(--success)' : 'var(--ink-3)' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 4px', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{w.url}</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
@@ -166,7 +166,7 @@ export default function IntegrationsPage() {
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                   <button onClick={() => toggleWebhook(w.id)}
-                    style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', background: 'var(--bg-muted)', color: 'var(--fg-muted)', fontWeight: 600 }}>
+                    style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--line)', cursor: 'pointer', background: 'var(--surface-2)', color: 'var(--ink-2)', fontWeight: 600 }}>
                     {w.active ? t('wh_disable') : t('wh_enable')}
                   </button>
                   <button onClick={() => removeWebhook(w.id)}
@@ -183,16 +183,16 @@ export default function IntegrationsPage() {
       <h2 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: 'var(--fg)' }}>{t('integrations_catalog')}</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10 }}>
         {CATALOG.map(item => (
-          <div key={item.name} style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 10, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div key={item.name} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 8, background: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
               {item.letter}
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 2px' }}>{item.name}</p>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: 0 }}>{item.desc}</p>
+              <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{item.desc}</p>
             </div>
             {item.coming ? (
-              <span style={{ fontSize: 10, padding: '2px 8px', background: 'var(--bg-muted)', color: 'var(--fg-muted)', borderRadius: 999, border: '1px solid var(--border)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 10, padding: '2px 8px', background: 'var(--surface-2)', color: 'var(--ink-2)', borderRadius: 999, border: '1px solid var(--line)', fontWeight: 600, whiteSpace: 'nowrap' }}>
                 {t('coming_soon')}
               </span>
             ) : (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Moon, Sun, Palette, User, Bell, Shield } from 'lucide-react';
@@ -59,7 +59,7 @@ function TabProfile() {
         <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 16 }}>{t('role_access_title')}</h3>
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ background: 'var(--primary-soft)', border: '1px solid var(--primary-border)', borderRadius: 'var(--radius-md)', padding: '10px 16px', fontSize: 13 }}>
-            <span style={{ color: 'var(--fg-muted)', marginRight: 8 }}>{t('role_label')}</span>
+            <span style={{ color: 'var(--ink-2)', marginRight: 8 }}>{t('role_label')}</span>
             <span style={{ fontWeight: 600, color: 'var(--primary)' }}>
               {((user as any)?.role_name as string) || t('hr_member')}
             </span>
@@ -105,16 +105,16 @@ function TabAppearance() {
               onClick={() => setTheme(th.key)}
               style={{
                 flex: 1, padding: 20, borderRadius: 'var(--radius-lg)', cursor: 'pointer', textAlign: 'center',
-                border: theme === th.key ? '2px solid var(--primary)' : '2px solid var(--border)',
-                background: theme === th.key ? 'var(--primary-soft)' : 'var(--bg-muted)',
+                border: theme === th.key ? '2px solid var(--primary)' : '2px solid var(--line)',
+                background: theme === th.key ? 'var(--primary-soft)' : 'var(--surface-2)',
                 transition: 'all 0.15s',
               }}
             >
-              <div style={{ color: theme === th.key ? 'var(--primary)' : 'var(--fg-muted)', marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
+              <div style={{ color: theme === th.key ? 'var(--primary)' : 'var(--ink-2)', marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
                 {th.icon}
               </div>
               <p style={{ fontSize: 13, fontWeight: 600, color: theme === th.key ? 'var(--primary)' : 'var(--fg)', marginBottom: 2 }}>{th.label}</p>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{th.desc}</p>
+              <p style={{ fontSize: 11, color: 'var(--ink-2)' }}>{th.desc}</p>
             </button>
           ))}
         </div>
@@ -129,13 +129,13 @@ function TabAppearance() {
               onClick={() => applyDir(d.key)}
               style={{
                 flex: 1, padding: 16, borderRadius: 'var(--radius-lg)', cursor: 'pointer', textAlign: 'left',
-                border: dir === d.key ? '2px solid var(--primary)' : '2px solid var(--border)',
-                background: dir === d.key ? 'var(--primary-soft)' : 'var(--bg-muted)',
+                border: dir === d.key ? '2px solid var(--primary)' : '2px solid var(--line)',
+                background: dir === d.key ? 'var(--primary-soft)' : 'var(--surface-2)',
                 transition: 'all 0.15s',
               }}
             >
               <p style={{ fontSize: 13, fontWeight: 600, color: dir === d.key ? 'var(--primary)' : 'var(--fg)', marginBottom: 4 }}>{d.key} · {d.label}</p>
-              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{d.desc}</p>
+              <p style={{ fontSize: 11, color: 'var(--ink-2)' }}>{d.desc}</p>
             </button>
           ))}
         </div>
@@ -170,11 +170,11 @@ function TabNotifications() {
           <div key={item.key} style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '14px 0',
-            borderBottom: i < items.length - 1 ? '1px solid var(--border)' : 'none',
+            borderBottom: i < items.length - 1 ? '1px solid var(--line)' : 'none',
           }}>
             <div>
               <p style={{ fontSize: 13, fontWeight: 500, color: 'var(--fg)' }}>{item.label}</p>
-              <p style={{ fontSize: 12, color: 'var(--fg-muted)', marginTop: 2 }}>{item.desc}</p>
+              <p style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 2 }}>{item.desc}</p>
             </div>
             <button
               onClick={() => toggle(item.key)}
@@ -185,7 +185,7 @@ function TabNotifications() {
               }}
             >
               <span style={{
-                position: 'absolute', top: 3, width: 16, height: 16, borderRadius: '50%', background: '#fff',
+                position: 'absolute', top: 3, width: 16, height: 16, borderRadius: '50%', background: 'var(--surface)',
                 transition: 'left 0.2s', left: prefs[item.key] ? 21 : 3,
               }} />
             </button>
@@ -237,10 +237,10 @@ function TabSecurity() {
 
       <Card>
         <h3 style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>{t('active_sessions_title')}</h3>
-        <div style={{ background: 'var(--bg-muted)', borderRadius: 'var(--radius-md)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ background: 'var(--surface-2)', borderRadius: 'var(--radius-md)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <p style={{ fontSize: 13, fontWeight: 500 }}>{t('current_session_label')}</p>
-            <p style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{t('session_now')}</p>
+            <p style={{ fontSize: 12, color: 'var(--ink-2)' }}>{t('session_now')}</p>
           </div>
           <span style={{ fontSize: 11, background: 'var(--success)', color: '#fff', padding: '2px 8px', borderRadius: 999 }}>{t('active_badge')}</span>
         </div>
@@ -276,12 +276,12 @@ export default function SettingsPage() {
                   padding: '8px 12px', borderRadius: 'var(--radius-md)',
                   border: 'none', cursor: 'pointer', fontSize: 13,
                   background: tab === tb.key ? 'var(--primary-soft)' : 'transparent',
-                  color: tab === tb.key ? 'var(--primary)' : 'var(--fg-muted)',
+                  color: tab === tb.key ? 'var(--primary)' : 'var(--ink-2)',
                   fontWeight: tab === tb.key ? 500 : 400,
                   textAlign: 'left',
                 }}
               >
-                <span style={{ color: tab === tb.key ? 'var(--primary)' : 'var(--fg-muted)' }}>{tb.icon}</span>
+                <span style={{ color: tab === tb.key ? 'var(--primary)' : 'var(--ink-2)' }}>{tb.icon}</span>
                 {tb.label}
               </button>
             ))}

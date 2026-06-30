@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Clock, Calendar } from 'lucide-react';
 import CreneauxRHPage from './CreneauxRHPage';
 import CalendrierRHPage from './CalendrierRHPage';
@@ -21,8 +21,8 @@ export default function PlanningRHPage() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: 2,
         padding: '0 24px',
-        background: 'var(--bg-elev)',
-        borderBottom: '1px solid var(--border)',
+        background: 'var(--surface)',
+        borderBottom: '1px solid var(--line)',
         flexShrink: 0,
       }}>
         {TABS.map(tab => {
@@ -37,12 +37,12 @@ export default function PlanningRHPage() {
                 fontSize: 13, fontWeight: active ? 700 : 500,
                 border: 'none', borderBottom: active ? '2px solid var(--primary)' : '2px solid transparent',
                 background: 'none', cursor: 'pointer',
-                color: active ? 'var(--primary)' : 'var(--fg-muted)',
+                color: active ? 'var(--primary)' : 'var(--ink-2)',
                 marginBottom: -1,
                 transition: 'all 0.15s',
               }}
             >
-              <span style={{ color: active ? 'var(--primary)' : 'var(--fg-subtle)', display: 'flex' }}>
+              <span style={{ color: active ? 'var(--primary)' : 'var(--ink-3)', display: 'flex' }}>
                 {tab.icon}
               </span>
               {t(tab.labelKey)}

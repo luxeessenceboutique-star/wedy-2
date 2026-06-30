@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { User, Mail, Building2, Briefcase, Calendar, Phone, MapPin, Lock } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -15,13 +15,13 @@ const safeFormat = (d: any, fmt = 'dd MMMM yyyy') => {
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-      <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg-muted)', flexShrink: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
+      <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-2)', flexShrink: 0 }}>
         {icon}
       </div>
       <div>
-        <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: '0 0 2px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
-        <p style={{ fontSize: 14, fontWeight: 500, margin: 0, color: value ? 'var(--fg)' : 'var(--fg-muted)' }}>{value || '—'}</p>
+        <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: '0 0 2px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
+        <p style={{ fontSize: 14, fontWeight: 500, margin: 0, color: value ? 'var(--fg)' : 'var(--ink-2)' }}>{value || '—'}</p>
       </div>
     </div>
   );
@@ -36,10 +36,10 @@ export default function MyProfilePage() {
   });
 
   const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-    active:     { label: t('myprofile_status_active'),     color: '#10b981', bg: '#ecfdf5' },
-    inactive:   { label: t('myprofile_status_inactive'),   color: '#ef4444', bg: '#fef2f2' },
-    on_leave:   { label: t('myprofile_status_on_leave'),   color: '#f59e0b', bg: '#fffbeb' },
-    terminated: { label: t('myprofile_status_terminated'), color: '#64748b', bg: '#f8fafc' },
+    active:     { label: t('myprofile_status_active'),     color: 'var(--success)', bg: 'var(--success-soft)' },
+    inactive:   { label: t('myprofile_status_inactive'),   color: 'var(--danger)', bg: '#fef2f2' },
+    on_leave:   { label: t('myprofile_status_on_leave'),   color: 'var(--warn)', bg: 'var(--warn-soft)' },
+    terminated: { label: t('myprofile_status_terminated'), color: 'var(--ink-2)', bg: 'var(--surface-2)' },
   };
 
   if (isLoading) {
@@ -48,7 +48,7 @@ export default function MyProfilePage() {
 
   if (error || !profile) {
     return (
-      <div style={{ padding: '60px 28px', textAlign: 'center', color: 'var(--fg-muted)', maxWidth: 600, margin: '0 auto' }}>
+      <div style={{ padding: '60px 28px', textAlign: 'center', color: 'var(--ink-2)', maxWidth: 600, margin: '0 auto' }}>
         <Lock size={36} style={{ opacity: 0.3, margin: '0 auto 16px' }} />
         <p style={{ fontWeight: 600 }}>{t('myprofile_unavailable')}</p>
         <p style={{ fontSize: 13 }}>{t('myprofile_not_linked')}</p>
@@ -69,7 +69,7 @@ export default function MyProfilePage() {
 
       {/* Identity card */}
       <div className="card card-pad" style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', gap: 18, alignItems: 'center', marginBottom: 20, paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', gap: 18, alignItems: 'center', marginBottom: 20, paddingBottom: 20, borderBottom: '1px solid var(--line)' }}>
           <Avatar name={profile.full_name} src={profile.photo_url} size={72} />
           <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px' }}>{profile.full_name}</h2>
@@ -79,7 +79,7 @@ export default function MyProfilePage() {
                 {statusMeta.label}
               </span>
               {profile.department && (
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--fg-muted)', background: 'var(--bg-muted)', padding: '3px 10px', borderRadius: 20 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', background: 'var(--surface-2)', padding: '3px 10px', borderRadius: 20 }}>
                   {profile.department}
                 </span>
               )}
@@ -106,7 +106,7 @@ export default function MyProfilePage() {
         )}
       </div>
 
-      <div style={{ padding: '12px 16px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, fontSize: 13, color: '#92400e' }}>
+      <div style={{ padding: '12px 16px', background: 'var(--warn-soft)', border: '1px solid #fde68a', borderRadius: 10, fontSize: 13, color: '#92400e' }}>
         {t('myprofile_contact_hr')}
       </div>
     </div>

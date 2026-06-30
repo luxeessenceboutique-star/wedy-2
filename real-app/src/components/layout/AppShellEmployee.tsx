@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Calendar, FileText, BookOpen, User,
-  LogOut, ChevronDown, Network, Video,
+  LogOut, ChevronDown, Network, Video, Moon, Sun, Search,
 } from 'lucide-react';
 import { WedyLogo } from '../WedyLogo';
 import { Avatar } from '../ui';
 import { useAuth } from '../../lib/auth';
 import { useTheme } from '../../lib/theme';
-import { Moon, Sun } from 'lucide-react';
 import { useLang, type Lang } from '../../lib/lang';
 
 const LANG_OPTIONS: { code: Lang; label: string; flag: string }[] = [
@@ -31,13 +30,13 @@ export function AppShellEmployee({ children }: { children: React.ReactNode }) {
   const currentLang = LANG_OPTIONS.find(l => l.code === lang)!;
 
   const NAV = [
-    { label: t('dashboard'),   icon: <LayoutDashboard size={15} />, to: '/employee' },
-    { label: t('time_off'),    icon: <Calendar size={15} />,        to: '/employee/conges' },
-    { label: t('nav_documents'), icon: <FileText size={15} />,     to: '/employee/documents' },
-    { label: t('training'),    icon: <BookOpen size={15} />,        to: '/employee/formation' },
-    { label: t('org_chart'),   icon: <Network size={15} />,         to: '/employee/orgchart' },
-    { label: t('meetings'),    icon: <Video size={15} />,           to: '/employee/meetings' },
-    { label: t('myprofile_title'), icon: <User size={15} />,        to: '/employee/profil' },
+    { label: t('dashboard'),       icon: <LayoutDashboard size={15} />, to: '/employee' },
+    { label: t('time_off'),        icon: <Calendar size={15} />,        to: '/employee/conges' },
+    { label: t('nav_documents'),   icon: <FileText size={15} />,        to: '/employee/documents' },
+    { label: t('training'),        icon: <BookOpen size={15} />,        to: '/employee/formation' },
+    { label: t('org_chart'),       icon: <Network size={15} />,         to: '/employee/orgchart' },
+    { label: t('meetings'),        icon: <Video size={15} />,           to: '/employee/meetings' },
+    { label: t('myprofile_title'), icon: <User size={15} />,            to: '/employee/profil' },
   ];
 
   return (
@@ -45,58 +44,62 @@ export function AppShellEmployee({ children }: { children: React.ReactNode }) {
 
       {/* ── SIDEBAR ── */}
       <aside style={{
-        width: 192, flexShrink: 0,
-        borderRight: dir === 'rtl' ? 'none' : '1px solid var(--border)',
-        borderLeft:  dir === 'rtl' ? '1px solid var(--border)' : 'none',
-        background: '#ffffff',
+        width: 228, flexShrink: 0,
+        borderRight: dir === 'rtl' ? 'none' : '1px solid var(--line)',
+        borderLeft:  dir === 'rtl' ? '1px solid var(--line)' : 'none',
+        background: 'var(--surface)',
         display: 'flex', flexDirection: 'column',
+        boxShadow: 'var(--shadow-sm)',
       }}>
-        {/* Logo row */}
-        <div style={{ padding: '12px 14px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <WedyLogo size={24} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
 
-            {/* Language switcher */}
+        {/* Logo row */}
+        <div style={{ padding: '16px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <WedyLogo size={26} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <button
+              onClick={toggleTheme}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: 6, borderRadius: 7, display: 'flex', alignItems: 'center' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            >
+              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setLangMenuOpen(o => !o)}
-                title="Language / Langue / اللغة"
                 style={{
-                  background: 'none', border: '1px solid var(--border)',
-                  cursor: 'pointer', color: 'var(--fg-subtle)',
-                  padding: '2px 6px', borderRadius: 4,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--ink-3)', padding: '4px 7px', borderRadius: 7,
                   display: 'flex', alignItems: 'center', gap: 3,
-                  fontSize: 11, fontWeight: 600,
+                  fontSize: 11, fontWeight: 700,
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'none')}
               >
                 <span>{currentLang.flag}</span>
-                <span>{currentLang.code.toUpperCase()}</span>
+                <span style={{ letterSpacing: '.04em' }}>{currentLang.code.toUpperCase()}</span>
               </button>
-
               {langMenuOpen && (
                 <div style={{
                   position: 'absolute', top: '100%',
                   [dir === 'rtl' ? 'right' : 'left']: 0,
-                  marginTop: 4, zIndex: 100,
-                  background: '#fff', border: '1px solid var(--border)',
-                  borderRadius: 8, boxShadow: 'var(--shadow-lg)',
-                  minWidth: 130, overflow: 'hidden',
+                  marginTop: 6, zIndex: 100,
+                  background: 'var(--surface)', border: '1px solid var(--line)',
+                  borderRadius: 10, boxShadow: 'var(--shadow-lg)',
+                  minWidth: 140, overflow: 'hidden',
                 }}>
                   {LANG_OPTIONS.map(opt => (
                     <button
                       key={opt.code}
                       onClick={() => { setLang(opt.code); setLangMenuOpen(false); }}
                       style={{
-                        width: '100%', padding: '8px 12px', border: 'none',
+                        width: '100%', padding: '8px 14px', border: 'none',
                         background: lang === opt.code ? 'var(--primary-soft)' : 'none',
-                        color: lang === opt.code ? 'var(--primary)' : 'var(--fg)',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                        fontSize: 13, fontWeight: lang === opt.code ? 600 : 400,
-                        textAlign: 'start',
+                        color: lang === opt.code ? 'var(--primary)' : 'var(--ink)',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 9,
+                        fontSize: 13, fontWeight: lang === opt.code ? 600 : 400, textAlign: 'start',
                       }}
-                      onMouseEnter={e => { if (lang !== opt.code) (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-muted)'; }}
+                      onMouseEnter={e => { if (lang !== opt.code) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
                       onMouseLeave={e => { if (lang !== opt.code) (e.currentTarget as HTMLButtonElement).style.background = 'none'; }}
                     >
                       <span style={{ fontSize: 16 }}>{opt.flag}</span>
@@ -106,33 +109,36 @@ export function AppShellEmployee({ children }: { children: React.ReactNode }) {
                 </div>
               )}
             </div>
-
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-subtle)', padding: 4, borderRadius: 4, display: 'flex', alignItems: 'center' }}
-            >
-              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-            </button>
           </div>
         </div>
 
         {/* Portal badge */}
-        <div style={{ padding: '0 10px 12px' }}>
+        <div style={{ padding: '0 12px 12px' }}>
           <div style={{
-            padding: '6px 10px', borderRadius: 8,
-            background: 'linear-gradient(135deg, #ecfeff 0%, #eff6ff 100%)',
-            border: '1px solid #a5f3fc',
-            fontSize: 11, fontWeight: 700, color: '#0891b2',
-            textAlign: 'center', letterSpacing: '0.03em',
+            padding: '6px 12px', borderRadius: 8,
+            background: 'var(--primary-soft)',
+            border: '1px solid var(--primary-line)',
+            fontSize: 11, fontWeight: 700, color: 'var(--primary)',
+            textAlign: 'center', letterSpacing: '.04em',
           }}>
             {t('role_employee_label')}
           </div>
         </div>
 
+        {/* Search */}
+        <div style={{ padding: '0 12px 12px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'var(--surface-2)', borderRadius: 9,
+            padding: '7px 11px', border: '1px solid var(--line)',
+          }}>
+            <Search size={13} style={{ color: 'var(--ink-3)', flexShrink: 0 }} />
+            <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>{t('search')}</span>
+          </div>
+        </div>
+
         {/* Nav */}
-        <nav style={{ flex: 1, paddingBottom: 8 }}>
+        <nav style={{ flex: 1, paddingBottom: 10, overflowY: 'auto' }} className="scroll">
           {NAV.map(item => {
             const active = item.to === '/employee'
               ? location.pathname === '/employee'
@@ -141,17 +147,17 @@ export function AppShellEmployee({ children }: { children: React.ReactNode }) {
               <Link key={item.to} to={item.to} style={{ textDecoration: 'none', display: 'block' }}>
                 <div
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '6px 10px', margin: '1px 6px', borderRadius: 6, cursor: 'pointer',
-                    background: active ? '#ecfeff' : 'transparent',
-                    color: active ? '#0891b2' : '#475569',
-                    fontWeight: active ? 500 : 400, fontSize: 13,
-                    transition: 'background 0.1s',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '7px 11px', margin: '1px 8px',
+                    borderRadius: 9, cursor: 'pointer',
+                    background: active ? 'var(--primary-soft)' : 'transparent',
+                    color: active ? 'var(--primary)' : 'var(--ink-2)',
+                    fontWeight: active ? 600 : 400, fontSize: 13,
                   }}
-                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-muted)'; }}
+                  onMouseEnter={e => { if (!active) (e.currentTarget as HTMLDivElement).style.background = 'var(--surface-2)'; }}
                   onMouseLeave={e => { if (!active) (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
                 >
-                  <span style={{ flexShrink: 0, color: active ? '#0891b2' : '#94a3b8' }}>{item.icon}</span>
+                  <span style={{ flexShrink: 0, color: active ? 'var(--primary)' : 'var(--ink-3)', display: 'flex' }}>{item.icon}</span>
                   <span style={{ flex: 1 }}>{item.label}</span>
                 </div>
               </Link>
@@ -160,32 +166,30 @@ export function AppShellEmployee({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* User footer */}
-        <div style={{ borderTop: '1px solid var(--border)', position: 'relative' }}>
+        <div style={{ borderTop: '1px solid var(--line)', position: 'relative' }}>
           <button
             onClick={() => setMenuOpen(o => !o)}
             style={{
               width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-              padding: '10px 14px',
-              display: 'flex', alignItems: 'center', gap: 9,
+              padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 10,
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-muted)')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'none')}
           >
-            <Avatar name={fullName} size={28} />
-            <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <Avatar name={fullName} size={30} />
+            <div style={{ flex: 1, minWidth: 0, textAlign: dir === 'rtl' ? 'right' : 'left' }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {fullName}
               </div>
-              <div style={{ fontSize: 11, color: '#94a3b8' }}>{t('role_employee_label')}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{t('role_employee_label')}</div>
             </div>
-            <ChevronDown size={13} style={{ color: '#94a3b8', flexShrink: 0 }} />
+            <ChevronDown size={13} style={{ color: 'var(--ink-3)', flexShrink: 0 }} />
           </button>
-
           {menuOpen && (
             <div style={{
-              position: 'absolute', bottom: '100%', left: 10, right: 10,
-              background: '#fff', border: '1px solid var(--border)',
-              borderRadius: 8, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', zIndex: 50,
+              position: 'absolute', bottom: '100%', left: 8, right: 8,
+              background: 'var(--surface)', border: '1px solid var(--line)',
+              borderRadius: 10, boxShadow: 'var(--shadow-lg)', overflow: 'hidden', zIndex: 50,
             }}>
               <button
                 onClick={handleLogout}
@@ -193,9 +197,9 @@ export function AppShellEmployee({ children }: { children: React.ReactNode }) {
                   width: '100%', padding: '9px 14px', border: 'none',
                   background: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 8,
-                  fontSize: 13, color: '#ef4444',
+                  fontSize: 13, color: 'var(--danger)',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#fee2e2')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--danger-soft)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'none')}
               >
                 <LogOut size={13} /> {t('sign_out')}
@@ -206,7 +210,7 @@ export function AppShellEmployee({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* ── MAIN ── */}
-      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', background: 'var(--bg-muted)' }} className="scroll">
+      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }} className="scroll">
         {children}
       </main>
     </div>

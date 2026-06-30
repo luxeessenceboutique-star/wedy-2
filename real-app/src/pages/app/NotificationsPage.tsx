@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Bell, CheckCheck, RefreshCw, AlertTriangle, Calendar, FileText, Users } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -40,8 +40,8 @@ function NotifRow({ n }: { n: SmartNotif }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 18px',
-      background: n.unread ? `${n.color}08` : 'var(--bg-elev)',
-      borderBottom: '1px solid var(--border)', position: 'relative', transition: 'background 0.15s',
+      background: n.unread ? `${n.color}08` : 'var(--surface)',
+      borderBottom: '1px solid var(--line)', position: 'relative', transition: 'background 0.15s',
     }}>
       {n.unread && (
         <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: n.color, borderRadius: '0 2px 2px 0' }} />
@@ -49,10 +49,10 @@ function NotifRow({ n }: { n: SmartNotif }) {
       <TypeIcon type={n.type} color={n.color} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: 13, fontWeight: n.unread ? 600 : 500, color: 'var(--fg)', margin: '0 0 2px', lineHeight: 1.4 }}>{n.title}</p>
-        <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: 0, lineHeight: 1.5 }}>{n.body}</p>
+        <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0, lineHeight: 1.5 }}>{n.body}</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-        <span style={{ fontSize: 11, color: 'var(--fg-subtle)', whiteSpace: 'nowrap' }}>{n.time}</span>
+        <span style={{ fontSize: 11, color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>{n.time}</span>
         {n.unread && <span style={{ width: 7, height: 7, borderRadius: '50%', background: n.color, display: 'block' }} />}
       </div>
     </div>
@@ -124,9 +124,9 @@ export default function NotificationsPage() {
           <button key={cat} onClick={() => setFilter(cat)}
             style={{
               padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600,
-              border: '1px solid var(--border)', cursor: 'pointer',
-              background: filter === cat ? 'var(--primary)' : 'var(--bg-elev)',
-              color: filter === cat ? '#fff' : 'var(--fg-muted)',
+              border: '1px solid var(--line)', cursor: 'pointer',
+              background: filter === cat ? 'var(--primary)' : 'var(--surface)',
+              color: filter === cat ? '#fff' : 'var(--ink-2)',
               transition: 'all 0.15s',
             }}>
             {catLabel[cat] ?? cat}
@@ -134,11 +134,11 @@ export default function NotificationsPage() {
         ))}
       </div>
 
-      <div style={{ background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spinner /></div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--fg-muted)' }}>
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--ink-2)' }}>
             <Bell size={36} style={{ margin: '0 auto 14px', opacity: 0.15 }} />
             <p style={{ fontWeight: 600, marginBottom: 4 }}>{t('notif_none_title')}</p>
             <p style={{ fontSize: 13 }}>
@@ -151,7 +151,7 @@ export default function NotificationsPage() {
       </div>
 
       {notifs.length > 0 && (
-        <p style={{ fontSize: 12, color: 'var(--fg-subtle)', marginTop: 10, textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 10, textAlign: 'center' }}>
           {t('notif_footer')}
         </p>
       )}

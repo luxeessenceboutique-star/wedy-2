@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, Search, Pencil, Trash2, FileUp, GraduationCap, User, Calendar, Mail, Phone,
@@ -44,10 +44,10 @@ const safeFormat = (date: any, fmt = 'dd/MM/yyyy') => {
 // ── Phase config ───────────────────────────────────────────────────────────────
 
 const PHASES = [
-  { id: 'pre',         label: 'Pré-onboarding',  color: '#f59e0b', bg: '#fffbeb' },
-  { id: 'integration', label: 'Intégration',      color: '#3b82f6', bg: '#eff6ff' },
-  { id: 'evaluation',  label: 'Évaluation',       color: '#8b5cf6', bg: '#f5f3ff' },
-  { id: 'completed',   label: 'Terminé',          color: '#10b981', bg: '#ecfdf5' },
+  { id: 'pre',         label: 'Pré-onboarding',  color: 'var(--warn)',    bg: 'var(--warn-soft)' },
+  { id: 'integration', label: 'Intégration',      color: 'var(--primary)', bg: 'var(--primary-soft)' },
+  { id: 'evaluation',  label: 'Évaluation',       color: 'var(--violet)',  bg: 'var(--violet-soft)' },
+  { id: 'completed',   label: 'Terminé',          color: 'var(--success)', bg: 'var(--success-soft)' },
 ];
 
 const phaseIndex = (p: string) => PHASES.findIndex(x => x.id === p);
@@ -73,7 +73,7 @@ function StarRating({ value, onChange, readonly }: { value: number; onChange?: (
           onClick={() => !readonly && onChange?.(n)}
           style={{
             background: 'none', border: 'none', cursor: readonly ? 'default' : 'pointer', padding: 1,
-            color: n <= value ? '#f59e0b' : '#d1d5db', fontSize: 18, lineHeight: 1,
+            color: n <= value ? 'var(--warn)' : '#d1d5db', fontSize: 18, lineHeight: 1,
           }}>
           ★
         </button>
@@ -99,18 +99,18 @@ function ChecklistPhaseSection({
             display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: phase.color,
           }} />
           <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--fg)' }}>{phase.label}</span>
-          <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>{done}/{total}</span>
+          <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>{done}/{total}</span>
         </div>
-        <span style={{ fontSize: 12, fontWeight: 600, color: pct === 100 ? '#10b981' : 'var(--fg-muted)' }}>{pct}%</span>
+        <span style={{ fontSize: 12, fontWeight: 600, color: pct === 100 ? 'var(--success)' : 'var(--ink-2)' }}>{pct}%</span>
       </div>
-      <div style={{ height: 4, background: 'var(--border)', borderRadius: 4, marginBottom: 10 }}>
+      <div style={{ height: 4, background: 'var(--line)', borderRadius: 4, marginBottom: 10 }}>
         <div style={{ height: 4, width: `${pct}%`, background: phase.color, borderRadius: 4, transition: 'width 0.3s' }} />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {items.map(item => (
           <label key={item.id} style={{
             display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-            background: item.done ? phase.bg : 'var(--bg-elev)', border: `1px solid ${item.done ? phase.color + '44' : 'var(--border)'}`,
+            background: item.done ? phase.bg : 'var(--surface)', border: `1px solid ${item.done ? phase.color + '44' : 'var(--line)'}`,
             borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
           }}>
             <input type="checkbox" checked={item.done} onChange={e => onToggle(item.id, e.target.checked)}
@@ -118,7 +118,7 @@ function ChecklistPhaseSection({
             <span style={{
               fontSize: 13, flex: 1,
               textDecoration: item.done ? 'line-through' : 'none',
-              color: item.done ? 'var(--fg-muted)' : 'var(--fg)',
+              color: item.done ? 'var(--ink-2)' : 'var(--fg)',
             }}>{item.label}</span>
             {item.done && <CheckCircle2 size={14} style={{ color: phase.color, flexShrink: 0 }} />}
           </label>
@@ -161,11 +161,11 @@ function EvaluationForm({ internId, onDone }: { internId: string; onDone: () => 
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         {SCORES.map(s => (
-          <div key={s.key} style={{ padding: '10px 12px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 10 }}>
+          <div key={s.key} style={{ padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <span style={{ color: '#f59e0b' }}>{s.icon}</span>
+              <span style={{ color: 'var(--warn)' }}>{s.icon}</span>
               <span style={{ fontWeight: 700, fontSize: 13 }}>{s.label}</span>
-              <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>— {s.desc}</span>
+              <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>— {s.desc}</span>
             </div>
             <StarRating value={(form as any)[s.key] ?? 0} onChange={setScore(s.key)} />
           </div>
@@ -226,18 +226,18 @@ function OnboardingTab({ intern }: { intern: Intern }) {
         <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 8 }}>
           {isMigration ? 'Migration de base de données requise' : 'Erreur de chargement'}
         </p>
-        <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 20, maxWidth: 400, margin: '0 auto 20px' }}>
+        <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 20, maxWidth: 400, margin: '0 auto 20px' }}>
           {isMigration
             ? 'Les tables d\'onboarding n\'existent pas encore. Exécutez le SQL ci-dessous dans votre Supabase SQL Editor.'
             : 'Impossible de charger les données d\'onboarding.'}
         </p>
         {isMigration && (
           <div style={{ textAlign: 'left', maxWidth: 560, margin: '0 auto' }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', marginBottom: 8 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase', marginBottom: 8 }}>
               SQL à exécuter dans Supabase → SQL Editor :
             </p>
             <pre style={{
-              background: '#1e293b', color: '#e2e8f0', padding: '14px 16px', borderRadius: 10,
+              background: 'var(--ink)', color: 'var(--line)', padding: '14px 16px', borderRadius: 10,
               fontSize: 11, lineHeight: 1.7, overflow: 'auto', maxHeight: 260,
             }}>{`CREATE TABLE IF NOT EXISTS intern_onboarding (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -352,20 +352,20 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div>
             <p style={{ fontWeight: 700, fontSize: 15, margin: 0 }}>Progression onboarding</p>
-            <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: '2px 0 0' }}>
+            <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: '2px 0 0' }}>
               {totalDone}/{totalItems} tâches complétées
               {stageDays !== null && ` · Stage de ${stageDays} jours`}
             </p>
           </div>
-          <span style={{ fontSize: 28, fontWeight: 800, color: globalPct === 100 ? '#10b981' : '#667eea' }}>{globalPct}%</span>
+          <span style={{ fontSize: 28, fontWeight: 800, color: globalPct === 100 ? 'var(--success)' : '#667eea' }}>{globalPct}%</span>
         </div>
-        <div style={{ height: 8, background: 'var(--border)', borderRadius: 8 }}>
+        <div style={{ height: 8, background: 'var(--line)', borderRadius: 8 }}>
           <div style={{ height: 8, width: `${globalPct}%`, background: 'linear-gradient(90deg, #667eea, #764ba2)', borderRadius: 8, transition: 'width 0.4s' }} />
         </div>
       </div>
 
       {/* ── Phase stepper ── */}
-      <div style={{ display: 'flex', gap: 0, background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', gap: 0, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
         {PHASES.map((p, i) => {
           const active  = ob.phase === p.id;
           const passed  = i < phaseIdx;
@@ -374,9 +374,9 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
               style={{
                 flex: 1, padding: '10px 6px', border: 'none', cursor: 'pointer', transition: 'all 0.2s',
                 background: active ? p.color : passed ? p.bg : 'transparent',
-                color: active ? '#fff' : passed ? p.color : 'var(--fg-muted)',
+                color: active ? '#fff' : passed ? p.color : 'var(--ink-2)',
                 fontWeight: active ? 700 : 500, fontSize: 12,
-                borderRight: i < PHASES.length - 1 ? '1px solid var(--border)' : 'none',
+                borderRight: i < PHASES.length - 1 ? '1px solid var(--line)' : 'none',
               }}>
               {passed && !active && <CheckCircle2 size={12} style={{ display: 'inline', marginRight: 4 }} />}
               {p.label}
@@ -390,9 +390,9 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
 
         {/* Mentor card */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12 }}>
             <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <UserCheck size={14} style={{ color: '#3b82f6' }} /> Mentor assigné
+              <UserCheck size={14} style={{ color: 'var(--primary)' }} /> Mentor assigné
             </p>
             <Input
               label="Nom du mentor"
@@ -412,20 +412,20 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
           </div>
 
           {/* Objectives */}
-          <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12 }}>
             <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Target size={14} style={{ color: '#8b5cf6' }} /> Objectifs du stage
+              <Target size={14} style={{ color: 'var(--violet)' }} /> Objectifs du stage
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
               {objectives.map(obj => (
                 <div key={obj.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input type="checkbox" checked={obj.done} onChange={e => handleObjToggle(obj.id, e.target.checked)}
-                    style={{ accentColor: '#8b5cf6', width: 15, height: 15, cursor: 'pointer' }} />
-                  <span style={{ flex: 1, fontSize: 12, textDecoration: obj.done ? 'line-through' : 'none', color: obj.done ? 'var(--fg-muted)' : 'var(--fg)' }}>
+                    style={{ accentColor: 'var(--violet)', width: 15, height: 15, cursor: 'pointer' }} />
+                  <span style={{ flex: 1, fontSize: 12, textDecoration: obj.done ? 'line-through' : 'none', color: obj.done ? 'var(--ink-2)' : 'var(--fg)' }}>
                     {obj.label}
                   </span>
                   <button onClick={() => handleRemoveObj(obj.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', padding: 0 }}>
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 0 }}>
                     <X size={12} />
                   </button>
                 </div>
@@ -441,9 +441,9 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
         </div>
 
         {/* Checklist */}
-        <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 12 }}>
+        <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12 }}>
           <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <ClipboardList size={14} style={{ color: '#10b981' }} /> Checklist d'intégration
+            <ClipboardList size={14} style={{ color: 'var(--success)' }} /> Checklist d'intégration
           </p>
           {(['pre', 'integration', 'evaluation'] as const).map(phaseId => {
             const phaseItems = checklist.filter(i => i.phase === phaseId);
@@ -461,10 +461,10 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
       </div>
 
       {/* ── Evaluations ── */}
-      <div style={{ padding: '14px 16px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 12 }}>
+      <div style={{ padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <p style={{ fontWeight: 700, fontSize: 13, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Award size={14} style={{ color: '#f59e0b' }} /> Évaluations Moovwin
+            <Award size={14} style={{ color: 'var(--warn)' }} /> Évaluations Moovwin
           </p>
           {!showEvalForm && (
             <Button size="sm" variant="soft" onClick={() => setShowEvalForm(true)}>
@@ -474,13 +474,13 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
         </div>
 
         {showEvalForm && (
-          <div style={{ padding: '14px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 14 }}>
+          <div style={{ padding: '14px 16px', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 14 }}>
             <EvaluationForm internId={intern.id} onDone={() => setShowEvalForm(false)} />
           </div>
         )}
 
         {evals.length === 0 && !showEvalForm ? (
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', textAlign: 'center', padding: '16px 0' }}>
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', textAlign: 'center', padding: '16px 0' }}>
             Aucune évaluation pour le moment.
           </p>
         ) : (
@@ -488,21 +488,21 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
             {evals.map(ev => {
               const avg = avgEvalScore(ev);
               const typeLabel = ev.evaluation_type === 'weekly' ? `Semaine ${ev.week_number}` : ev.evaluation_type === 'final' ? 'Évaluation finale' : 'Auto-évaluation';
-              const typeColor = ev.evaluation_type === 'final' ? '#10b981' : ev.evaluation_type === 'self' ? '#8b5cf6' : '#3b82f6';
+              const typeColor = ev.evaluation_type === 'final' ? 'var(--success)' : ev.evaluation_type === 'self' ? 'var(--violet)' : 'var(--primary)';
               return (
                 <div key={ev.id} style={{
-                  padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10,
+                  padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 10,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{
                         background: typeColor + '22', color: typeColor, borderRadius: 6, fontSize: 11, fontWeight: 700, padding: '2px 8px',
                       }}>{typeLabel}</span>
-                      {ev.evaluator_name && <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>par {ev.evaluator_name}</span>}
-                      <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{safeFormat(ev.created_at)}</span>
+                      {ev.evaluator_name && <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>par {ev.evaluator_name}</span>}
+                      <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>{safeFormat(ev.created_at)}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontWeight: 800, fontSize: 16, color: '#f59e0b' }}>★ {avg}/5</span>
+                      <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--warn)' }}>★ {avg}/5</span>
                       <button onClick={() => delEvalMut.mutate(ev.id)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: 2 }}>
                         <Trash2 size={12} />
@@ -512,14 +512,14 @@ CREATE POLICY "allow_all_intern_evaluations" ON intern_evaluations FOR ALL USING
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     {SCORES.map(s => (
                       <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
-                        <span style={{ color: '#f59e0b' }}>{s.icon}</span>
-                        <span style={{ color: 'var(--fg-muted)' }}>{s.label}:</span>
+                        <span style={{ color: 'var(--warn)' }}>{s.icon}</span>
+                        <span style={{ color: 'var(--ink-2)' }}>{s.label}:</span>
                         <span style={{ fontWeight: 700 }}>{(ev as any)[s.key]}</span>
                       </div>
                     ))}
                   </div>
                   {ev.comment && (
-                    <p style={{ fontSize: 12, color: 'var(--fg-muted)', margin: '8px 0 0', fontStyle: 'italic' }}>
+                    <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: '8px 0 0', fontStyle: 'italic' }}>
                       "{ev.comment}"
                     </p>
                   )}
@@ -572,17 +572,17 @@ function InternForm({ initial, onSave, onCancel, loading }: {
     <form onSubmit={e => { e.preventDefault(); onSave({ ...form, status: 'intern', contract_type: 'Stage' }); }}
       style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 10, padding: '10px 14px', background: 'var(--bg-muted)', borderRadius: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 10, padding: '10px 14px', background: 'var(--surface-2)', borderRadius: 12 }}>
         <div style={{ position: 'relative' }}>
           <Avatar name={form.full_name || 'U'} src={form.photo_url} size={70} />
           <button type="button" onClick={() => fileRef.current?.click()}
-            style={{ position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)', color: '#fff', border: '2px solid var(--bg-elev)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            style={{ position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)', color: '#fff', border: '2px solid var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
             <Camera size={12} />
           </button>
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 4px' }}>Photo de profil</p>
-          <p style={{ fontSize: 11, color: 'var(--fg-muted)', margin: '0 0 8px' }}>JPG/PNG, max 1MB</p>
+          <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: '0 0 8px' }}>JPG/PNG, max 1MB</p>
           <Button variant="soft" size="sm" type="button" onClick={() => fileRef.current?.click()}>Changer</Button>
           <input ref={fileRef} type="file" style={{ display: 'none' }} accept="image/*" onChange={handlePhoto} />
         </div>
@@ -710,20 +710,20 @@ export default function InternsPage() {
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         <div style={{ position: 'relative', flex: 1 }}>
-          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)' }} />
+          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-2)' }} />
           <input className="input" style={{ paddingLeft: 36 }}
             placeholder="Rechercher par nom..."
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => setShowDeptManager(true)}
-          style={{ padding: '0 12px', fontSize: 11, color: 'var(--fg-muted)', whiteSpace: 'nowrap', border: '1px solid var(--border)', borderRadius: 8 }}>
+          style={{ padding: '0 12px', fontSize: 11, color: 'var(--ink-2)', whiteSpace: 'nowrap', border: '1px solid var(--line)', borderRadius: 8 }}>
           ⚙ Gérer les départements
         </button>
       </div>
 
       {/* Selection bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--fg-muted)' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--ink-2)' }}>
           <input
             type="checkbox"
             checked={allSelected}
@@ -760,7 +760,7 @@ export default function InternsPage() {
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
       ) : interns.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--fg-muted)' }}>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
           <GraduationCap size={40} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
           <p style={{ fontWeight: 500, marginBottom: 8 }}>Aucun stagiaire</p>
           <p style={{ fontSize: 13, marginBottom: 20 }}>Ajoutez un stagiaire manuellement ou importez un CV.</p>
@@ -805,7 +805,7 @@ export default function InternsPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, fontSize: 12, color: 'var(--fg-muted)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, fontSize: 12, color: 'var(--ink-2)' }}>
                 {intern.email && <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Mail size={12} /> {intern.email}</div>}
                 {intern.phone && <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Phone size={12} /> {intern.phone}</div>}
                 {intern.manager && <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><User size={12} /> {intern.manager}</div>}
@@ -842,12 +842,12 @@ export default function InternsPage() {
         {viewingIntern && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Header */}
-            <div style={{ display: 'flex', gap: 20, alignItems: 'center', padding: 16, background: 'var(--bg-muted)', borderRadius: 12 }}>
+            <div style={{ display: 'flex', gap: 20, alignItems: 'center', padding: 16, background: 'var(--surface-2)', borderRadius: 12 }}>
               <Avatar name={viewingIntern.full_name} src={viewingIntern.photo_url} size={72} />
               <div style={{ flex: 1 }}>
                 <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>{viewingIntern.full_name}</h3>
                 <p style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 600, margin: '2px 0' }}>{viewingIntern.position || 'Stagiaire'}</p>
-                <div style={{ display: 'flex', gap: 14, fontSize: 12, color: 'var(--fg-muted)' }}>
+                <div style={{ display: 'flex', gap: 14, fontSize: 12, color: 'var(--ink-2)' }}>
                   {viewingIntern.email && <span><Mail size={11} /> {viewingIntern.email}</span>}
                   {viewingIntern.phone && <span><Phone size={11} /> {viewingIntern.phone}</span>}
                 </div>
@@ -858,7 +858,7 @@ export default function InternsPage() {
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: 20 }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', gap: 20 }}>
               {[
                 { id: 'info',       label: 'Profil',      icon: <User size={13} /> },
                 { id: 'onboarding', label: 'Onboarding',  icon: <ClipboardList size={13} /> },
@@ -868,7 +868,7 @@ export default function InternsPage() {
                 <button key={t.id} onClick={() => setActiveTab(t.id as any)} style={{
                   padding: '10px 4px', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
                   borderBottom: activeTab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-                  color: activeTab === t.id ? 'var(--primary)' : 'var(--fg-muted)',
+                  color: activeTab === t.id ? 'var(--primary)' : 'var(--ink-2)',
                   background: 'none', borderLeft: 'none', borderRight: 'none', borderTop: 'none', cursor: 'pointer',
                 }}>
                   {t.icon} {t.label}
@@ -881,19 +881,19 @@ export default function InternsPage() {
               {activeTab === 'info' && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 20 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <div className="card card-pad" style={{ background: 'var(--bg-elev)' }}>
-                      <p style={{ fontSize: 11, color: 'var(--fg-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>Bio</p>
+                    <div className="card card-pad" style={{ background: 'var(--surface)' }}>
+                      <p style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>Bio</p>
                       <p style={{ fontSize: 14, lineHeight: 1.6 }}>{viewingIntern.bio || 'Non renseigné'}</p>
                     </div>
-                    <div className="card card-pad" style={{ background: 'var(--bg-elev)' }}>
-                      <p style={{ fontSize: 11, color: 'var(--fg-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>Compétences</p>
+                    <div className="card card-pad" style={{ background: 'var(--surface)' }}>
+                      <p style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>Compétences</p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {viewingIntern.skills?.length ? viewingIntern.skills.map((s, i) => <Badge key={i} variant="primary">{s}</Badge>) : <span style={{ fontSize: 13 }}>—</span>}
                       </div>
                     </div>
                   </div>
-                  <div className="card card-pad" style={{ background: 'var(--bg-elev)' }}>
-                    <p style={{ fontSize: 11, color: 'var(--fg-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 10 }}>Détails Stage</p>
+                  <div className="card card-pad" style={{ background: 'var(--surface)' }}>
+                    <p style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 10 }}>Détails Stage</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
                       {[
                         ['Début', safeFormat(viewingIntern.internship_start)],
@@ -903,7 +903,7 @@ export default function InternsPage() {
                         ['Département', viewingIntern.department || '—'],
                       ].map(([label, val]) => (
                         <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'var(--fg-muted)' }}>{label}</span>
+                          <span style={{ color: 'var(--ink-2)' }}>{label}</span>
                           <span style={{ fontWeight: 600 }}>{val}</span>
                         </div>
                       ))}
@@ -918,14 +918,14 @@ export default function InternsPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {internDocs.length > 0 && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase' }}>Fichiers enregistrés</p>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase' }}>Fichiers enregistrés</p>
                       {internDocs.map(d => (
-                        <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--bg-elev)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                        <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <FileText size={15} style={{ color: 'var(--primary)' }} />
                             <div>
                               <p style={{ fontSize: 13, fontWeight: 600 }}>{d.document_type?.toUpperCase()} — {d.name || 'Document'}</p>
-                              <p style={{ fontSize: 11, color: 'var(--fg-muted)' }}>{safeFormat(d.created_at)}</p>
+                              <p style={{ fontSize: 11, color: 'var(--ink-2)' }}>{safeFormat(d.created_at)}</p>
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: 4 }}>
@@ -960,7 +960,7 @@ export default function InternsPage() {
                     </div>
                   )}
                   <div>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--fg-muted)', textTransform: 'uppercase', marginBottom: 10 }}>Scanner un document</p>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase', marginBottom: 10 }}>Scanner un document</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       {[
                         { label: 'Copie CIN', type: 'cin' },
@@ -968,7 +968,7 @@ export default function InternsPage() {
                         { label: 'Charte IT / NDA', type: 'nda' },
                         { label: 'Attestation de stage', type: 'completion' },
                       ].map(doc => (
-                        <div key={doc.type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 10 }}>
+                        <div key={doc.type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 10 }}>
                           <span style={{ fontSize: 13 }}>{doc.label}</span>
                           <Button size="sm" variant="soft" onClick={() => {
                             const input = document.createElement('input');
@@ -994,9 +994,9 @@ export default function InternsPage() {
 
               {activeTab === 'actions' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div style={{ padding: 16, border: '1px solid var(--border)', borderRadius: 12 }}>
+                  <div style={{ padding: 16, border: '1px solid var(--line)', borderRadius: 12 }}>
                     <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>Conversion en employé permanent</p>
-                    <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 14 }}>
+                    <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 14 }}>
                       Transfert vers la liste des employés actifs avec contrat CDI.
                     </p>
                     <Button variant="primary" disabled={viewingIntern.status === 'active'}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Building2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listDepartments, createDepartment, updateDepartment, deleteDepartment, getApiError } from '../lib/api';
@@ -64,7 +64,7 @@ export function DepartmentsModal({ open, onClose }: Props) {
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><Spinner /></div>
         ) : departments.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--fg-muted)', textAlign: 'center', padding: '16px 0' }}>
+          <p style={{ fontSize: 13, color: 'var(--ink-2)', textAlign: 'center', padding: '16px 0' }}>
             Aucun département. Ajoutez-en un ci-dessous.
           </p>
         ) : (
@@ -72,7 +72,7 @@ export function DepartmentsModal({ open, onClose }: Props) {
             {departments.map(dept => (
               <div key={dept.id} style={{
                 display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
-                background: 'var(--bg-muted)', border: '1px solid var(--border)', borderRadius: 8,
+                background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 8,
               }}>
                 <Building2 size={14} style={{ color: 'var(--primary)', flexShrink: 0, opacity: 0.7 }} />
 
@@ -85,15 +85,15 @@ export function DepartmentsModal({ open, onClose }: Props) {
                       onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit(); }}
                       style={{
                         flex: 1, border: '1px solid var(--primary)', borderRadius: 6,
-                        padding: '4px 8px', fontSize: 13, outline: 'none', background: 'var(--bg-elev)',
+                        padding: '4px 8px', fontSize: 13, outline: 'none', background: 'var(--surface)',
                       }}
                     />
                     <button onClick={saveEdit} disabled={updateMut.isPending}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10b981', padding: 3, display: 'flex' }}>
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--success)', padding: 3, display: 'flex' }}>
                       <Check size={15} />
                     </button>
                     <button onClick={cancelEdit}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', padding: 3, display: 'flex' }}>
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 3, display: 'flex' }}>
                       <X size={15} />
                     </button>
                   </>
@@ -101,10 +101,10 @@ export function DepartmentsModal({ open, onClose }: Props) {
                   <>
                     <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{dept.name}</span>
                     {dept.description && (
-                      <span style={{ fontSize: 11, color: 'var(--fg-muted)', marginRight: 4 }}>{dept.description}</span>
+                      <span style={{ fontSize: 11, color: 'var(--ink-2)', marginRight: 4 }}>{dept.description}</span>
                     )}
                     <button onClick={() => startEdit(dept)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fg-muted)', padding: 3, display: 'flex' }}>
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 3, display: 'flex' }}>
                       <Pencil size={13} />
                     </button>
                     <button
@@ -121,8 +121,8 @@ export function DepartmentsModal({ open, onClose }: Props) {
         )}
 
         {/* Add form */}
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+        <div style={{ borderTop: '1px solid var(--line)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
             Ajouter un département
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -132,8 +132,8 @@ export function DepartmentsModal({ open, onClose }: Props) {
               onKeyDown={e => { if (e.key === 'Enter' && newName.trim()) createMut.mutate(); }}
               placeholder="Nom du département *"
               style={{
-                flex: 2, border: '1px solid var(--border)', borderRadius: 8,
-                padding: '8px 12px', fontSize: 13, outline: 'none', background: 'var(--bg-elev)',
+                flex: 2, border: '1px solid var(--line)', borderRadius: 8,
+                padding: '8px 12px', fontSize: 13, outline: 'none', background: 'var(--surface)',
               }}
             />
             <input
@@ -142,8 +142,8 @@ export function DepartmentsModal({ open, onClose }: Props) {
               onKeyDown={e => { if (e.key === 'Enter' && newName.trim()) createMut.mutate(); }}
               placeholder="Description (optionnel)"
               style={{
-                flex: 3, border: '1px solid var(--border)', borderRadius: 8,
-                padding: '8px 12px', fontSize: 13, outline: 'none', background: 'var(--bg-elev)',
+                flex: 3, border: '1px solid var(--line)', borderRadius: 8,
+                padding: '8px 12px', fontSize: 13, outline: 'none', background: 'var(--surface)',
               }}
             />
           </div>

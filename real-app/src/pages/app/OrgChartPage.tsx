@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -32,7 +32,7 @@ import { useLang } from '../../lib/lang';
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const COLORS = [
-  '#0891b2', '#6366f1', '#059669', '#d97706', '#dc2626',
+  'var(--primary)', 'var(--violet)', '#059669', 'var(--warn)', '#dc2626',
   '#7c3aed', '#0284c7', '#0d9488', '#ea580c', '#be185d',
 ];
 
@@ -92,7 +92,7 @@ function ProjectNode({ data }: NodeProps) {
       width: 240,
       boxShadow: '0 4px 24px rgba(0,0,0,0.14)',
       border: `2px solid ${d.color}`,
-      background: '#fff',
+      background: 'var(--surface)',
       overflow: 'hidden',
     }}>
       <Handle type="source" position={Position.Bottom} id="s"
@@ -139,11 +139,11 @@ function ProjectNode({ data }: NodeProps) {
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '7px 12px', background: '#f8fafc' }}>
-        <span style={{ fontSize: 11, color: '#94a3b8' }}>
+      <div style={{ padding: '7px 12px', background: 'var(--surface-2)' }}>
+        <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>
           {d.memberCount} {t('members_label')}
           {d.memberCount === 0 && (
-            <span style={{ marginLeft: 6, color: '#cbd5e1' }}>· {t('org_node_edit_hint')}</span>
+            <span style={{ marginLeft: 6, color: 'var(--line-2)' }}>· {t('org_node_edit_hint')}</span>
           )}
         </span>
       </div>
@@ -176,7 +176,7 @@ function PersonNode({ data }: NodeProps) {
     <div style={{
       borderRadius: 10,
       width: 200,
-      background: '#fff',
+      background: 'var(--surface)',
       border: '1.5px solid #e2e8f0',
       boxShadow: '0 2px 14px rgba(0,0,0,0.08)',
       overflow: 'hidden',
@@ -191,10 +191,10 @@ function PersonNode({ data }: NodeProps) {
       <div style={{ padding: '12px 12px 10px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         <Avatar name={d.name} size={36} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {d.name}
           </p>
-          <p style={{ margin: 0, fontSize: 11, color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {d.position || '—'}
           </p>
           {d.roleInTeam && (
@@ -216,16 +216,16 @@ function PersonNode({ data }: NodeProps) {
             <button
               onClick={() => onEditMemberRole(d.projectId, d.employeeId, d.roleInTeam || '')}
               title={t('edit_role')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2, borderRadius: 4, display: 'flex', alignItems: 'center' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: 2, borderRadius: 4, display: 'flex', alignItems: 'center' }}
               onMouseEnter={e => (e.currentTarget.style.color = d.color)}
-              onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-3)')}
             ><Pencil size={11} /></button>
             <button
               onClick={() => onRemoveMember(d.projectId, d.employeeId)}
               title={t('remove')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2, borderRadius: 4, display: 'flex', alignItems: 'center' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: 2, borderRadius: 4, display: 'flex', alignItems: 'center' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--danger)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--ink-3)')}
             ><X size={11} /></button>
           </div>
         )}
@@ -257,7 +257,7 @@ function buildGraph(
       data: {
         projectId: proj.id,
         name: proj.name,
-        color: proj.color ?? '#0891b2',
+        color: proj.color ?? 'var(--primary)',
         memberCount: proj.members.length,
       },
     });
@@ -282,7 +282,7 @@ function buildGraph(
           name: m.employee?.full_name ?? 'Inconnu',
           position: m.employee?.position,
           roleInTeam: m.role_in_team,
-          color: proj.color ?? '#0891b2',
+          color: proj.color ?? 'var(--primary)',
         },
       });
 
@@ -292,7 +292,7 @@ function buildGraph(
         target: personId,
         sourceHandle: 's',
         targetHandle: 't',
-        style: { stroke: proj.color ?? '#0891b2', strokeWidth: 1.5, strokeDasharray: '6 3' },
+        style: { stroke: proj.color ?? 'var(--primary)', strokeWidth: 1.5, strokeDasharray: '6 3' },
         animated: false,
       });
     });
@@ -403,20 +403,20 @@ export default function OrgChartPage({ readOnly = false }: { readOnly?: boolean 
           {/* ── Left panel: unassigned ── */}
           <aside style={{
             width: 220,
-            borderRight: '1px solid var(--border)',
-            background: '#fff',
+            borderRight: '1px solid var(--line)',
+            background: 'var(--surface)',
             display: 'flex', flexDirection: 'column',
             overflow: 'hidden', flexShrink: 0,
           }}>
-            <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid var(--border)' }}>
-              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <div style={{ padding: '10px 14px 8px', borderBottom: '1px solid var(--line)' }}>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 {t('org_unassigned')} ({unassigned.length})
               </p>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '8px 8px' }} className="scroll">
               {isLoading && <div style={{ padding: 16, textAlign: 'center' }}><Spinner /></div>}
               {!isLoading && unassigned.length === 0 && (
-                <p style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', padding: '20px 8px' }}>
+                <p style={{ fontSize: 12, color: 'var(--ink-3)', textAlign: 'center', padding: '20px 8px' }}>
                   {t('org_all_assigned')}
                 </p>
               )}
@@ -424,14 +424,14 @@ export default function OrgChartPage({ readOnly = false }: { readOnly?: boolean 
                 <div key={emp.id} style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '7px 10px', borderRadius: 8, marginBottom: 4,
-                  background: 'var(--bg-muted)', border: '1px solid var(--border)',
+                  background: 'var(--surface-2)', border: '1px solid var(--line)',
                 }}>
                   <Avatar name={emp.full_name} size={28} />
                   <div style={{ minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {emp.full_name}
                     </p>
-                    <p style={{ margin: 0, fontSize: 11, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {emp.position || emp.department || '—'}
                     </p>
                   </div>
@@ -466,9 +466,9 @@ export default function OrgChartPage({ readOnly = false }: { readOnly?: boolean 
                 <MiniMap
                   nodeColor={(n) => {
                     const c = (n.data as any)?.color;
-                    return n.type === 'projectNode' ? (c ?? '#0891b2') : '#e2e8f0';
+                    return n.type === 'projectNode' ? (c ?? 'var(--primary)') : 'var(--line)';
                   }}
-                  style={{ borderRadius: 8, border: '1px solid var(--border)' }}
+                  style={{ borderRadius: 8, border: '1px solid var(--line)' }}
                 />
 
                 {/* Empty state */}
@@ -477,15 +477,15 @@ export default function OrgChartPage({ readOnly = false }: { readOnly?: boolean 
                     <div style={{
                       marginTop: 100,
                       textAlign: 'center',
-                      background: '#fff',
+                      background: 'var(--surface)',
                       borderRadius: 16,
                       padding: '40px 56px',
                       border: '1px dashed #cbd5e1',
                       boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
                     }}>
-                      <Network size={44} style={{ color: '#cbd5e1', marginBottom: 14 }} />
-                      <p style={{ fontWeight: 600, fontSize: 16, marginBottom: 6, color: '#0f172a' }}>{t('org_empty_title')}</p>
-                      <p style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20 }}>
+                      <Network size={44} style={{ color: 'var(--line-2)', marginBottom: 14 }} />
+                      <p style={{ fontWeight: 600, fontSize: 16, marginBottom: 6, color: 'var(--ink)' }}>{t('org_empty_title')}</p>
+                      <p style={{ fontSize: 13, color: 'var(--ink-3)', marginBottom: 20 }}>
                         {t('org_empty_desc')}
                       </p>
                       {!readOnly && (
@@ -517,7 +517,7 @@ export default function OrgChartPage({ readOnly = false }: { readOnly?: boolean 
               placeholder={t('description_label') + "..."}
             />
             <div>
-              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500, color: '#475569' }}>{t('color')}</p>
+              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500, color: 'var(--ink-2)' }}>{t('color')}</p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {COLORS.map(c => (
                   <button key={c} onClick={() => setNewColor(c)} style={{
@@ -537,8 +537,8 @@ export default function OrgChartPage({ readOnly = false }: { readOnly?: boolean 
                   {newName || t('org_team_name')}
                 </span>
               </div>
-              <div style={{ padding: '7px 14px', background: '#f8fafc' }}>
-                <span style={{ fontSize: 11, color: '#94a3b8' }}>0 {t('members_label')}</span>
+              <div style={{ padding: '7px 14px', background: 'var(--surface-2)' }}>
+                <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>0 {t('members_label')}</span>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
@@ -562,13 +562,13 @@ export default function OrgChartPage({ readOnly = false }: { readOnly?: boolean 
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '4px 0 8px' }}>
             <div>
-              <p style={{ margin: '0 0 7px', fontSize: 12, fontWeight: 500, color: '#475569' }}>{t('employee')}</p>
+              <p style={{ margin: '0 0 7px', fontSize: 12, fontWeight: 500, color: 'var(--ink-2)' }}>{t('employee')}</p>
               <select
                 value={selectedEmpId}
                 onChange={e => setSelectedEmpId(e.target.value)}
                 style={{
                   width: '100%', padding: '8px 10px', borderRadius: 8,
-                  border: '1px solid var(--border)', fontSize: 13,
+                  border: '1px solid var(--line)', fontSize: 13,
                   background: 'var(--bg)', color: 'var(--fg)', outline: 'none',
                 }}
               >
@@ -580,7 +580,7 @@ export default function OrgChartPage({ readOnly = false }: { readOnly?: boolean 
                 ))}
               </select>
               {unassigned.length === 0 && (
-                <p style={{ margin: '6px 0 0', fontSize: 11, color: '#f59e0b' }}>
+                <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--warn)' }}>
                   {t('org_all_assigned')}
                 </p>
               )}

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, RefreshCw } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
@@ -16,18 +16,18 @@ function MsgBubble({ msg }: { msg: ChatMessage }) {
     }}>
       <div style={{
         width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-        background: isUser ? 'var(--bg-muted)' : 'var(--primary)',
-        border: isUser ? '1px solid var(--border)' : 'none',
+        background: isUser ? 'var(--surface-2)' : 'var(--primary)',
+        border: isUser ? '1px solid var(--line)' : 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        {isUser ? <User size={14} style={{ color: 'var(--fg-muted)' }} /> : <Bot size={14} style={{ color: '#fff' }} />}
+        {isUser ? <User size={14} style={{ color: 'var(--ink-2)' }} /> : <Bot size={14} style={{ color: '#fff' }} />}
       </div>
       <div style={{
         maxWidth: '72%', padding: '11px 15px',
         borderRadius: isUser ? '12px 4px 12px 12px' : '4px 12px 12px 12px',
-        background: isUser ? 'var(--primary)' : 'var(--bg-elev)',
+        background: isUser ? 'var(--primary)' : 'var(--surface)',
         color: isUser ? '#fff' : 'var(--fg)',
-        border: isUser ? 'none' : '1px solid var(--border)',
+        border: isUser ? 'none' : '1px solid var(--line)',
         fontSize: 14, lineHeight: 1.65, whiteSpace: 'pre-wrap',
         boxShadow: 'var(--shadow-sm)',
       }}>
@@ -43,11 +43,11 @@ function TypingIndicator() {
       <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Bot size={14} style={{ color: '#fff' }} />
       </div>
-      <div style={{ padding: '12px 16px', borderRadius: '4px 12px 12px 12px', background: 'var(--bg-elev)', border: '1px solid var(--border)' }}>
+      <div style={{ padding: '12px 16px', borderRadius: '4px 12px 12px 12px', background: 'var(--surface)', border: '1px solid var(--line)' }}>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           {[0, 1, 2].map(i => (
             <div key={i} style={{
-              width: 6, height: 6, borderRadius: '50%', background: 'var(--fg-muted)',
+              width: 6, height: 6, borderRadius: '50%', background: 'var(--ink-2)',
               animation: `bounce 1.2s ${i * 0.2}s infinite ease-in-out`,
             }} />
           ))}
@@ -112,16 +112,16 @@ export default function CopilotPage() {
 
   return (
     <div style={{ padding: '0 0 0 0', display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <div style={{ padding: '20px 28px 0', borderBottom: '1px solid var(--border)', background: 'var(--bg-elev)', flexShrink: 0 }}>
+      <div style={{ padding: '20px 28px 0', borderBottom: '1px solid var(--line)', background: 'var(--surface)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
             <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 2 }}>{t('ai_copilot')}</h1>
-            <p style={{ fontSize: 13, color: 'var(--fg-muted)' }}>{t('copilot_header_sub')}</p>
+            <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>{t('copilot_header_sub')}</p>
           </div>
           <button
             onClick={reset}
             title={t('copilot_new_chat')}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--fg-muted)', background: 'var(--bg-muted)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '6px 12px', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ink-2)', background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', padding: '6px 12px', cursor: 'pointer' }}
           >
             <RefreshCw size={12} /> {t('copilot_new_chat')}
           </button>
@@ -144,8 +144,8 @@ export default function CopilotPage() {
         </div>
       )}
 
-      <div style={{ padding: '12px 28px 20px', borderTop: '1px solid var(--border)', background: 'var(--bg-elev)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '8px 8px 8px 14px' }}>
+      <div style={{ padding: '12px 28px 20px', borderTop: '1px solid var(--line)', background: 'var(--surface)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '8px 8px 8px 14px' }}>
           <textarea
             ref={textareaRef}
             className="input"
@@ -160,7 +160,7 @@ export default function CopilotPage() {
             <Send size={13} />
           </Button>
         </div>
-        <p style={{ fontSize: 11, color: 'var(--fg-subtle)', marginTop: 6, textAlign: 'center' }}>
+        <p style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 6, textAlign: 'center' }}>
           {t('copilot_disclaimer')}
         </p>
       </div>

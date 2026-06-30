@@ -287,8 +287,111 @@ ul { list-style: none; padding: 0; margin: 0; }
 .rise-3 { animation-delay: .15s; }
 .rise-4 { animation-delay: .20s; }
 
+/* ── Tables ─────────────────────────────────────────────────────── */
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px; font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  background: var(--surface-2);
+}
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  vertical-align: middle;
+}
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover td { background: var(--surface-2); }
+.table tbody tr.selected td { background: var(--primary-soft); }
+
+/* ── Card header / section ──────────────────────────────────────── */
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-header-title {
+  font-family: var(--font-display);
+  font-weight: 600; font-size: 14px;
+  color: var(--ink); letter-spacing: -.01em;
+}
+.card-section { padding: 20px 22px; }
+.card-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* ── Filter bar ─────────────────────────────────────────────────── */
+.filter-bar {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap; margin-bottom: 20px;
+}
+.search-field {
+  position: relative; flex: 1; min-width: 200px;
+}
+.search-field svg {
+  position: absolute; left: 11px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--ink-3); pointer-events: none;
+}
+.search-field input { padding-left: 34px; }
+
+/* ── Selection bar ──────────────────────────────────────────────── */
+.selection-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 16px;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-line);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  animation: fadeIn .15s ease;
+}
+
+/* ── Error alert ────────────────────────────────────────────────── */
+.alert-error {
+  background: var(--danger-soft);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 13px; color: var(--danger);
+}
+
+/* ── Input error ────────────────────────────────────────────────── */
+.input-error { border-color: var(--danger) !important; }
+.input-error:focus { box-shadow: 0 0 0 3px var(--danger-soft) !important; }
+
+/* ── Animations ─────────────────────────────────────────────────── */
+.animate-spin { animation: spinSlow .8s linear infinite; }
+
 /* ── Misc helpers ───────────────────────────────────────────────── */
 .bg-dotgrid {
   background-image: radial-gradient(var(--line) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+/* ── Login page responsive ──────────────────────────────────────── */
+.login-brand-panel { display: flex !important; }
+.login-mobile-logo { display: none; }
+@media (max-width: 768px) {
+  .login-brand-panel { display: none !important; }
+  .login-mobile-logo { display: block; }
+}
+
+/* ── Missing legacy aliases ─────────────────────────────────────── */
+:root {
+  --shadow-xl:     var(--shadow-lg);
+  --primary-light: var(--primary-soft);
+  --accent-text:   var(--primary);
+}
+[data-theme="dark"] {
+  --shadow-xl:     var(--shadow-lg);
+  --primary-light: var(--primary-soft);
 }

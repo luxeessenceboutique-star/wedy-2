@@ -5,6 +5,7 @@ from supabase import Client
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.services.audit import notify_hr, create_notification
 
 router = APIRouter(prefix="/portal", tags=["Employee Portal"])
 
@@ -25,33 +26,6 @@ def _get_my_employee(supabase: Client, current_user: dict) -> dict:
         status_code=404,
         detail="Aucun profil employé lié à ce compte. Contactez votre responsable RH.",
     )
-
-
-def _notify_hr(supabase: Client, title: str, body: str, notif_type: str = "employee_request") -> None:
-    """Create a notification for every HR/admin user."""
-    try:
-        hr_users = (
-            supabase.table("user_roles")
-            .select("user_id")
-            .in_("role", ["hr", "admin", "rh"])
-            .execute()
-            .data or []
-        )
-        if not hr_users:
-            return
-        records = [
-            {
-                "user_id": u["user_id"],
-                "type": notif_type,
-                "title": title,
-                "body": body,
-                "read": False,
-            }
-            for u in hr_users
-        ]
-        supabase.table("notifications").insert(records).execute()
-    except Exception:
-        pass  # non-critical
 
 
 # ── My profile ─────────────────────────────────────────────────────────────────
@@ -137,7 +111,7 @@ def submit_leave(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    _notify_hr(
+    notify_hr(
         supabase,
         title=f"Demande de congé — {emp['full_name']}",
         body=(
@@ -146,6 +120,7 @@ def submit_leave(
             f"du {payload.get('start_date', '')} au {payload.get('end_date', '')}"
         ),
         notif_type="leave_pending",
+        link="/leaves",
     )
     return leave
 
@@ -186,11 +161,12 @@ def submit_doc_request(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    _notify_hr(
+    notify_hr(
         supabase,
         title=f"Demande de document — {emp['full_name']}",
         body=f"{emp['full_name']} a demandé : {payload.get('doc_type', 'document')}",
         notif_type="document_request",
+        link="/documents",
     )
     return doc_req
 

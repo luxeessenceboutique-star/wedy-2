@@ -9,7 +9,7 @@ from supabase import Client
 
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
-from app.services.audit import log_action
+from app.services.audit import log_action, create_notification, notify_hr
 
 router = APIRouter(prefix="/leaves", tags=["Leaves"])
 
@@ -149,6 +149,15 @@ def create_leave(
 
     leave = res.data[0]
     log_action(supabase, current_user["id"], "CREATE", "leave_request", leave["id"])
+
+    # Notify HR that a new leave request was created (HR-side creation)
+    notify_hr(
+        supabase,
+        title=f"Congé créé pour un employé",
+        body=f"Une demande de congé ({data.get('type', '')}) a été créée du {data.get('start_date', '')} au {data.get('end_date', '')}.",
+        notif_type="leave_pending",
+        link="/leaves",
+    )
     return leave
 
 
@@ -173,7 +182,50 @@ def review_leave(
 
     leave = res.data[0]
     log_action(supabase, current_user["id"], status.upper(), "leave_request", leave_id)
+
+    # Notify the employee who owns this leave request
+    _notify_employee_leave_decision(supabase, leave, status)
     return leave
+
+
+def _notify_employee_leave_decision(supabase: Client, leave: dict, status: str) -> None:
+    """Find the user linked to the employee's email and send them a notification."""
+    emp_id = leave.get("employee_id")
+    if not emp_id:
+        return
+    try:
+        # Get employee email
+        emp = supabase.table("employees").select("email, full_name").eq("id", emp_id).maybe_single().execute()
+        emp_email = (emp.data or {}).get("email")
+        emp_name  = (emp.data or {}).get("full_name", "Employé")
+        if not emp_email:
+            return
+
+        # Look up user_id by email via Supabase admin API
+        users = supabase.auth.admin.list_users()
+        target_user_id = None
+        for u in (users or []):
+            if getattr(u, "email", None) == emp_email:
+                target_user_id = u.id
+                break
+
+        if not target_user_id:
+            print(f"[leaves] no auth user found for email {emp_email!r}")
+            return
+
+        status_label = "approuvée" if status == "approved" else "refusée"
+        create_notification(
+            supabase,
+            user_id=target_user_id,
+            message=(
+                f"Votre demande de congé du {leave.get('start_date', '')} "
+                f"au {leave.get('end_date', '')} a été {status_label}."
+            ),
+            title=f"Congé {status_label}",
+            notif_type="success" if status == "approved" else "warning",
+        )
+    except Exception as e:
+        print(f"[leaves] _notify_employee_leave_decision failed: {e}")
 
 
 @router.patch("/{leave_id}")

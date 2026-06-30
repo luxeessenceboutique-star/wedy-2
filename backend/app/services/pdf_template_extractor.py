@@ -1,5 +1,5 @@
 """
-PDF → HTML Template Extractor  v3  (Render + Overlay)
+PDF → HTML Template Extractor  v4  (Render + Overlay)
 ======================================================
 Strategy:
   1. Render each PDF page as a high-quality JPEG image  →  exact visual copy
@@ -33,130 +33,187 @@ except ImportError:
 
 # ── Variable substitution table ───────────────────────────────────────────────
 # Maps PDF placeholder patterns  →  Jinja2 {{variable}} tokens
+# All patterns are applied with re.IGNORECASE.
 
 _VAR_SUBS = [
-    # Full name
-    (r"\[Nom et pr[ée]nom du stagiaire\s*\]",   "{{full_name}}"),
-    (r"\[Nom et pr[ée]nom\s*du stagiaire\s*\]", "{{full_name}}"),
-    (r"\[Nom et pr[ée]nom\s*\]",                "{{full_name}}"),
-    (r"\[Nom et pr[ée]nom\]",                   "{{full_name}}"),
-    (r"\(Nom\s*Pr[ée]nom\)",                    "{{full_name}}"),
-    (r"\[nom complet\]",                        "{{full_name}}"),
-    (r"\[pr[ée]nom\s+nom\]",                    "{{full_name}}"),
-    # CIN
-    (r"\[Num[ée]ro\s+CIN\]",                    "{{cin}}"),
-    (r"\[CIN\s*\]",                             "{{cin}}"),
-    (r"\(CIN\s*\)",                             "{{cin}}"),
-    (r"\[num[ée]ro\s+de\s+cin\]",               "{{cin}}"),
-    # Dates
-    (r"\[date\s+d.embauche\]",                  "{{hire_date}}"),
-    (r"\[date de d[ée]but\]",                   "{{contract_start}}"),
-    (r"\[date de fin\s*/\s*.+?\]",              "{{contract_end}}"),
-    (r"\[date de fin / [\w\s]+\]",              "{{contract_end}}"),
-    (r"\[date de fin\]",                        "{{contract_end}}"),
-    (r"\[Date\]",                               "{{today}}"),
-    (r"\[date\]",                               "{{today}}"),
-    # Position / poste
-    (r"\[poste occup[ée]\s*\]",                 "{{position}}"),
-    (r"\[\s*poste occup[ée]\s*\]",              "{{position}}"),
-    (r"\[poste\]",                              "{{position}}"),
-    (r"\[fonction\]",                           "{{position}}"),
-    # Salary
-    (r"\[montant en dirhams\s*\]",              "{{salary}}"),
-    (r"\[salaire\]",                            "{{salary}}"),
-    (r"\[r[ée]mun[ée]ration\]",                "{{salary}}"),
-    # Contact
-    (r"\(adresse\s*\)",                         "{{address}}"),
-    (r"\[adresse\]",                            "{{address}}"),
-    (r"\[email\]",                              "{{email}}"),
-    (r"\[e-mail\]",                             "{{email}}"),
-    (r"\[t[ée]l[ée]phone\]",                   "{{phone}}"),
-    (r"\[t[ée]l\.?\]",                          "{{phone}}"),
-    # Other
-    (r"\[d[ée]partement\]",                     "{{department}}"),
-    (r"\[service\]",                            "{{department}}"),
-    (r"\[manager\]",                            "{{manager}}"),
-    (r"\[responsable\]",                        "{{manager}}"),
-    (r"\[matricule\]",                          "{{matricule}}"),
-    (r"\[nationalit[ée]\]",                     "{{nationality}}"),
+    # ── Full name ─────────────────────────────────────────────────────────────
+    # bracket / parenthesis variants
+    (r"\[Nom\s+et\s+[Pp]r[ée]noms?\s+du\s+stagiaire[^\]]*\]",  "{{full_name}}"),
+    (r"\[Nom\s+et\s+[Pp]r[ée]noms?\s*\]",                      "{{full_name}}"),
+    (r"\[[Pp]r[ée]noms?\s+et\s+[Nn]om[^\]]*\]",                "{{full_name}}"),
+    (r"\[[Nn]om\s+[Pp]r[ée]nom[^\]]*\]",                       "{{full_name}}"),
+    (r"\[[Nn]om\s+[Cc]omplet[^\]]*\]",                         "{{full_name}}"),
+    (r"\[[Ii]ntitul[ée]\s+nom[^\]]*\]",                        "{{full_name}}"),
+    (r"\[[Ll]e\s+nomm[ée][^\]]*\]",                            "{{full_name}}"),
+    (r"\[[Ll]'int[ée]ress[ée][^\]]*\]",                        "{{full_name}}"),
+    (r"\[[Bb][ée]n[ée]ficiaire[^\]]*\]",                       "{{full_name}}"),
+    (r"\[[Ss]alarié[^\]]*\]",                                   "{{full_name}}"),
+    (r"\[[Ss]tagiai?re[^\]]*\]",                                "{{full_name}}"),
+    (r"\(Nom\s*[Ee]t?\s*Pr[ée]nom\)",                          "{{full_name}}"),
+    (r"\(Nom\s+Pr[ée]nom\)",                                    "{{full_name}}"),
+    (r"\[full[_\s]?name\]",                                     "{{full_name}}"),
+    # Arabic
+    (r"\[الاسم\s+الكامل\]",                                     "{{full_name}}"),
+    (r"\[اسم\s+ولقب\]",                                        "{{full_name}}"),
+    (r"\[الاسم\s+واللقب\]",                                    "{{full_name}}"),
+
+    # ── CIN ───────────────────────────────────────────────────────────────────
+    (r"\[Num[ée]ro\s+(?:de\s+la\s+)?CIN[^\]]*\]",             "{{cin}}"),
+    (r"\[N°?\s*CIN[^\]]*\]",                                   "{{cin}}"),
+    (r"\[CIN\s*[^\]]*\]",                                      "{{cin}}"),
+    (r"\(CIN[^\)]*\)",                                          "{{cin}}"),
+    (r"\[Carte\s+[Nn]ationale[^\]]*\]",                        "{{cin}}"),
+    (r"\[CNI[^\]]*\]",                                          "{{cin}}"),
+    (r"\[cin\b[^\]]*\]",                                        "{{cin}}"),
+    (r"\[رقم\s+(?:بطاقة\s+)?(?:التعريف\s+)?(?:الوطنية?|الهوية)[^\]]*\]", "{{cin}}"),
+
+    # ── Hire / start date ─────────────────────────────────────────────────────
+    (r"\[date\s+d[''`]?embauche[^\]]*\]",                      "{{hire_date}}"),
+    (r"\[date\s+d[''`]?entr[ée]e[^\]]*\]",                    "{{hire_date}}"),
+    (r"\[date\s+d[''`]?entr[ée]e\s+en\s+(?:service|fonction)[^\]]*\]", "{{hire_date}}"),
+    (r"\[date\s+de\s+prise\s+d[''`]?effet[^\]]*\]",            "{{hire_date}}"),
+    (r"\[date\s+de\s+d[ée]but[^\]]*\]",                        "{{contract_start}}"),
+    (r"\[date\s+d[''`]?effet[^\]]*\]",                         "{{contract_start}}"),
+    (r"\[date\s+de\s+signature[^\]]*\]",                        "{{today}}"),
+    (r"\[date\s+de\s+fin(?:\s*/?[^\]]*)\]",                    "{{contract_end}}"),
+    (r"\[date\s+d[''`]?[ée]ch[ée]ance[^\]]*\]",               "{{contract_end}}"),
+    (r"\[date\s+d[''`]?expiration[^\]]*\]",                    "{{contract_end}}"),
+    (r"\[Date\s*\]",                                            "{{today}}"),
+    (r"\[date\s*\]",                                            "{{today}}"),
+    # Arabic dates
+    (r"\[تاريخ\s+(?:الالتحاق|التوظيف)[^\]]*\]",               "{{hire_date}}"),
+    (r"\[تاريخ\s+البداية[^\]]*\]",                             "{{contract_start}}"),
+    (r"\[تاريخ\s+النهاية[^\]]*\]",                             "{{contract_end}}"),
+    (r"\[تاريخ[^\]]*\]",                                        "{{today}}"),
+
+    # ── Position / Poste ──────────────────────────────────────────────────────
+    (r"\[poste\s+occup[ée][^\]]*\]",                           "{{position}}"),
+    (r"\[intitul[ée]\s+du\s+poste[^\]]*\]",                   "{{position}}"),
+    (r"\[intitul[ée]\s+de\s+(?:l[''`]?)?emploi[^\]]*\]",      "{{position}}"),
+    (r"\[fonction[^\]]*\]",                                    "{{position}}"),
+    (r"\[emploi[^\]]*\]",                                      "{{position}}"),
+    (r"\[grade[^\]]*\]",                                       "{{position}}"),
+    (r"\[titre[^\]]*\]",                                       "{{position}}"),
+    (r"\[poste[^\]]*\]",                                       "{{position}}"),
+    (r"\[المنصب[^\]]*\]",                                      "{{position}}"),
+    (r"\[الوظيفة[^\]]*\]",                                     "{{position}}"),
+
+    # ── Department ────────────────────────────────────────────────────────────
+    (r"\[d[ée]partement[^\]]*\]",                              "{{department}}"),
+    (r"\[service\s*/?\s*d[ée]partement[^\]]*\]",               "{{department}}"),
+    (r"\[service[^\]]*\]",                                     "{{department}}"),
+    (r"\[direction[^\]]*\]",                                   "{{department}}"),
+    (r"\[entit[ée][^\]]*\]",                                   "{{department}}"),
+    (r"\[structure[^\]]*\]",                                   "{{department}}"),
+    (r"\[القسم[^\]]*\]",                                       "{{department}}"),
+    (r"\[الإدارة[^\]]*\]",                                     "{{department}}"),
+
+    # ── Salary ────────────────────────────────────────────────────────────────
+    (r"\[montant\s+en\s+dirhams[^\]]*\]",                      "{{salary}}"),
+    (r"\[salaire\s+(?:mensuel\s+)?(?:brut|net|de\s+base)[^\]]*\]", "{{salary}}"),
+    (r"\[r[ée]mun[ée]ration[^\]]*\]",                          "{{salary}}"),
+    (r"\[montant[^\]]*\]",                                     "{{salary}}"),
+    (r"\[salaire[^\]]*\]",                                     "{{salary}}"),
+    (r"\[الراتب[^\]]*\]",                                      "{{salary}}"),
+    (r"\[الأجر[^\]]*\]",                                       "{{salary}}"),
+
+    # ── Contact ───────────────────────────────────────────────────────────────
+    (r"\[adresse\s+(?:postale|domicile|complète)?[^\]]*\]",    "{{address}}"),
+    (r"\(adresse[^\)]*\)",                                      "{{address}}"),
+    (r"\[domicile[^\]]*\]",                                    "{{address}}"),
+    (r"\[adresse[^\]]*\]",                                     "{{address}}"),
+    (r"\[ville[^\]]*\]",                                       "{{city}}"),
+    (r"\[email[^\]]*\]",                                       "{{email}}"),
+    (r"\[e[-\s]?mail[^\]]*\]",                                 "{{email}}"),
+    (r"\[courriel[^\]]*\]",                                    "{{email}}"),
+    (r"\[t[ée]l[ée]phone\s*(?:mobile|personnel|professionnel)?[^\]]*\]", "{{phone}}"),
+    (r"\[t[ée]l\.?[^\]]*\]",                                   "{{phone}}"),
+    (r"\[gsm[^\]]*\]",                                         "{{phone}}"),
+
+    # ── Manager ───────────────────────────────────────────────────────────────
+    (r"\[manager[^\]]*\]",                                     "{{manager}}"),
+    (r"\[responsable\s+(?:hi[ée]rarchique)?[^\]]*\]",          "{{manager}}"),
+    (r"\[sup[ée]rieur[^\]]*\]",                                "{{manager}}"),
+    (r"\[encadrant[^\]]*\]",                                   "{{manager}}"),
+
+    # ── Matricule ─────────────────────────────────────────────────────────────
+    (r"\[matricule[^\]]*\]",                                   "{{matricule}}"),
+    (r"\[num[ée]ro\s+d[''`]?employ[ée][^\]]*\]",              "{{matricule}}"),
+    (r"\[id\s+employ[ée][^\]]*\]",                             "{{matricule}}"),
+
+    # ── Contract type ─────────────────────────────────────────────────────────
+    (r"\[type\s+(?:de\s+)?contrat[^\]]*\]",                   "{{contract_type}}"),
+    (r"\[nature\s+(?:du\s+)?contrat[^\]]*\]",                 "{{contract_type}}"),
+
+    # ── Nationality ───────────────────────────────────────────────────────────
+    (r"\[nationalit[ée][^\]]*\]",                              "{{nationality}}"),
+    (r"\[الجنسية[^\]]*\]",                                     "{{nationality}}"),
 ]
 
 
 def _apply_vars(text: str) -> str:
-    """Apply all variable substitution patterns to a plain-text string."""
+    """Apply bracket-style placeholder patterns to a plain-text string."""
     for pattern, replacement in _VAR_SUBS:
         text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
     return text
 
 
 # ── Contextual patterns for filled-in documents ───────────────────────────────
-# These detect REAL data (names, CIN numbers, dates, positions) by their
-# surrounding context, for PDFs that were already filled in rather than using
-# [bracket] placeholder markers.
-#
-# Each entry is (pattern, replacement, flags).
-# Use flags=0 for case-SENSITIVE matching (e.g. ALL-CAPS position detection).
+# Detect REAL data (names, CIN numbers, dates, positions) by context.
+# Applied ONLY when bracket-pattern substitution found nothing.
 
-_D = r"\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4}"   # date pattern shorthand
+_D = r"\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4}"   # date shorthand
 
 _CONTEXTUAL_SUBS: list[tuple] = [
     # ── CIN — 1-2 uppercase letters + 5-7 digits ─────────────────────────────
     (r"(CIN\s*N?°?\s*:?\s*)([A-Z]{1,2}\d{5,7})\b",
      r"\1{{cin}}", re.IGNORECASE),
 
-    # ── Employee name: contract header "- M.: NAME" or "- Mme: NAME" ─────────
+    # ── Employee name after "M. / Mme" at start of line (ALL-CAPS names) ─────
     (r"^(\s*[-–]\s*M(?:me)?\.?\s*:?\s+)([A-Z\xc0-\xd6\xd8-\xde][A-Z\xc0-\xd6\xd8-\xde\s]+)\s*$",
      r"\1{{full_name}}", re.MULTILINE),
 
-    # ── Employee name: attestation standalone line "M. NAME" or "Mme. NAME" ──
-    # Only matches ALL-CAPS names (>=5 chars) to avoid signer names (mixed case)
-    (r"^(M(?:me)?\.?\s+)([A-Z\xc0-\xd6\xd8-\xde][A-Z\xc0-\xd6\xd8-\xde\s]{4,})\s*$",
+    # ── Employee name: "M. NAME" — now accepts mixed-case (≥8 chars) ──────────
+    (r"^(M(?:me)?\.?\s+)([A-Z\xc0-\xd6\xd8-\xde][\w\xc0-\xff\s]{6,})\s*$",
      r"\1{{full_name}}", re.MULTILINE),
-
-    # ── Birth date after "né le" / "née le" ──────────────────────────────────
-    (r"(n[e\xe9]e?\s+le\s+)(" + _D + r")", r"\1{{birth_date}}", re.IGNORECASE),
 
     # ── Hire date: "à compter du DATE" or "depuis le DATE" ───────────────────
     (r"(\xe0\s+compter\s+du\s+)(" + _D + r")", r"\1{{hire_date}}", re.IGNORECASE),
     (r"(depuis\s+le\s+)(" + _D + r")",          r"\1{{hire_date}}", re.IGNORECASE),
 
-    # ── Date range on same line: "DATE au DATE" → hire_date … contract_end ───
-    # Applied BEFORE standalone patterns so both dates are captured together.
+    # ── Date range: "DATE au DATE" → hire_date … contract_end ────────────────
     (r"(" + _D + r")(\s+au\s+)(" + _D + r")",
      r"{{hire_date}}\2{{contract_end}}", re.IGNORECASE),
 
     # ── "Jusqu'à présent" ─────────────────────────────────────────────────────
-    (r"jusqu['’`]?à\s+pr[e\xe9]sent\b", r"{{contract_end}}", re.IGNORECASE),
+    (r"jusqu[''`]?à\s+pr[e\xe9]sent\b", r"{{contract_end}}", re.IGNORECASE),
+
+    # ── Birth date after "né le" / "née le" ──────────────────────────────────
+    (r"(n[e\xe9]e?\s+le\s+)(" + _D + r")", r"\1{{birth_date}}", re.IGNORECASE),
 
     # ── Address after "Demeurant à" ───────────────────────────────────────────
     (r"(demeurant\s+\xe0\s+)(.{3,60}?)\s*$", r"\1{{address}}", re.IGNORECASE | re.MULTILINE),
 
-    # ── Position with French guillemets «…» (mixed-case ok, contract style) ──
-    (r"(en\s+(?:sa\s+)?qualit[e\xe9]\s+de\s*«\s*)(.{2,60}?)(\s*»)",
+    # ── Position with French guillemets «…» ──────────────────────────────────
+    (r"(en\s+(?:sa\s+)?qualit[e\xe9]\s+de\s*[««]\s*)(.{2,60}?)(\s*[»»])",
      r"\1{{position}}\3", re.IGNORECASE),
 
-    # ── Position ALL-CAPS multi-word (attestation style: "UI/UX DESIGNER") ───
-    # Case-SENSITIVE (flags=0) so mixed-case signer titles like "Gérant" don't match.
-    # Requires at least 5 chars total and ends with uppercase letter.
-    (r"(en\s+(?:sa\s+)?qualit[e\xe9]\s+de\s+)([A-Z\xc0-\xd6\xd8-\xde][A-Z\xc0-\xd6\xd8-\xde\s/\-]{4,}[A-Z\xc0-\xd6\xd8-\xde])(\s+(?:du|au|depuis)|,|\s*$)",
-     r"\1{{position}}\3", 0),
+    # ── Position after "en qualité de" — mixed-case (≥4 chars, stops at conjunctions) ─
+    (r"(en\s+(?:sa\s+)?qualit[e\xe9]\s+de\s+)([\w\xc0-\xff][\w\xc0-\xff\s/\-]{3,50}?)(\s+(?:du|au|depuis|au\s+sein|à\s+compter)|,|\.|\s*$)",
+     r"\1{{position}}\3", re.IGNORECASE),
 
-    # ── Salary: "salaire mensuel net sera de X dirhams" ───────────────────────
-    (r"(salaire\s+mensuel\s+net\s+sera\s+de\s+)([\d\s ,\.]+?)\s*(dirhams|MAD|dhs?\.?)\b",
+    # ── Salary: "salaire mensuel (net|brut) (sera|est) de X (dirhams|MAD)" ───
+    (r"(salaire\s+mensuel\s+(?:net|brut)?\s+(?:sera|est)\s+de\s+)([\d\s,\.]+?)\s*(dirhams?|MAD|dhs?\.?)\b",
      r"\1{{salary}} \3", re.IGNORECASE),
 
-    # ── Today's date: "Fait (en double exemplaire)? à CITY, le DATE" ─────────
-    (r"(Fait(?:\s+en\s+double\s+exemplaire)?\s+\xe0\s+\w+,?\s+le\s+)(" + _D + r")",
+    # ── Today's date: "Fait à CITY, le DATE" ─────────────────────────────────
+    (r"(Fait(?:\s+en\s+double\s+exemplaire)?\s+\xe0\s+[\w\s]+,?\s+le\s+)(" + _D + r")",
      r"\1{{today}}", re.IGNORECASE),
 ]
 
 
 def _apply_contextual_vars(text: str) -> str:
-    """Detect filled-in HR data by context and replace with {{variable}} tokens.
-
-    Works on documents that contain real employee data (names, CIN numbers, dates,
-    positions) rather than [bracket] placeholder markers.
-    """
+    """Replace filled-in HR data by context. Call only when bracket patterns found nothing."""
     for item in _CONTEXTUAL_SUBS:
         pat, repl, flags = item
         try:
@@ -166,18 +223,21 @@ def _apply_contextual_vars(text: str) -> str:
     return text
 
 
+def _apply_all(text: str) -> str:
+    """Apply bracket patterns first; only fall through to contextual if nothing found."""
+    result = _apply_vars(text)
+    if "{{" not in result:
+        result = _apply_contextual_vars(result)
+    return result
+
+
 def _extract_vars_from(token: str) -> list[str]:
-    """Return list of  var_name  strings found inside {{...}} tokens."""
     return re.findall(r"\{\{(\w+)\}\}", token)
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def extract_pdf_template(file_bytes: bytes, filename: str = "template.pdf") -> str:
-    """
-    Convert a PDF / DOCX file into a faithful HTML Jinja2 template.
-    Returns an HTML string ready to be stored in document_templates.body_template.
-    """
     ext = filename.rsplit(".", 1)[-1].lower()
     if ext == "pdf":
         return _extract_from_pdf(file_bytes)
@@ -198,19 +258,18 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
     except Exception as exc:
         return f"<p style='color:red;font-family:sans-serif;'>Erreur ouverture PDF: {exc}</p>"
 
-    DISPLAY_W = 760          # pixels — target display width
-    RENDER_SCALE = 2.5       # render at 2.5× for sharp output
+    DISPLAY_W = 760
+    RENDER_SCALE = 2.5
 
     pages_html: list[str] = []
 
     for page_num in range(len(doc)):
         page = doc[page_num]
-        page_w = page.rect.width    # pt  (A4 ≈ 595 pt)
-        page_h = page.rect.height   # pt  (A4 ≈ 842 pt)
-        disp_scale = DISPLAY_W / page_w          # pt → display-px
+        page_w = page.rect.width
+        page_h = page.rect.height
+        disp_scale = DISPLAY_W / page_w
         display_h  = int(page_h * disp_scale)
 
-        # ── 1. Detect variable placeholder regions ────────────────────────────
         var_regions: list[dict] = []
         text_dict = page.get_text(
             "dict",
@@ -218,26 +277,20 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
         )
 
         for block in text_dict.get("blocks", []):
-            if block.get("type") != 0:      # 0 = text, 1 = image
+            if block.get("type") != 0:
                 continue
             for line in block.get("lines", []):
                 spans = line.get("spans", [])
                 if not spans:
                     continue
 
-                # Reconstruct the full line text
                 full_text = "".join(s.get("text", "") for s in spans)
-                # First try bracket-style [placeholder] substitution, then fall
-                # back to contextual detection for real filled-in data.
-                substituted = _apply_contextual_vars(_apply_vars(full_text))
+                substituted = _apply_all(full_text)
 
                 if "{{" not in substituted:
-                    continue  # no variable detected in this line
+                    continue
 
-                # Get the bounding box of the whole line
-                bbox = line.get("bbox", [0, 0, 0, 0])   # [x0,y0,x1,y1] in pt
-
-                # Style from the first span
+                bbox = line.get("bbox", [0, 0, 0, 0])
                 sp0 = spans[0]
                 font_size = sp0.get("size", 11)
                 font_name = sp0.get("font", "")
@@ -260,18 +313,15 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
                     "vars":      _extract_vars_from(substituted),
                 })
 
-        # ── 2. Render the page as a high-quality JPEG ─────────────────────────
         mat = fitz.Matrix(RENDER_SCALE, RENDER_SCALE)
         pix = page.get_pixmap(matrix=mat, alpha=False)
-        img_bytes = pix.tobytes("png")           # first get raw PNG
+        img_bytes = pix.tobytes("png")
 
-        # ── 3. White-out variable regions using Pillow ────────────────────────
         if _HAS_PIL and var_regions:
             img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
             draw = ImageDraw.Draw(img)
             for vr in var_regions:
                 x0, y0, x1, y1 = vr["bbox"]
-                # Scale PDF pt → render pixels (× RENDER_SCALE)
                 rx0 = max(0, int(x0 * RENDER_SCALE) - 4)
                 ry0 = max(0, int(y0 * RENDER_SCALE) - 2)
                 rx1 = min(img.width,  int(x1 * RENDER_SCALE) + 4)
@@ -282,7 +332,6 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
             img_bytes = buf.getvalue()
             img_mime = "image/jpeg"
         else:
-            # No Pillow or no vars — convert PNG to JPEG to save space
             if _HAS_PIL:
                 pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
                 buf = io.BytesIO()
@@ -292,20 +341,17 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
 
         img_b64 = base64.b64encode(img_bytes).decode()
 
-        # ── 4. Build overlay HTML for each variable region ────────────────────
         overlays = ""
         for vr in var_regions:
             x0, y0, x1, y1 = vr["bbox"]
             left   = x0 * disp_scale
             top    = y0 * disp_scale
-            width  = max((x1 - x0) * disp_scale, 80)   # minimum 80 px
+            width  = max((x1 - x0) * disp_scale, 80)
             height = (y1 - y0) * disp_scale
 
             fw = "700" if vr["bold"] else "400"
             fs = max(11, vr["font_size"])
 
-            # Render the entire substituted line text (including static text around variables)
-            # using the exact extracted styles so it matches the original document perfectly.
             text_html = (
                 f'<span style="'
                 f'font-size:{fs:.1f}px;'
@@ -328,7 +374,6 @@ def _extract_from_pdf(file_bytes: bytes) -> str:
                 f'</div>\n'
             )
 
-        # ── 5. Assemble page block ─────────────────────────────────────────────
         page_block = (
             f'<div style="'
             f'position:relative;'
@@ -371,20 +416,16 @@ def _esc(text: str) -> str:
 
 
 def _run_to_html(run) -> str:
-    """Convert a python-docx Run to inline HTML. Does NOT apply _apply_vars here
-    (variable substitution happens at paragraph level to catch cross-run markers)."""
     text = run.text
     if not text:
         return ""
     text = _esc(text)
-    # Bold / italic / underline
     if getattr(run, "bold", False):
         text = f"<strong>{text}</strong>"
     if getattr(run, "italic", False):
         text = f"<em>{text}</em>"
     if getattr(run, "underline", False):
         text = f"<u>{text}</u>"
-    # Font size / color
     styles = []
     try:
         if run.font.size:
@@ -404,22 +445,17 @@ def _run_to_html(run) -> str:
 
 
 def _para_to_html(para) -> str:
-    """Convert a python-docx Paragraph to an HTML block element.
+    """Convert a python-docx Paragraph to HTML.
 
-    Variable placeholders like [Nom et prénom] can span several runs in DOCX
-    (Word's spell-checker / autocorrect splits text into multiple runs).  To
-    catch them reliably we first apply _apply_vars() to the *full* paragraph
-    text.  If it produced any {{var}} tokens we render the paragraph as plain
-    HTML text (losing per-run formatting for that paragraph).  Otherwise we
-    use per-run rendering to preserve bold/italic/color.
+    Variable placeholders can span several runs in DOCX (Word splits text).
+    We apply substitution on the full concatenated text first.
     """
-    full_raw = para.text          # concatenates all runs — never misses cross-run vars
-    full_sub = _apply_contextual_vars(_apply_vars(full_raw))
+    full_raw = para.text
+    full_sub = _apply_all(full_raw)
 
     if not full_raw.strip():
         return "<p>&nbsp;</p>"
 
-    # ── Alignment ────────────────────────────────────────────────────────────
     align_css = ""
     try:
         from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -433,27 +469,29 @@ def _para_to_html(para) -> str:
     except Exception:
         pass
 
-    # ── Heading styles ───────────────────────────────────────────────────────
-    style_name = (para.style.name or "").lower()
+    style_name = ""
+    try:
+        style_name = (para.style.name or "").lower()
+    except Exception:
+        pass
+
     content: str
     if full_sub != full_raw:
-        # Variable substitution happened — use plain text to preserve tokens
+        # Substitution happened — use plain text to preserve the {{tokens}}
         content = _esc(full_sub)
     else:
-        # No variables — use per-run HTML for rich formatting
         content = "".join(_run_to_html(r) for r in para.runs) or _esc(full_raw)
 
-    if "heading 1" in style_name:
+    if "heading 1" in style_name or "titre 1" in style_name:
         return (f'<h1 style="font-size:18pt;font-weight:bold;text-align:center;'
                 f'text-decoration:underline;margin:24px 0 16px;">{content}</h1>')
-    if "heading 2" in style_name:
+    if "heading 2" in style_name or "titre 2" in style_name:
         return (f'<h2 style="font-size:15pt;font-weight:bold;{align_css}'
                 f'margin:20px 0 12px;">{content}</h2>')
-    if "heading 3" in style_name:
+    if "heading 3" in style_name or "titre 3" in style_name:
         return (f'<h3 style="font-size:13pt;font-weight:bold;{align_css}'
                 f'margin:16px 0 10px;">{content}</h3>')
 
-    # ── Body paragraph ───────────────────────────────────────────────────────
     para_fs = "12pt"
     try:
         if para.style.font.size:
@@ -466,7 +504,6 @@ def _para_to_html(para) -> str:
 
 
 def _table_to_html(table) -> str:
-    """Convert a python-docx Table to an HTML table."""
     rows_html = []
     for row in table.rows:
         cells_html = []
@@ -486,14 +523,22 @@ def _table_to_html(table) -> str:
     )
 
 
+def _sdt_text(sdt_el) -> str:
+    """Extract plain text from a <w:sdt> content-control element."""
+    try:
+        from lxml import etree
+        ns = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        content_el = sdt_el.find(f"{{{ns}}}sdtContent")
+        if content_el is None:
+            return ""
+        # Gather all text runs inside the content control
+        texts = [t.text or "" for t in content_el.iter(f"{{{ns}}}t")]
+        return "".join(texts)
+    except Exception:
+        return ""
+
+
 def _extract_from_docx(file_bytes: bytes) -> str:
-    """
-    Convert DOCX to faithful HTML, preserving:
-    - Paragraph formatting (bold, italic, underline, alignment, font size/color)
-    - Tables (rendered as <table> elements)
-    - Document element order
-    - Variable placeholder substitution
-    """
     try:
         from docx import Document
         from lxml import etree
@@ -501,19 +546,31 @@ def _extract_from_docx(file_bytes: bytes) -> str:
         doc = Document(io.BytesIO(file_bytes))
         parts: list[str] = []
 
-        # Walk body children in document order — paragraphs AND tables
         for child in doc.element.body:
-            tag = etree.QName(child.tag).localname
+            try:
+                tag = etree.QName(child.tag).localname
+            except Exception:
+                continue
+
             if tag == "p":
                 from docx.text.paragraph import Paragraph as DocxPara
                 para = DocxPara(child, doc)
-                html = _para_to_html(para)
-                parts.append(html)
+                parts.append(_para_to_html(para))
+
             elif tag == "tbl":
                 from docx.table import Table as DocxTable
                 table = DocxTable(child, doc)
                 parts.append(_table_to_html(table))
-            # sdt (content controls), sectPr, etc. are silently skipped
+
+            elif tag == "sdt":
+                # Structured content control (form field) — extract its text
+                raw = _sdt_text(child)
+                if raw.strip():
+                    sub = _apply_all(raw)
+                    content = _esc(sub)
+                    parts.append(f'<p style="font-size:12pt;line-height:1.8;margin:4px 0;">{content}</p>')
+
+            # sectPr, bookmarkStart, etc. — silently skip
 
         return (
             '<div style="font-family:\'Times New Roman\',serif;'
@@ -522,7 +579,6 @@ def _extract_from_docx(file_bytes: bytes) -> str:
             + "\n</div>"
         )
     except Exception as exc:
-        # Fallback to plain-text extraction on any error
         try:
             from docx import Document
             doc = Document(io.BytesIO(file_bytes))
@@ -535,8 +591,7 @@ def _extract_from_docx(file_bytes: bytes) -> str:
 # ── Plain-text fallback ───────────────────────────────────────────────────────
 
 def _plain_fallback(raw_text: str) -> str:
-    """Minimal fallback used when fitz is unavailable or for text files."""
-    text  = _apply_contextual_vars(_apply_vars(raw_text))
+    text  = _apply_all(raw_text)
     lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
     parts: list[str] = []
     for line in lines:

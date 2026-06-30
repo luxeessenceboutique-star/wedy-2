@@ -113,35 +113,38 @@ function MsgBubble({ msg }: { msg: ChatMessage }) {
   return (
     <div style={{
       display: 'flex',
+      flexDirection: 'row',           // always row — no reversal
       gap: 10,
       marginBottom: 18,
       alignItems: 'flex-start',
       justifyContent: isUser ? 'flex-end' : 'flex-start',
-      flexDirection: isUser ? 'row-reverse' : 'row',
       animation: 'riseIn .25s cubic-bezier(.2,.8,.2,1) both',
     }}>
+      {/* AI avatar — left side, only for bot messages */}
       {!isUser && <CopilotAvatar size={32} />}
 
       <div style={{
-        maxWidth: '76%',
-        padding: isUser ? '10px 16px' : '14px 18px',
+        maxWidth: '72%',
+        padding: isUser ? '11px 16px' : '14px 18px',
         borderRadius: isUser ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
-        background: isUser ? 'var(--grad)' : 'var(--surface)',
+        background: isUser ? 'var(--grad)' : 'var(--surface-2)',
         color: isUser ? '#fff' : 'var(--ink)',
         border: isUser ? 'none' : '1px solid var(--line)',
         fontSize: 13.5,
         lineHeight: 1.65,
         boxShadow: isUser ? '0 4px 16px rgba(14,111,132,.22)' : 'var(--shadow-sm)',
+        wordBreak: 'break-word',
       }}>
         <RenderContent content={msg.content} />
       </div>
 
+      {/* User avatar — right side, only for user messages */}
       {isUser && (
         <div style={{
           width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-          background: 'var(--surface-2)', border: '1px solid var(--line)',
+          background: 'var(--primary-soft)', border: '1px solid var(--primary-line)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--ink-3)',
+          color: 'var(--primary)',
         }}>
           <Users size={14} />
         </div>
@@ -308,7 +311,7 @@ export default function CopilotPage() {
       </div>
 
       {/* ── Messages area ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px' }} className="scroll">
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 32px', background: 'var(--bg)' }} className="scroll">
 
         {/* Welcome empty state */}
         {messages.length === 1 && !loading && (

@@ -571,12 +571,14 @@ export const updateAsset = (id: string, body: Partial<Asset>) =>
   api.patch<Asset>(`/assets/${id}`, body).then(r => r.data);
 // ── Notifications ──────────────────────────────────────────────────
 export type Notification = {
-  id: string; title: string; message: string; type: string;
-  is_read: boolean; link?: string; created_at: string;
+  id: string; title: string; body: string; message: string; type: string;
+  unread: boolean; is_read: boolean; color?: string; time?: string;
+  link?: string; created_at?: string;
 };
-export const listNotifications = () => api.get<{ data: Notification[] }>('/notifications').then(r => r.data);
+export const listNotifications = () =>
+  api.get<{ data: Notification[]; unread_count: number; count: number }>('/notifications').then(r => r.data);
 export const markNotifRead = (id: string) => api.patch(`/notifications/${id}/read`);
-export const markAllNotifsRead = () => api.patch('/notifications/read-all');
+export const markAllNotifsRead = () => api.patch('/notifications/read-all'); // PATCH alias supported; POST /mark-all-read also works
 
 // ── Holidays ────────────────────────────────────────────────────────
 export const listHolidays = () => api.get<{ data: { name: string; date: string }[] }>('/leaves/holidays').then(r => r.data);

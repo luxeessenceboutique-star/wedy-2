@@ -36,9 +36,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { data: notifData } = useQuery({
     queryKey: ['notifications'],
     queryFn: listNotifications,
-    refetchInterval: 60000,
+    refetchInterval: 20000,
   });
-  const unreadCount = (notifData?.data ?? []).filter(n => !n.is_read).length;
+  const unreadCount = notifData?.unread_count ?? (notifData?.data ?? []).filter((n: any) => n.unread || !n.is_read).length;
 
   React.useEffect(() => {
     document.documentElement.removeAttribute('data-direction');

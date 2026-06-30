@@ -22,16 +22,20 @@ TYPE_COLORS = {
 
 def _format(row: dict) -> dict:
     t = row.get("type", "info")
+    # Support both "read" and "is_read" column names
+    is_read = row.get("read") or row.get("is_read") or False
     return {
         "id":       row.get("id"),
         "type":     t,
-        "title":    row.get("title", ""),
+        "title":    row.get("title") or row.get("message", "")[:60],
         "body":     row.get("body") or row.get("message", ""),
+        "message":  row.get("body") or row.get("message", ""),
         "time":     row.get("created_at", ""),
-        "unread":   not row.get("read", False),
+        "unread":   not is_read,
+        "is_read":  is_read,
         "color":    TYPE_COLORS.get(t, "#6b7280"),
         "link":     row.get("link"),
-        "priority": 1 if not row.get("read") else 0,
+        "priority": 1 if not is_read else 0,
     }
 
 
@@ -56,18 +60,28 @@ def list_notifications(
 
 
 @router.post("/mark-all-read")
+@router.patch("/read-all")
 def mark_all_read(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    res = (
-        supabase.table("notifications")
-        .update({"read": True})
-        .eq("user_id", current_user["id"])
-        .eq("read", False)
-        .execute()
-    )
-    return {"status": "success", "count": len(res.data or [])}
+    uid = current_user["id"]
+    count = 0
+    # Try "read" column first, then "is_read"
+    for col in ("read", "is_read"):
+        try:
+            res = (
+                supabase.table("notifications")
+                .update({col: True})
+                .eq("user_id", uid)
+                .eq(col, False)
+                .execute()
+            )
+            count = len(res.data or [])
+            break
+        except Exception:
+            continue
+    return {"status": "success", "count": count}
 
 
 @router.patch("/{notif_id}/read")
@@ -76,16 +90,21 @@ def mark_as_read(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    res = (
-        supabase.table("notifications")
-        .update({"read": True})
-        .eq("id", notif_id)
-        .eq("user_id", current_user["id"])
-        .execute()
-    )
-    if not res.data:
-        raise HTTPException(status_code=404, detail="Notification not found")
-    return _format(res.data[0])
+    uid = current_user["id"]
+    for col in ("read", "is_read"):
+        try:
+            res = (
+                supabase.table("notifications")
+                .update({col: True})
+                .eq("id", notif_id)
+                .eq("user_id", uid)
+                .execute()
+            )
+            if res.data:
+                return _format(res.data[0])
+        except Exception:
+            continue
+    raise HTTPException(status_code=404, detail="Notification not found")
 
 
 @router.delete("/{notif_id}")

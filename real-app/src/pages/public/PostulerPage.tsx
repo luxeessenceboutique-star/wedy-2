@@ -24,16 +24,16 @@ export default function PostulerPage() {
     const [submitted, setSubmitted] = useState(false);
 
     useEffect(() => {
-        if (id) {
-            Promise.all([getAnnonce(id), listSlots()])
-                .then(([ad, allSlots]) => {
-                    setAnnonce(ad);
-                    // Filter or use all slots
-                    setSlots(allSlots.filter(s => s.status === 'free'));
-                })
-                .catch(() => toast.error("Erreur lors du chargement de l'offre"))
-                .finally(() => setFetching(false));
-        }
+        if (!id) return;
+        setFetching(true);
+        const annoncePromise = getAnnonce(id)
+            .then(ad => setAnnonce(ad))
+            .catch(() => toast.error("Offre introuvable"));
+        const slotsPromise = listSlots()
+            .then(allSlots => setSlots(allSlots.filter(s => !s.status || s.status === 'free')))
+            .catch(() => toast.error("Impossible de charger les créneaux"));
+        Promise.allSettled([annoncePromise, slotsPromise])
+            .finally(() => setFetching(false));
     }, [id]);
 
     const handleSubmit = async (e: React.FormEvent) => {

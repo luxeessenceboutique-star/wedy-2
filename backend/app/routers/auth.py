@@ -47,24 +47,37 @@ def login(payload: LoginRequest, supabase: Client = Depends(get_db)):
 
 @router.post("/register", response_model=UserOut)
 def register(payload: RegisterRequest, supabase: Client = Depends(get_db)):
-    """Delegate registration to Supabase Auth"""
+    """Register via admin API (bypasses Supabase public-signup restrictions)."""
+    full_name = getattr(payload, "full_name", None) or payload.email.split("@")[0]
     try:
-        res = supabase.auth.sign_up({
-            "email": payload.email,
-            "password": payload.password,
-            "options": {
-                "data": {"full_name": payload.email.split("@")[0]}
-            }
+        res = supabase.auth.admin.create_user({
+            "email":         payload.email,
+            "password":      payload.password,
+            "email_confirm": True,
+            "user_metadata": {"full_name": full_name},
         })
         if not res.user:
             raise HTTPException(status_code=400, detail="Erreur lors de l'inscription")
-        
-        # Le déclencheur Supabase (Trigger) devrait s'occuper de créer le profil et le rôle
+
+        user_id = res.user.id
+
+        # Ensure a profile row exists
+        try:
+            supabase.table("profiles").upsert({
+                "user_id":   user_id,
+                "full_name": full_name,
+                "email":     payload.email,
+            }, on_conflict="user_id").execute()
+        except Exception:
+            pass
+
         return {
-            "id": res.user.id,
-            "email": res.user.email,
-            "role_name": "employee"
+            "id":        user_id,
+            "email":     res.user.email,
+            "role_name": "employee",
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

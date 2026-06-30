@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, ChevronUp, FileUp, Eye, X, ArrowUpDown } from 'lucide-react';
-import { listEmployees, createEmployee, updateEmployee, deleteEmployee, listDepartments, getApiError } from '../../lib/api';
+import { listEmployees, createEmployee, updateEmployee, deleteEmployee, listDepartments, listContractTypes, getApiError } from '../../lib/api';
 import type { Employee } from '../../lib/api';
 import { Button, Badge, Card, Input, Select, Modal, Spinner, Empty, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
@@ -40,7 +40,7 @@ const STATUS_COLORS: Record<string, 'success' | 'warning' | 'danger' | 'default'
   active: 'success', inactive: 'danger', 'on-leave': 'warning',
 };
 
-const CONTRACT_TYPES = ['CDI', 'CDD', 'Stage', 'Freelance'];
+// CONTRACT_TYPES is now loaded dynamically via useQuery + listContractTypes
 const today = new Date().toISOString().split('T')[0];
 
 type TagField = 'skills' | 'languages' | 'certifications';
@@ -92,9 +92,10 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
 }) {
   const isAdd = !initial?.id;
   const { data: departments = [] } = useQuery({ queryKey: ['departments'], queryFn: listDepartments });
+  const { data: contractTypes = [] } = useQuery({ queryKey: ['contract-types'], queryFn: listContractTypes });
   const [form, setForm] = useState<Partial<Employee>>(
     isAdd
-      ? { status: 'active', contract_type: 'CDI', hire_date: today, contract_start: today, ...initial }
+      ? { status: 'active', contract_type: '', hire_date: today, contract_start: today, ...initial }
       : { ...initial }
   );
   const [showExtra, setShowExtra] = useState(false);
@@ -144,8 +145,9 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
           <option value="terminated">Terminé</option>
           <option value="intern">Stagiaire</option>
         </Select>
-        <Select label="Type de contrat" value={form.contract_type ?? 'CDI'} onChange={set('contract_type')}>
-          {CONTRACT_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
+        <Select label="Type de contrat" value={form.contract_type ?? ''} onChange={set('contract_type')}>
+          <option value="">— Sélectionner —</option>
+          {contractTypes.map(c => <option key={c.id} value={c.name}>{c.name}{c.description ? ` — ${c.description}` : ''}</option>)}
         </Select>
         <Input label="Date d'embauche" type="date" value={form.hire_date ?? ''} onChange={set('hire_date')} />
         <Input label="Début de contrat" type="date" value={form.contract_start ?? ''} onChange={set('contract_start')} />

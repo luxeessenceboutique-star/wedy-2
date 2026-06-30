@@ -209,11 +209,25 @@ _CONTEXTUAL_SUBS: list[tuple] = [
     # ── Today's date: "Fait à CITY, le DATE" ─────────────────────────────────
     (r"(Fait(?:\s+en\s+double\s+exemplaire)?\s+\xe0\s+[\w\s]+,?\s+le\s+)(" + _D + r")",
      r"\1{{today}}", re.IGNORECASE),
+
+    # ── Employee name: "M. FIRSTNAME LASTNAME, titulaire/effectue/occupe" ─────
+    # Handles mid-sentence names (not at end of line) — e.g. filled-in PDFs
+    (r"(M(?:me)?\.?\s{0,2})"
+     r"([A-Z\xc0-\xd6\xd8-\xde][\w\xc0-\xff]{1,20}"
+     r"(?:\s+[A-Z\xc0-\xd6\xd8-\xde][\w\xc0-\xff]{1,20}){0,3})"
+     r"(\s*,\s+(?:titulaire|effectue|occupe|n[e\xe9]e?|stagiaire))",
+     r"\1{{full_name}}\3", re.MULTILINE),
+
+    # ── Department after "au/du département …" ────────────────────────────────
+    (r"((?:au|du|de\s+la?)\s+d[e\xe9]partement\s+)"
+     r"([\w\xc0-\xff][\w\xc0-\xff\s/\-]{2,50}?)"
+     r"(\s*[.,\n]|\s*$)",
+     r"\1{{department}}\3", re.IGNORECASE | re.MULTILINE),
 ]
 
 
 def _apply_contextual_vars(text: str) -> str:
-    """Replace filled-in HR data by context. Call only when bracket patterns found nothing."""
+    """Detect and replace real HR data (names, dates, depts) by surrounding context."""
     for item in _CONTEXTUAL_SUBS:
         pat, repl, flags = item
         try:
@@ -224,10 +238,9 @@ def _apply_contextual_vars(text: str) -> str:
 
 
 def _apply_all(text: str) -> str:
-    """Apply bracket patterns first; only fall through to contextual if nothing found."""
+    """Apply bracket patterns then contextual patterns (always both)."""
     result = _apply_vars(text)
-    if "{{" not in result:
-        result = _apply_contextual_vars(result)
+    result = _apply_contextual_vars(result)
     return result
 
 

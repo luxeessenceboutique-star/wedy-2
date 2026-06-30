@@ -1,12 +1,13 @@
 ﻿import React, { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Moon, Sun, Palette, User, Bell, Shield } from 'lucide-react';
+import { Moon, Sun, Palette, User, Bell, Shield, FileText, Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Card, Button } from '../../components/ui';
 import { useTheme } from '../../lib/theme';
 import { useAuth } from '../../lib/auth';
-import { api } from '../../lib/api';
+import { api, listContractTypes, createContractType, updateContractType, deleteContractType } from '../../lib/api';
+import type { ContractType } from '../../lib/api';
 import { useLang } from '../../lib/lang';
 
 function TabProfile() {
@@ -249,6 +250,195 @@ function TabSecurity() {
   );
 }
 
+function TabReferentiels() {
+  const qc = useQueryClient();
+  const { data: types = [], isLoading } = useQuery({ queryKey: ['contract-types'], queryFn: listContractTypes });
+
+  const [newName, setNewName]   = useState('');
+  const [newDesc, setNewDesc]   = useState('');
+  const [adding, setAdding]     = useState(false);
+  const [editId, setEditId]     = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+
+  const createMut = useMutation({
+    mutationFn: () => createContractType({ name: newName.trim(), description: newDesc.trim() || undefined }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contract-types'] });
+      setNewName(''); setNewDesc(''); setAdding(false);
+      toast.success('Type de contrat ajouté');
+    },
+    onError: () => toast.error('Erreur lors de la création'),
+  });
+
+  const updateMut = useMutation({
+    mutationFn: (id: string) => updateContractType(id, { name: editName.trim(), description: editDesc.trim() || undefined }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contract-types'] });
+      setEditId(null);
+      toast.success('Type de contrat mis à jour');
+    },
+    onError: () => toast.error('Erreur lors de la mise à jour'),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteContractType(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contract-types'] });
+      toast.success('Type de contrat supprimé');
+    },
+    onError: () => toast.error('Erreur lors de la suppression'),
+  });
+
+  const startEdit = (ct: ContractType) => {
+    setEditId(ct.id); setEditName(ct.name); setEditDesc(ct.description ?? '');
+  };
+
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <h3 style={{ fontWeight: 600, fontSize: 15, margin: 0 }}>Types de contrat</h3>
+          <p style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 4 }}>
+            Gérez les types de contrat disponibles (CDI, CDD, Stage…)
+          </p>
+        </div>
+        <Button size="sm" onClick={() => { setAdding(true); setEditId(null); }}>
+          <Plus size={13} /> Ajouter
+        </Button>
+      </div>
+
+      {/* Add form */}
+      {adding && (
+        <div style={{
+          background: 'var(--primary-soft)', border: '1px solid var(--primary-border)',
+          borderRadius: 10, padding: '14px 16px', marginBottom: 16,
+          display: 'flex', flexDirection: 'column', gap: 10,
+        }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--primary)', margin: 0 }}>Nouveau type de contrat</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Nom *</label>
+              <input
+                className="input"
+                placeholder="ex : CDI, CDD, Freelance…"
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Description (optionnel)</label>
+              <input
+                className="input"
+                placeholder="ex : Contrat à Durée Indéterminée"
+                value={newDesc}
+                onChange={e => setNewDesc(e.target.value)}
+              />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <Button variant="ghost" size="sm" onClick={() => { setAdding(false); setNewName(''); setNewDesc(''); }}>
+              <X size={13} /> Annuler
+            </Button>
+            <Button size="sm" loading={createMut.isPending} disabled={!newName.trim()} onClick={() => createMut.mutate()}>
+              <Check size={13} /> Enregistrer
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* List */}
+      {isLoading ? (
+        <p style={{ fontSize: 13, color: 'var(--ink-2)', textAlign: 'center', padding: '20px 0' }}>Chargement…</p>
+      ) : types.length === 0 ? (
+        <p style={{ fontSize: 13, color: 'var(--ink-2)', textAlign: 'center', padding: '20px 0' }}>Aucun type de contrat configuré.</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {types.map((ct, i) => (
+            <div
+              key={ct.id}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '11px 14px',
+                background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-2)',
+                borderRadius: 8,
+              }}
+            >
+              {editId === ct.id ? (
+                /* Inline edit mode */
+                <>
+                  <input
+                    className="input"
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    style={{ width: 120, fontSize: 13 }}
+                    autoFocus
+                  />
+                  <input
+                    className="input"
+                    value={editDesc}
+                    onChange={e => setEditDesc(e.target.value)}
+                    placeholder="Description…"
+                    style={{ flex: 1, fontSize: 13 }}
+                  />
+                  <button
+                    onClick={() => updateMut.mutate(ct.id)}
+                    disabled={!editName.trim() || updateMut.isPending}
+                    style={{ background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}
+                  >
+                    <Check size={12} />
+                  </button>
+                  <button
+                    onClick={() => setEditId(null)}
+                    style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}
+                  >
+                    <X size={12} />
+                  </button>
+                </>
+              ) : (
+                /* View mode */
+                <>
+                  <span style={{
+                    fontWeight: 700, fontSize: 13, color: 'var(--primary)',
+                    background: 'var(--primary-soft)', border: '1px solid var(--primary-border)',
+                    borderRadius: 6, padding: '2px 10px', flexShrink: 0,
+                  }}>
+                    {ct.name}
+                  </span>
+                  <span style={{ flex: 1, fontSize: 13, color: 'var(--ink-2)' }}>
+                    {ct.description || <em style={{ opacity: 0.5 }}>Pas de description</em>}
+                  </span>
+                  <button
+                    onClick={() => startEdit(ct)}
+                    title="Modifier"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 4, borderRadius: 4, display: 'flex', alignItems: 'center' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                  >
+                    <Pencil size={13} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Supprimer le type « ${ct.name} » ?`)) deleteMut.mutate(ct.id);
+                    }}
+                    title="Supprimer"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: 4, borderRadius: 4, display: 'flex', alignItems: 'center' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--danger-soft)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
   const { t } = useLang();
   const [tab, setTab] = useState('profile');
@@ -258,6 +448,7 @@ export default function SettingsPage() {
     { key: 'appearance',    label: t('tab_appearance'),        icon: <Palette size={14} /> },
     { key: 'notifications', label: t('tab_notifications_tab'), icon: <Bell size={14} /> },
     { key: 'security',      label: t('tab_security_tab'),      icon: <Shield size={14} /> },
+    { key: 'referentiels',  label: 'Référentiels RH',          icon: <FileText size={14} /> },
   ];
 
   return (
@@ -289,10 +480,11 @@ export default function SettingsPage() {
         </div>
 
         <div style={{ flex: 1 }}>
-          {tab === 'profile'       && <TabProfile />}
-          {tab === 'appearance'    && <TabAppearance />}
-          {tab === 'notifications' && <TabNotifications />}
-          {tab === 'security'      && <TabSecurity />}
+          {tab === 'profile'        && <TabProfile />}
+          {tab === 'appearance'     && <TabAppearance />}
+          {tab === 'notifications'  && <TabNotifications />}
+          {tab === 'security'       && <TabSecurity />}
+          {tab === 'referentiels'   && <TabReferentiels />}
         </div>
       </div>
     </div>

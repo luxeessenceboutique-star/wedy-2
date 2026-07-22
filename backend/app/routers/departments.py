@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from supabase import Client
 from app.database import get_db
 from app.dependencies import require_role
+from app.repositories import department_repository
 
 router = APIRouter(tags=["Departments"])
 
@@ -22,7 +23,7 @@ class DepartmentUpdate(BaseModel):
 
 @router.get("/departments", response_model=List[dict])
 def list_departments(supabase: Client = Depends(get_db)):
-    res = supabase.table("departments").select("*").order("name").execute()
+    res = department_repository.list_departments(supabase)
     return res.data or []
 
 
@@ -35,7 +36,7 @@ def create_department(
     data: dict = {"name": payload.name.strip()}
     if payload.description:
         data["description"] = payload.description.strip()
-    res = supabase.table("departments").insert(data).execute()
+    res = department_repository.create_department(supabase, data)
     if not res.data:
         raise HTTPException(status_code=400, detail="Impossible de créer le département")
     return res.data[0]
@@ -55,7 +56,7 @@ def update_department(
         data["description"] = payload.description.strip()
     if not data:
         raise HTTPException(status_code=400, detail="Aucun champ à modifier")
-    res = supabase.table("departments").update(data).eq("id", str(dept_id)).execute()
+    res = department_repository.update_department(supabase, str(dept_id), data)
     if not res.data:
         raise HTTPException(status_code=404, detail="Département introuvable")
     return res.data[0]
@@ -67,6 +68,6 @@ def delete_department(
     supabase: Client = Depends(get_db),
     _user: dict = Depends(require_role("admin", "hr")),
 ):
-    res = supabase.table("departments").delete().eq("id", str(dept_id)).execute()
+    res = department_repository.delete_department(supabase, str(dept_id))
     if not res.data:
         raise HTTPException(status_code=404, detail="Département introuvable")

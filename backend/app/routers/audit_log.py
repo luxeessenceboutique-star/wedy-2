@@ -5,6 +5,7 @@ from supabase import Client
 
 from app.database import get_db
 from app.dependencies import require_hr_or_admin
+from app.repositories import audit_log_repository
 
 router = APIRouter(prefix="/audit-logs", tags=["Audit"])
 
@@ -19,26 +20,7 @@ def list_audit_logs(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    query = (
-        supabase.table("audit_logs")
-        .select("*, profiles(full_name)")
+    res, count_res = audit_log_repository.list_audit_logs(
+        supabase, user_id, action, entity, skip, limit
     )
-    if user_id:
-        query = query.eq("user_id", user_id)
-    if action:
-        query = query.eq("action", action)
-    if entity:
-        query = query.eq("entity", entity)
-
-    res = query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()
-
-    cq = supabase.table("audit_logs").select("id", count="exact")
-    if user_id:
-        cq = cq.eq("user_id", user_id)
-    if action:
-        cq = cq.eq("action", action)
-    if entity:
-        cq = cq.eq("entity", entity)
-    count_res = cq.execute()
-
     return {"data": res.data, "count": count_res.count or 0}

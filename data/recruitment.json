@@ -1,0 +1,199 @@
+{
+    "annonces": [
+        {
+            "id": "11111111-1111-1111-1111-111111111111",
+            "poste": "Développeur Fullstack React/FastAPI",
+            "description": "Nous recherchons un développeur passionné pour rejoindre notre équipe RH digitale.",
+            "competences": "React, TypeScript, FastAPI, Python",
+            "experience": "2-3 ans",
+            "contenu": "<h1>Offre d'emploi</h1><p>Description du poste...</p>",
+            "is_active": true,
+            "created_at": "2026-05-10T14:50:00Z"
+        },
+        {
+            "poste": "Nouveau Poste",
+            "description": null,
+            "competences": null,
+            "experience": null,
+            "contenu": "Très bien ! Voici une annonce de poste de Data Analyste pour TYTHON, avec un contenu attractif laissant la place aux discussions lors de l’entretien.\n\n```markdown\n# Data Analyste\n\n## À propos de TYTHON\nTYTHON est une entreprise innovante spécialisée pour le traitement et l’analyse avancée de données. Notre ambition est de transformer les données en leviers stratégiques pour nos clients à travers des solutions adaptées et performantes.\n\n## Vos missions\nEn tant que Data Analyste chez TYTHON, vous participerez à l’analyse et à l’exploitation de vastes jeux de données afin de fournir des insights pertinents. Vos missions seront discutées et adaptées en fonction de vos compétences et des besoins du projet.\n\n## Profil recherché\nNous recherchons un(e) candidat(e) passionné(e) par les données, avec des compétences en LLM (Large Language Models) et NLP (Natural Language Processing). Vous êtes rigoureux(se), curieux(se) et prêt(e) à relever des défis techniques qui feront évoluer vos compétences.\n\n## Ce que nous offrons\nUn environnement de travail stimulant au cœur de l’innovation, avec des perspectives d’évolution professionnelle. Les détails des conditions et avantages seront échangés lors de l’entretien.\n\n[**Postulez dès maintenant et rejoignez TYTHON !**]\n```\n\nN’hésitez pas à me demander si vous souhaitez une version modifiable ou adaptée !",
+            "image_url": null,
+            "is_active": true,
+            "created_at": "2026-05-10T17:37:49.961798",
+            "id": "d08e2678-bd92-4507-baad-327166b101b0"
+        },
+        {
+            "poste": "Nouveau Poste",
+            "description": null,
+            "competences": null,
+            "experience": null,
+            "contenu": "```markdown\n# Data Scientist – Spécialiste NLP & LLM\n\n## Découvrez TYTHON  \nTYTHON est une entreprise innovante spécialisée dans les technologies de pointe, engagée à transformer les données en opportunités stratégiques grâce à l'intelligence artificielle.\n\n## Vos missions  \n- Développer et optimiser des modèles de traitement du langage naturel (NLP) et des modèles de langage de grande taille (LLM)  \n- Analyser et exploiter des jeux de données complexes pour extraire des insights pertinents  \n- Collaborer avec les équipes produit et recherche pour intégrer les solutions NLP dans les applications TYTHON  \n\n## Profil recherché  \n- Expertise solide en NLP et manipulation de LLM  \n- Maîtrise des outils et langages courants en data science (Python, frameworks ML/DL)  \n- Capacité à travailler en équipe et à conduire des projets innovants  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant  \n- Opportunités de développement professionnel et formation continue  \n- Une équipe dynamique et bienveillante  \n\n[Postulez dès maintenant chez TYTHON !](#)\n```",
+            "image_url": null,
+            "is_active": true,
+            "created_at": "2026-05-10T18:29:53.980284",
+            "id": "dab84f68-27c6-440d-9348-8b6f364cdc43"
+        },
+        {
+            "poste": "Nouveau Poste",
+            "description": null,
+            "competences": null,
+            "experience": null,
+            "contenu": "```markdown\n# Data Scientist – Spécialiste NLP & LLM\n\n## Découvrez TYTHON  \nTYTHON est une entreprise innovante spécialisée dans les technologies de pointe, engagée à transformer les données en opportunités stratégiques grâce à l'intelligence artificielle.\n\n## Vos missions  \n- Développer et optimiser des modèles de traitement du langage naturel (NLP) et des modèles de langage de grande taille (LLM)  \n- Analyser et exploiter des jeux de données complexes pour extraire des insights pertinents  \n- Collaborer avec les équipes produit et recherche pour intégrer les solutions NLP dans les applications TYTHON  \n\n## Profil recherché  \n- Expertise solide en NLP et manipulation de LLM  \n- Maîtrise des outils et langages courants en data science (Python, frameworks ML/DL)  \n- Capacité à travailler en équipe et à conduire des projets innovants  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant  \n- Opportunités de développement professionnel et formation continue  \n- Une équipe dynamique et bienveillante  \n\n[Postulez dès maintenant chez TYTHON !](#)\n```",
+            "image_url": null,
+            "is_active": true,
+            "created_at": "2026-05-11T09:21:02.633048",
+            "id": "4a0a9d46-3d13-40a5-8e83-08a7eda6f082"
+        },
+        {
+            "poste": "Nouveau Poste",
+            "description": null,
+            "competences": null,
+            "experience": null,
+            "contenu": "```markdown\n# Data Scientist – Spécialiste NLP & LLM\n\n## Découvrez TYTHON  \nTYTHON est une entreprise innovante spécialisée dans les technologies de pointe, engagée à transformer les données en opportunités stratégiques grâce à l'intelligence artificielle.\n\n## Vos missions  \n- Développer et optimiser des modèles de traitement du langage naturel (NLP) et des modèles de langage de grande taille (LLM)  \n- Analyser et exploiter des jeux de données complexes pour extraire des insights pertinents  \n- Collaborer avec les équipes produit et recherche pour intégrer les solutions NLP dans les applications TYTHON  \n\n## Profil recherché  \n- Expertise solide en NLP et manipulation de LLM  \n- Maîtrise des outils et langages courants en data science (Python, frameworks ML/DL)  \n- Capacité à travailler en équipe et à conduire des projets innovants  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant  \n- Opportunités de développement professionnel et formation continue  \n- Une équipe dynamique et bienveillante  \n\n[Postulez dès maintenant chez TYTHON !](#)\n```",
+            "image_url": null,
+            "is_active": true,
+            "created_at": "2026-05-11T09:44:33.745174",
+            "id": "cdff667d-d827-4e69-b515-baaf8d545894"
+        },
+        {
+            "poste": "Développeur Fullstack React/FastAPI",
+            "description": null,
+            "competences": null,
+            "experience": null,
+            "contenu": "```markdown\n# Data Analyste BI\n\n## À propos de TYTHON  \nTYTHON est une entreprise innovante spécialisée dans la transformation digitale et l'exploitation des données pour aider ses clients à prendre des décisions stratégiques éclairées. Rejoignez une équipe dynamique où vos analyses auront un impact direct sur la performance de nos projets.\n\n## Vos missions  \n- Collecter, traiter et analyser des données variées afin de produire des rapports clairs et pertinents.  \n- Concevoir et développer des tableaux de bord interactifs avec des outils BI (Power BI, Tableau, etc.).  \n- Collaborer étroitement avec les équipes métiers pour comprendre leurs besoins et proposer des solutions adaptées.  \n- Identifier les tendances et les opportunités d’amélioration à partir des données.  \n- Assurer la qualité, la fiabilité et la sécurité des données utilisées pour les analyses.  \n\n## Profil recherché  \n- Formation Bac+3 à Bac+5 en Statistiques, Informatique, Économie ou domaine similaire.  \n- Maîtrise des outils BI et des langages de requêtage (SQL, DAX, etc.).  \n- Solides compétences analytiques et esprit critique développés.  \n- Capacité à vulgariser les données pour des interlocuteurs non techniques.  \n- Autonomie, rigueur et sens du détail.  \n\n## Ce que nous offrons  \n- Un environnement de travail stimulant et innovant.  \n- Des perspectives d’évolution et de formation continue.  \n- Une politique de télétravail flexible.  \n- Un package salarial attractif avec avantages sociaux.  \n\n[Postulez dès maintenant chez TYTHON !](#)\n```",
+            "image_url": null,
+            "is_active": true,
+            "created_at": "2026-05-11T10:31:57.382072",
+            "id": "0bbb2b98-b33f-4bbd-bb1a-ee4af53a25bd"
+        },
+        {
+            "poste": "Data Analyste",
+            "description": null,
+            "competences": null,
+            "experience": null,
+            "contenu": "```markdown\n# Data Analyste\n\n## À propos de TYTHON  \nTYTHON est une entreprise innovante, engagée dans l’analyse de données pour accompagner ses clients vers la prise de décisions éclairées.\n\n## Vos missions  \n- Collecter, analyser et interpréter les données pour produire des rapports clairs  \n- Utiliser des outils de Business Intelligence (BI) pour visualiser et partager l’information  \n\n## Profil recherché  \n- Maîtrise des outils de BI  \n- Esprit analytique et rigueur  \n\n## Ce que nous offrons  \n- Environnement dynamique  \n- Opportunités d’évolution  \n\n[Postulez dès maintenant]\n```",
+            "image_url": null,
+            "is_active": true,
+            "created_at": "2026-05-11T10:33:05.287660",
+            "id": "04867179-e81e-475b-a447-9884fdb56915"
+        }
+    ],
+    "creneaux": [
+        {
+            "date": "2026-05-13",
+            "start_time": "09:00",
+            "end_time": "09:20",
+            "ad_id": null,
+            "id": "0ee16cca-d993-42ef-8814-8a8a8761a524"
+        },
+        {
+            "date": "2026-05-13",
+            "start_time": "09:20",
+            "end_time": "09:40",
+            "ad_id": null,
+            "id": "119f66a4-803b-4ea2-bfeb-55fe035bb822"
+        },
+        {
+            "date": "2026-05-13",
+            "start_time": "09:40",
+            "end_time": "10:00",
+            "ad_id": null,
+            "id": "d679f3c3-f6e0-4c20-9d01-6c921a8001a2"
+        },
+        {
+            "date": "2026-05-13",
+            "start_time": "10:00",
+            "end_time": "10:20",
+            "ad_id": null,
+            "id": "9405bb4f-97cb-414f-b9c2-06fd641e5350"
+        },
+        {
+            "date": "2026-05-13",
+            "start_time": "10:20",
+            "end_time": "10:40",
+            "ad_id": null,
+            "id": "252d1371-dd41-4d54-9c5f-d67538ce4660"
+        },
+        {
+            "date": "2026-05-13",
+            "start_time": "10:40",
+            "end_time": "11:00",
+            "ad_id": null,
+            "id": "6db6c630-e707-440c-8f0a-6a54b459e94d"
+        },
+        {
+            "date": "2026-05-13",
+            "start_time": "11:00",
+            "end_time": "11:20",
+            "ad_id": null,
+            "id": "8362d440-a67e-43b6-91e2-b5da60d40bc4"
+        },
+        {
+            "date": "2026-05-13",
+            "start_time": "11:20",
+            "end_time": "11:40",
+            "ad_id": null,
+            "id": "89f08344-c839-4d12-af02-2939639e33b4"
+        },
+        {
+            "date": "2026-05-13",
+            "start_time": "11:40",
+            "end_time": "12:00",
+            "ad_id": null,
+            "id": "7bd554ee-ac2a-43a6-9f4e-e05f8e990bd1"
+        }
+    ],
+    "entretiens": [
+        {
+            "candidate_name": "Yasmine Ettalib",
+            "candidate_id": "be26b493-c50e-4eee-8a91-3df417060bbf",
+            "date": "2026-05-12",
+            "start_time": "09:30",
+            "end_time": "09:30",
+            "ad_id": "cdff667d-d827-4e69-b515-baaf8d545894",
+            "job_title": "Nouveau Poste",
+            "status": "realized",
+            "type": "RH",
+            "id": "5f025902-90f9-4d56-bf38-9968f120803e"
+        },
+        {
+            "candidate_name": "Yasmine Ettalib",
+            "candidate_id": "d73a2021-d678-4dd5-bc69-c34492211d4a",
+            "date": "2026-05-12",
+            "start_time": "10:30",
+            "end_time": "10:30",
+            "ad_id": "04867179-e81e-475b-a447-9884fdb56915",
+            "job_title": "Data Analyste",
+            "status": "realized",
+            "type": "RH",
+            "id": "5bb6df71-6a54-4799-b8cf-27b20d520cc4"
+        },
+        {
+            "candidate_id": "c7b2f77f-9883-47a2-b00b-167165552eb0",
+            "recruiter_id": null,
+            "date": "2026-05-14",
+            "start_time": "09:00",
+            "end_time": "10:00",
+            "type": "RH",
+            "meet_link": "",
+            "notes": "",
+            "candidate_name": "Yassine Filali",
+            "job_title": "TEST",
+            "status": "confirmed",
+            "id": "6b100c7f-43ea-4cfb-89fb-0a8a97edcf5e"
+        },
+        {
+            "candidate_id": "c7b2f77f-9883-47a2-b00b-167165552eb0",
+            "recruiter_id": null,
+            "date": "2026-05-14",
+            "start_time": "09:00",
+            "end_time": "10:00",
+            "type": "RH",
+            "meet_link": "https://meet.google.com/tch-ajwk-aqt ",
+            "notes": "",
+            "candidate_name": "Yassine Filali",
+            "job_title": "TEST",
+            "status": "confirmed",
+            "id": "8696d4a0-56c9-4e4f-b7a2-023327988a4d"
+        }
+    ]
+}

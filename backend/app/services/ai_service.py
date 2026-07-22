@@ -1,0 +1,383 @@
+import anthropic
+from app.config import settings
+
+_client: anthropic.Anthropic | None = None
+
+
+def get_client() -> anthropic.Anthropic:
+    global _client
+    if not settings.ANTHROPIC_API_KEY:
+        raise RuntimeError("ANTHROPIC_API_KEY n'est pas configurée dans .env")
+    if _client is None:
+        _client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+    return _client
+
+
+SYSTEM_PROMPT = """You are an expert HR document specialist for TYTHON, a Moroccan company.
+You write and enhance formal HR documents in French, English, or Arabic.
+Your documents must comply with Moroccan Labor Code (Code du Travail marocain).
+Tone: formal, professional, legally precise.
+Never invent facts — only work with information provided.
+When enhancing, preserve all variable placeholders like {{variable_name}} as-is."""
+
+
+def enhance_document(content: str, document_type: str, language: str = "fr", instructions: str = "") -> str:
+    """Use Claude to improve/enhance a generated HR document."""
+    lang_name = {"fr": "French", "en": "English", "ar": "Arabic"}.get(language, "French")
+    extra = f"\nAdditional instructions: {instructions}" if instructions else ""
+
+    message = get_client().messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=2048,
+        system=SYSTEM_PROMPT,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f"Enhance the following {document_type} document written in {lang_name}. "
+                    f"Keep the same structure but improve clarity, formality, and legal precision. "
+                    f"Return ONLY the improved document text, no commentary.{extra}\n\n"
+                    f"Document:\n{content}"
+                ),
+            }
+        ],
+    )
+    return message.content[0].text
+
+
+def extract_missing_variables(template: str, employee_data: dict) -> list[str]:
+    """Use Claude to identify which variables are missing from employee data."""
+    import re
+    placeholders = re.findall(r"\{\{(\w+)\}\}", template)
+    missing = [p for p in placeholders if not employee_data.get(p)]
+    return missing
+
+
+def suggest_document_content(
+    document_type: str,
+    employee_data: dict,
+    language: str = "fr",
+) -> str:
+    """Ask Claude to draft a document when template is insufficient."""
+    lang_name = {"fr": "French", "en": "English", "ar": "Arabic"}.get(language, "French")
+
+    employee_info = "\n".join(
+        f"- {k}: {v}" for k, v in employee_data.items() if v
+    )
+
+    message = get_client().messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=2048,
+        system=SYSTEM_PROMPT,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f"Draft a formal {document_type} document in {lang_name} for TYTHON company "
+                    f"based on the following employee information:\n{employee_info}\n\n"
+                    f"The document must follow Moroccan Labor Code standards. "
+                    f"Return only the document text."
+                ),
+            }
+        ],
+    )
+    return message.content[0].text
+
+
+def translate_document(content: str, target_language: str) -> str:
+    """Translate a document to the target language while preserving formatting."""
+    lang_name = {"fr": "French", "en": "English", "ar": "Arabic"}.get(target_language, "French")
+
+    message = get_client().messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=2048,
+        system=SYSTEM_PROMPT,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    f"Translate the following HR document to {lang_name}. "
+                    f"Preserve all formatting, structure, and any {{{{variable}}}} placeholders exactly as they are. "
+                    f"Return only the translated document.\n\nDocument:\n{content}"
+                ),
+            }
+        ],
+    )
+    return message.content[0].text
+
+
+def _local_convert_template(raw_text: str) -> str:
+    """Library-only fallback: convert raw PDF text to an HTML template with {{variables}}."""
+    import re as _re
+
+    # Use tuples of (pattern, replacement) — note: apostrophe handled with \\x27 or \\u2019
+    subs = [
+        (r"\[Nom et pr[ée]nom du stagiaire\]", "{{full_name}}"),
+        (r"\[Nom et pr[ée]nom\s*\]",           "{{full_name}}"),
+        (r"\[Nom et pr[ée]nom\]",              "{{full_name}}"),
+        (r"\(Nom Pr[ée]nom\)",                 "{{full_name}}"),
+        (r"\[Num[ée]ro CIN\]",                 "{{cin}}"),
+        (r"\[CIN\s*\]",                        "{{cin}}"),
+        (r"\(CIN\s*\)",                        "{{cin}}"),
+        # apostrophe variants in "date d'embauche"
+        (r"\[date d.embauche\]",               "{{hire_date}}"),
+        (r"\[date de d[ée]but\]",              "{{contract_start}}"),
+        (r"\[date de fin\s*/\s*.+?\]",         "{{contract_end}}"),
+        (r"\[date de fin\]",                   "{{contract_end}}"),
+        (r"\[poste occup[ée]\s*\]",            "{{position}}"),
+        (r"\[ poste occup[ée] \]",             "{{position}}"),
+        (r"\[poste\]",                         "{{position}}"),
+        (r"\[montant en dirhams\s*\]",         "{{salary}}"),
+        (r"\[Date\]",                          "{{today}}"),
+        (r"\(adresse\s*\)",                    "{{address}}"),
+        (r"\[adresse\]",                       "{{address}}"),
+    ]
+
+    text = raw_text
+    for pat, rep in subs:
+        text = _re.sub(pat, rep, text, flags=_re.IGNORECASE)
+
+    lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
+    parts = []
+    for line in lines:
+        low = line.lower()
+        if len(line) < 65 and (line.isupper() or low.startswith("attestation") or low.startswith("contrat") or low.startswith("charte")):
+            parts.append("<h2 style=\"text-align:center;font-size:18px;font-weight:bold;text-decoration:underline;margin:30px 0 40px;\">" + line + "</h2>")
+        elif low.startswith("la soci") or low.startswith("je soussign"):
+            parts.append("<p style=\"font-weight:bold;margin-bottom:20px;font-size:13px;line-height:1.6;\">" + line + "</p>")
+        elif low.startswith("fait ") or low.startswith("signature"):
+            parts.append("<p style=\"font-weight:bold;margin-top:40px;font-size:13px;\">" + line + "</p>")
+        elif low.startswith("article"):
+            parts.append("<p style=\"font-weight:bold;text-align:center;margin:20px 0 10px;font-size:13px;\">" + line + "</p>")
+        else:
+            parts.append("<p style=\"margin-bottom:15px;font-size:13px;line-height:1.7;\">" + line + "</p>")
+
+    body = "\n  ".join(parts)
+    header = (
+        "<div style=\"font-family:'Times New Roman',serif;max-width:700px;margin:0 auto;padding:60px 40px;\">\n"
+        "  <div style=\"margin-bottom:40px;padding-bottom:12px;border-bottom:2px solid #5b21b6;\">\n"
+        "    <p style=\"font-size:26px;font-weight:900;color:#5b21b6;letter-spacing:4px;margin:0;font-family:Arial,sans-serif;\">TYTHON</p>\n"
+        "    <p style=\"font-size:10px;color:#9ca3af;margin:2px 0;letter-spacing:2px;\">&#8212; INNOVATE NOW</p>\n"
+        "  </div>\n  "
+    )
+    footer = (
+        "\n  <div style=\"text-align:right;margin-top:60px;\">"
+        "<p style=\"font-weight:bold;font-size:13px;\">Signature et cachet</p></div>\n</div>"
+    )
+    return header + body + footer
+
+
+def convert_document_to_template(raw_text: str) -> str:
+    """Public alias for the local regex+HTML template converter."""
+    return _local_convert_template(raw_text)
+
+
+FOLDER_ANALYSIS_SYSTEM = """You are an expert HR data extractor for a Moroccan company.
+You receive text extracted from documents in an employee's folder (CV, diplomas, certificates, contracts, payslips, etc.).
+Extract ALL employee information and return it as a single valid JSON object.
+
+Return ONLY a JSON object with these keys (omit any key you cannot find with confidence):
+{
+  "full_name": "string",
+  "cin": "string - Moroccan national ID",
+  "birth_date": "YYYY-MM-DD",
+  "nationality": "string",
+  "email": "string",
+  "phone": "string",
+  "address": "string",
+  "city": "string",
+  "position": "string - job title",
+  "department": "string",
+  "hire_date": "YYYY-MM-DD",
+  "contract_type": "CDI|CDD|Stage|ANAPEC|Consultant|Freelance",
+  "contract_start": "YYYY-MM-DD",
+  "contract_end": "YYYY-MM-DD",
+  "salary": number,
+  "manager": "string",
+  "cnss_number": "string",
+  "bank_account": "string - RIB",
+  "matricule": "string",
+  "education": [{"degree": "string", "field": "string", "school": "string", "year": "string"}],
+  "certifications": [{"name": "string", "issuer": "string", "year": "string"}],
+  "skills": ["string"],
+  "languages": ["string"],
+  "notes": "string - any extra relevant info"
+}
+
+Rules:
+- Return ONLY the raw JSON, no markdown, no explanation
+- Only include fields you found explicitly in the documents
+- Dates must be in YYYY-MM-DD format; convert from French formats (ex: 15/03/1995 → 1995-03-15)
+- salary must be a number (MAD/month)"""
+
+
+def analyze_employee_folder(file_contents: list[dict]) -> dict:
+    """
+    Send all extracted file content to AI and get structured employee data.
+    file_contents: [{"filename": str, "file_type": str, "text": str, "images": [b64_str], "mime": str}]
+    Tries Anthropic Claude first, falls back to OpenAI.
+    """
+    import json
+    import os
+
+    # Build shared text and collect images
+    text_parts = ["Analyze these HR documents and extract all employee data:\n"]
+    images_data: list[dict] = []
+
+    for i, fc in enumerate(file_contents, 1):
+        text_parts.append(f"\n=== Document {i}: {fc['filename']} ({fc['file_type']}) ===")
+        if fc.get("text", "").strip():
+            text_parts.append(fc["text"][:4000])
+        for b64 in fc.get("images", [])[:3]:
+            images_data.append({"b64": b64, "mime": fc.get("mime", "image/jpeg")})
+
+    combined_text = "\n".join(text_parts)
+    raw = ""
+
+    # ── Anthropic Claude (primary) ────────────────────────────────
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY") or getattr(settings, "ANTHROPIC_API_KEY", "")
+    if anthropic_key:
+        import anthropic as _anthropic
+        ac = _anthropic.Anthropic(api_key=anthropic_key)
+
+        content: list[dict] = [{"type": "text", "text": combined_text}]
+        for img in images_data[:5]:
+            content.append({
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": img["mime"],
+                    "data": img["b64"],
+                },
+            })
+
+        try:
+            resp = ac.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=2048,
+                system=FOLDER_ANALYSIS_SYSTEM,
+                messages=[{"role": "user", "content": content}],
+            )
+            raw = resp.content[0].text.strip()
+        except Exception as e:
+            raise RuntimeError(f"Analyse IA (Anthropic) échouée : {e}")
+
+    # ── OpenAI fallback ───────────────────────────────────────────
+    else:
+        openai_key = os.getenv("OPENAI_API_KEY") or getattr(settings, "OPENAI_API_KEY", "")
+        if not openai_key:
+            raise RuntimeError(
+                "Aucune clé API configurée. Ajoutez ANTHROPIC_API_KEY ou OPENAI_API_KEY dans .env"
+            )
+        from openai import OpenAI as _OpenAI
+        base = os.getenv("OPENAI_BASE_URL") or getattr(settings, "OPENAI_BASE_URL", "") or None
+        if base and not base.rstrip("/").endswith("/v1"):
+            base = base.rstrip("/") + "/v1"
+        oa = _OpenAI(api_key=openai_key, base_url=base)
+
+        oa_content: list[dict] = [{"type": "text", "text": combined_text}]
+        for img in images_data[:5]:
+            oa_content.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:{img['mime']};base64,{img['b64']}"},
+            })
+
+        try:
+            model = os.getenv("OPENAI_MODEL") or getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+            resp = oa.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": FOLDER_ANALYSIS_SYSTEM},
+                    {"role": "user",   "content": oa_content},
+                ],
+                max_tokens=2048,
+                temperature=0.0,
+            )
+            raw = resp.choices[0].message.content.strip()
+        except Exception as e:
+            raise RuntimeError(f"Analyse IA (OpenAI) échouée : {e}")
+
+    # ── Parse JSON ────────────────────────────────────────────────
+    if "```" in raw:
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    try:
+        return json.loads(raw.strip())
+    except json.JSONDecodeError:
+        return {}
+
+
+def convert_to_html_template(raw_text: str) -> str:
+    """Legacy: convert raw text to HTML template (fallback only)."""
+    return _local_convert_template(raw_text)
+
+
+_CLEAN_SYSTEM = """You are an expert HR document formatter for TYTHON, a Moroccan company.
+
+Your task is to take HTML extracted from a PDF or DOCX and return a CLEAN, PROFESSIONAL version that:
+1. PRESERVES all original styling: fonts, sizes, bold, italic, alignment, colors, images, logos
+2. REMOVES extraction artifacts: stray single letters (like lone "g", "f", etc.), duplicate blank lines, junk characters from PDF font encoding
+3. REPLACES all data placeholders with {{variable_name}} format:
+   - [Nom et prénom...] / [Nom complet] / (Nom Prénom) → {{full_name}}
+   - [CIN...] / (CIN) → {{cin}}
+   - [date d'embauche] / [date de début] → {{hire_date}} or {{contract_start}}
+   - [date de fin...] → {{contract_end}}
+   - [poste occupé] / [poste] / [fonction] → {{position}}
+   - [département] / [service] → {{department}}
+   - [salaire] / [montant...] / [rémunération] → {{salary}}
+   - [adresse] / (adresse) → {{address}}
+   - [ville] → {{city}}
+   - [email] → {{email}}
+   - [téléphone] / [tél] → {{phone}}
+   - [matricule] → {{matricule}}
+   - [type de contrat] / [nature du contrat] → {{contract_type}}
+   - [nationalité] → {{nationality}}
+   - [manager] / [responsable] → {{manager}}
+   - [Date] / [date du jour] / [Date du jour] → {{today}}
+   - [Nom et prénom du stagiaire] → {{full_name}}
+   - Blank underscores "______" next to a known field → replace with the appropriate {{variable}}
+4. DO NOT change any wording, paragraph structure, or visual layout
+5. Return ONLY the raw HTML — no markdown, no explanation, no ```html wrapper"""
+
+
+def clean_template_html(styled_html: str) -> str:
+    """Use OpenAI (TybotFlow) to clean extraction artifacts and detect {{variables}}."""
+    import os
+    from openai import OpenAI as _OpenAI
+
+    openai_key = os.getenv("OPENAI_API_KEY") or getattr(settings, "OPENAI_API_KEY", "")
+    if not openai_key:
+        return styled_html
+
+    base = os.getenv("OPENAI_BASE_URL") or getattr(settings, "OPENAI_BASE_URL", "") or None
+    if base and not base.rstrip("/").endswith("/v1"):
+        base = base.rstrip("/") + "/v1"
+    model = os.getenv("OPENAI_MODEL") or getattr(settings, "OPENAI_MODEL", "gpt-4.1-mini")
+
+    prompt = (
+        "Here is HTML extracted from an HR document. Clean it and replace all data fields "
+        "with {{variable_name}} placeholders. Return only the cleaned HTML.\n\n"
+        f"HTML:\n{styled_html[:12000]}"
+    )
+
+    try:
+        oa = _OpenAI(api_key=openai_key, base_url=base)
+        resp = oa.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": _CLEAN_SYSTEM},
+                {"role": "user",   "content": prompt},
+            ],
+            max_tokens=4096,
+            temperature=0.0,
+        )
+        result = resp.choices[0].message.content.strip()
+        if result.startswith("```"):
+            result = result.split("```")[1]
+            if result.startswith("html"):
+                result = result[4:]
+        return result.strip()
+    except Exception:
+        return styled_html
+

@@ -1,0 +1,50 @@
+﻿import React from 'react';
+import { PageHeader } from '../../components/layout/AppShell';
+import { Shield, Lock, FileCheck, Globe } from 'lucide-react';
+import { useLang } from '../../lib/lang';
+
+export default function SecurityPage() {
+  const { t } = useLang();
+
+  const ITEMS = [
+    { icon: <Shield size={18} />, title: t('sec_gdpr_title'), desc: t('sec_gdpr_desc'), status: t('sec_status_active') },
+    { icon: <FileCheck size={18} />, title: t('sec_labor_title'), desc: t('sec_labor_desc'), status: t('sec_status_active') },
+    { icon: <Lock size={18} />, title: t('sec_encryption_title'), desc: t('sec_encryption_desc'), status: t('sec_status_active') },
+    { icon: <Globe size={18} />, title: t('sec_residency_title'), desc: t('sec_residency_desc'), status: t('sec_status_configured') },
+  ];
+
+  return (
+    <div style={{ padding: '24px 28px' }}>
+      <PageHeader title={t('security_title')} subtitle={t('security_subtitle')} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, maxWidth: 800 }}>
+        {ITEMS.map(item => (
+          <div key={item.title} style={{
+            background: 'var(--surface)', border: '1px solid var(--line)',
+            borderRadius: 10, padding: '20px 22px',
+            display: 'flex', gap: 14,
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 8, background: 'var(--primary-soft)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--primary)', flexShrink: 0,
+            }}>
+              {item.icon}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{item.title}</span>
+                <span style={{
+                  fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 5,
+                  background: '#d1fae5', color: '#065f46',
+                }}>
+                  {item.status}
+                </span>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0, lineHeight: 1.5 }}>{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

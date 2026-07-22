@@ -19,6 +19,9 @@ lerna-debug.log*
 
 node_modules
 dist
+.venv_verify/
+venv/
+.venv/
 dist-ssr
 .output
 .vinxi

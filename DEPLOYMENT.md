@@ -295,26 +295,26 @@ After the backend is healthy, run all SQL migration scripts in order against you
 
 ```bash
 # Order matters — run in this sequence:
-psql $SUPABASE_DB_URL -f backend/setup_database.sql
-psql $SUPABASE_DB_URL -f backend/missing_tables.sql
-psql $SUPABASE_DB_URL -f backend/schema_notifications_payroll.sql
-psql $SUPABASE_DB_URL -f backend/modules_migration.sql
-psql $SUPABASE_DB_URL -f backend/onboarding_migration.sql
-psql $SUPABASE_DB_URL -f backend/portal_migration.sql
-psql $SUPABASE_DB_URL -f backend/pdi_skills_migration.sql
-psql $SUPABASE_DB_URL -f backend/cv_data_migration.sql
-psql $SUPABASE_DB_URL -f backend/supabase_schema_v2.sql
-psql $SUPABASE_DB_URL -f backend/upgrade_schema_v3.sql
-psql $SUPABASE_DB_URL -f backend/v3_fix_constraints.sql
-psql $SUPABASE_DB_URL -f backend/fix_documents_enum.sql
-psql $SUPABASE_DB_URL -f backend/fix_payroll_columns.sql
-psql $SUPABASE_DB_URL -f backend/fix_performance_columns.sql
-psql $SUPABASE_DB_URL -f backend/interns_advanced_migration.sql
-psql $SUPABASE_DB_URL -f backend/create_hr_requests.sql
-psql $SUPABASE_DB_URL -f backend/migration_employee_files.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/setup_database.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/missing_tables.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/schema_notifications_payroll.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/modules_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/onboarding_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/portal_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/pdi_skills_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/cv_data_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/supabase_schema_v2.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/upgrade_schema_v3.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/v3_fix_constraints.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/fix_documents_enum.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/fix_payroll_columns.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/fix_performance_columns.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/interns_advanced_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/create_hr_requests.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/migration_employee_files.sql
 ```
 
-> **Note:** For a fresh environment, `setup_database.sql` creates the base schema. The remaining scripts are additive migrations applied on top.
+> **Note:** For a fresh environment, `setup_database.sql` creates the base schema. The remaining scripts are additive migrations applied on top. All migration SQL files now live under `backend/database/migrations/`.
 
 ### Step 6 — Create MinIO bucket
 
@@ -334,11 +334,11 @@ docker exec rh_minio mc mb local/rh-platform
 ### Step 7 — Seed initial data (optional)
 
 ```bash
-docker exec rh_backend python backend/seed_all.py
+docker exec rh_backend python scripts/seed_all.py
 # Or for specific data:
-docker exec rh_backend python backend/seed_users.py
-docker exec rh_backend python backend/setup_accounts.py
-docker exec rh_backend python backend/sync_templates.py
+docker exec rh_backend python scripts/seed_users.py
+docker exec rh_backend python scripts/setup_accounts.py
+docker exec rh_backend python scripts/sync_templates.py
 ```
 
 ### Step 8 — Verify the API is running

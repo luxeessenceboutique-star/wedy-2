@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 # Add backend to path
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from app.services.ai_service import convert_to_html_template
 from app.services.supabase import get_supabase
@@ -52,7 +52,7 @@ async def import_pdf(pdf_path: str, category: str):
         print(f"Error importing {name_fr}: {str(e)}")
 
 async def main():
-    uploads_dir = Path(__file__).parent.parent / "uploads"
+    uploads_dir = Path(__file__).resolve().parents[2] / "uploads"
     pdfs = [
         ("_ ATTESTATION DE TRAVAIL.pdf", "attestation"),
         ("ATTESTATION DE POURSUITE DE STAGE.pdf", "attestation"),

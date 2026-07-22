@@ -7,8 +7,8 @@ import httpx
 from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-# Add parent dir to path to import app.config
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Add backend dir to path to import app.config
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 from app.config import settings
 
 async def test_all():

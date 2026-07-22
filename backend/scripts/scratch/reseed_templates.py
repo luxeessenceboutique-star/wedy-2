@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 # Add backend to path
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from app.services.supabase import get_supabase
 

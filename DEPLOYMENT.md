@@ -29,7 +29,7 @@
 │                     WEDY RH Platform                    │
 ├─────────────┬───────────────────────────────────────────┤
 │  Frontend   │  React 19 + TypeScript + Vite             │
-│  (real-app) │  → Communicates with Backend via REST API │
+│  (frontend) │  → Communicates with Backend via REST API │
 ├─────────────┼───────────────────────────────────────────┤
 │  Backend    │  FastAPI (Python 3.11) on port 8000       │
 │  (backend/) │  → Auth via Supabase JWT                  │
@@ -84,7 +84,7 @@
 ## 3. Project Structure
 
 ```
-platform-RH/
+wedy-rh/
 ├── docker-compose.yml          ← Main orchestration file
 ├── DEPLOYMENT.md               ← This file
 ├── ARCHITECTURE.md             ← Architecture documentation
@@ -101,15 +101,13 @@ platform-RH/
 │       ├── worker/
 │       │   └── celery_app.py   ← Celery configuration
 │       └── routers/            ← API route modules
-└── real-app/                   ← React frontend (ACTIVE)
+└── frontend/                   ← React frontend (ACTIVE)
     ├── package.json
     ├── vite.config.ts
     ├── .env.example            ← Environment variable template
     ├── .env                    ← Active config (DO NOT COMMIT)
     └── src/
 ```
-
-> **Note:** There is also a legacy `frontend/` directory — it is **not** the active frontend. Use `real-app/` only.
 
 ---
 
@@ -199,12 +197,12 @@ MAX_FILE_SIZE_MB=20
 
 ---
 
-### 4.2 Frontend — `real-app/.env`
+### 4.2 Frontend — `frontend/.env`
 
-Copy `real-app/.env.example` to `real-app/.env`:
+Copy `frontend/.env.example` to `frontend/.env`:
 
 ```bash
-cp real-app/.env.example real-app/.env
+cp frontend/.env.example frontend/.env
 ```
 
 | Variable | Required | Description |
@@ -213,7 +211,7 @@ cp real-app/.env.example real-app/.env
 | `VITE_SUPABASE_URL` | **Yes** | Supabase project URL (same as backend) |
 | `VITE_SUPABASE_ANON_KEY` | **Yes** | Supabase public anon key (same as backend) |
 
-**Example `real-app/.env` for production:**
+**Example `frontend/.env` for production:**
 
 ```env
 VITE_API_URL=https://api.yourdomain.com/api
@@ -244,7 +242,7 @@ MINIO_ROOT_PASSWORD=<strong_minio_password>
 
 ```bash
 git clone <repository-url>
-cd platform-RH
+cd wedy-rh
 ```
 
 ### Step 2 — Configure environment files
@@ -256,8 +254,8 @@ cp backend/.env.example backend/.env
 nano backend/.env
 
 # Frontend (only needed if building locally; for Docker it uses build args)
-cp real-app/.env.example real-app/.env
-nano real-app/.env
+cp frontend/.env.example frontend/.env
+nano frontend/.env
 
 # Docker infrastructure credentials (optional override)
 # Create a .env file at the project root with POSTGRES_* and MINIO_* values
@@ -295,26 +293,26 @@ After the backend is healthy, run all SQL migration scripts in order against you
 
 ```bash
 # Order matters — run in this sequence:
-psql $SUPABASE_DB_URL -f backend/setup_database.sql
-psql $SUPABASE_DB_URL -f backend/missing_tables.sql
-psql $SUPABASE_DB_URL -f backend/schema_notifications_payroll.sql
-psql $SUPABASE_DB_URL -f backend/modules_migration.sql
-psql $SUPABASE_DB_URL -f backend/onboarding_migration.sql
-psql $SUPABASE_DB_URL -f backend/portal_migration.sql
-psql $SUPABASE_DB_URL -f backend/pdi_skills_migration.sql
-psql $SUPABASE_DB_URL -f backend/cv_data_migration.sql
-psql $SUPABASE_DB_URL -f backend/supabase_schema_v2.sql
-psql $SUPABASE_DB_URL -f backend/upgrade_schema_v3.sql
-psql $SUPABASE_DB_URL -f backend/v3_fix_constraints.sql
-psql $SUPABASE_DB_URL -f backend/fix_documents_enum.sql
-psql $SUPABASE_DB_URL -f backend/fix_payroll_columns.sql
-psql $SUPABASE_DB_URL -f backend/fix_performance_columns.sql
-psql $SUPABASE_DB_URL -f backend/interns_advanced_migration.sql
-psql $SUPABASE_DB_URL -f backend/create_hr_requests.sql
-psql $SUPABASE_DB_URL -f backend/migration_employee_files.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/setup_database.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/missing_tables.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/schema_notifications_payroll.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/modules_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/onboarding_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/portal_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/pdi_skills_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/cv_data_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/supabase_schema_v2.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/upgrade_schema_v3.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/v3_fix_constraints.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/fix_documents_enum.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/fix_payroll_columns.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/fix_performance_columns.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/interns_advanced_migration.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/create_hr_requests.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/migration_employee_files.sql
 ```
 
-> **Note:** For a fresh environment, `setup_database.sql` creates the base schema. The remaining scripts are additive migrations applied on top.
+> **Note:** For a fresh environment, `setup_database.sql` creates the base schema. The remaining scripts are additive migrations applied on top. All migration SQL files now live under `backend/database/migrations/`.
 
 ### Step 6 — Create MinIO bucket
 
@@ -334,11 +332,11 @@ docker exec rh_minio mc mb local/rh-platform
 ### Step 7 — Seed initial data (optional)
 
 ```bash
-docker exec rh_backend python backend/seed_all.py
+docker exec rh_backend python scripts/seed_all.py
 # Or for specific data:
-docker exec rh_backend python backend/seed_users.py
-docker exec rh_backend python backend/setup_accounts.py
-docker exec rh_backend python backend/sync_templates.py
+docker exec rh_backend python scripts/seed_users.py
+docker exec rh_backend python scripts/setup_accounts.py
+docker exec rh_backend python scripts/sync_templates.py
 ```
 
 ### Step 8 — Verify the API is running
@@ -384,7 +382,7 @@ The frontend is a Vite + React SPA that can be deployed as static files to any w
 ### Build for Production
 
 ```bash
-cd real-app
+cd frontend
 
 # Install dependencies
 npm install
@@ -393,7 +391,7 @@ npm install
 # Then build:
 npm run build
 
-# Output is in: real-app/dist/
+# Output is in: frontend/dist/
 ```
 
 ### Serving the Frontend
@@ -426,7 +424,7 @@ server {
 
 ```dockerfile
 FROM nginx:alpine
-COPY real-app/dist /usr/share/nginx/html
+COPY frontend/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 ```
 
@@ -604,7 +602,7 @@ docker compose logs backend | grep -i minio
 
 **Fix:** Rebuild the frontend after correcting `.env`:
 ```bash
-cd real-app && npm run build
+cd frontend && npm run build
 ```
 
 ---

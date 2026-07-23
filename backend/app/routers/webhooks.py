@@ -4,7 +4,8 @@ from supabase import Client
 from pydantic import BaseModel
 
 from app.database import get_db
-from app.dependencies import require_hr_or_admin, get_current_user
+from app.dependencies import require_hr_or_admin
+from app.repositories import webhook_repository
 
 router = APIRouter(prefix="/webhooks", tags=["Integrations"])
 
@@ -18,7 +19,7 @@ def list_webhooks(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin)
 ):
-    res = supabase.table("webhooks").select("*").execute()
+    res = webhook_repository.list_webhooks(supabase)
     return {"data": res.data or []}
 
 @router.post("", status_code=201)
@@ -27,7 +28,7 @@ def create_webhook(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin)
 ):
-    res = supabase.table("webhooks").insert(body.model_dump()).execute()
+    res = webhook_repository.create_webhook(supabase, body.model_dump())
     if not res.data:
         raise HTTPException(status_code=400, detail="Could not create webhook")
     return res.data[0]
@@ -39,7 +40,7 @@ def update_webhook(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin)
 ):
-    res = supabase.table("webhooks").update(body).eq("id", hook_id).execute()
+    res = webhook_repository.update_webhook(supabase, hook_id, body)
     if not res.data:
         raise HTTPException(status_code=404, detail="Webhook not found")
     return res.data[0]
@@ -50,4 +51,4 @@ def delete_webhook(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin)
 ):
-    supabase.table("webhooks").delete().eq("id", hook_id).execute()
+    webhook_repository.delete_webhook(supabase, hook_id)

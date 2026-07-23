@@ -5,6 +5,39 @@ from reportlab.lib.styles import getSampleStyleSheet
 import os
 from io import BytesIO
 
+
+def compute_moroccan_payroll(base: float, bonuses: float = 0, deductions: float = 0):
+    """Approximate Moroccan CNSS + IR calculation."""
+    gross = base + bonuses
+
+    # CNSS employee part ≈ 4.48% (capped at 6 000 MAD/month gross)
+    cnss_base = min(gross, 6000)
+    cnss = round(cnss_base * 0.0448, 2)
+
+    # Taxable income = gross - CNSS - professional deduction (20%, max 2500)
+    prof_ded = min(gross * 0.20, 2500)
+    taxable = gross - cnss - prof_ded
+
+    # IR tranches marocaines 2024 (monthly)
+    if taxable <= 2500:
+        ir = 0
+    elif taxable <= 4166:
+        ir = taxable * 0.10 - 250
+    elif taxable <= 5000:
+        ir = taxable * 0.20 - 666.67
+    elif taxable <= 6666:
+        ir = taxable * 0.30 - 1166.67
+    elif taxable <= 15000:
+        ir = taxable * 0.34 - 1433.33
+    else:
+        ir = taxable * 0.38 - 2033.33
+
+    ir = max(round(ir, 2), 0)
+    net = round(gross - cnss - ir - deductions, 2)
+
+    return {"cnss": cnss, "ir": ir, "net_salary": net}
+
+
 def generate_payroll_pdf(record: dict) -> BytesIO:
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4)

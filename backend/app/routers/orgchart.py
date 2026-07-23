@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.repositories import orgchart_repository
 
 router = APIRouter(prefix="/orgchart", tags=["OrgChart"])
 
@@ -34,17 +35,13 @@ def get_orgchart(
     _user: dict = Depends(get_current_user),
 ):
     """Return all projects with their members + unassigned active employees."""
-    projects_res = supabase.table("orgchart_projects").select("*").order("created_at").execute()
+    projects_res = orgchart_repository.list_projects(supabase)
     projects = projects_res.data or []
 
-    members_res = supabase.table("orgchart_team_members").select("*").execute()
+    members_res = orgchart_repository.list_team_members(supabase)
     members = members_res.data or []
 
-    employees_res = (
-        supabase.table("employees")
-        .select("id, full_name, position, department, photo_url, status")
-        .execute()
-    )
+    employees_res = orgchart_repository.list_employees_for_orgchart(supabase)
     active_employees = [e for e in (employees_res.data or []) if e.get("status") != "terminated"]
 
     emp_map = {e["id"]: e for e in active_employees}
@@ -72,11 +69,11 @@ def create_project(
     supabase: Client = Depends(get_db),
     _user: dict = Depends(get_current_user),
 ):
-    res = supabase.table("orgchart_projects").insert({
+    res = orgchart_repository.create_project(supabase, {
         "name": body.name,
         "description": body.description,
         "color": body.color or "#0891b2",
-    }).execute()
+    })
     if not res.data:
         raise HTTPException(status_code=400, detail="Échec création projet")
     return res.data[0]
@@ -92,7 +89,7 @@ def update_project(
     updates = {k: v for k, v in body.model_dump().items() if v is not None}
     if not updates:
         raise HTTPException(status_code=400, detail="Aucune donnée")
-    res = supabase.table("orgchart_projects").update(updates).eq("id", project_id).execute()
+    res = orgchart_repository.update_project(supabase, project_id, updates)
     return res.data[0] if res.data else {}
 
 
@@ -102,8 +99,8 @@ def delete_project(
     supabase: Client = Depends(get_db),
     _user: dict = Depends(get_current_user),
 ):
-    supabase.table("orgchart_team_members").delete().eq("project_id", project_id).execute()
-    supabase.table("orgchart_projects").delete().eq("id", project_id).execute()
+    orgchart_repository.delete_project_members(supabase, project_id)
+    orgchart_repository.delete_project(supabase, project_id)
 
 
 # ── Team Members ──────────────────────────────────────────────────────────────
@@ -116,12 +113,8 @@ def add_member(
     _user: dict = Depends(get_current_user),
 ):
     # An employee can only be in one project at a time
-    supabase.table("orgchart_team_members").delete().eq("employee_id", body.employee_id).execute()
-    res = supabase.table("orgchart_team_members").insert({
-        "project_id": project_id,
-        "employee_id": body.employee_id,
-        "role_in_team": body.role_in_team,
-    }).execute()
+    orgchart_repository.delete_member_by_employee(supabase, body.employee_id)
+    res = orgchart_repository.add_member(supabase, project_id, body.employee_id, body.role_in_team)
     return res.data[0] if res.data else {}
 
 
@@ -136,13 +129,7 @@ def update_member_role(
     role = body.get("role_in_team")
     if role is None:
         raise HTTPException(status_code=400, detail="role_in_team requis")
-    res = (
-        supabase.table("orgchart_team_members")
-        .update({"role_in_team": role})
-        .eq("project_id", project_id)
-        .eq("employee_id", employee_id)
-        .execute()
-    )
+    res = orgchart_repository.update_member_role(supabase, project_id, employee_id, role)
     return res.data[0] if res.data else {}
 
 
@@ -153,8 +140,4 @@ def remove_member(
     supabase: Client = Depends(get_db),
     _user: dict = Depends(get_current_user),
 ):
-    supabase.table("orgchart_team_members") \
-        .delete() \
-        .eq("project_id", project_id) \
-        .eq("employee_id", employee_id) \
-        .execute()
+    orgchart_repository.remove_member(supabase, project_id, employee_id)

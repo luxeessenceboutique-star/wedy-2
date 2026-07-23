@@ -6,6 +6,7 @@ from datetime import datetime
 
 from app.database import get_db
 from app.dependencies import require_hr_or_admin, get_current_user
+from app.repositories import asset_repository
 
 router = APIRouter(prefix="/assets", tags=["Assets Management"])
 
@@ -36,13 +37,7 @@ async def list_assets(
     db: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    query = db.table("assets").select("*, employees(full_name, department)")
-    if employee_id:
-        query = query.eq("employee_id", employee_id)
-    if category:
-        query = query.eq("category", category)
-    
-    result = query.execute()
+    result = asset_repository.list_assets(db, employee_id, category)
     return {"data": result.data, "count": len(result.data)}
 
 @router.post("", status_code=201)
@@ -56,7 +51,7 @@ async def create_asset(
         payload["assigned_at"] = datetime.now().isoformat()
         payload["status"] = "assigned"
         
-    result = db.table("assets").insert(payload).execute()
+    result = asset_repository.create_asset(db, payload)
     return result.data[0]
 
 @router.patch("/{asset_id}")
@@ -75,7 +70,7 @@ async def update_asset(
             payload["status"] = "available"
             payload["assigned_at"] = None
             
-    result = db.table("assets").update(payload).eq("id", asset_id).execute()
+    result = asset_repository.update_asset(db, asset_id, payload)
     if not result.data:
         raise HTTPException(status_code=404, detail="Asset not found")
     return result.data[0]
@@ -86,4 +81,4 @@ async def delete_asset(
     db: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    db.table("assets").delete().eq("id", asset_id).execute()
+    asset_repository.delete_asset(db, asset_id)

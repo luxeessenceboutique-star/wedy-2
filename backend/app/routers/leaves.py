@@ -10,6 +10,7 @@ from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.audit import log_action, create_notification, notify_hr
+from app.repositories import leave_repository
 
 router = APIRouter(prefix="/leaves", tags=["Leaves"])
 
@@ -39,22 +40,7 @@ def list_leaves(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    query = (
-        supabase.table("leave_requests")
-        .select("*, employees(id, full_name, position, department)")
-    )
-    if employee_id:
-        query = query.eq("employee_id", employee_id)
-    if status:
-        query = query.eq("status", status)
-
-    res = query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()
-    count_q = supabase.table("leave_requests").select("id", count="exact")
-    if employee_id:
-        count_q = count_q.eq("employee_id", employee_id)
-    if status:
-        count_q = count_q.eq("status", status)
-    count_res = count_q.execute()
+    res, count_res = leave_repository.list_leaves(supabase, employee_id, status, skip, limit)
     return {"data": res.data, "count": count_res.count or 0}
 
 
@@ -71,7 +57,7 @@ def get_balance(
     def _safe_default() -> dict:
         base = 21
         try:
-            emp = supabase.table("employees").select("hire_date").eq("id", employee_id).maybe_single().execute()
+            emp = leave_repository.get_employee_hire_date(supabase, employee_id)
             if emp.data and emp.data.get("hire_date"):
                 hd = _date.fromisoformat(emp.data["hire_date"][:10])
                 seniority = (datetime.now().date() - hd).days // 365
@@ -90,14 +76,7 @@ def get_balance(
         }
 
     try:
-        res = (
-            supabase.table("leave_balances")
-            .select("*")
-            .eq("employee_id", employee_id)
-            .eq("year", y)
-            .maybe_single()
-            .execute()
-        )
+        res = leave_repository.get_leave_balance(supabase, employee_id, y)
         if res.data:
             return res.data
     except Exception:
@@ -106,20 +85,13 @@ def get_balance(
     # No record found — create and return default
     default = _safe_default()
     try:
-        ins = supabase.table("leave_balances").insert(default).execute()
+        ins = leave_repository.create_leave_balance(supabase, default)
         if ins.data:
             return ins.data[0]
     except Exception:
         # Duplicate or table error — try fetching again
         try:
-            res2 = (
-                supabase.table("leave_balances")
-                .select("*")
-                .eq("employee_id", employee_id)
-                .eq("year", y)
-                .maybe_single()
-                .execute()
-            )
+            res2 = leave_repository.get_leave_balance(supabase, employee_id, y)
             if res2.data:
                 return res2.data
         except Exception:
@@ -141,7 +113,7 @@ def create_leave(
     data["status"] = "pending"
 
     try:
-        res = supabase.table("leave_requests").insert(data).execute()
+        res = leave_repository.create_leave(supabase, data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     if not res.data:
@@ -166,7 +138,7 @@ def create_leave(
 @router.patch("/{leave_id}/review")
 def review_leave(
     leave_id: str,
-    status: str = Query(..., regex="^(approved|rejected)$"),
+    status: str = Query(..., pattern="^(approved|rejected)$"),
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
@@ -176,7 +148,7 @@ def review_leave(
         "reviewed_by": current_user["id"],
         "reviewed_at": datetime.utcnow().isoformat(),
     }
-    res = supabase.table("leave_requests").update(update_data).eq("id", leave_id).execute()
+    res = leave_repository.update_leave(supabase, leave_id, update_data)
     if not res.data:
         raise HTTPException(status_code=404, detail="Leave request not found")
 
@@ -195,14 +167,14 @@ def _notify_employee_leave_decision(supabase: Client, leave: dict, status: str) 
         return
     try:
         # Get employee email
-        emp = supabase.table("employees").select("email, full_name").eq("id", emp_id).maybe_single().execute()
+        emp = leave_repository.get_employee_email(supabase, emp_id)
         emp_email = (emp.data or {}).get("email")
         emp_name  = (emp.data or {}).get("full_name", "Employé")
         if not emp_email:
             return
 
         # Look up user_id by email via Supabase admin API
-        users = supabase.auth.admin.list_users()
+        users = leave_repository.list_auth_users(supabase)
         target_user_id = None
         for u in (users or []):
             if getattr(u, "email", None) == emp_email:
@@ -239,7 +211,7 @@ def update_leave(
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
 
-    res = supabase.table("leave_requests").update(data).eq("id", leave_id).execute()
+    res = leave_repository.update_leave(supabase, leave_id, data)
     if not res.data:
         raise HTTPException(status_code=404, detail="Leave request not found")
     return res.data[0]
@@ -251,7 +223,7 @@ def delete_leave(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    res = supabase.table("leave_requests").delete().eq("id", leave_id).execute()
+    res = leave_repository.delete_leave(supabase, leave_id)
     if not res.data:
         raise HTTPException(status_code=404, detail="Leave request not found")
     log_action(supabase, current_user["id"], "DELETE", "leave_request", leave_id)
@@ -263,5 +235,5 @@ def list_holidays(
     current_user: dict = Depends(get_current_user),
 ):
     """Fetch public holidays."""
-    res = supabase.table("holidays").select("*").order("date").execute()
+    res = leave_repository.list_holidays(supabase)
     return {"data": res.data or []}

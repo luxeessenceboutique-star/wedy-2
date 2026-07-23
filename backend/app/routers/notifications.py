@@ -3,6 +3,7 @@ from supabase import Client
 
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.repositories import notification_repository
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
@@ -45,14 +46,7 @@ def list_notifications(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    res = (
-        supabase.table("notifications")
-        .select("*")
-        .eq("user_id", current_user["id"])
-        .order("created_at", desc=True)
-        .limit(limit)
-        .execute()
-    )
+    res = notification_repository.list_for_user(supabase, current_user["id"], limit)
     rows = res.data or []
     formatted = [_format(r) for r in rows]
     unread_count = sum(1 for n in formatted if n["unread"])
@@ -65,22 +59,7 @@ def mark_all_read(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    uid = current_user["id"]
-    count = 0
-    # Try "read" column first, then "is_read"
-    for col in ("read", "is_read"):
-        try:
-            res = (
-                supabase.table("notifications")
-                .update({col: True})
-                .eq("user_id", uid)
-                .eq(col, False)
-                .execute()
-            )
-            count = len(res.data or [])
-            break
-        except Exception:
-            continue
+    count = notification_repository.mark_all_read(supabase, current_user["id"])
     return {"status": "success", "count": count}
 
 
@@ -90,20 +69,9 @@ def mark_as_read(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    uid = current_user["id"]
-    for col in ("read", "is_read"):
-        try:
-            res = (
-                supabase.table("notifications")
-                .update({col: True})
-                .eq("id", notif_id)
-                .eq("user_id", uid)
-                .execute()
-            )
-            if res.data:
-                return _format(res.data[0])
-        except Exception:
-            continue
+    row = notification_repository.mark_one_read(supabase, notif_id, current_user["id"])
+    if row:
+        return _format(row)
     raise HTTPException(status_code=404, detail="Notification not found")
 
 
@@ -113,5 +81,5 @@ def delete_notification(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    supabase.table("notifications").delete().eq("id", notif_id).eq("user_id", current_user["id"]).execute()
+    notification_repository.delete_notification(supabase, notif_id, current_user["id"])
     return {"status": "deleted"}

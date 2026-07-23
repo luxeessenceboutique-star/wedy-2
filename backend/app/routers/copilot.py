@@ -10,6 +10,7 @@ from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.config import settings
+from app.repositories import copilot_repository
 
 router = APIRouter(prefix="/copilot", tags=["Copilot"])
 
@@ -52,9 +53,7 @@ def _build_db_context(supabase: Client) -> str:
 
     # ── Employees ────────────────────────────────────────────────
     try:
-        emp_res = supabase.table("employees").select(
-            "id,full_name,position,department,status,contract_type,contract_end,hire_date,salary"
-        ).execute()
+        emp_res = copilot_repository.list_employees_full_context(supabase)
         employees = emp_res.data or []
 
         active = [e for e in employees if e.get("status") == "active"]
@@ -113,9 +112,7 @@ def _build_db_context(supabase: Client) -> str:
 
     # ── Leave requests ───────────────────────────────────────────
     try:
-        leave_res = supabase.table("leave_requests").select(
-            "employee_id,type,start_date,end_date,days,status"
-        ).execute()
+        leave_res = copilot_repository.list_leave_requests_context(supabase)
         leaves = leave_res.data or []
 
         pending = [l for l in leaves if l.get("status") == "pending"]
@@ -131,9 +128,7 @@ def _build_db_context(supabase: Client) -> str:
 
     # ── Payroll ──────────────────────────────────────────────────
     try:
-        pay_res = supabase.table("payroll_records").select(
-            "employee_id,month,year,net_salary,status"
-        ).order("year", desc=True).order("month", desc=True).limit(20).execute()
+        pay_res = copilot_repository.list_recent_payroll(supabase)
         payroll = pay_res.data or []
         if payroll:
             lines.append(f"\nRECENT PAYROLL: {len(payroll)} records (latest: {payroll[0].get('month')}/{payroll[0].get('year')})")
@@ -142,7 +137,7 @@ def _build_db_context(supabase: Client) -> str:
 
     # ── Templates ────────────────────────────────────────────────
     try:
-        tpl_res = supabase.table("document_templates").select("name_fr,category").eq("is_active", True).execute()
+        tpl_res = copilot_repository.list_active_templates(supabase)
         templates = tpl_res.data or []
         if templates:
             lines.append(f"\nAVAILABLE DOCUMENT TEMPLATES ({len(templates)}): " +
@@ -207,13 +202,13 @@ async def summarize_employee(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    emp_res = supabase.table("employees").select("*").eq("id", employee_id).maybe_single().execute()
+    emp_res = copilot_repository.get_employee(supabase, employee_id)
     if not emp_res.data:
         raise HTTPException(status_code=404, detail="Employee not found")
 
     emp = emp_res.data
-    docs_res = supabase.table("generated_documents").select("document_type,created_at").eq("employee_id", employee_id).execute()
-    leaves_res = supabase.table("leave_requests").select("type,days,status,start_date").eq("employee_id", employee_id).execute()
+    docs_res = copilot_repository.list_employee_generated_documents(supabase, employee_id)
+    leaves_res = copilot_repository.list_employee_leave_requests(supabase, employee_id)
 
     context = (
         f"Employee: {emp.get('full_name')}\n"

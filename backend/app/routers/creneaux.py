@@ -4,6 +4,7 @@ from uuid import UUID
 from datetime import date
 from pydantic import BaseModel
 from app.database import get_db
+from app.repositories import creneau_repository
 from supabase import Client
 
 router = APIRouter(prefix="/creneaux", tags=["Recruitment - Scheduling"])
@@ -36,14 +37,9 @@ def list_slots(
     current_date: Optional[date] = None,
     supabase: Client = Depends(get_db),
 ):
-    query = supabase.table("creneaux").select("*").order("date").order("start_time")
-
-    if ad_id:
-        query = query.or_(f"ad_id.eq.{ad_id},ad_id.is.null")
-    if current_date:
-        query = query.eq("date", str(current_date))
-
-    res = query.execute()
+    res = creneau_repository.list_slots(
+        supabase, str(ad_id) if ad_id else None, str(current_date) if current_date else None
+    )
     slots = res.data or []
 
     # Build reserved_times per date from same result set
@@ -73,7 +69,7 @@ def add_slots(payload: List[SlotCreate], supabase: Client = Depends(get_db)):
     if not records:
         return []
 
-    res = supabase.table("creneaux").insert(records).execute()
+    res = creneau_repository.insert_slots(supabase, records)
     rows = res.data or []
     for r in rows:
         r.setdefault("reserved_times", [])
@@ -82,5 +78,5 @@ def add_slots(payload: List[SlotCreate], supabase: Client = Depends(get_db)):
 
 @router.delete("/{id}")
 def delete_slot(id: UUID, supabase: Client = Depends(get_db)):
-    supabase.table("creneaux").delete().eq("id", str(id)).execute()
+    creneau_repository.delete_slot(supabase, str(id))
     return {"message": "Créneau supprimé"}

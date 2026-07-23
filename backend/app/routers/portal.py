@@ -6,6 +6,7 @@ from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.services.audit import notify_hr, create_notification
+from app.repositories import portal_repository
 
 router = APIRouter(prefix="/portal", tags=["Employee Portal"])
 
@@ -16,7 +17,7 @@ def _get_my_employee(supabase: Client, current_user: dict) -> dict:
     """Find the employee record linked to the authenticated user by email."""
     email = current_user["email"]
     try:
-        res = supabase.table("employees").select("*").eq("email", email).limit(1).execute()
+        res = portal_repository.find_employee_by_email(supabase, email)
         rows = res.data or []
         if rows:
             return rows[0]
@@ -50,7 +51,7 @@ def get_my_stats(
     stats: dict = {}
 
     try:
-        leaves = supabase.table("leave_requests").select("status").eq("employee_id", emp_id).execute().data or []
+        leaves = portal_repository.list_leaves_for_stats(supabase, emp_id).data or []
         stats["leaves_pending"]  = sum(1 for l in leaves if l.get("status") == "pending")
         stats["leaves_approved"] = sum(1 for l in leaves if l.get("status") == "approved")
         stats["leaves_total"]    = len(leaves)
@@ -58,7 +59,7 @@ def get_my_stats(
         stats.update({"leaves_pending": 0, "leaves_approved": 0, "leaves_total": 0})
 
     try:
-        training = supabase.table("employee_trainings").select("status").eq("employee_id", emp_id).execute().data or []
+        training = portal_repository.list_trainings_for_stats(supabase, emp_id).data or []
         stats["training_total"]     = len(training)
         stats["training_completed"] = sum(1 for t in training if t.get("status") == "completed")
         stats["training_planned"]   = sum(1 for t in training if t.get("status") in ("planned", "in_progress"))
@@ -66,7 +67,7 @@ def get_my_stats(
         stats.update({"training_total": 0, "training_completed": 0, "training_planned": 0})
 
     try:
-        doc_reqs = supabase.table("document_requests").select("status").eq("employee_id", emp_id).execute().data or []
+        doc_reqs = portal_repository.list_document_requests_for_stats(supabase, emp_id).data or []
         stats["doc_requests_pending"] = sum(1 for d in doc_reqs if d.get("status") == "pending")
         stats["doc_requests_total"]   = len(doc_reqs)
     except Exception:
@@ -84,13 +85,7 @@ def get_my_leaves(
 ):
     emp = _get_my_employee(supabase, current_user)
     try:
-        res = (
-            supabase.table("leave_requests")
-            .select("*")
-            .eq("employee_id", emp["id"])
-            .order("created_at", desc=True)
-            .execute()
-        )
+        res = portal_repository.list_my_leaves(supabase, emp["id"])
         return res.data or []
     except Exception:
         return []
@@ -106,7 +101,7 @@ def submit_leave(
     payload["employee_id"] = emp["id"]
     payload.setdefault("status", "pending")
     try:
-        res = supabase.table("leave_requests").insert(payload).execute()
+        res = portal_repository.create_leave(supabase, payload)
         leave = (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -134,13 +129,7 @@ def get_my_doc_requests(
 ):
     emp = _get_my_employee(supabase, current_user)
     try:
-        res = (
-            supabase.table("document_requests")
-            .select("*")
-            .eq("employee_id", emp["id"])
-            .order("created_at", desc=True)
-            .execute()
-        )
+        res = portal_repository.list_my_document_requests(supabase, emp["id"])
         return res.data or []
     except Exception:
         return []
@@ -156,7 +145,7 @@ def submit_doc_request(
     payload["employee_id"] = emp["id"]
     payload.setdefault("status", "pending")
     try:
-        res = supabase.table("document_requests").insert(payload).execute()
+        res = portal_repository.create_document_request(supabase, payload)
         doc_req = (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -180,13 +169,7 @@ def get_my_training(
 ):
     emp = _get_my_employee(supabase, current_user)
     try:
-        res = (
-            supabase.table("employee_trainings")
-            .select("*, training_catalog(id,title,category,duration_hours,provider,description)")
-            .eq("employee_id", emp["id"])
-            .order("assigned_at", desc=True)
-            .execute()
-        )
+        res = portal_repository.list_my_training(supabase, emp["id"])
         return res.data or []
     except Exception:
         return []
@@ -201,14 +184,7 @@ def get_my_okrs(
 ):
     emp = _get_my_employee(supabase, current_user)
     try:
-        res = (
-            supabase.table("employee_okrs")
-            .select("*")
-            .eq("employee_id", emp["id"])
-            .neq("status", "cancelled")
-            .order("created_at", desc=True)
-            .execute()
-        )
+        res = portal_repository.list_my_okrs(supabase, emp["id"])
         return res.data or []
     except Exception:
         return []

@@ -6,6 +6,7 @@ from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.audit import log_action
+from app.repositories import intern_repository
 
 router = APIRouter(prefix="/interns", tags=["Interns"])
 
@@ -46,14 +47,7 @@ def list_interns(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    res = (
-        supabase.table("employees")
-        .select("*", count="exact")
-        .eq("status", "intern")
-        .order("created_at", desc=True)
-        .range(skip, skip + limit - 1)
-        .execute()
-    )
+    res = intern_repository.list_interns(supabase, skip, limit)
     return {"data": res.data, "count": res.count or 0}
 
 
@@ -63,7 +57,7 @@ def get_intern(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    res = supabase.table("employees").select("*").eq("id", intern_id).eq("status", "intern").maybe_single().execute()
+    res = intern_repository.get_intern(supabase, intern_id)
     if not res.data:
         raise HTTPException(status_code=404, detail="Stagiaire non trouvé")
     return res.data
@@ -77,7 +71,7 @@ def create_intern(
 ):
     payload["status"] = "intern"
     payload["contract_type"] = payload.get("contract_type", "Stage")
-    res = supabase.table("employees").insert(payload).execute()
+    res = intern_repository.create_intern(supabase, payload)
     if not res.data:
         raise HTTPException(status_code=400, detail="Impossible de créer le stagiaire")
     intern = res.data[0]
@@ -93,7 +87,7 @@ def update_intern(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     payload.pop("id", None)
-    res = supabase.table("employees").update(payload).eq("id", intern_id).execute()
+    res = intern_repository.update_intern(supabase, intern_id, payload)
     if not res.data:
         raise HTTPException(status_code=404, detail="Stagiaire non trouvé")
     log_action(supabase, current_user["id"], "UPDATE", "intern", intern_id)
@@ -106,7 +100,7 @@ def delete_intern(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    res = supabase.table("employees").delete().eq("id", intern_id).execute()
+    res = intern_repository.delete_intern(supabase, intern_id)
     if not res.data:
         raise HTTPException(status_code=404, detail="Stagiaire non trouvé")
     log_action(supabase, current_user["id"], "DELETE", "intern", intern_id)
@@ -126,7 +120,7 @@ def get_onboarding(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        res = supabase.table("intern_onboarding").select("*").eq("intern_id", intern_id).limit(1).execute()
+        res = intern_repository.get_onboarding(supabase, intern_id)
         rows = res.data or []
         if rows:
             row = rows[0]
@@ -137,12 +131,12 @@ def get_onboarding(
                 row["objectives"] = DEFAULT_OBJECTIVES
             return row
         # No record yet — create it
-        created = supabase.table("intern_onboarding").insert({
+        created = intern_repository.create_onboarding(supabase, {
             "intern_id": intern_id,
             "phase": "pre",
             "checklist": DEFAULT_CHECKLIST,
             "objectives": DEFAULT_OBJECTIVES,
-        }).execute()
+        })
         created_rows = created.data or []
         return created_rows[0] if created_rows else {
             "intern_id": intern_id, "phase": "pre",
@@ -171,16 +165,16 @@ def update_onboarding(
     payload.pop("intern_id", None)
     payload["updated_at"] = datetime.utcnow().isoformat()
     try:
-        existing = supabase.table("intern_onboarding").select("id").eq("intern_id", intern_id).limit(1).execute()
+        existing = intern_repository.onboarding_exists(supabase, intern_id)
         if existing.data:
-            res = supabase.table("intern_onboarding").update(payload).eq("intern_id", intern_id).execute()
+            res = intern_repository.update_onboarding(supabase, intern_id, payload)
         else:
             payload["intern_id"] = intern_id
             if "checklist" not in payload:
                 payload["checklist"] = DEFAULT_CHECKLIST
             if "objectives" not in payload:
                 payload["objectives"] = DEFAULT_OBJECTIVES
-            res = supabase.table("intern_onboarding").insert(payload).execute()
+            res = intern_repository.create_onboarding(supabase, payload)
         rows = res.data or []
         return rows[0] if rows else {}
     except Exception as e:
@@ -198,13 +192,7 @@ def list_evaluations(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        res = (
-            supabase.table("intern_evaluations")
-            .select("*")
-            .eq("intern_id", intern_id)
-            .order("created_at", desc=True)
-            .execute()
-        )
+        res = intern_repository.list_evaluations(supabase, intern_id)
         return res.data or []
     except Exception as e:
         if _table_missing(e):
@@ -221,7 +209,7 @@ def create_evaluation(
 ):
     payload["intern_id"] = intern_id
     try:
-        res = supabase.table("intern_evaluations").insert(payload).execute()
+        res = intern_repository.create_evaluation(supabase, payload)
     except Exception as e:
         if _table_missing(e):
             raise HTTPException(status_code=503, detail="MIGRATION_NEEDED")
@@ -239,6 +227,6 @@ def delete_evaluation(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        supabase.table("intern_evaluations").delete().eq("id", eval_id).eq("intern_id", intern_id).execute()
+        intern_repository.delete_evaluation(supabase, intern_id, eval_id)
     except Exception:
         pass

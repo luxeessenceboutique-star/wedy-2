@@ -5,6 +5,7 @@ from supabase import Client
 
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
+from app.repositories import talent_repository
 
 router = APIRouter(prefix="/talents", tags=["Talents"])
 
@@ -25,9 +26,7 @@ def talent_stats(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        profiles = supabase.table("talent_profiles").select(
-            "talent_category,flight_risk,performance_score,potential_score,is_critical_position"
-        ).execute().data or []
+        profiles = talent_repository.list_talent_stats(supabase).data or []
 
         cats = {}
         for p in profiles:
@@ -60,13 +59,7 @@ def list_mobility_candidates(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        res = (
-            supabase.table("talent_profiles")
-            .select("*, employees(id,full_name,email,position,department,photo_url,hire_date)")
-            .not_.is_("next_role", "null")
-            .order("updated_at", desc=True)
-            .execute()
-        )
+        res = talent_repository.list_mobility_candidates(supabase)
         # Filter out empty next_role strings
         data = [r for r in (res.data or []) if r.get("next_role", "").strip()]
         return data
@@ -83,16 +76,10 @@ def bulk_create_profiles(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        employees = (
-            supabase.table("employees")
-            .select("id")
-            .eq("status", "active")
-            .execute()
-            .data or []
-        )
+        employees = talent_repository.list_active_employee_ids(supabase).data or []
         existing = {
             r["employee_id"]
-            for r in (supabase.table("talent_profiles").select("employee_id").execute().data or [])
+            for r in (talent_repository.list_talent_profile_employee_ids(supabase).data or [])
         }
         to_create = [
             {"employee_id": e["id"], "performance_score": 3, "potential_score": 3,
@@ -101,7 +88,7 @@ def bulk_create_profiles(
             for e in employees if e["id"] not in existing
         ]
         if to_create:
-            supabase.table("talent_profiles").insert(to_create).execute()
+            talent_repository.bulk_insert_talent_profiles(supabase, to_create)
         return {"created": len(to_create), "skipped": len(existing)}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -115,12 +102,7 @@ def list_talents(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        res = (
-            supabase.table("talent_profiles")
-            .select("*, employees(id,full_name,email,position,department,photo_url)")
-            .order("created_at", desc=True)
-            .execute()
-        )
+        res = talent_repository.list_talents(supabase)
         return res.data or []
     except Exception:
         return []
@@ -133,16 +115,16 @@ def get_talent(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        res = supabase.table("talent_profiles").select("*").eq("employee_id", employee_id).limit(1).execute()
+        res = talent_repository.get_talent_profile(supabase, employee_id)
         rows = res.data or []
         if rows:
             return rows[0]
-        created = supabase.table("talent_profiles").insert({
+        created = talent_repository.create_talent_profile(supabase, {
             "employee_id": employee_id,
             "performance_score": 3, "potential_score": 3,
             "talent_category": "key_player", "flight_risk": "low",
             "successor_names": [],
-        }).execute()
+        })
         return (created.data or [{}])[0]
     except Exception as e:
         return {"employee_id": employee_id, "performance_score": 3, "potential_score": 3,
@@ -163,12 +145,12 @@ def update_talent(
     pot  = payload.get("potential_score", 3)
     payload["talent_category"] = _classify(int(perf), int(pot))
     try:
-        res = supabase.table("talent_profiles").select("id").eq("employee_id", employee_id).limit(1).execute()
+        res = talent_repository.get_talent_profile_id(supabase, employee_id)
         if res.data:
-            r = supabase.table("talent_profiles").update(payload).eq("employee_id", employee_id).execute()
+            r = talent_repository.update_talent_profile(supabase, employee_id, payload)
         else:
             payload["employee_id"] = employee_id
-            r = supabase.table("talent_profiles").insert(payload).execute()
+            r = talent_repository.create_talent_profile(supabase, payload)
         return (r.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -183,14 +165,7 @@ def list_okrs(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        res = (
-            supabase.table("employee_okrs")
-            .select("*")
-            .eq("employee_id", employee_id)
-            .neq("status", "cancelled")
-            .order("created_at", desc=True)
-            .execute()
-        )
+        res = talent_repository.list_okrs(supabase, employee_id)
         return res.data or []
     except Exception:
         return []
@@ -207,7 +182,7 @@ def create_okr(
     payload.setdefault("status", "active")
     payload.setdefault("progress", 0)
     try:
-        res = supabase.table("employee_okrs").insert(payload).execute()
+        res = talent_repository.create_okr(supabase, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -224,7 +199,7 @@ def update_okr(
     payload.pop("id", None)
     payload["updated_at"] = datetime.utcnow().isoformat()
     try:
-        res = supabase.table("employee_okrs").update(payload).eq("id", okr_id).execute()
+        res = talent_repository.update_okr(supabase, okr_id, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -238,7 +213,7 @@ def delete_okr(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        supabase.table("employee_okrs").update({"status": "cancelled"}).eq("id", okr_id).execute()
+        talent_repository.cancel_okr(supabase, okr_id)
     except Exception:
         pass
 
@@ -252,13 +227,7 @@ def list_pdi(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        res = (
-            supabase.table("pdi_items")
-            .select("*")
-            .eq("employee_id", employee_id)
-            .order("created_at", desc=True)
-            .execute()
-        )
+        res = talent_repository.list_pdi(supabase, employee_id)
         return res.data or []
     except Exception:
         return []
@@ -274,7 +243,7 @@ def create_pdi(
     payload["employee_id"] = employee_id
     payload.setdefault("status", "pending")
     try:
-        res = supabase.table("pdi_items").insert(payload).execute()
+        res = talent_repository.create_pdi(supabase, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -291,7 +260,7 @@ def update_pdi(
     payload.pop("id", None)
     payload["updated_at"] = datetime.utcnow().isoformat()
     try:
-        res = supabase.table("pdi_items").update(payload).eq("id", item_id).execute()
+        res = talent_repository.update_pdi(supabase, item_id, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -305,6 +274,6 @@ def delete_pdi(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        supabase.table("pdi_items").delete().eq("id", item_id).execute()
+        talent_repository.delete_pdi(supabase, item_id)
     except Exception:
         pass

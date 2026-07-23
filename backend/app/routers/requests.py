@@ -9,6 +9,7 @@ from app.database import get_db
 from app.dependencies import get_current_user, require_role
 from app.schemas import HRRequestCreate, HRRequestUpdate, HRRequestOut
 from app.services.audit import log_action, create_notification, notify_hr
+from app.repositories import hr_request_repository
 
 router = APIRouter(prefix="/requests", tags=["HR Requests"])
 
@@ -19,13 +20,9 @@ def list_requests(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    query = supabase.table("hr_requests").select("*")
-    if profile_id:
-        query = query.eq("profile_id", str(profile_id))
-    if status:
-        query = query.eq("status", status)
-
-    response = query.order("created_at", desc=True).execute()
+    response = hr_request_repository.list_requests(
+        supabase, str(profile_id) if profile_id else None, status
+    )
     return response.data
 
 @router.post("", response_model=HRRequestOut, status_code=201)
@@ -35,7 +32,7 @@ def create_request(
     current_user: dict = Depends(get_current_user),
 ):
     data = payload.model_dump()
-    response = supabase.table("hr_requests").insert(data).execute()
+    response = hr_request_repository.create_request(supabase, data)
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create request")
 
@@ -64,7 +61,7 @@ def approve_request(
     if status not in ["approved", "rejected"]:
         raise HTTPException(status_code=400, detail="Status must be approved or rejected")
 
-    response = supabase.table("hr_requests").update({"status": status}).eq("id", str(request_id)).execute()
+    response = hr_request_repository.update_request_status(supabase, str(request_id), status)
     if not response.data:
         raise HTTPException(status_code=404, detail="Request not found")
 

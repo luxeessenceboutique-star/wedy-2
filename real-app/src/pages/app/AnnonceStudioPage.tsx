@@ -6,7 +6,7 @@ import {
     Trash2, Plus, Download, Layout
 } from 'lucide-react';
 import { Button, Card, Input, Spinner } from '../../components/ui';
-import { getApiError } from '../../lib/api';
+import { getApiError } from '@/services/api';
 import { toast } from 'sonner';
 
 export default function AnnonceStudioPage() {

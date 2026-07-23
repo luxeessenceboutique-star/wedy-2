@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Clock, CheckCircle } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api } from '@/services/api';
 import { Spinner } from '../../components/ui';
 import { format, isValid } from 'date-fns';
 import { useLang } from '../../lib/lang';

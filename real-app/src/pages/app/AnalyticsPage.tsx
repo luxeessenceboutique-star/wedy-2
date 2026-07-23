@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getAnalyticsOverview, getHeadcountTrend, getDocumentsTrend, getLeaveStats } from '../../lib/api';
+import { getAnalyticsOverview, getHeadcountTrend, getDocumentsTrend, getLeaveStats } from '@/services/api';
 import { Card, Spinner } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Users, FileText, Clock, TrendingUp, AlertTriangle, UserX } from 'lucide-react';

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight, Zap, CheckCircle, Printer, Download, TrendingUp, TrendingDown, ArrowRight, DollarSign, BarChart3, Plus, X } from 'lucide-react';
-import { listPayroll, generateBulkPayroll, updatePayroll, createPayroll, listEmployees, getApiError, type PayrollRecord } from '../../lib/api';
+import { listPayroll, generateBulkPayroll, updatePayroll, createPayroll, listEmployees, getApiError, type PayrollRecord } from '@/services/api';
 import { Badge, Spinner, Button } from '../../components/ui';
 import { useLang } from '../../lib/lang';
 

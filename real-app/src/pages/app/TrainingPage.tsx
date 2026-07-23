@@ -4,7 +4,7 @@ import {
   BookOpen, Plus, Pencil, Trash2, Search, X, CheckCircle,
   Clock, DollarSign, Users, TrendingUp, Award, Brain,
 } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api } from '@/services/api';
 import { Button, Badge, Spinner, Input, Modal, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { useLang } from '../../lib/lang';

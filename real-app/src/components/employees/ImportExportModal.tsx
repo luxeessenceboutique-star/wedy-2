@@ -1,7 +1,7 @@
 ﻿import React, { useState, useRef } from 'react';
 import { Download, Upload, FileSpreadsheet, X, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Modal, Button, Spinner } from './ui';
-import { getApiError } from '../lib/api';
+import { Modal, Button, Spinner } from '@/components/ui';
+import { getApiError } from '@/services/api';
 import * as XLSX from 'xlsx';
 
 export interface ColDef {

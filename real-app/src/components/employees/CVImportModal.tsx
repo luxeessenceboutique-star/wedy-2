@@ -4,9 +4,9 @@ import {
   User, Briefcase, GraduationCap, Wrench, Globe, Award,
   Camera, Crosshair, AlertTriangle, FileText, UserCheck, Plus,
 } from 'lucide-react';
-import { api, getApiError } from '../../lib/api';
+import { api, getApiError } from '@/services/api';
 import { toast } from 'sonner';
-import { Button, Spinner } from '../ui';
+import { Button, Spinner } from '@/components/ui';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

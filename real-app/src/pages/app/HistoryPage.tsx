@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Download, Trash2, FileText, Eye } from 'lucide-react';
-import { listDocuments, deleteDocument, downloadDoc, printDocument, viewDocument } from '../../lib/api';
+import { listDocuments, deleteDocument, downloadDoc, printDocument, viewDocument } from '@/services/api';
 import { Card, Badge, Spinner, Empty } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { useLang } from '../../lib/lang';

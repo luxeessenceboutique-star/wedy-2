@@ -9,7 +9,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { subMonths, format } from 'date-fns';
-import { listEmployees, listDocuments, getDashboardMetrics, listRequests } from '../../lib/api';
+import { listEmployees, listDocuments, getDashboardMetrics, listRequests } from '@/services/api';
 import { Badge, Spinner, StatCard } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Link } from 'react-router-dom';

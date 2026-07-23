@@ -8,8 +8,8 @@ import { fr } from 'date-fns/locale';
 import { Button, Card, Spinner } from '../../components/ui';
 import { toast } from 'sonner';
 import { useLang } from '../../lib/lang';
-import type { HRSlot, Interview } from '../../lib/api';
-import { listSlots, addSlots, deleteSlot, listInterviews } from '../../lib/api';
+import type { HRSlot, Interview } from '@/services/api';
+import { listSlots, addSlots, deleteSlot, listInterviews } from '@/services/api';
 import { X, User, Briefcase } from 'lucide-react';
 
 export default function CreneauxRHPage() {

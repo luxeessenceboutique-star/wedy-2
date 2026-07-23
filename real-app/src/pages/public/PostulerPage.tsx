@@ -2,8 +2,8 @@
 import { useParams } from 'react-router-dom';
 import { Briefcase, Send, CheckCircle, ArrowRight, MapPin, Clock, Calendar as CalIcon, Info, Upload, FileText } from 'lucide-react';
 import { Button, Card, Spinner } from '../../components/ui';
-import { applyCandidate, getAnnonce, listSlots, extractCV, getApiError } from '../../lib/api';
-import type { JobAd, HRSlot } from '../../lib/api';
+import { applyCandidate, getAnnonce, listSlots, extractCV, getApiError } from '@/services/api';
+import type { JobAd, HRSlot } from '@/services/api';
 import { toast } from 'sonner';
 
 export default function PostulerPage() {

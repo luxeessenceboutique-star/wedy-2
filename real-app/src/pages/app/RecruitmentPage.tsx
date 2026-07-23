@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
-import { api, getApiError } from '../../lib/api';
+import { api, getApiError } from '@/services/api';
 import {
   RefreshCw, Search, X, Eye, Table2, AlertTriangle,
   Hash, Calendar, Mail, Globe, ToggleLeft, Paperclip, Key,

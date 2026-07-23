@@ -16,7 +16,7 @@ import {
   type Employee, type GeneratedDoc, type EmployeeFile,
   type LeaveRequest, type Payslip, type PerformanceGoal, type PerformanceReview,
   type AnalysisResult,
-} from '../../lib/api';
+} from '@/services/api';
 import { Avatar, Badge, Button, Card, Modal, Input, Select, Spinner } from '../../components/ui';
 import { toast } from 'sonner';
 import { useLang } from '../../lib/lang';

@@ -3,7 +3,7 @@ import { Plus, Trash2, Send, X, Zap } from 'lucide-react';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Card, Button, Badge } from '../../components/ui';
 import { toast } from 'sonner';
-import { api } from '../../lib/api';
+import { api } from '@/services/api';
 import { useLang } from '../../lib/lang';
 
 const CATALOG = [

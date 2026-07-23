@@ -1,8 +1,8 @@
 ﻿import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, Building2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listDepartments, createDepartment, updateDepartment, deleteDepartment, getApiError } from '../lib/api';
-import { Modal, Button, Spinner } from './ui';
+import { listDepartments, createDepartment, updateDepartment, deleteDepartment, getApiError } from '@/services/api';
+import { Modal, Button, Spinner } from '@/components/ui';
 import { toast } from 'sonner';
 
 interface Props {

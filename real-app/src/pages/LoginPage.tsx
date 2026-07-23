@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth, isHRRole } from '../lib/auth';
-import { getApiError } from '../lib/api';
+import { getApiError } from '@/services/api';
 import { Button, Input } from '../components/ui';
 import { WedyLogo } from '../components/WedyLogo';
 import { Shield, Zap, Globe } from 'lucide-react';

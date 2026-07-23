@@ -6,8 +6,8 @@ import {
 import { Button, Spinner, Avatar, Modal } from '../../components/ui';
 import { toast } from 'sonner';
 import { useLang } from '../../lib/lang';
-import type { Employee } from '../../lib/api';
-import { listCandidates, createCandidate, promoteToEmployee, promoteToIntern, deleteCandidate, getApiError } from '../../lib/api';
+import type { Employee } from '@/services/api';
+import { listCandidates, createCandidate, promoteToEmployee, promoteToIntern, deleteCandidate, getApiError } from '@/services/api';
 
 // ── Add Candidate Modal ────────────────────────────────────────────────────────
 

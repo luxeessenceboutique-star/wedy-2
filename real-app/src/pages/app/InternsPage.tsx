@@ -10,11 +10,11 @@ import {
   listInterns, createIntern, updateIntern, deleteIntern, uploadDocument, listDocuments, deleteDocument,
   getInternOnboarding, updateInternOnboarding, listInternEvaluations, createInternEvaluation, deleteInternEvaluation,
   sendForSignature, listDepartments, getApiError,
-} from '../../lib/api';
-import type { Intern, InternOnboarding, InternEvaluation, ChecklistItem, Objective } from '../../lib/api';
-import { CVImportModal } from '../../components/cv/CVImportModal';
-import { ImportExportModal } from '../../components/ImportExportModal';
-import { DepartmentsModal } from '../../components/DepartmentsModal';
+} from '@/services/api';
+import type { Intern, InternOnboarding, InternEvaluation, ChecklistItem, Objective } from '@/services/api';
+import { CVImportModal } from '@/components/employees/CVImportModal';
+import { ImportExportModal } from '@/components/employees/ImportExportModal';
+import { DepartmentsModal } from '@/components/employees/DepartmentsModal';
 import { Button, Badge, Input, Modal, Spinner, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';

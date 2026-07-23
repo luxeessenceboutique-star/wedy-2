@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, ChevronUp, FileUp, Eye, X, ArrowUpDown } from 'lucide-react';
-import { listEmployees, createEmployee, updateEmployee, deleteEmployee, listDepartments, listContractTypes, getApiError } from '../../lib/api';
-import type { Employee } from '../../lib/api';
+import { listEmployees, createEmployee, updateEmployee, deleteEmployee, listDepartments, listContractTypes, getApiError } from '@/services/api';
+import type { Employee } from '@/services/api';
 import { Button, Badge, Card, Input, Select, Modal, Spinner, Empty, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
-import { CVImportModal } from '../../components/cv/CVImportModal';
-import { ImportExportModal } from '../../components/ImportExportModal';
-import { DepartmentsModal } from '../../components/DepartmentsModal';
+import { CVImportModal } from '@/components/employees/CVImportModal';
+import { ImportExportModal } from '@/components/employees/ImportExportModal';
+import { DepartmentsModal } from '@/components/employees/DepartmentsModal';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { useLang } from '../../lib/lang';

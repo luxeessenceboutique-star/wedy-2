@@ -5,7 +5,7 @@ import { format, parseISO, startOfDay, getDaysInMonth, getDay, isWeekend, addMon
 import { Plus, Check, X, Calendar, Clock, ChevronLeft, ChevronRight, Users, List, User, TrendingUp } from 'lucide-react';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Card, Badge, Spinner, Button } from '../../components/ui';
-import { listLeaves, reviewLeave, createLeave, listEmployees, getLeaveBalance, getApiError, type LeaveRequest } from '../../lib/api';
+import { listLeaves, reviewLeave, createLeave, listEmployees, getLeaveBalance, getApiError, type LeaveRequest } from '@/services/api';
 import { useLang } from '../../lib/lang';
 
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];

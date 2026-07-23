@@ -7,8 +7,8 @@ import {
 import { Button, Card, Spinner } from '../../components/ui';
 import { toast } from 'sonner';
 import { useLang } from '../../lib/lang';
-import type { ChatMessage, JobAd } from '../../lib/api';
-import { chatGenerateAnnonce, createAnnonce, listAnnonces } from '../../lib/api';
+import type { ChatMessage, JobAd } from '@/services/api';
+import { chatGenerateAnnonce, createAnnonce, listAnnonces } from '@/services/api';
 
 export default function AnnoncesPage() {
     const { t } = useLang();

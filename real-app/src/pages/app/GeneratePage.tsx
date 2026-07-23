@@ -6,8 +6,8 @@ import {
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
   Printer, RotateCcw, AlertCircle, Eye, EyeOff, Search, Users, GraduationCap
 } from 'lucide-react';
-import { listEmployees, listInterns, listTemplates, generateDocument, downloadDoc, aiEnhance } from '../../lib/api';
-import type { Employee, Template } from '../../lib/api';
+import { listEmployees, listInterns, listTemplates, generateDocument, downloadDoc, aiEnhance } from '@/services/api';
+import type { Employee, Template } from '@/services/api';
 import { Button, Badge, Card, Spinner } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';

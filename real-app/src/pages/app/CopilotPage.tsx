@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Plus, RefreshCw, BarChart2, FileEdit, CalendarDays, Wand2, Users, TrendingUp } from 'lucide-react';
-import { sendCopilotMessage, getApiError, type ChatMessage } from '../../lib/api';
+import { sendCopilotMessage, getApiError, type ChatMessage } from '@/services/api';
 import { toast } from 'sonner';
 import { useLang } from '../../lib/lang';
 

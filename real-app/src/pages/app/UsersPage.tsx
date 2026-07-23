@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api, getApiError, listEmployees } from '../../lib/api';
+import { api, getApiError, listEmployees } from '@/services/api';
 import { Spinner, Button, Badge, Avatar, Input, Modal } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';

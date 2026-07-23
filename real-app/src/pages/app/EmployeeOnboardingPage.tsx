@@ -4,7 +4,7 @@ import {
   Users, CheckCircle, Clock, FileSignature, Search, ChevronRight,
   Plus, X, Star, MessageSquare, Trash2, UserCheck, Zap,
 } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api } from '@/services/api';
 import { Button, Badge, Spinner, Avatar, Input } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { toast } from 'sonner';

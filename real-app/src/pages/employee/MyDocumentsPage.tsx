@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileText, Plus, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { api, getApiError } from '../../lib/api';
+import { api, getApiError } from '@/services/api';
 import { Button, Spinner, Modal } from '../../components/ui';
 import { toast } from 'sonner';
 import { format, isValid } from 'date-fns';

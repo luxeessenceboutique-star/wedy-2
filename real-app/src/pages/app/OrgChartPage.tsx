@@ -25,7 +25,7 @@ import {
   getOrgChart, createOrgProject, updateOrgProject, deleteOrgProject,
   addOrgMember, removeOrgMember, updateOrgMemberRole,
   type OrgProject, type Employee,
-} from '../../lib/api';
+} from '@/services/api';
 import { toast } from 'sonner';
 import { useLang } from '../../lib/lang';
 

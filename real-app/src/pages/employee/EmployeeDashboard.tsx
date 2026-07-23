@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Calendar, FileText, BookOpen, Clock, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api } from '@/services/api';
 import { useAuth } from '../../lib/auth';
 import { Spinner } from '../../components/ui';
 import { useLang } from '../../lib/lang';

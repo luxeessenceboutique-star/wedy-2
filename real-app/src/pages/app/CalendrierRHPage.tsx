@@ -14,8 +14,8 @@ import { Button, Card, Spinner } from '../../components/ui';
 import { toast } from 'sonner';
 import { CheckCircle } from 'lucide-react';
 import { useLang } from '../../lib/lang';
-import type { Interview, Employee } from '../../lib/api';
-import { listInterviews, listCandidates, scheduleInterview, updateInterviewStatus } from '../../lib/api';
+import type { Interview, Employee } from '@/services/api';
+import { listInterviews, listCandidates, scheduleInterview, updateInterviewStatus } from '@/services/api';
 
 type ViewMode = 'month' | 'week' | 'day';
 

@@ -1,7 +1,7 @@
 ﻿import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { User, Mail, Building2, Briefcase, Calendar, Phone, MapPin, Lock } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api } from '@/services/api';
 import { Avatar, Spinner } from '../../components/ui';
 import { format, isValid } from 'date-fns';
 import { useLang } from '../../lib/lang';

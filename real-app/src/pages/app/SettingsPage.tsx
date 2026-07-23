@@ -6,8 +6,8 @@ import { PageHeader } from '../../components/layout/AppShell';
 import { Card, Button } from '../../components/ui';
 import { useTheme } from '../../lib/theme';
 import { useAuth } from '../../lib/auth';
-import { api, listContractTypes, createContractType, updateContractType, deleteContractType } from '../../lib/api';
-import type { ContractType } from '../../lib/api';
+import { api, listContractTypes, createContractType, updateContractType, deleteContractType } from '@/services/api';
+import type { ContractType } from '@/services/api';
 import { useLang } from '../../lib/lang';
 
 function TabProfile() {

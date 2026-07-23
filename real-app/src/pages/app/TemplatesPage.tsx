@@ -9,8 +9,8 @@ import {
 import {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
   importTemplateFromPdf, seedDefaultTemplates, getApiError,
-} from '../../lib/api';
-import type { Template } from '../../lib/api';
+} from '@/services/api';
+import type { Template } from '@/services/api';
 import { Spinner, Button } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Link } from 'react-router-dom';

@@ -5,7 +5,7 @@ import {
   Zap, Shield, Flame, BookOpen, ChevronRight, Pencil, Trash2,
   LayoutGrid, List, Award, ArrowRight, CheckCircle2, Circle, Clock,
 } from 'lucide-react';
-import { api } from '../../lib/api';
+import { api } from '@/services/api';
 import { Button, Spinner, Input, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { useLang } from '../../lib/lang';

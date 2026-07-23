@@ -43,3 +43,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Frontend
+real-app/node_modules/
+real-app/dist/

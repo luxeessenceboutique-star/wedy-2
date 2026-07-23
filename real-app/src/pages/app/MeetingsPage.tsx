@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Avatar, Button, Spinner, Modal, Input } from '../../components/ui';
-import { getOrgChart, type OrgProject } from '../../lib/api';
+import { getOrgChart, type OrgProject } from '@/services/api';
 import { useAuth } from '../../lib/auth';
 import { useLang } from '../../lib/lang';
 import { toast } from 'sonner';

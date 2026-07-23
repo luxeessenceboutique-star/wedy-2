@@ -1,7 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Star, Plus, TrendingUp, Pencil, Trash2, X, Save } from 'lucide-react';
-import { listPerformanceReviews, createPerformanceReview, updatePerformanceReview, listEmployees, getApiError } from '../../lib/api';
+import { listPerformanceReviews, createPerformanceReview, updatePerformanceReview, listEmployees, getApiError } from '@/services/api';
 import { Card, Badge, Spinner, Button, Modal } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { useLang } from '../../lib/lang';

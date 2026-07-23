@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ClipboardList, Search } from 'lucide-react';
-import { listAuditLogs, type AuditLog } from '../../lib/api';
+import { listAuditLogs, type AuditLog } from '@/services/api';
 import { Card, Badge, Spinner } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { useLang } from '../../lib/lang';

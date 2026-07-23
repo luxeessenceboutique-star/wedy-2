@@ -5,7 +5,7 @@ from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.schemas import LoginRequest, RegisterRequest, TokenResponse, UserOut
-from app.services.auth_service import verify_password, hash_password, create_access_token
+from app.repositories import auth_repository
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -13,20 +13,17 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 def login(payload: LoginRequest, supabase: Client = Depends(get_db)):
     """Delegate login to Supabase Auth"""
     try:
-        res = supabase.auth.sign_in_with_password({
-            "email": payload.email,
-            "password": payload.password
-        })
+        res = auth_repository.sign_in_with_password(supabase, payload.email, payload.password)
         if not res.session:
             raise HTTPException(status_code=400, detail="Identifiants invalides")
-        
+
         user_id = res.user.id
         email = res.user.email
-        
+
         # Fetch actual role
         raw_role = "employee"
         try:
-            role_res = supabase.table("user_roles").select("role").eq("user_id", user_id).maybe_single().execute()
+            role_res = auth_repository.get_user_role(supabase, user_id)
             if role_res.data:
                 raw_role = role_res.data.get("role", "employee")
         except Exception:
@@ -50,12 +47,7 @@ def register(payload: RegisterRequest, supabase: Client = Depends(get_db)):
     """Register via admin API (bypasses Supabase public-signup restrictions)."""
     full_name = getattr(payload, "full_name", None) or payload.email.split("@")[0]
     try:
-        res = supabase.auth.admin.create_user({
-            "email":         payload.email,
-            "password":      payload.password,
-            "email_confirm": True,
-            "user_metadata": {"full_name": full_name},
-        })
+        res = auth_repository.create_user(supabase, payload.email, payload.password, full_name)
         if not res.user:
             raise HTTPException(status_code=400, detail="Erreur lors de l'inscription")
 
@@ -63,11 +55,7 @@ def register(payload: RegisterRequest, supabase: Client = Depends(get_db)):
 
         # Ensure a profile row exists
         try:
-            supabase.table("profiles").upsert({
-                "user_id":   user_id,
-                "full_name": full_name,
-                "email":     payload.email,
-            }, on_conflict="user_id").execute()
+            auth_repository.upsert_profile(supabase, user_id, full_name, payload.email)
         except Exception:
             pass
 

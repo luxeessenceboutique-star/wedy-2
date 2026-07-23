@@ -27,7 +27,3 @@ def get_db():
     Note: Supabase client is stateless (HTTP), so we can yield it directly.
     """
     yield get_supabase()
-
-class Base:
-    """Dummy class to prevent import errors from legacy SQLAlchemy models."""
-    pass

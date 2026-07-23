@@ -5,6 +5,7 @@ from uuid import UUID
 from datetime import datetime
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.repositories import annonce_repository
 from supabase import Client
 
 router = APIRouter(prefix="/annonces", tags=["Recruitment - Annonces"])
@@ -36,13 +37,13 @@ class JobAdOut(JobAdBase):
 
 @router.get("", response_model=List[JobAdOut])
 def list_annonces(supabase: Client = Depends(get_db)):
-    res = supabase.table("annonces").select("*").order("created_at", desc=True).execute()
+    res = annonce_repository.list_annonces(supabase)
     return res.data or []
 
 
 @router.get("/{id}", response_model=JobAdOut)
 def get_annonce(id: UUID, supabase: Client = Depends(get_db)):
-    res = supabase.table("annonces").select("*").eq("id", str(id)).maybe_single().execute()
+    res = annonce_repository.get_annonce(supabase, str(id))
     if not res.data:
         raise HTTPException(status_code=404, detail="Annonce non trouvée")
     return res.data
@@ -54,7 +55,7 @@ def create_annonce(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    res = supabase.table("annonces").insert(payload.dict()).execute()
+    res = annonce_repository.create_annonce(supabase, payload.dict())
     if not res.data:
         raise HTTPException(status_code=500, detail="Erreur lors de la création de l'annonce")
     return res.data[0]
@@ -67,11 +68,8 @@ def update_annonce(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    res = (
-        supabase.table("annonces")
-        .update({**payload.dict(), "updated_at": datetime.now().isoformat()})
-        .eq("id", str(id))
-        .execute()
+    res = annonce_repository.update_annonce(
+        supabase, str(id), {**payload.dict(), "updated_at": datetime.now().isoformat()}
     )
     if not res.data:
         raise HTTPException(status_code=404, detail="Annonce non trouvée")
@@ -84,7 +82,7 @@ def delete_annonce(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    supabase.table("annonces").delete().eq("id", str(id)).execute()
+    annonce_repository.delete_annonce(supabase, str(id))
     return {"message": "Annonce supprimée"}
 
 

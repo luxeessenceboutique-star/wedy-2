@@ -15,6 +15,7 @@ from app.schemas import (
 )
 from app.services.storage import store_file, retrieve_file
 from app.services.audit import log_action
+from app.repositories import document_repository
 
 router = APIRouter(tags=["Documents"])
 
@@ -33,19 +34,19 @@ def list_documents(
     current_user: dict = Depends(get_current_user),
 ):
     # Generated documents (from the generate flow) are stored in generated_documents
-    query = supabase.table("generated_documents").select("*").order("created_at", desc=True)
-    if employee_id:
-        query = query.eq("employee_id", str(employee_id))
-    elif profile_id:
-        query = query.eq("profile_id", str(profile_id))
-    response = query.range(skip, skip + limit - 1).execute()
+    response = document_repository.list_generated_documents(
+        supabase,
+        str(employee_id) if employee_id else None,
+        str(profile_id) if profile_id else None,
+        skip, limit,
+    )
     rows = response.data or []
 
     # Manual join: resolve employee names from the employees table
     emp_ids = list({r["employee_id"] for r in rows if r.get("employee_id")})
     emp_map = {}
     if emp_ids:
-        emp_res = supabase.table("employees").select("id, full_name, cin, department").in_("id", emp_ids).execute()
+        emp_res = document_repository.get_employees_by_ids(supabase, emp_ids)
         emp_map = {e["id"]: e for e in (emp_res.data or [])}
     for row in rows:
         eid = row.get("employee_id")
@@ -77,7 +78,7 @@ async def upload_document(
         "name": name,
         "file_url": url,
     }
-    response = supabase.table("documents").insert(data).execute()
+    response = document_repository.create_document(supabase, data)
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not upload document")
 
@@ -92,7 +93,7 @@ def download_document(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    response = supabase.table("documents").select("*").eq("id", str(doc_id)).execute()
+    response = document_repository.get_document(supabase, str(doc_id))
     if not response.data:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -108,7 +109,7 @@ def delete_document(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
-    response = supabase.table("documents").delete().eq("id", str(doc_id)).execute()
+    response = document_repository.delete_document(supabase, str(doc_id))
     if not response.data:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -121,8 +122,7 @@ def list_generated(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    query = supabase.table("generated_documents").select("*")
-    if profile_id:
-        query = query.eq("profile_id", str(profile_id))
-    response = query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()
+    response = document_repository.list_generated_by_profile(
+        supabase, str(profile_id) if profile_id else None, skip, limit
+    )
     return response.data

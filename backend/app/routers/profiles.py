@@ -10,6 +10,7 @@ from app.dependencies import get_current_user, require_role
 from app.schemas import ProfileCreate, ProfileUpdate, ProfileOut
 from app.services.audit import log_action
 from app.services.storage import store_file
+from app.repositories import profile_repository
 
 router = APIRouter(prefix="/profiles", tags=["Profiles"])
 
@@ -23,16 +24,7 @@ def list_profiles(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    query = supabase.table("profiles").select("*")
-    
-    if type:
-        query = query.eq("type", type)
-    
-    if search:
-        # Supabase 'or' query for multiple fields
-        query = query.or_(f"full_name.ilike.%{search}%,email.ilike.%{search}%,cin.ilike.%{search}%")
-        
-    response = query.range(skip, skip + limit - 1).execute()
+    response = profile_repository.list_profiles(supabase, type, search, skip, limit)
     return response.data
 
 
@@ -42,7 +34,7 @@ def get_profile(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    response = supabase.table("profiles").select("*").eq("id", str(profile_id)).execute()
+    response = profile_repository.get_profile(supabase, str(profile_id))
     if not response.data:
         raise HTTPException(status_code=404, detail="Profile not found")
     return response.data[0]
@@ -54,7 +46,7 @@ def get_my_profile(
     current_user: dict = Depends(get_current_user),
 ):
     """Return the profile of the currently authenticated user."""
-    res = supabase.table("profiles").select("*").eq("user_id", current_user["id"]).maybe_single().execute()
+    res = profile_repository.get_profile_by_user_id(supabase, current_user["id"])
     if res.data:
         return res.data
     return {
@@ -76,7 +68,7 @@ def update_my_profile(
     if not payload:
         return {"status": "no changes"}
     try:
-        res = supabase.table("profiles").update(payload).eq("user_id", current_user["id"]).execute()
+        res = profile_repository.update_profile_by_user_id(supabase, current_user["id"], payload)
         return res.data[0] if res.data else payload
     except Exception as e:
         from fastapi import HTTPException
@@ -90,7 +82,7 @@ def create_profile(
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
     data = payload.model_dump()
-    response = supabase.table("profiles").insert(data).execute()
+    response = profile_repository.create_profile(supabase, data)
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create profile")
     
@@ -110,10 +102,10 @@ def update_profile(
     if not data:
         return get_profile(profile_id, supabase, current_user)
         
-    response = supabase.table("profiles").update(data).eq("id", str(profile_id)).execute()
+    response = profile_repository.update_profile(supabase, str(profile_id), data)
     if not response.data:
         raise HTTPException(status_code=404, detail="Profile not found")
-    
+
     profile = response.data[0]
     log_action(supabase, current_user["id"], "UPDATE", "profile", profile["id"])
     return profile
@@ -125,7 +117,7 @@ def delete_profile(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_role("admin")),
 ):
-    response = supabase.table("profiles").delete().eq("id", str(profile_id)).execute()
+    response = profile_repository.delete_profile(supabase, str(profile_id))
     if not response.data:
         raise HTTPException(status_code=404, detail="Profile not found")
     log_action(supabase, current_user["id"], "DELETE", "profile", str(profile_id))
@@ -141,7 +133,7 @@ async def upload_photo(
     content = await file.read()
     url = store_file(content, file.filename, subfolder="photos", content_type=file.content_type)
     
-    response = supabase.table("profiles").update({"photo_url": url}).eq("id", str(profile_id)).execute()
+    response = profile_repository.update_profile(supabase, str(profile_id), {"photo_url": url})
     if not response.data:
         raise HTTPException(status_code=404, detail="Profile not found")
         

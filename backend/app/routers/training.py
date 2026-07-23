@@ -4,6 +4,7 @@ from supabase import Client
 
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
+from app.repositories import training_repository
 
 router = APIRouter(prefix="/training", tags=["Training"])
 
@@ -19,10 +20,7 @@ def list_catalog(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        q = supabase.table("training_catalog").select("*").eq("is_active", True).order("created_at", desc=True)
-        if category:
-            q = q.eq("category", category)
-        return q.execute().data or []
+        return training_repository.list_catalog(supabase, category).data or []
     except Exception:
         return []
 
@@ -35,7 +33,7 @@ def create_training(
 ):
     payload.setdefault("is_active", True)
     try:
-        res = supabase.table("training_catalog").insert(payload).execute()
+        res = training_repository.create_training(supabase, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -50,7 +48,7 @@ def update_training(
 ):
     payload.pop("id", None)
     try:
-        res = supabase.table("training_catalog").update(payload).eq("id", training_id).execute()
+        res = training_repository.update_training(supabase, training_id, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -63,7 +61,7 @@ def delete_training(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        supabase.table("training_catalog").update({"is_active": False}).eq("id", training_id).execute()
+        training_repository.deactivate_training(supabase, training_id)
     except Exception:
         pass
 
@@ -78,16 +76,7 @@ def list_assignments(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        q = (
-            supabase.table("employee_trainings")
-            .select("*, training_catalog(id,title,category,duration_hours,cost_dh), employees(id,full_name,department)")
-            .order("assigned_at", desc=True)
-        )
-        if employee_id:
-            q = q.eq("employee_id", employee_id)
-        if status:
-            q = q.eq("status", status)
-        return q.execute().data or []
+        return training_repository.list_assignments(supabase, employee_id, status).data or []
     except Exception:
         return []
 
@@ -99,7 +88,7 @@ def assign_training(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        res = supabase.table("employee_trainings").insert(payload).execute()
+        res = training_repository.create_assignment(supabase, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -114,7 +103,7 @@ def update_assignment(
 ):
     payload.pop("id", None)
     try:
-        res = supabase.table("employee_trainings").update(payload).eq("id", assignment_id).execute()
+        res = training_repository.update_assignment(supabase, assignment_id, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -127,7 +116,7 @@ def delete_assignment(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        supabase.table("employee_trainings").delete().eq("id", assignment_id).execute()
+        training_repository.delete_assignment(supabase, assignment_id)
     except Exception:
         pass
 
@@ -140,9 +129,7 @@ def get_stats(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        assignments = supabase.table("employee_trainings").select(
-            "status, training_catalog(cost_dh, duration_hours)"
-        ).execute().data or []
+        assignments = training_repository.list_assignments_for_stats(supabase).data or []
 
         total       = len(assignments)
         completed   = sum(1 for a in assignments if a.get("status") == "completed")
@@ -177,10 +164,7 @@ def list_skills(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        q = supabase.table("skills").select("*").eq("is_active", True).order("name")
-        if category:
-            q = q.eq("category", category)
-        return q.execute().data or []
+        return training_repository.list_skills(supabase, category).data or []
     except Exception:
         return []
 
@@ -193,7 +177,7 @@ def create_skill(
 ):
     payload.setdefault("is_active", True)
     try:
-        res = supabase.table("skills").insert(payload).execute()
+        res = training_repository.create_skill(supabase, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -208,7 +192,7 @@ def update_skill(
 ):
     payload.pop("id", None)
     try:
-        res = supabase.table("skills").update(payload).eq("id", skill_id).execute()
+        res = training_repository.update_skill(supabase, skill_id, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -221,7 +205,7 @@ def delete_skill(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        supabase.table("skills").update({"is_active": False}).eq("id", skill_id).execute()
+        training_repository.deactivate_skill(supabase, skill_id)
     except Exception:
         pass
 
@@ -235,10 +219,7 @@ def get_employee_skills(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        q = supabase.table("employee_skills").select("*, skills(id,name,category,description)")
-        if employee_id:
-            q = q.eq("employee_id", employee_id)
-        return q.execute().data or []
+        return training_repository.get_employee_skills(supabase, employee_id).data or []
     except Exception:
         return []
 
@@ -250,9 +231,7 @@ def upsert_employee_skill(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        res = supabase.table("employee_skills").upsert(
-            payload, on_conflict="employee_id,skill_id"
-        ).execute()
+        res = training_repository.upsert_employee_skill(supabase, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -265,6 +244,6 @@ def remove_employee_skill(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        supabase.table("employee_skills").delete().eq("id", record_id).execute()
+        training_repository.remove_employee_skill(supabase, record_id)
     except Exception:
         pass

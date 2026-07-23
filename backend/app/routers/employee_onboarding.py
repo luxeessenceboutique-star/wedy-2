@@ -6,6 +6,7 @@ from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.audit import log_action
+from app.repositories import onboarding_repository
 
 router = APIRouter(prefix="/employee-onboarding", tags=["EmployeeOnboarding"])
 
@@ -37,11 +38,7 @@ DEFAULT_PLAN_90 = [
 
 
 def _safe_get(table, supabase, employee_id):
-    try:
-        res = supabase.table(table).select("*").eq("employee_id", employee_id).limit(1).execute()
-        return res.data or []
-    except Exception:
-        return []
+    return onboarding_repository.safe_get_by_employee(table, supabase, employee_id)
 
 
 # ── Onboarding plan ────────────────────────────────────────────────────────────
@@ -53,12 +50,7 @@ def list_onboarding(
 ):
     """List all employees that have an onboarding record."""
     try:
-        res = (
-            supabase.table("employee_onboarding")
-            .select("*, employees(id,full_name,email,position,department,photo_url,hire_date)")
-            .order("created_at", desc=True)
-            .execute()
-        )
+        res = onboarding_repository.list_onboarding(supabase)
         return res.data or []
     except Exception:
         return []
@@ -78,13 +70,13 @@ def get_onboarding(
         if not row.get("plan_90"): row["plan_90"] = DEFAULT_PLAN_90
         return row
     try:
-        created = supabase.table("employee_onboarding").insert({
+        created = onboarding_repository.create_onboarding(supabase, {
             "employee_id": employee_id,
             "phase": "day30",
             "plan_30": DEFAULT_PLAN_30,
             "plan_60": DEFAULT_PLAN_60,
             "plan_90": DEFAULT_PLAN_90,
-        }).execute()
+        })
         return (created.data or [{}])[0]
     except Exception as e:
         return {
@@ -107,12 +99,12 @@ def update_onboarding(
     payload["updated_at"] = datetime.utcnow().isoformat()
     rows = _safe_get("employee_onboarding", supabase, employee_id)
     if rows:
-        res = supabase.table("employee_onboarding").update(payload).eq("employee_id", employee_id).execute()
+        res = onboarding_repository.update_onboarding(supabase, employee_id, payload)
     else:
         payload["employee_id"] = employee_id
         for k, v in [("plan_30", DEFAULT_PLAN_30), ("plan_60", DEFAULT_PLAN_60), ("plan_90", DEFAULT_PLAN_90)]:
             payload.setdefault(k, v)
-        res = supabase.table("employee_onboarding").insert(payload).execute()
+        res = onboarding_repository.create_onboarding(supabase, payload)
     return (res.data or [{}])[0]
 
 
@@ -125,15 +117,15 @@ def sign_contract(
     now = datetime.utcnow().isoformat()
     rows = _safe_get("employee_onboarding", supabase, employee_id)
     if rows:
-        res = supabase.table("employee_onboarding").update({
+        res = onboarding_repository.update_onboarding(supabase, employee_id, {
             "contract_signed": True, "contract_signed_at": now, "updated_at": now,
-        }).eq("employee_id", employee_id).execute()
+        })
     else:
-        res = supabase.table("employee_onboarding").insert({
+        res = onboarding_repository.create_onboarding(supabase, {
             "employee_id": employee_id, "contract_signed": True,
             "contract_signed_at": now, "phase": "day30",
             "plan_30": DEFAULT_PLAN_30, "plan_60": DEFAULT_PLAN_60, "plan_90": DEFAULT_PLAN_90,
-        }).execute()
+        })
     log_action(supabase, current_user["id"], "UPDATE", "employee_onboarding", employee_id)
     return (res.data or [{}])[0]
 
@@ -147,13 +139,7 @@ def list_pulse(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        res = (
-            supabase.table("pulse_surveys")
-            .select("*")
-            .eq("employee_id", employee_id)
-            .order("created_at", desc=True)
-            .execute()
-        )
+        res = onboarding_repository.list_pulse_surveys(supabase, employee_id)
         return res.data or []
     except Exception:
         return []
@@ -168,7 +154,7 @@ def create_pulse(
 ):
     payload["employee_id"] = employee_id
     try:
-        res = supabase.table("pulse_surveys").insert(payload).execute()
+        res = onboarding_repository.create_pulse_survey(supabase, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -182,6 +168,6 @@ def delete_pulse(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        supabase.table("pulse_surveys").delete().eq("id", pulse_id).execute()
+        onboarding_repository.delete_pulse_survey(supabase, pulse_id)
     except Exception:
         pass

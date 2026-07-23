@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from supabase import Client
 
 from app.database import get_db
-from app.dependencies import require_admin, require_hr_or_admin, get_current_user
+from app.dependencies import require_hr_or_admin
 from app.repositories import user_repository
 
 router = APIRouter(prefix="/users", tags=["User Management"])

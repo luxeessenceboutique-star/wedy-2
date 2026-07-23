@@ -4,7 +4,7 @@ from supabase import Client
 from pydantic import BaseModel
 
 from app.database import get_db
-from app.dependencies import require_hr_or_admin, get_current_user
+from app.dependencies import require_hr_or_admin
 from app.repositories import webhook_repository
 
 router = APIRouter(prefix="/webhooks", tags=["Integrations"])

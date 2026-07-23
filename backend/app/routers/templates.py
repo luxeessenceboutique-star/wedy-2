@@ -4,7 +4,7 @@ import time
 from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile, File, Form, Body
 from supabase import Client
 from app.database import get_db
-from app.dependencies import get_current_user, require_admin, require_hr_or_admin
+from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.ai_service import clean_template_html
 from app.repositories import template_repository
 

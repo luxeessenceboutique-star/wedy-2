@@ -8,13 +8,17 @@ Powered by **Claude AI (Anthropic)** and **Supabase**.
 ## Project structure
 
 ```
-client-brand-design/
-├── wedy/           ← Frontend (Vite + React 18 + TypeScript)
+wedy-rh/
+├── real-app/       ← Frontend (Vite + React 18 + TypeScript)
 ├── backend/        ← API (Python + FastAPI)
+├── scripts/        ← Root-level maintenance/debug scripts
 └── ARCHITECTURE.md
 ```
 
-## Frontend — `wedy/`
+> Note: the frontend section below predates the current `real-app/` page set and will be
+> refreshed as part of the frontend architecture pass.
+
+## Frontend — `real-app/`
 
 - **Framework**: Vite + React 18 + TypeScript
 - **Routing**: React Router v6
@@ -67,8 +71,30 @@ src/
 
 - **Framework**: FastAPI (Python)
 - **Database / Auth**: Supabase (PostgreSQL + Supabase Auth)
-- **AI**: Claude API (Anthropic) for document enhancement and AI Copilot
-- **Exports**: PDF (WeasyPrint) and DOCX (python-docx)
+- **AI**: Claude API (Anthropic) / OpenAI-compatible fallback, for document enhancement and AI Copilot
+- **Exports**: PDF (WeasyPrint / ReportLab fallback) and DOCX (python-docx)
+
+```
+backend/
+├── app/
+│   ├── main.py                ← FastAPI app, router registration, global exception handlers
+│   ├── config.py               ← Settings (env-driven)
+│   ├── database.py             ← Supabase client singleton (get_db dependency)
+│   ├── dependencies.py         ← Auth dependencies (get_current_user, require_role, ...)
+│   ├── routers/                ← One module per resource — HTTP layer only (parse
+│   │                              request → call repository/service → shape response)
+│   ├── repositories/           ← One module per resource — every supabase.table()/
+│   │                              supabase.auth.* call lives here, nowhere else
+│   ├── services/                ← Business logic that isn't pure data access:
+│   │                              AI calls, PDF/DOCX generation, payroll tax calc,
+│   │                              CV parsing, audit logging/notifications
+│   └── schemas/                 ← Pydantic request/response models
+├── database/
+│   └── migrations/              ← All SQL schema/migration/fix scripts
+├── scripts/                     ← One-off maintenance scripts (seed, setup, repair)
+│   └── scratch/                 ← Ad-hoc debug scripts, not part of the app
+└── uploads/                     ← User-uploaded files (employee documents, CVs)
+```
 
 Key routes:
 - `POST /auth/login` — sign in, returns JWT
@@ -96,7 +122,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 
 # Frontend
-cd wedy
+cd real-app
 npm install
 npm run dev   # → http://localhost:5173
 ```

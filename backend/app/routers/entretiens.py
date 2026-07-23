@@ -4,7 +4,6 @@ from uuid import UUID
 from datetime import date
 from pydantic import BaseModel
 from app.database import get_db
-from app.dependencies import get_current_user
 from app.repositories import entretien_repository
 from supabase import Client
 

@@ -47,3 +47,6 @@ dist-ssr
 # Frontend
 frontend/node_modules/
 frontend/dist/
+
+# Claude Code session state
+.claude/

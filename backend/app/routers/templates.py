@@ -6,6 +6,7 @@ from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user, require_admin, require_hr_or_admin
 from app.services.ai_service import clean_template_html
+from app.repositories import template_repository
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
@@ -315,12 +316,7 @@ async def list_templates(
     db: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    query = db.table("document_templates").select("*").order("name_fr")
-    if active_only:
-        query = query.eq("is_active", True)
-    if category:
-        query = query.eq("category", category)
-    result = query.execute()
+    result = template_repository.list_templates(db, active_only, category)
     return {"data": result.data, "count": len(result.data)}
 
 
@@ -344,13 +340,13 @@ async def create_template(
         data["target_type"] = payload["target_type"]
     data.setdefault("variables", [])
     try:
-        result = db.table("document_templates").insert(data).execute()
+        result = template_repository.create_template(db, data)
     except Exception as e:
         # Self-healing: if target_type column is missing, retry without it
         if "target_type" in str(e) and "target_type" in data:
             del data["target_type"]
             try:
-                result = db.table("document_templates").insert(data).execute()
+                result = template_repository.create_template(db, data)
             except Exception as e2:
                 raise HTTPException(status_code=400, detail=f"Erreur base de données : {e2}")
         else:
@@ -408,13 +404,13 @@ async def import_template_from_file(
         data["target_type"] = target_type if target_type in ("employee", "intern", "both") else "employee"
 
     try:
-        result = db.table("document_templates").insert(data).execute()
+        result = template_repository.create_template(db, data)
     except Exception as e:
         # Self-healing: if target_type column is missing, retry without it
         if "target_type" in str(e) and "target_type" in data:
             del data["target_type"]
             try:
-                result = db.table("document_templates").insert(data).execute()
+                result = template_repository.create_template(db, data)
             except Exception as e2:
                 raise HTTPException(status_code=400, detail=f"Erreur base de données : {e2}")
         else:
@@ -651,7 +647,7 @@ async def seed_default_templates(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     """Insert the built-in professional HR templates (skips any whose code already exists)."""
-    existing_res = db.table("document_templates").select("code").execute()
+    existing_res = template_repository.list_template_codes(db)
     existing_codes = {r["code"] for r in (existing_res.data or [])}
 
     created = []
@@ -671,7 +667,7 @@ async def seed_default_templates(
             "is_active":     True,
         }
         try:
-            res = db.table("document_templates").insert(data).execute()
+            res = template_repository.create_template(db, data)
             if res.data:
                 created.append(tpl["code"])
         except Exception:
@@ -688,7 +684,7 @@ async def get_template(
     db: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    result = db.table("document_templates").select("*").eq("id", template_id).single().execute()
+    result = template_repository.get_template(db, template_id)
     if not result.data:
         raise HTTPException(status_code=404, detail="Template not found")
     return result.data
@@ -707,13 +703,13 @@ async def update_template(
     if not data:
         raise HTTPException(status_code=400, detail="No fields to update")
     try:
-        result = db.table("document_templates").update(data).eq("id", template_id).execute()
+        result = template_repository.update_template(db, template_id, data)
     except Exception as e:
         # Self-healing: if target_type column is missing, retry without it
         if "target_type" in str(e) and "target_type" in data:
             del data["target_type"]
             try:
-                result = db.table("document_templates").update(data).eq("id", template_id).execute()
+                result = template_repository.update_template(db, template_id, data)
             except Exception as e2:
                 raise HTTPException(status_code=400, detail=f"Erreur base de données : {e2}")
         else:
@@ -729,4 +725,4 @@ async def delete_template(
     db: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    db.table("document_templates").delete().eq("id", template_id).execute()
+    template_repository.delete_template(db, template_id)

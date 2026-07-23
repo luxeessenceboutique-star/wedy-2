@@ -5,6 +5,7 @@ from supabase import Client
 
 from app.database import get_db
 from app.dependencies import require_hr_or_admin
+from app.repositories import analytics_repository
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
@@ -16,7 +17,7 @@ def get_overview(
 ):
     try:
         # Total active employees
-        emp_res = supabase.table("employees").select("id, full_name, position, contract_type, department, status, hire_date, contract_end").execute()
+        emp_res = analytics_repository.list_employees_for_overview(supabase)
         all_emp = emp_res.data or []
     except Exception as e:
         print(f"Error fetching employees for analytics: {e}")
@@ -51,7 +52,7 @@ def get_overview(
     docs_this_month = 0
     try:
         this_month = datetime.now().strftime("%Y-%m")
-        doc_res = supabase.table("generated_documents").select("id, created_at").execute()
+        doc_res = analytics_repository.list_generated_documents_meta(supabase)
         docs_this_month = sum(
             1 for d in (doc_res.data or [])
             if (d.get("created_at") or "").startswith(this_month)
@@ -62,7 +63,7 @@ def get_overview(
     # Pending leave requests
     pending_leaves = 0
     try:
-        lr_res = supabase.table("leave_requests").select("id", count="exact").eq("status", "pending").execute()
+        lr_res = analytics_repository.count_pending_leave_requests(supabase)
         pending_leaves = lr_res.count or 0
     except Exception as e:
         print(f"Error fetching leaves for analytics: {e}")
@@ -70,7 +71,7 @@ def get_overview(
     # Pending HR requests
     pending_hr = 0
     try:
-        hr_res = supabase.table("hr_requests").select("id", count="exact").eq("status", "pending").execute()
+        hr_res = analytics_repository.count_pending_hr_requests(supabase)
         pending_hr = hr_res.count or 0
     except Exception as e:
         print(f"Error fetching hr_requests for analytics: {e}")
@@ -96,7 +97,7 @@ def headcount_trend(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        res = supabase.table("employees").select("hire_date, status").execute()
+        res = analytics_repository.list_employees_hire_status(supabase)
         employees = res.data or []
     except Exception as e:
         print(f"Error fetching headcount trend: {e}")
@@ -145,7 +146,7 @@ def documents_trend(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        res = supabase.table("generated_documents").select("created_at").execute()
+        res = analytics_repository.list_generated_documents_dates(supabase)
         docs = res.data or []
     except Exception as e:
         print(f"Error fetching documents trend: {e}")
@@ -176,7 +177,7 @@ def leave_stats(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        res = supabase.table("leave_requests").select("type, status, days").execute()
+        res = analytics_repository.list_leave_requests_stats(supabase)
         leaves = res.data or []
     except Exception as e:
         print(f"Error fetching leave stats: {e}")

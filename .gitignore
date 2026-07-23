@@ -45,5 +45,5 @@ dist-ssr
 *.sw?
 
 # Frontend
-real-app/node_modules/
-real-app/dist/
+frontend/node_modules/
+frontend/dist/

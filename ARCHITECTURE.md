@@ -9,16 +9,16 @@ Powered by **Claude AI (Anthropic)** and **Supabase**.
 
 ```
 wedy-rh/
-├── real-app/       ← Frontend (Vite + React 18 + TypeScript)
+├── frontend/       ← Frontend (Vite + React 18 + TypeScript)
 ├── backend/        ← API (Python + FastAPI)
 ├── scripts/        ← Root-level maintenance/debug scripts
 └── ARCHITECTURE.md
 ```
 
-> Note: the frontend section below predates the current `real-app/` page set and will be
+> Note: the frontend section below predates the current `frontend/` page set and will be
 > refreshed as part of the frontend architecture pass.
 
-## Frontend — `real-app/`
+## Frontend — `frontend/`
 
 - **Framework**: Vite + React 18 + TypeScript
 - **Routing**: React Router v6
@@ -122,7 +122,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 
 # Frontend
-cd real-app
+cd frontend
 npm install
 npm run dev   # → http://localhost:5173
 ```

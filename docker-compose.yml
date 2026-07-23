@@ -121,7 +121,7 @@ services:
 
   frontend:
     build:
-      context: ./real-app
+      context: ./frontend
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=/api

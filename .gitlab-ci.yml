@@ -69,7 +69,7 @@ build_frontend:
         --build-arg VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
         -t "$FRONTEND_IMAGE" \
         -t "$FRONTEND_IMAGE_VERSION" \
-        ./real-app
+        ./frontend
       docker push "$FRONTEND_IMAGE"
       docker push "$FRONTEND_IMAGE_VERSION"
 

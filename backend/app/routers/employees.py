@@ -14,6 +14,7 @@ from app.dependencies import get_current_user, require_role, require_hr_or_admin
 from app.schemas import EmployeeCreate, EmployeeUpdate, EmployeeOut
 from app.services.audit import log_action
 from app.config import settings
+from app.repositories import employee_repository
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
 
@@ -40,17 +41,9 @@ def list_employees(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    query = supabase.table("employees").select("*", count="exact")
-
-    if status:
-        query = query.eq("status", status)
-    elif exclude_intern:
-        # Never mix interns into the employee list unless explicitly requested
-        query = query.neq("status", "intern")
-    if search:
-        query = query.ilike("full_name", f"%{search}%")
-
-    response = query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()
+    response = employee_repository.list_employees(
+        supabase, status, str(department_id) if department_id else None, search, exclude_intern, skip, limit
+    )
     return _serialize({"data": response.data, "count": response.count or 0})
 
 
@@ -62,7 +55,7 @@ def list_employee_files(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    res = supabase.table("employee_files").select("*").eq("employee_id", str(employee_id)).order("created_at", desc=True).execute()
+    res = employee_repository.list_employee_files(supabase, str(employee_id))
     return res.data
 
 
@@ -74,7 +67,7 @@ async def upload_employee_file(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    emp_res = supabase.table("employees").select("id").eq("id", str(employee_id)).execute()
+    emp_res = employee_repository.get_employee_id(supabase, str(employee_id))
     if not emp_res.data:
         raise HTTPException(status_code=404, detail="Employé introuvable")
 
@@ -101,7 +94,7 @@ async def upload_employee_file(
         "uploaded_by": current_user["id"],
     }
     try:
-        res = supabase.table("employee_files").insert(record).execute()
+        res = employee_repository.create_employee_file(supabase, record)
     except Exception as e:
         os.remove(full_path)
         raise HTTPException(status_code=400, detail=f"Erreur base de données : {e}")
@@ -120,7 +113,7 @@ async def analyze_employee_folder(
     import base64
     from app.services.ai_service import analyze_employee_folder as ai_analyze
 
-    files_res = supabase.table("employee_files").select("*").eq("employee_id", str(employee_id)).execute()
+    files_res = employee_repository.list_employee_files_full(supabase, str(employee_id))
     files = files_res.data
     if not files:
         raise HTTPException(status_code=422, detail="Aucun fichier dans le dossier. Ajoutez d'abord des fichiers.")
@@ -180,12 +173,12 @@ async def analyze_employee_folder(
         raise HTTPException(status_code=503, detail=f"Analyse IA échouée : {e}")
 
     try:
-        supabase.table("employee_analyses").insert({
+        employee_repository.create_employee_analysis(supabase, {
             "employee_id":    str(employee_id),
             "extracted_data": extracted,
             "files_analyzed": len(file_contents),
             "analyzed_by":    current_user["id"],
-        }).execute()
+        })
     except Exception:
         pass
 
@@ -210,7 +203,7 @@ def apply_analysis(
     if not data:
         raise HTTPException(status_code=400, detail="Aucune donnée à appliquer")
 
-    res = supabase.table("employees").update(data).eq("id", str(employee_id)).execute()
+    res = employee_repository.apply_employee_analysis(supabase, str(employee_id), data)
     if not res.data:
         raise HTTPException(status_code=404, detail="Employé introuvable")
 
@@ -225,7 +218,7 @@ def delete_employee_file(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    res = supabase.table("employee_files").select("file_path").eq("id", str(file_id)).eq("employee_id", str(employee_id)).execute()
+    res = employee_repository.get_employee_file(supabase, str(employee_id), str(file_id))
     if not res.data:
         raise HTTPException(status_code=404, detail="Fichier introuvable")
 
@@ -233,7 +226,7 @@ def delete_employee_file(
     if os.path.exists(file_path):
         os.remove(file_path)
 
-    supabase.table("employee_files").delete().eq("id", str(file_id)).execute()
+    employee_repository.delete_employee_file(supabase, str(file_id))
 
 
 # ── Single employee + CRUD ────────────────────────────────────────────────────
@@ -244,7 +237,7 @@ def get_employee(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    response = supabase.table("employees").select("*").eq("id", str(employee_id)).execute()
+    response = employee_repository.get_employee(supabase, str(employee_id))
     if not response.data:
         raise HTTPException(status_code=404, detail="Employee not found")
     return _serialize(response.data[0])
@@ -258,7 +251,7 @@ def create_employee(
 ):
     data = _serialize({k: v for k, v in payload.model_dump().items() if v is not None})
     data["created_by"] = current_user["id"]
-    response = supabase.table("employees").insert(data).execute()
+    response = employee_repository.create_employee(supabase, data)
     if not response.data:
         raise HTTPException(status_code=400, detail="Could not create employee")
 
@@ -278,7 +271,7 @@ def update_employee(
     if not data:
         return get_employee(employee_id, supabase, current_user)
 
-    response = supabase.table("employees").update(data).eq("id", str(employee_id)).execute()
+    response = employee_repository.update_employee(supabase, str(employee_id), data)
     if not response.data:
         raise HTTPException(status_code=404, detail="Employee not found")
 
@@ -293,7 +286,7 @@ def delete_employee(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_role("admin", "hr")),
 ):
-    response = supabase.table("employees").delete().eq("id", str(employee_id)).execute()
+    response = employee_repository.delete_employee(supabase, str(employee_id))
     if not response.data:
         raise HTTPException(status_code=404, detail="Employee not found")
     log_action(supabase, current_user["id"], "DELETE", "employee", str(employee_id))

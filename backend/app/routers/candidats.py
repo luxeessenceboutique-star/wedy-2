@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from uuid import UUID
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
+from app.repositories import candidate_repository
 from supabase import Client
 
 router = APIRouter(prefix="/candidats", tags=["Recruitment - Candidats"])
@@ -24,7 +25,7 @@ def list_candidates(
     db: Client = Depends(get_db),
     _user: dict = Depends(get_current_user),
 ):
-    res = db.table("employees").select("*").eq("status", "candidate").order("created_at", desc=True).execute()
+    res = candidate_repository.list_candidates(db)
     return res.data or []
 
 
@@ -38,7 +39,7 @@ def create_candidate(
 ):
     data = {k: v for k, v in body.model_dump().items() if v is not None}
     data["status"] = "candidate"
-    res = db.table("employees").insert(data).execute()
+    res = candidate_repository.create_candidate(db, data)
     if not res.data:
         raise HTTPException(status_code=500, detail="Échec de la création")
     return res.data[0]
@@ -58,7 +59,7 @@ def promote_to_employee(
         update["hire_date"] = payload["hire_date"]
     if payload.get("position"):
         update["position"] = payload["position"]
-    db.table("employees").update(update).eq("id", str(candidate_id)).execute()
+    candidate_repository.update_status(db, str(candidate_id), update)
     return {"message": "Candidat promu en employé"}
 
 
@@ -72,7 +73,7 @@ def promote_to_intern(
     update = {"status": "intern"}
     if payload.get("internship_start"):
         update["internship_start"] = payload["internship_start"]
-    db.table("employees").update(update).eq("id", str(candidate_id)).execute()
+    candidate_repository.update_status(db, str(candidate_id), update)
     return {"message": "Candidat promu en stagiaire"}
 
 
@@ -84,4 +85,4 @@ def delete_candidate(
     db: Client = Depends(get_db),
     _user: dict = Depends(require_hr_or_admin),
 ):
-    db.table("employees").delete().eq("id", str(candidate_id)).execute()
+    candidate_repository.delete_candidate(db, str(candidate_id))

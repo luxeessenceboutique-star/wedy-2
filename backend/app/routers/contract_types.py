@@ -6,6 +6,7 @@ from supabase import Client
 
 from app.database import get_db
 from app.dependencies import require_role
+from app.repositories import contract_type_repository
 
 router = APIRouter(prefix="/contract-types", tags=["Contract Types"])
 
@@ -31,7 +32,7 @@ class ContractTypeUpdate(BaseModel):
 @router.get("", response_model=List[dict])
 def list_contract_types(supabase: Client = Depends(get_db)):
     try:
-        res = supabase.table("contract_types").select("*").order("name").execute()
+        res = contract_type_repository.list_contract_types(supabase)
         if res.data:
             return res.data
     except Exception:
@@ -49,11 +50,11 @@ def create_contract_type(
     if not name:
         raise HTTPException(status_code=400, detail="Le nom est obligatoire")
     try:
-        res = supabase.table("contract_types").insert({
+        res = contract_type_repository.create_contract_type(supabase, {
             "name": name,
             "description": payload.description.strip() if payload.description else None,
             "is_active": True,
-        }).execute()
+        })
         if res.data:
             return res.data[0]
         raise HTTPException(status_code=400, detail="Impossible de créer le type de contrat")
@@ -76,7 +77,7 @@ def update_contract_type(
     if "name" in data:
         data["name"] = data["name"].strip()
     try:
-        res = supabase.table("contract_types").update(data).eq("id", ct_id).execute()
+        res = contract_type_repository.update_contract_type(supabase, ct_id, data)
         if not res.data:
             raise HTTPException(status_code=404, detail="Type de contrat introuvable")
         return res.data[0]
@@ -93,7 +94,7 @@ def delete_contract_type(
     _user: dict = Depends(require_role("admin", "hr")),
 ):
     try:
-        res = supabase.table("contract_types").delete().eq("id", ct_id).execute()
+        res = contract_type_repository.delete_contract_type(supabase, ct_id)
         if not res.data:
             raise HTTPException(status_code=404, detail="Type de contrat introuvable")
     except HTTPException:

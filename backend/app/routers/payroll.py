@@ -8,7 +8,8 @@ from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.audit import log_action
-from app.services.payroll_service import generate_payroll_pdf
+from app.services.payroll_service import generate_payroll_pdf, compute_moroccan_payroll
+from app.repositories import payroll_repository
 
 router = APIRouter(prefix="/payroll", tags=["Payroll"])
 
@@ -30,38 +31,6 @@ class PayrollUpdate(BaseModel):
     notes: Optional[str] = None
 
 
-def compute_moroccan_payroll(base: float, bonuses: float = 0, deductions: float = 0):
-    """Approximate Moroccan CNSS + IR calculation."""
-    gross = base + bonuses
-
-    # CNSS employee part ≈ 4.48% (capped at 6 000 MAD/month gross)
-    cnss_base = min(gross, 6000)
-    cnss = round(cnss_base * 0.0448, 2)
-
-    # Taxable income = gross - CNSS - professional deduction (20%, max 2500)
-    prof_ded = min(gross * 0.20, 2500)
-    taxable = gross - cnss - prof_ded
-
-    # IR tranches marocaines 2024 (monthly)
-    if taxable <= 2500:
-        ir = 0
-    elif taxable <= 4166:
-        ir = taxable * 0.10 - 250
-    elif taxable <= 5000:
-        ir = taxable * 0.20 - 666.67
-    elif taxable <= 6666:
-        ir = taxable * 0.30 - 1166.67
-    elif taxable <= 15000:
-        ir = taxable * 0.34 - 1433.33
-    else:
-        ir = taxable * 0.38 - 2033.33
-
-    ir = max(round(ir, 2), 0)
-    net = round(gross - cnss - ir - deductions, 2)
-
-    return {"cnss": cnss, "ir": ir, "net_salary": net}
-
-
 # ── List ──────────────────────────────────────────────────────
 
 @router.get("")
@@ -74,29 +43,7 @@ def list_payroll(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    query = (
-        supabase.table("payroll_records")
-        .select("*, employees(id, full_name, position, department)")
-    )
-    if month:
-        query = query.eq("month", month)
-    if year:
-        query = query.eq("year", year)
-    if employee_id:
-        query = query.eq("employee_id", employee_id)
-
-    res = query.order("year", desc=True).order("month", desc=True).range(skip, skip + limit - 1).execute()
-
-    # Count
-    cq = supabase.table("payroll_records").select("id", count="exact")
-    if month:
-        cq = cq.eq("month", month)
-    if year:
-        cq = cq.eq("year", year)
-    if employee_id:
-        cq = cq.eq("employee_id", employee_id)
-    count_res = cq.execute()
-
+    res, count_res = payroll_repository.list_payroll(supabase, month, year, employee_id, skip, limit)
     return {"data": res.data, "count": count_res.count or 0}
 
 
@@ -114,7 +61,7 @@ def create_payroll(
     data["created_by"] = current_user["id"]
     data["status"] = "draft"
 
-    res = supabase.table("payroll_records").insert(data).execute()
+    res = payroll_repository.create_payroll(supabase, data)
     if not res.data:
         raise HTTPException(status_code=400, detail="Could not create payroll record (may already exist for this month/year)")
 
@@ -138,7 +85,7 @@ def update_payroll(
 
     # Recalculate if salary components changed
     if "bonuses" in data or "deductions" in data:
-        rec_res = supabase.table("payroll_records").select("base_salary, bonuses, deductions").eq("id", record_id).maybe_single().execute()
+        rec_res = payroll_repository.get_payroll_components(supabase, record_id)
         if rec_res.data:
             base = rec_res.data["base_salary"]
             bonuses = data.get("bonuses", rec_res.data["bonuses"])
@@ -150,7 +97,7 @@ def update_payroll(
         from datetime import datetime
         data["paid_at"] = datetime.utcnow().isoformat()
 
-    res = supabase.table("payroll_records").update(data).eq("id", record_id).execute()
+    res = payroll_repository.update_payroll(supabase, record_id, data)
     if not res.data:
         raise HTTPException(status_code=404, detail="Payroll record not found")
 
@@ -164,7 +111,7 @@ def delete_payroll(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    res = supabase.table("payroll_records").delete().eq("id", record_id).execute()
+    res = payroll_repository.delete_payroll(supabase, record_id)
     if not res.data:
         raise HTTPException(status_code=404, detail="Payroll record not found")
     log_action(supabase, current_user["id"], "DELETE", "payroll_record", record_id)
@@ -180,7 +127,7 @@ def generate_bulk_payroll(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     """Auto-generate draft payroll for all active employees for a given month/year."""
-    emp_res = supabase.table("employees").select("id, full_name, salary").eq("status", "active").execute()
+    emp_res = payroll_repository.list_active_employees_for_payroll(supabase)
     employees = emp_res.data or []
 
     created, skipped_existing, no_salary_names = 0, 0, []
@@ -202,7 +149,7 @@ def generate_bulk_payroll(
             "created_by": current_user["id"],
         }
         try:
-            supabase.table("payroll_records").insert(record).execute()
+            payroll_repository.create_payroll(supabase, record)
             created += 1
         except Exception:
             skipped_existing += 1  # Already exists for this month/year
@@ -224,13 +171,7 @@ def get_payroll_pdf(
     current_user: dict = Depends(get_current_user),
 ):
     """Generate and return a PDF payslip for a specific record."""
-    res = (
-        supabase.table("payroll_records")
-        .select("*, employees(id, full_name, position, department)")
-        .eq("id", record_id)
-        .maybe_single()
-        .execute()
-    )
+    res = payroll_repository.get_payroll_with_employee(supabase, record_id)
     if not res.data:
         raise HTTPException(status_code=404, detail="Payroll record not found")
     

@@ -1,10 +1,12 @@
 """Users & account management — /api/users"""
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from supabase import Client
 
 from app.database import get_db
 from app.dependencies import require_admin, require_hr_or_admin, get_current_user
+from app.repositories import user_repository
 
 router = APIRouter(prefix="/users", tags=["User Management"])
 
@@ -41,10 +43,10 @@ async def list_users(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        roles_res = db.table("user_roles").select("user_id, role, created_at").execute()
+        roles_res = user_repository.list_user_roles(db)
         roles = {r["user_id"]: r for r in (roles_res.data or [])}
 
-        profiles_res = db.table("profiles").select("user_id, full_name, email, created_at").execute()
+        profiles_res = user_repository.list_profiles_summary(db)
 
         merged = []
         for p in (profiles_res.data or []):
@@ -78,9 +80,9 @@ async def update_user_role(
     try:
         db_role = _to_db_role(body.role)
         # Always delete existing entry first (avoids unique-constraint issues)
-        db.table("user_roles").delete().eq("user_id", user_id).execute()
+        user_repository.delete_user_role(db, user_id)
         if db_role:
-            result = db.table("user_roles").insert({"user_id": user_id, "role": db_role}).execute()
+            result = user_repository.create_user_role(db, user_id, db_role)
             return {"user_id": user_id, "role": _to_display_role(db_role)}
         # Employee — no entry needed
         return {"user_id": user_id, "role": "employee"}
@@ -110,12 +112,7 @@ async def create_user_account(
 
     # Create Supabase auth user (auto-confirmed)
     try:
-        user_res = db.auth.admin.create_user({
-            "email":         email,
-            "password":      password,
-            "email_confirm": True,
-            "user_metadata": {"full_name": full_name},
-        })
+        user_res = user_repository.create_auth_user(db, email, password, full_name)
         user_id = user_res.user.id
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erreur création compte: {str(e)}")
@@ -123,19 +120,15 @@ async def create_user_account(
     # Assign role in user_roles (HR Admin only; employees have no entry)
     if db_role:
         try:
-            db.table("user_roles").delete().eq("user_id", user_id).execute()
-            db.table("user_roles").insert({"user_id": user_id, "role": db_role}).execute()
+            user_repository.delete_user_role(db, user_id)
+            user_repository.create_user_role(db, user_id, db_role)
         except Exception:
             pass
 
     # Create profile
     try:
-        db.table("profiles").delete().eq("user_id", user_id).execute()
-        db.table("profiles").insert({
-            "user_id":   user_id,
-            "full_name": full_name,
-            "email":     email,
-        }).execute()
+        user_repository.delete_profile(db, user_id)
+        user_repository.create_profile(db, user_id, full_name, email)
     except Exception:
         pass
 
@@ -143,7 +136,7 @@ async def create_user_account(
     employee_id = payload.get("employee_id")
     if employee_id:
         try:
-            db.table("employees").update({"email": email}).eq("id", employee_id).execute()
+            user_repository.link_employee_email(db, employee_id, email)
         except Exception:
             pass
 
@@ -164,14 +157,7 @@ async def list_doc_requests(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     try:
-        q = (
-            db.table("document_requests")
-            .select("*, employees(id,full_name,department,position)")
-            .order("created_at", desc=True)
-        )
-        if status:
-            q = q.eq("status", status)
-        return q.execute().data or []
+        return user_repository.list_document_requests(db, status).data or []
     except Exception:
         return []
 
@@ -184,9 +170,9 @@ async def update_doc_request(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     payload.pop("id", None)
-    payload["updated_at"] = __import__("datetime").datetime.utcnow().isoformat()
+    payload["updated_at"] = datetime.utcnow().isoformat()
     try:
-        res = db.table("document_requests").update(payload).eq("id", req_id).execute()
+        res = user_repository.update_document_request(db, req_id, payload)
         return (res.data or [{}])[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

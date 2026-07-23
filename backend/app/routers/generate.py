@@ -10,6 +10,7 @@ from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.audit import log_action
+from app.repositories import generated_document_repository
 
 router = APIRouter(prefix="/documents", tags=["Generate"])
 
@@ -97,13 +98,13 @@ def generate_doc(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     # 1. Fetch template
-    t_res = supabase.table("document_templates").select("*").eq("id", payload.template_id).maybe_single().execute()
+    t_res = generated_document_repository.get_template(supabase, payload.template_id)
     if not t_res.data:
         raise HTTPException(status_code=404, detail="Template introuvable")
     template = t_res.data
 
     # 2. Fetch employee
-    e_res = supabase.table("employees").select("*").eq("id", payload.employee_id).maybe_single().execute()
+    e_res = generated_document_repository.get_employee(supabase, payload.employee_id)
     if not e_res.data:
         raise HTTPException(status_code=404, detail="Employé introuvable")
     employee = e_res.data
@@ -129,7 +130,7 @@ def generate_doc(
         "language":      payload.language,
     }
     try:
-        ins = supabase.table("generated_documents").insert(doc_data).execute()
+        ins = generated_document_repository.create_generated_document(supabase, doc_data)
         doc = ins.data[0] if ins.data else doc_data
     except Exception:
         doc = {**doc_data, "id": "local", "created_at": str(date.today())}
@@ -164,7 +165,7 @@ def generate_doc(
             "mime_type": "application/pdf",
             "uploaded_by": current_user["id"],
         }
-        res = supabase.table("employee_files").insert(record).execute()
+        res = generated_document_repository.create_employee_file(supabase, record)
         if res.data:
             log_action(supabase, current_user["id"], "UPLOAD_FILE_GENERATED", "employee_file", res.data[0]["id"])
     except Exception as e:
@@ -307,13 +308,7 @@ def get_generated_doc(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    res = (
-        supabase.table("generated_documents")
-        .select("*, employees(full_name)")
-        .eq("id", doc_id)
-        .maybe_single()
-        .execute()
-    )
+    res = generated_document_repository.get_generated_document_with_employee(supabase, doc_id)
     if not res.data:
         raise HTTPException(status_code=404, detail="Document introuvable")
     return res.data
@@ -325,7 +320,7 @@ def download_docx(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    res = supabase.table("generated_documents").select("*").eq("id", doc_id).maybe_single().execute()
+    res = generated_document_repository.get_generated_document(supabase, doc_id)
     if not res.data:
         raise HTTPException(status_code=404, detail="Document introuvable")
 
@@ -419,7 +414,7 @@ def download_pdf(
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    res = supabase.table("generated_documents").select("*").eq("id", doc_id).maybe_single().execute()
+    res = generated_document_repository.get_generated_document(supabase, doc_id)
     if not res.data:
         raise HTTPException(status_code=404, detail="Document introuvable")
 

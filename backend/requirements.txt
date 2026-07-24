@@ -23,8 +23,10 @@ celery
 flower
 loguru
 aiofiles
-loguru
 email-validator
 supabase
 reportlab
 httpx
+pandas
+openpyxl
+xlrd

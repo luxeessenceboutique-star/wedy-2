@@ -86,3 +86,76 @@ export const analyzeEmployeeFolder = (employee_id: string) =>
 
 export const applyAnalysis = (employee_id: string, fields: Record<string, unknown>) =>
   api.post<Employee>(`/employees/${employee_id}/apply-analysis`, fields).then(r => r.data);
+
+// ── AI-powered bulk import ─────────────────────────────────────────────────
+
+export type ImportTargetType = 'employee' | 'intern';
+
+export type ImportColumnMapping = {
+  mapping: Record<string, string | null>;
+  method: Record<string, 'exact' | 'fuzzy' | 'ai' | 'unmapped'>;
+};
+
+export type ImportDuplicateMatch = {
+  duplicate: true;
+  source: 'database' | 'file';
+  matched_id?: string;
+  matched_status?: string;
+  matched_row_index?: number;
+  matched_on: string;
+};
+
+export type ImportRowAction = 'create' | 'update' | 'skip';
+
+export type ImportPreviewRow = {
+  row_index: number;
+  data: Partial<Employee>;
+  custom_fields: Record<string, unknown>;
+  errors: string[];
+  duplicate: ImportDuplicateMatch | null;
+};
+
+export type ImportSummary = {
+  total_rows: number;
+  valid_rows: number;
+  invalid_rows: number;
+  missing_required_fields: number;
+  duplicate_employees: number;
+  duplicate_interns: number;
+  duplicate_in_file: number;
+};
+
+export type ImportPreviewResponse = {
+  column_mapping: ImportColumnMapping;
+  rows: ImportPreviewRow[];
+  summary: ImportSummary;
+};
+
+export type ImportCommitRow = {
+  data: Partial<Employee>;
+  custom_fields: Record<string, unknown>;
+  action: ImportRowAction;
+  matched_id?: string;
+};
+
+export type ImportCommitResult = { created: number; updated: number; skipped: number };
+
+export const previewEmployeeImport = (file: File, targetType: ImportTargetType) => {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('target_type', targetType);
+  return api.post<ImportPreviewResponse>('/employees/import/preview', form, { timeout: 180000 }).then(r => r.data);
+};
+
+export const commitEmployeeImport = (
+  targetType: ImportTargetType,
+  filename: string,
+  columnMapping: ImportColumnMapping,
+  rows: ImportCommitRow[],
+) =>
+  api.post<ImportCommitResult>('/employees/import/commit', {
+    target_type: targetType,
+    filename,
+    column_mapping: columnMapping,
+    rows,
+  }, { timeout: 180000 }).then(r => r.data);

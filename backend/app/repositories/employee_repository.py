@@ -60,3 +60,56 @@ def update_employee(supabase: Client, employee_id: str, data: dict):
 
 def delete_employee(supabase: Client, employee_id: str):
     return supabase.table("employees").delete().eq("id", employee_id).execute()
+
+
+# ── Bulk import support ───────────────────────────────────────────────────────
+
+def find_by_identifiers(supabase: Client, cins: list[str], emails: list[str], phones: list[str]) -> list[dict]:
+    """
+    Fetch id/status/cin/email/phone for every existing employee or intern
+    matching any of the given identifiers. Uses one parameterized `.in_()`
+    query per field (rather than hand-building a single OR filter string)
+    so identifier values can't break or inject into the filter syntax.
+    Used by import_service.match_duplicates. Returns a plain merged list,
+    not a raw Supabase response — this already combines multiple queries.
+    """
+    by_id: dict[str, dict] = {}
+    for field, values in (("cin", cins), ("email", emails), ("phone", phones)):
+        if not values:
+            continue
+        res = (
+            supabase.table("employees")
+            .select("id, status, cin, email, phone")
+            .in_(field, values)
+            .execute()
+        )
+        for row in res.data or []:
+            by_id[row["id"]] = row
+    return list(by_id.values())
+
+
+def bulk_create_employees(supabase: Client, rows: list[dict], batch_size: int = 500):
+    """Insert many employee rows in chunks rather than one call per row."""
+    created = []
+    for i in range(0, len(rows), batch_size):
+        chunk = rows[i:i + batch_size]
+        res = supabase.table("employees").insert(chunk).execute()
+        created.extend(res.data or [])
+    return created
+
+
+def create_import_log(supabase: Client, record: dict):
+    return supabase.table("import_logs").insert(record).execute()
+
+
+def bulk_update_employees(supabase: Client, updates: list[tuple[str, dict]]):
+    """Update many existing employees by id. Supabase/PostgREST has no
+    per-row-different-values bulk update, so this loops server-side — still
+    far faster than the previous client-side loop since it's backend-to-Supabase,
+    not browser-to-backend-to-Supabase per row."""
+    updated = []
+    for employee_id, data in updates:
+        res = supabase.table("employees").update(data).eq("id", employee_id).execute()
+        if res.data:
+            updated.extend(res.data)
+    return updated

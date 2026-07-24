@@ -13,6 +13,7 @@ from app.database import get_db
 from app.dependencies import get_current_user, require_role, require_hr_or_admin
 from app.schemas import EmployeeCreate, EmployeeUpdate, EmployeeOut
 from app.services.audit import log_action
+from app.services import import_service
 from app.config import settings
 from app.repositories import employee_repository
 
@@ -45,6 +46,134 @@ def list_employees(
         supabase, status, str(department_id) if department_id else None, search, exclude_intern, skip, limit
     )
     return _serialize({"data": response.data, "count": response.count or 0})
+
+
+# ── Bulk import (BEFORE parameterized /{employee_id}) ─────────────────────────
+
+@router.post("/import/preview")
+async def preview_import(
+    file: UploadFile = File(...),
+    target_type: str = Form("employee"),
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """
+    Parse an uploaded spreadsheet, map every header to a known field (or
+    custom_fields), clean/normalize every value, validate each row, and flag
+    duplicates against existing records — without writing anything to the DB.
+    The frontend renders this as an editable preview before commit_import.
+    """
+    content = await file.read()
+    filename = file.filename or "import.xlsx"
+
+    try:
+        headers, raw_rows = import_service.parse_spreadsheet(content, filename)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Impossible de lire le fichier : {e}")
+
+    if not raw_rows:
+        raise HTTPException(status_code=422, detail="Le fichier ne contient aucune ligne de données.")
+
+    mapping_result = import_service.map_columns(headers)
+    mapping = mapping_result["mapping"]
+
+    cleaned_rows, custom_rows, row_errors = [], [], []
+    for raw in raw_rows:
+        cleaned, custom, warnings = import_service.clean_row(raw, mapping)
+        errors = warnings + import_service.validate_row(cleaned)
+        cleaned_rows.append(cleaned)
+        custom_rows.append(custom)
+        row_errors.append(errors)
+
+    cins = [r["cin"] for r in cleaned_rows if r.get("cin")]
+    emails = [r["email"] for r in cleaned_rows if r.get("email")]
+    phones = [r["phone"] for r in cleaned_rows if r.get("phone")]
+    existing = employee_repository.find_by_identifiers(supabase, cins, emails, phones)
+    duplicates = import_service.match_duplicates(cleaned_rows, existing)
+
+    row_results = []
+    for i in range(len(cleaned_rows)):
+        row_results.append({
+            "row_index":     i,
+            "data":          _serialize(cleaned_rows[i]),
+            "custom_fields": custom_rows[i],
+            "errors":        row_errors[i],
+            "duplicate":     duplicates.get(i),
+        })
+
+    return {
+        "column_mapping": mapping_result,
+        "rows":            row_results,
+        "summary":         import_service.build_summary(row_results),
+    }
+
+
+@router.post("/import/commit")
+def commit_import(
+    payload: dict,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """
+    Write a reviewed import to the database. Expected payload shape:
+    {target_type, filename, column_mapping, rows: [{data, custom_fields, action, matched_id}]}
+    where action is one of 'create' | 'update' | 'skip', and 'update' does a
+    full overwrite of every non-empty field the spreadsheet provided (blank
+    cells never clobber existing data — they're simply absent from `data`).
+    """
+    target_type = payload.get("target_type", "employee")
+    rows = payload.get("rows", [])
+
+    to_create, to_update = [], []
+    skipped = 0
+
+    for row in rows:
+        action = row.get("action", "create")
+        if action == "skip":
+            skipped += 1
+            continue
+
+        data = {k: v for k, v in (row.get("data") or {}).items() if v not in (None, "", [])}
+        custom = row.get("custom_fields") or {}
+        if custom:
+            data["custom_fields"] = custom
+        if target_type == "intern":
+            data["status"] = "intern"
+            data.setdefault("contract_type", "Stage")
+
+        if action == "update" and row.get("matched_id"):
+            to_update.append((row["matched_id"], data))
+        else:
+            data["created_by"] = current_user["id"]
+            to_create.append(data)
+
+    try:
+        created = employee_repository.bulk_create_employees(supabase, to_create) if to_create else []
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erreur lors de la création en masse : {e}")
+
+    try:
+        updated = employee_repository.bulk_update_employees(supabase, to_update) if to_update else []
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Erreur lors de la mise à jour en masse : {e}")
+
+    try:
+        employee_repository.create_import_log(supabase, {
+            "entity_type":    target_type,
+            "filename":       payload.get("filename"),
+            "total_rows":     len(rows),
+            "created_count":  len(created),
+            "updated_count":  len(updated),
+            "skipped_count":  skipped,
+            "failed_count":   0,
+            "column_mapping": payload.get("column_mapping") or {},
+            "initiated_by":   current_user["id"],
+        })
+    except Exception:
+        pass
+    log_action(supabase, current_user["id"], "IMPORT", target_type, None)
+
+    return {"created": len(created), "updated": len(updated), "skipped": skipped}
 
 
 # ── Employee file sub-resources (BEFORE parameterized /{employee_id}) ─────────

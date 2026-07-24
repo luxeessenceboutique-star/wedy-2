@@ -313,6 +313,81 @@ def convert_to_html_template(raw_text: str) -> str:
     return _local_convert_template(raw_text)
 
 
+_HEADER_MAPPING_SYSTEM = """You are an expert HR data analyst. You will be given a list of
+spreadsheet column headers (possibly in French, English, or Arabic, possibly abbreviated
+or ambiguous) and a list of known employee-record field names.
+
+For each header, decide which known field it most likely represents, or null if it does not
+match any of them (e.g. it's clearly something else like a free-text comment column).
+
+Return ONLY a single valid JSON object mapping each input header (exactly as given) to either
+one of the known field names or null. No markdown, no explanation, no extra keys."""
+
+
+def map_import_headers(headers: list[str], known_fields: list[str]) -> dict:
+    """
+    Ask the AI to map spreadsheet headers that couldn't be resolved by the
+    deterministic synonym/fuzzy matcher (see app/services/import_service.py).
+    Called once per import with only the *remaining ambiguous* headers, not
+    once per column — keeps cost and latency low even for wide spreadsheets.
+
+    Returns {header: field_name_or_None}. On any failure (no API key, bad
+    JSON, request error) returns {} so the caller can fall back to leaving
+    those headers unmapped (they end up in custom_fields).
+    """
+    if not headers:
+        return {}
+
+    prompt = (
+        f"Known fields: {known_fields}\n\n"
+        f"Headers to map: {headers}"
+    )
+
+    raw = ""
+    try:
+        anthropic_key = settings.ANTHROPIC_API_KEY
+        if anthropic_key:
+            client = get_client()
+            resp = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=1024,
+                system=_HEADER_MAPPING_SYSTEM,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw = resp.content[0].text.strip()
+        elif settings.OPENAI_API_KEY:
+            from openai import OpenAI as _OpenAI
+            base = settings.OPENAI_BASE_URL or None
+            if base and not base.rstrip("/").endswith("/v1"):
+                base = base.rstrip("/") + "/v1"
+            oa = _OpenAI(api_key=settings.OPENAI_API_KEY, base_url=base)
+            resp = oa.chat.completions.create(
+                model=settings.OPENAI_MODEL or "gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": _HEADER_MAPPING_SYSTEM},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=1024,
+                temperature=0.0,
+            )
+            raw = resp.choices[0].message.content.strip()
+        else:
+            return {}
+    except Exception:
+        return {}
+
+    if "```" in raw:
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+    try:
+        import json
+        result = json.loads(raw.strip())
+        return result if isinstance(result, dict) else {}
+    except json.JSONDecodeError:
+        return {}
+
+
 _CLEAN_SYSTEM = """You are an expert HR document formatter for TYTHON, a Moroccan company.
 
 Your task is to take HTML extracted from a PDF or DOCX and return a CLEAN, PROFESSIONAL version that:

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth, isHRRole, isEmployeeRole } from '@/lib/auth';
+import { useAuth, isHRRole } from '@/lib/auth';
 import { AppShell } from '@/components/layout/AppShell';
 import { AppShellEmployee } from '@/components/layout/AppShellEmployee';
 
@@ -53,21 +53,25 @@ const Loader = () => (
   </div>
 );
 
-/** HR / Admin access only — redirects employees to their portal */
+/** HR / Admin access only — redirects employees (and unresolved roles) to their portal */
 function RequireHR({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <Loader />;
   if (!user) return <Navigate to="/login" replace />;
-  if (isEmployeeRole(user.role_name)) return <Navigate to="/employee" replace />;
+  // Resolve the role from either field; treat missing/unrecognised roles as employee
+  const role = user.role_name ?? user.role;
+  if (!isHRRole(role)) return <Navigate to="/employee" replace />;
   return <AppShell>{children}</AppShell>;
 }
 
-/** Employee access — redirects HR to the full portal */
+/** Employee access — redirects HR/Admin to the management portal */
 function RequireEmployee({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <Loader />;
   if (!user) return <Navigate to="/login" replace />;
-  if (isHRRole(user.role_name)) return <Navigate to="/app" replace />;
+  // Resolve the role from either field
+  const role = user.role_name ?? user.role;
+  if (isHRRole(role)) return <Navigate to="/app" replace />;
   return <AppShellEmployee>{children}</AppShellEmployee>;
 }
 

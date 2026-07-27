@@ -58,9 +58,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role_name: resolvedRole,
     };
 
-    // Enrich with full profile in background (non-blocking)
-    getMe().then(full => setUser(full)).catch(() => setUser(me));
+    // Set user immediately with the role from the login response.
     setUser(me);
+
+    // Enrich with full profile data in background (non-blocking).
+    // IMPORTANT: always keep resolvedRole, never let /auth/me overwrite it.
+    // get_current_user() re-queries user_roles; if that row is absent or the
+    // Supabase query fails, it silently defaults to "employee" — which would
+    // downgrade an HR admin after they have already been redirected to /app.
+    getMe()
+      .then((full: User) => {
+        setUser({
+          ...full,
+          role:      resolvedRole,
+          role_name: resolvedRole,
+        });
+      })
+      .catch(() => {
+        // /auth/me failed — me (with resolvedRole) already set above, nothing to do
+      });
 
     return { role: resolvedRole };
   };

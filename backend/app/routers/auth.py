@@ -45,7 +45,7 @@ def login(payload: LoginRequest, supabase: Client = Depends(get_db)):
 @router.post("/register", response_model=UserOut)
 def register(payload: RegisterRequest, supabase: Client = Depends(get_db)):
     """Register via admin API (bypasses Supabase public-signup restrictions)."""
-    full_name = getattr(payload, "full_name", None) or payload.email.split("@")[0]
+    full_name = payload.full_name or payload.email.split("@")[0]
     try:
         res = auth_repository.create_user(supabase, payload.email, payload.password, full_name)
         if not res.user:

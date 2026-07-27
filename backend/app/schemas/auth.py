@@ -12,6 +12,7 @@ class LoginRequest(BaseModel):
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
+    full_name: Optional[str] = None
     role: str = "employee"  # admin | hr | manager | employee | intern
 
 

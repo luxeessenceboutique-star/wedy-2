@@ -4,7 +4,7 @@ import {
   Plus, Search, Pencil, Trash2, FileUp, GraduationCap, User, Calendar, Mail, Phone,
   Camera, X, FileText, CheckCircle2, TrendingUp, Eye, Settings, ClipboardList,
   Star, ChevronDown, ChevronUp, Target, UserCheck, Zap, Shield, Flame, BookOpen, Award,
-  ArrowUpDown,
+  Upload, Download,
 } from 'lucide-react';
 import {
   listInterns, createIntern, updateIntern, deleteIntern, uploadDocument, listDocuments, deleteDocument,
@@ -13,7 +13,8 @@ import {
 } from '@/services/api';
 import type { Intern, InternOnboarding, InternEvaluation, ChecklistItem, Objective } from '@/services/api';
 import { CVImportModal } from '@/components/employees/CVImportModal';
-import { ImportExportModal } from '@/components/employees/ImportExportModal';
+import { SmartImportModal } from '@/components/employees/SmartImportModal';
+import { ExportModal } from '@/components/employees/ExportModal';
 import { DepartmentsModal } from '@/components/employees/DepartmentsModal';
 import { Button, Badge, Input, Modal, Spinner, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
@@ -634,7 +635,8 @@ export default function InternsPage() {
   const qc = useQueryClient();
   const [search, setSearch]         = useState('');
   const [showCVImport, setShowCVImport] = useState(false);
-  const [showImportExport, setShowImportExport] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [editing, setEditing]       = useState<Intern | null>(null);
   const [prefill, setPrefill]       = useState<Partial<Intern> | null>(null);
   const [viewingIntern, setViewingIntern] = useState<Intern | null>(null);
@@ -698,8 +700,11 @@ export default function InternsPage() {
             <Button variant="soft" onClick={() => setShowCVImport(true)}>
               <FileUp size={14} /> Importer CV
             </Button>
-            <Button variant="soft" onClick={() => setShowImportExport(true)}>
-              <ArrowUpDown size={14} /> Import / Export
+            <Button variant="soft" onClick={() => setShowImport(true)}>
+              <Upload size={14} /> Importer
+            </Button>
+            <Button variant="soft" onClick={() => setShowExport(true)}>
+              <Download size={14} /> Exporter
             </Button>
             <Button onClick={() => setEditing({} as Intern)}>
               <Plus size={14} /> Nouveau stagiaire
@@ -1043,15 +1048,23 @@ export default function InternsPage() {
         />
       )}
 
-      {/* Import / Export modal */}
-      <ImportExportModal
-        open={showImportExport}
-        onClose={() => { setShowImportExport(false); qc.invalidateQueries({ queryKey: ['interns'] }); }}
+      {/* Smart import modal */}
+      <SmartImportModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        cols={INTERN_COLS}
+        entityName="Stagiaires"
+        targetType="intern"
+        onImported={() => qc.invalidateQueries({ queryKey: ['interns'] })}
+      />
+
+      {/* Export modal */}
+      <ExportModal
+        open={showExport}
+        onClose={() => setShowExport(false)}
         cols={INTERN_COLS}
         rows={interns as unknown as Record<string, unknown>[]}
         entityName="Stagiaires"
-        arrayFields={['skills', 'languages', 'certifications']}
-        onCreate={row => createIntern({ ...row, status: 'intern', contract_type: 'Stage' } as Partial<Intern>)}
       />
 
       <DepartmentsModal open={showDeptManager} onClose={() => setShowDeptManager(false)} />

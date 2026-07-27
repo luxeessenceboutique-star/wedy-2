@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, ChevronUp, FileUp, Eye, X, ArrowUpDown } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, ChevronUp, FileUp, Eye, X, Upload, Download } from 'lucide-react';
 import { listEmployees, createEmployee, updateEmployee, deleteEmployee, listDepartments, listContractTypes, getApiError } from '@/services/api';
 import type { Employee } from '@/services/api';
 import { Button, Badge, Card, Input, Select, Modal, Spinner, Empty, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
 import { CVImportModal } from '@/components/employees/CVImportModal';
-import { ImportExportModal } from '@/components/employees/ImportExportModal';
+import { SmartImportModal } from '@/components/employees/SmartImportModal';
+import { ExportModal } from '@/components/employees/ExportModal';
 import { DepartmentsModal } from '@/components/employees/DepartmentsModal';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
@@ -271,7 +272,8 @@ export default function EmployeesPage() {
   const [status, setStatus] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showCVImport, setShowCVImport] = useState(false);
-  const [showImportExport, setShowImportExport] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [showDeptManager, setShowDeptManager] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -321,8 +323,11 @@ export default function EmployeesPage() {
             <Button variant="soft" onClick={() => setShowCVImport(true)}>
               <FileUp size={14} /> {t('import_cv')}
             </Button>
-            <Button variant="soft" onClick={() => setShowImportExport(true)}>
-              <ArrowUpDown size={14} /> Import / Export
+            <Button variant="soft" onClick={() => setShowImport(true)}>
+              <Upload size={14} /> Importer
+            </Button>
+            <Button variant="soft" onClick={() => setShowExport(true)}>
+              <Download size={14} /> Exporter
             </Button>
             <Button onClick={() => setShowModal(true)}>
               <Plus size={14} /> {t('add_employee')}
@@ -507,15 +512,23 @@ export default function EmployeesPage() {
         />
       )}
 
-      {/* Import / Export modal */}
-      <ImportExportModal
-        open={showImportExport}
-        onClose={() => { setShowImportExport(false); qc.invalidateQueries({ queryKey: ['employees'] }); }}
+      {/* Smart import modal */}
+      <SmartImportModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        cols={EMPLOYEE_COLS}
+        entityName="Employés"
+        targetType="employee"
+        onImported={() => qc.invalidateQueries({ queryKey: ['employees'] })}
+      />
+
+      {/* Export modal */}
+      <ExportModal
+        open={showExport}
+        onClose={() => setShowExport(false)}
         cols={EMPLOYEE_COLS}
         rows={employees as unknown as Record<string, unknown>[]}
         entityName="Employés"
-        arrayFields={['skills', 'languages', 'certifications']}
-        onCreate={row => createEmployee(row as Partial<Employee>)}
       />
 
       <DepartmentsModal open={showDeptManager} onClose={() => setShowDeptManager(false)} />

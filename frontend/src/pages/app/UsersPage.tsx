@@ -9,7 +9,8 @@ import { UserPlus, ShieldCheck, Eye, EyeOff, Copy, CheckCircle, Shield, User, Li
 // ── API ────────────────────────────────────────────────────────────────────────
 const listUsers       = () => api.get('/users').then(r => r.data);
 const createUser      = (body: any) => api.post('/users/create-employee', body).then(r => r.data);
-const changeUserRole  = (userId: string, role: string) => api.patch(`/users/${userId}/role`, { role }).then(r => r.data);
+const changeUserRole  = (u: { email: string; full_name?: string }, role: string) =>
+  api.patch('/users/role-by-email', { email: u.email, full_name: u.full_name ?? '', role }).then(r => r.data);
 const listDocRequests = () => api.get('/users/document-requests').then(r => r.data).catch(() => []);
 const updateDocRequest = (id: string, body: any) => api.patch(`/users/document-requests/${id}`, body).then(r => r.data);
 
@@ -224,7 +225,7 @@ function CreateUserModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 }
 
 // ── Role Change Dropdown ───────────────────────────────────────────────────────
-function RoleDropdown({ userId, currentRole, onChanged }: { userId: string; currentRole: string; onChanged: () => void }) {
+function RoleDropdown({ user, currentRole, onChanged }: { user: { email: string; full_name?: string }; currentRole: string; onChanged: () => void }) {
   const [loading, setLoading] = useState(false);
 
   const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -232,11 +233,11 @@ function RoleDropdown({ userId, currentRole, onChanged }: { userId: string; curr
     if (newRole === currentRole) return;
     setLoading(true);
     try {
-      await changeUserRole(userId, newRole);
+      await changeUserRole(user, newRole);
       toast.success('Rôle mis à jour');
       onChanged();
-    } catch {
-      toast.error('Erreur mise à jour rôle');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || 'Erreur mise à jour rôle');
     } finally {
       setLoading(false);
     }
@@ -274,15 +275,17 @@ export default function UsersPage() {
     queryKey: ['doc-requests-hr'], queryFn: listDocRequests, enabled: tab === 'doc-requests',
   });
 
-  const users: any[] = data?.data ?? [];
+  const [q, setQ] = useState('');
+  const allUsers: any[] = data?.data ?? [];
+  const users: any[] = allUsers.filter(u => !q.trim() || `${u.full_name} ${u.email}`.toLowerCase().includes(q.trim().toLowerCase()));
   const updateDocMut = useMutation({
     mutationFn: ({ id, body }: any) => updateDocRequest(id, body),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['doc-requests-hr'] }); toast.success('Mis à jour'); },
   });
 
   const pendingDocCount = (docRequests as any[]).filter((r: any) => r.status === 'pending').length;
-  const hrCount  = users.filter(u => ['hr', 'rh', 'admin'].includes(u.role)).length;
-  const empCount = users.filter(u => u.role === 'employee').length;
+  const hrCount  = allUsers.filter(u => ['hr', 'rh', 'admin'].includes(u.role)).length;
+  const empCount = allUsers.filter(u => u.role === 'employee').length;
 
   const refresh = () => qc.invalidateQueries({ queryKey: ['users-list'] });
 
@@ -301,7 +304,7 @@ export default function UsersPage() {
       {/* Stats strip */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'Total utilisateurs', value: users.length, color: 'var(--violet)', bg: '#eef2ff' },
+          { label: 'Total utilisateurs', value: allUsers.length, color: 'var(--violet)', bg: '#eef2ff' },
           { label: 'Admins RH',          value: hrCount,      color: 'var(--primary)', bg: 'var(--primary-soft)' },
           { label: 'Employés',           value: empCount,     color: 'var(--success)', bg: 'var(--success-soft)' },
         ].map(s => (
@@ -315,7 +318,7 @@ export default function UsersPage() {
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', gap: 24, marginBottom: 20 }}>
         {[
-          { id: 'users',        label: `Utilisateurs (${users.length})` },
+          { id: 'users',        label: `Utilisateurs (${allUsers.length})` },
           { id: 'doc-requests', label: `Demandes documents${pendingDocCount > 0 ? ` · ${pendingDocCount} en attente` : ''}` },
         ].map(t => (
           <button key={t.id} onClick={() => setTab(t.id as any)} style={{
@@ -328,6 +331,15 @@ export default function UsersPage() {
       </div>
 
       {/* ── Users tab ── */}
+      {tab === 'users' && data?.warning && (
+        <div style={{ marginBottom: 12, padding: '10px 14px', borderRadius: 8, background: '#fef2f2', color: 'var(--danger)', fontSize: 13 }}>
+          Comptes Tybot indisponibles ({data.warning}) — seuls les comptes Wedy sont affichés.
+        </div>
+      )}
+      {tab === 'users' && (
+        <input className="input" placeholder="Rechercher un utilisateur (nom ou email)…" value={q} onChange={e => setQ(e.target.value)}
+          style={{ width: '100%', maxWidth: 420, marginBottom: 12 }} />
+      )}
       {tab === 'users' && (
         <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
           <div style={{
@@ -351,21 +363,26 @@ export default function UsersPage() {
             </div>
           ) : (
             users.map((u: any, i: number) => (
-              <div key={u.user_id ?? i} style={{
+              <div key={u.email ?? i} style={{
                 display: 'grid', gridTemplateColumns: '2fr 2.5fr 1.2fr 1fr',
                 alignItems: 'center', padding: '14px 20px',
                 borderBottom: i < users.length - 1 ? '1px solid var(--line)' : 'none',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Avatar name={u.full_name || 'U'} size={36} />
-                  <span style={{ fontSize: 13, fontWeight: 500 }}>{u.full_name || '—'}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                    <span style={{ fontSize: 13, fontWeight: 500 }}>{u.full_name || '—'}</span>
+                    <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>
+                      {u.source === 'tybot' ? `Tybot${u.tybot_roles?.length ? ' · ' + u.tybot_roles.join(', ') : ''}` : 'Compte Wedy (hors Tybot)'}
+                    </span>
+                  </div>
                 </div>
                 <span style={{ fontSize: 13, color: 'var(--primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {u.email || '—'}
                 </span>
-                <RoleDropdown userId={u.user_id} currentRole={u.role} onChanged={refresh} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--success)', background: 'var(--success-soft)', padding: '3px 10px', borderRadius: 20, width: 'fit-content' }}>
-                  Actif
+                <RoleDropdown user={u} currentRole={u.role} onChanged={refresh} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: u.is_active === false ? 'var(--danger)' : 'var(--success)', background: u.is_active === false ? '#fef2f2' : 'var(--success-soft)', padding: '3px 10px', borderRadius: 20, width: 'fit-content' }}>
+                  {u.is_active === false ? 'Inactif' : 'Actif'}
                 </span>
               </div>
             ))

@@ -35,49 +35,62 @@ class UserRoleUpdate(BaseModel):
     role: str
 
 
-# ── List platform users ────────────────────────────────────────────────────────
+# ── List platform users (Tybot accounts + Wedy-only accounts) ─────────────────
 
 @router.get("")
 async def list_users(
     db: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
+    from app.services import tybot_auth
     try:
         roles_res = user_repository.list_user_roles(db)
         roles = {r["user_id"]: r for r in (roles_res.data or [])}
-
-        profiles_res = user_repository.list_profiles_summary(db)
-
-        merged = []
-        for p in (profiles_res.data or []):
-            uid = p.get("user_id")
-            if not uid:
-                continue
-            role_info = roles.get(uid)
-            raw_role = role_info.get("role") if role_info else None
-            merged.append({
-                "user_id":    uid,
-                "role":       _to_display_role(raw_role),
-                "full_name":  p.get("full_name") or "",
-                "email":      p.get("email") or "",
-                "created_at": p.get("created_at"),
-            })
-
-        return {"data": merged, "count": len(merged)}
+        profiles = user_repository.list_profiles_summary(db).data or []
     except Exception as e:
         return {"data": [], "count": 0, "error": str(e)}
+
+    by_email = {(p.get("email") or "").lower(): p for p in profiles if p.get("email")}
+
+    def row(email, full_name, profile, source, is_active=True, tybot_roles=None):
+        uid = profile.get("user_id") if profile else None
+        raw_role = roles.get(uid, {}).get("role") if uid else None
+        return {
+            "user_id": uid,
+            "email": email,
+            "full_name": full_name,
+            "role": _to_display_role(raw_role),
+            "source": source,
+            "is_active": is_active,
+            "tybot_roles": tybot_roles or [],
+            "created_at": profile.get("created_at") if profile else None,
+        }
+
+    merged, seen, warning = [], set(), None
+    try:
+        for t in tybot_auth.list_tybot_users():
+            seen.add(t["email"])
+            p = by_email.get(t["email"])
+            merged.append(row(t["email"], (p or {}).get("full_name") or t["full_name"], p, "tybot", t["is_active"], t["tybot_roles"]))
+    except HTTPException as e:
+        warning = e.detail
+
+    # Wedy-only accounts (no Tybot account): keep them manageable
+    for email, p in by_email.items():
+        if email not in seen:
+            merged.append(row(email, p.get("full_name") or "", p, "wedy"))
+
+    merged.sort(key=lambda r: (r["role"] == "employee", (r["full_name"] or "").lower()))
+    out = {"data": merged, "count": len(merged)}
+    if warning:
+        out["warning"] = warning
+    return out
 
 
 # ── Update user role ───────────────────────────────────────────────────────────
 
-@router.patch("/{user_id}/role")
-async def update_user_role(
-    user_id: str,
-    body: UserRoleUpdate,
-    db: Client = Depends(get_db),
-    current_user: dict = Depends(require_hr_or_admin),
-):
-    db_role = _to_db_role(body.role)
+def _apply_role(db: Client, user_id: str, body_role: str, current_user: dict) -> dict:
+    db_role = _to_db_role(body_role)
 
     # Never let an HR/admin demote themselves, nor remove the last privileged account:
     # that is how an HR admin ends up locked out as a plain "employee".
@@ -102,6 +115,39 @@ async def update_user_role(
         return {"user_id": user_id, "role": "employee"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+class RoleByEmail(BaseModel):
+    email: str
+    role: str
+    full_name: str = ""
+
+
+@router.patch("/role-by-email")
+async def update_role_by_email(
+    body: RoleByEmail,
+    db: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """Set the Wedy role of a person identified by e-mail (creates the Wedy account on first assignment)."""
+    from app.services import tybot_auth
+    email = body.email.strip().lower()
+    known = {u["email"] for u in tybot_auth.list_tybot_users()}
+    local = db.table("profiles").select("user_id").ilike("email", email).limit(1).execute().data
+    if email not in known and not local:
+        raise HTTPException(status_code=404, detail="Cet email n'existe ni sur Tybot ni dans Wedy")
+    user_id = tybot_auth.resolve_wedy_user_id(db, email, body.full_name)
+    return _apply_role(db, user_id, body.role, current_user)
+
+
+@router.patch("/{user_id}/role")
+async def update_user_role(
+    user_id: str,
+    body: UserRoleUpdate,
+    db: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    return _apply_role(db, user_id, body.role, current_user)
 
 
 # ── Create user account (HR or Employee) ──────────────────────────────────────

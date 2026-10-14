@@ -148,3 +148,37 @@ def resolve_wedy_user_id(supabase: Client, email: str, full_name: str = "") -> s
     ).execute()
     _user_id_cache[email] = user_id
     return user_id
+
+
+_users_cache: tuple[float, list] = (0.0, [])
+
+
+def list_tybot_users(force: bool = False) -> list[dict]:
+    """All accounts of the Tybot domain (API key), normalized. Cached 60 s."""
+    global _users_cache
+    if not force and _users_cache[0] > time.time():
+        return _users_cache[1]
+    if not settings.TYBOTFLOW_API_KEY:
+        raise HTTPException(status_code=503, detail="TYBOTFLOW_API_KEY non configurée")
+    try:
+        r = httpx.get(_url("/users"), headers={"Authorization": settings.TYBOTFLOW_API_KEY}, timeout=30)
+        r.raise_for_status()
+        raw = r.json().get("data", [])
+    except Exception as e:
+        logger.error(f"[TYBOT] list users failed: {e}")
+        raise HTTPException(status_code=502, detail="Impossible de lire les comptes Tybot")
+    users = []
+    for u in raw:
+        email = (u.get("email") or "").strip().lower()
+        if not email:
+            continue
+        name = " ".join(x for x in (u.get("first_name"), u.get("last_name")) if x).strip()
+        users.append({
+            "tybot_id": u.get("id"),
+            "email": email,
+            "full_name": name or email.split("@")[0],
+            "is_active": bool(u.get("is_active", True)) and u.get("status", "active") == "active",
+            "tybot_roles": [r.get("name") for r in (u.get("roles") or []) if r.get("name")],
+        })
+    _users_cache = (time.time() + 60, users)
+    return users

@@ -29,7 +29,7 @@ export interface CVParseRes {
 export const uploadAndParseCV = async (file: File): Promise<CVParseRes> => {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await api.post<CVParseRes>('/cv/upload', formData);
+  const res = await api.post<CVParseRes>('/cv/upload', formData, { timeout: 120000 });
   return res.data;
 };
 

@@ -18,6 +18,15 @@ def create_user_role(supabase: Client, user_id: str, role: str):
     return supabase.table("user_roles").insert({"user_id": user_id, "role": role}).execute()
 
 
+def upsert_user_role(supabase: Client, user_id: str, role: str):
+    return supabase.table("user_roles").upsert({"user_id": user_id, "role": role}, on_conflict="user_id").execute()
+
+
+def count_privileged_roles(supabase: Client) -> int:
+    res = supabase.table("user_roles").select("user_id").in_("role", ["rh", "hr", "admin"]).execute()
+    return len(res.data or [])
+
+
 def create_auth_user(supabase: Client, email: str, password: str, full_name: str):
     return supabase.auth.admin.create_user({
         "email":         email,

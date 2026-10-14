@@ -77,14 +77,28 @@ async def update_user_role(
     db: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
+    db_role = _to_db_role(body.role)
+
+    # Never let an HR/admin demote themselves, nor remove the last privileged account:
+    # that is how an HR admin ends up locked out as a plain "employee".
+    if db_role is None:
+        if user_id == current_user.get("id"):
+            raise HTTPException(status_code=400, detail="Vous ne pouvez pas retirer votre propre accès RH")
+        try:
+            if user_repository.count_privileged_roles(db) <= 1:
+                raise HTTPException(status_code=400, detail="Impossible de retirer le dernier compte RH/admin")
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=503, detail=f"Vérification des rôles impossible: {e}")
+
     try:
-        db_role = _to_db_role(body.role)
-        # Always delete existing entry first (avoids unique-constraint issues)
-        user_repository.delete_user_role(db, user_id)
         if db_role:
-            result = user_repository.create_user_role(db, user_id, db_role)
+            # Upsert (no delete first): a failed insert can no longer leave the user role-less
+            user_repository.upsert_user_role(db, user_id, db_role)
             return {"user_id": user_id, "role": _to_display_role(db_role)}
         # Employee — no entry needed
+        user_repository.delete_user_role(db, user_id)
         return {"user_id": user_id, "role": "employee"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

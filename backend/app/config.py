@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     OPENAI_BASE_URL: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
     ANTHROPIC_API_KEY: str = ""
+    CV_AI_MODEL: str = "claude-sonnet-4-6"
     TYBOTFLOW_API_KEY: str = ""
 
     # Email

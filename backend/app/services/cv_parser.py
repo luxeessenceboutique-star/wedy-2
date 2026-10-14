@@ -69,7 +69,10 @@ def extract_raw_text(file_bytes: bytes, filename: str) -> str:
         if ext == '.pdf':
             import fitz
             doc = fitz.open(stream=file_bytes, filetype='pdf')
-            return '\n'.join(page.get_text() for page in doc)
+            text = '\n'.join(page.get_text() for page in doc)
+            if len(text.strip()) < 80:  # scanned PDF / image-only: OCR every page
+                text = _ocr_pdf(doc) or text
+            return text
         elif ext in ('.docx', '.doc'):
             from docx import Document
             with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as tmp:
@@ -84,6 +87,23 @@ def extract_raw_text(file_bytes: bytes, filename: str) -> str:
     except Exception as e:
         logger.error(f'Text extraction failed: {e}')
     return ''
+
+
+def _ocr_pdf(doc) -> str:
+    """OCR every page of a PDF that has no usable text layer."""
+    try:
+        import fitz
+        import pytesseract
+        from PIL import Image
+        out = []
+        for page in doc:
+            pix = page.get_pixmap(matrix=fitz.Matrix(200 / 72, 200 / 72), alpha=False)
+            img = Image.frombytes('RGB', [pix.width, pix.height], pix.samples)
+            out.append(pytesseract.image_to_string(img, lang='fra+eng+ara'))
+        return '\n'.join(out)
+    except Exception as e:
+        logger.warning(f'PDF OCR failed: {e}')
+        return ''
 
 
 # ── PDF → page images (base64 PNG) ───────────────────────────────────────────
@@ -404,6 +424,104 @@ def local_extract_cv(raw_text: str) -> dict:
         'certifications': _extract_certifications(sections.get('certifications', [])),
         'interests':      ' '.join(sections.get('interests', [])),
     }
+
+
+# ── AI extraction (Claude vision + text) ─────────────────────────────────────
+
+_AI_SYSTEM = """You are an expert CV/resume parser for an HR platform.
+You receive the page images of a CV and the text extracted from it (possibly noisy or incomplete).
+Read the CV carefully, including sidebars, columns, headers and footers, and extract EVERYTHING.
+Rules:
+- full_name is the person's real name (never a section title like CONTACT, PROFIL, CV).
+- Never invent data. Use null / empty list when something is absent.
+- Keep the CV's original language. Keep dates as written (e.g. "15/05/2026 - 15/08/2026").
+- experience: every job/internship/project, most recent first. description = the bullet points joined by " ; " and the technologies if listed.
+- skills: every individual skill/technology/tool as its own short string (no categories, no duplicates).
+- languages: spoken languages with level (Natif, Courant, Avancé, Intermédiaire, Débutant) when stated.
+Return ONLY a JSON object, no markdown, with exactly these keys:
+{"full_name":str|null,"email":str|null,"phone":str|null,"address":str|null,"nationality":str|null,
+"linkedin":str|null,"github":str|null,"portfolio":str|null,"date_of_birth":str|null,"job_title":str|null,
+"summary":str,
+"experience":[{"title":str,"company":str,"dates":str,"description":str}],
+"education":[{"degree":str,"institution":str,"dates":str}],
+"skills":[str],"languages":[{"name":str,"level":str}],
+"certifications":[str],"interests":str}"""
+
+
+def ai_extract_cv_vision(raw_text: str, pages_b64: List[str]) -> Optional[dict]:
+    """Extract structured CV data with Claude (images + text). Returns None if unavailable."""
+    import json
+    from app.config import settings
+    if not settings.ANTHROPIC_API_KEY:
+        return None
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+        content: list = []
+        for b64 in pages_b64[:4]:
+            content.append({'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/png', 'data': b64}})
+        content.append({'type': 'text', 'text': 'Extracted text (may be noisy):\n"""\n' + raw_text[:12000] + '\n"""\n\nReturn the JSON.'})
+        msg = client.messages.create(
+            model=getattr(settings, 'CV_AI_MODEL', 'claude-sonnet-4-6'),
+            max_tokens=4096,
+            system=_AI_SYSTEM,
+            messages=[{'role': 'user', 'content': content}],
+        )
+        text = ''.join(b.text for b in msg.content if getattr(b, 'type', '') == 'text').strip()
+        start, end = text.find('{'), text.rfind('}')
+        return json.loads(text[start:end + 1])
+    except Exception as e:
+        logger.error(f'AI CV extraction failed: {e}')
+        return None
+
+
+def _clean_ai(d: dict) -> dict:
+    def s(v):
+        return v.strip() if isinstance(v, str) and v.strip() else None
+    skills: List[str] = []
+    for x in d.get('skills') or []:
+        x = s(x)
+        if x and x.lower() not in {k.lower() for k in skills}:
+            skills.append(x)
+    return {
+        'full_name': s(d.get('full_name')), 'email': s(d.get('email')), 'phone': s(d.get('phone')),
+        'address': s(d.get('address')), 'nationality': s(d.get('nationality')),
+        'linkedin': s(d.get('linkedin')), 'github': s(d.get('github')),
+        'portfolio': s(d.get('portfolio')), 'date_of_birth': s(d.get('date_of_birth')),
+        'job_title': s(d.get('job_title')),
+        'summary': s(d.get('summary')) or '',
+        'experience': [
+            {'title': e.get('title') or '', 'company': e.get('company') or '',
+             'dates': e.get('dates') or '', 'description': e.get('description') or ''}
+            for e in d.get('experience') or [] if isinstance(e, dict) and (e.get('title') or e.get('company'))
+        ],
+        'education': [
+            {'degree': e.get('degree') or '', 'institution': e.get('institution') or '', 'dates': e.get('dates') or ''}
+            for e in d.get('education') or [] if isinstance(e, dict) and (e.get('degree') or e.get('institution'))
+        ],
+        'skills': skills,
+        'languages': [
+            {'name': l.get('name') or '', 'level': l.get('level') or 'Non précisé'}
+            for l in d.get('languages') or [] if isinstance(l, dict) and l.get('name')
+        ],
+        'certifications': [c.strip() for c in d.get('certifications') or [] if isinstance(c, str) and c.strip()],
+        'interests': s(d.get('interests')) or '',
+    }
+
+
+def smart_extract_cv(raw_text: str, pages_b64: List[str]) -> dict:
+    """AI extraction first; regex extraction fills whatever the AI left empty."""
+    local = local_extract_cv(raw_text)
+    ai = ai_extract_cv_vision(raw_text, pages_b64)
+    if not ai:
+        local['ai_used'] = False
+        return local
+    merged = _clean_ai(ai)
+    for k, v in local.items():
+        if not merged.get(k) and v:
+            merged[k] = v
+    merged['ai_used'] = True
+    return merged
 
 
 # ── Compatibility wrappers ────────────────────────────────────────────────────

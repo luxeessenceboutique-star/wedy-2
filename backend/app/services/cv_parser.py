@@ -448,31 +448,64 @@ Return ONLY a JSON object, no markdown, with exactly these keys:
 "certifications":[str],"interests":str}"""
 
 
-def ai_extract_cv_vision(raw_text: str, pages_b64: List[str]) -> Optional[dict]:
-    """Extract structured CV data with Claude (images + text). Returns None if unavailable."""
+def _parse_json_reply(text: str) -> dict:
     import json
+    text = text.strip()
+    start, end = text.find('{'), text.rfind('}')
+    return json.loads(text[start:end + 1])
+
+
+def _ai_anthropic(raw_text: str, pages_b64: List[str]) -> dict:
+    import anthropic
     from app.config import settings
-    if not settings.ANTHROPIC_API_KEY:
-        return None
-    try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-        content: list = []
-        for b64 in pages_b64[:4]:
-            content.append({'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/png', 'data': b64}})
-        content.append({'type': 'text', 'text': 'Extracted text (may be noisy):\n"""\n' + raw_text[:12000] + '\n"""\n\nReturn the JSON.'})
-        msg = client.messages.create(
-            model=getattr(settings, 'CV_AI_MODEL', 'claude-sonnet-4-6'),
-            max_tokens=4096,
-            system=_AI_SYSTEM,
-            messages=[{'role': 'user', 'content': content}],
-        )
-        text = ''.join(b.text for b in msg.content if getattr(b, 'type', '') == 'text').strip()
-        start, end = text.find('{'), text.rfind('}')
-        return json.loads(text[start:end + 1])
-    except Exception as e:
-        logger.error(f'AI CV extraction failed: {e}')
-        return None
+    client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+    content: list = [
+        {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/png', 'data': b64}}
+        for b64 in pages_b64[:4]
+    ]
+    content.append({'type': 'text', 'text': _AI_USER.format(text=raw_text[:12000])})
+    msg = client.messages.create(
+        model=settings.CV_AI_MODEL, max_tokens=4096, system=_AI_SYSTEM,
+        messages=[{'role': 'user', 'content': content}],
+    )
+    return _parse_json_reply(''.join(b.text for b in msg.content if getattr(b, 'type', '') == 'text'))
+
+
+def _ai_openai(raw_text: str, pages_b64: List[str]) -> dict:
+    """OpenAI-compatible endpoint (OPENAI_BASE_URL / OPENAI_MODEL)."""
+    from openai import OpenAI
+    from app.config import settings
+    client = OpenAI(api_key=settings.OPENAI_API_KEY, base_url=settings.OPENAI_BASE_URL or None, timeout=120)
+    content: list = [
+        {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{b64}'}}
+        for b64 in pages_b64[:4]
+    ]
+    content.append({'type': 'text', 'text': _AI_USER.format(text=raw_text[:12000])})
+    res = client.chat.completions.create(
+        model=settings.OPENAI_MODEL or 'gpt-4.1-mini',
+        temperature=0,
+        messages=[{'role': 'system', 'content': _AI_SYSTEM}, {'role': 'user', 'content': content}],
+    )
+    return _parse_json_reply(res.choices[0].message.content or '')
+
+
+_AI_USER = 'Extracted text (may be noisy):\n"""\n{text}\n"""\n\nReturn the JSON.'
+
+
+def ai_extract_cv_vision(raw_text: str, pages_b64: List[str]) -> Optional[dict]:
+    """Extract structured CV data with an LLM (page images + text). Tries Anthropic, then OpenAI-compatible."""
+    from app.config import settings
+    providers = []
+    if settings.ANTHROPIC_API_KEY:
+        providers.append(('anthropic', _ai_anthropic))
+    if settings.OPENAI_API_KEY:
+        providers.append(('openai', _ai_openai))
+    for name, fn in providers:
+        try:
+            return fn(raw_text, pages_b64)
+        except Exception as e:
+            logger.error(f'AI CV extraction failed ({name}): {e}')
+    return None
 
 
 def _clean_ai(d: dict) -> dict:
@@ -518,7 +551,7 @@ def smart_extract_cv(raw_text: str, pages_b64: List[str]) -> dict:
         return local
     merged = _clean_ai(ai)
     for k, v in local.items():
-        if not merged.get(k) and v:
+        if k != 'nationality' and not merged.get(k) and v:
             merged[k] = v
     merged['ai_used'] = True
     return merged

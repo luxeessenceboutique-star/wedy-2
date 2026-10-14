@@ -4,7 +4,7 @@ from supabase import Client
 
 
 def list_slots(supabase: Client, ad_id: Optional[str], current_date: Optional[str]):
-    query = supabase.table("creneaux").select("*").order("date").order("start_time")
+    query = supabase.table("hr_slots").select("*").order("date").order("start_time")
     if ad_id:
         query = query.or_(f"ad_id.eq.{ad_id},ad_id.is.null")
     if current_date:
@@ -13,8 +13,8 @@ def list_slots(supabase: Client, ad_id: Optional[str], current_date: Optional[st
 
 
 def insert_slots(supabase: Client, records: list):
-    return supabase.table("creneaux").insert(records).execute()
+    return supabase.table("hr_slots").insert(records).execute()
 
 
 def delete_slot(supabase: Client, slot_id: str):
-    return supabase.table("creneaux").delete().eq("id", slot_id).execute()
+    return supabase.table("hr_slots").delete().eq("id", slot_id).execute()

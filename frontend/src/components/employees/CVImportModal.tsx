@@ -132,7 +132,7 @@ function Inner({ onClose, onImport }: CVImportModalProps) {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await api.post('/cv/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const res = await api.post('/cv/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 });
       const d = res.data;
       const e = d.extraction || {};
 

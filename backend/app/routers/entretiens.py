@@ -44,7 +44,8 @@ def list_interviews(supabase: Client = Depends(get_db)):
 
 @router.post("", response_model=InterviewOut)
 def schedule_interview(payload: InterviewCreate, supabase: Client = Depends(get_db)):
-    data = payload.dict(exclude={"slot_id"})
+    # candidate_name / job_title / recruiter_name are display-only: not columns of interviews
+    data = payload.dict(exclude={"slot_id", "candidate_name", "job_title", "recruiter_name"})
     data["date"] = str(data["date"])
     data["candidate_id"] = str(data["candidate_id"])
     if data.get("recruiter_id"):

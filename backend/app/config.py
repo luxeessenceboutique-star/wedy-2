@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
     CV_AI_MODEL: str = "claude-sonnet-4-6"
     TYBOTFLOW_API_KEY: str = ""
+    TYBOT_API_URL: str = "https://api.tybotflow.com/api/v1"
 
     # Email
     MAIL_USERNAME: str = ""

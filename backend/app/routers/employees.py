@@ -35,6 +35,7 @@ def _serialize(obj):
 def list_employees(
     status: Optional[str] = None,
     department_id: Optional[UUID] = None,
+    department: Optional[str] = None,
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
@@ -43,7 +44,8 @@ def list_employees(
     current_user: dict = Depends(require_hr_or_admin),
 ):
     response = employee_repository.list_employees(
-        supabase, status, str(department_id) if department_id else None, search, exclude_intern, skip, limit
+        supabase, status, str(department_id) if department_id else None, search, exclude_intern, skip, limit,
+        department=department,
     )
     return _serialize({"data": response.data, "count": response.count or 0})
 

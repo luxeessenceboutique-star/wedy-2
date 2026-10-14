@@ -3,12 +3,14 @@ from typing import Optional
 from supabase import Client
 
 
-def list_employees(supabase: Client, status: Optional[str], department_id: Optional[str], search: Optional[str], exclude_intern: bool, skip: int, limit: int):
+def list_employees(supabase: Client, status: Optional[str], department_id: Optional[str], search: Optional[str], exclude_intern: bool, skip: int, limit: int, department: Optional[str] = None):
     query = supabase.table("employees").select("*", count="exact")
     if status:
         query = query.eq("status", status)
     elif exclude_intern:
         query = query.neq("status", "intern")
+    if department:
+        query = query.eq("department", department)
     if search:
         query = query.ilike("full_name", f"%{search}%")
     return query.order("created_at", desc=True).range(skip, skip + limit - 1).execute()

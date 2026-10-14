@@ -41,10 +41,15 @@ def get_current_user(
 
     try:
         role_res = supabase.table("user_roles").select("role").eq("user_id", user_id).maybe_single().execute()
-        if role_res.data:
+        if role_res is not None and role_res.data:
             raw_role = role_res.data.get("role", "employee")
-    except Exception:
-        pass  # table may not exist yet — default to employee
+    except Exception as e:
+        # A failed lookup must NOT silently demote an HR admin to "employee".
+        print(f"[AUTH] role lookup failed for {email}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Impossible de vérifier votre rôle pour le moment, réessayez.",
+        )
 
     try:
         profile_res = supabase.table("profiles").select("full_name").eq("user_id", user_id).maybe_single().execute()

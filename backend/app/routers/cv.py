@@ -9,9 +9,10 @@ from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.services.cv_parser import (
-    extract_raw_text, local_extract_cv, extract_pages_as_images,
-    extract_photo, ocr_zone, build_profile_suggestion
+    extract_raw_text, extract_pages_as_images,
+    extract_photo, ocr_zone, build_profile_suggestion, smart_extract_cv
 )
+from starlette.concurrency import run_in_threadpool
 from app.services.audit import log_action
 
 router = APIRouter(prefix="/cv", tags=["CV"])
@@ -40,11 +41,11 @@ async def upload_and_parse_cv(
     # 1. Raw text
     raw_text = extract_raw_text(content, filename)
 
-    # 2. Structured extraction
-    extraction = local_extract_cv(raw_text)
-
-    # 3. Page images (base64 PNG, one per page)
+    # 2. Page images (base64 PNG, one per page)
     pages = extract_pages_as_images(content, filename, dpi=150)
+
+    # 3. Structured extraction: Claude (vision + text), regex fallback
+    extraction = await run_in_threadpool(smart_extract_cv, raw_text, pages)
 
     # 4. Profile photo
     photo_b64 = extract_photo(content, filename)
@@ -122,7 +123,8 @@ async def public_extract_cv(file: UploadFile = File(...)):
         raw_text = extract_raw_text(content, filename)
         
         # 3. Structured extraction
-        extraction = local_extract_cv(raw_text)
+        pages = extract_pages_as_images(content, filename, dpi=130)
+        extraction = await run_in_threadpool(smart_extract_cv, raw_text, pages)
         
         return {
             "id": cv_id,

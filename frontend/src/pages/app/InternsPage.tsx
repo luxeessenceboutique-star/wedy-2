@@ -4,7 +4,7 @@ import {
   Plus, Search, Pencil, Trash2, FileUp, GraduationCap, User, Calendar, Mail, Phone,
   Camera, X, FileText, CheckCircle2, TrendingUp, Eye, Settings, ClipboardList,
   Star, ChevronDown, ChevronUp, Target, UserCheck, Zap, Shield, Flame, BookOpen, Award,
-  Upload, Download,
+  Upload, Download, LayoutGrid, List, Columns3,
 } from 'lucide-react';
 import {
   listInterns, createIntern, updateIntern, deleteIntern, uploadDocument, listDocuments, deleteDocument,
@@ -18,6 +18,7 @@ import { ExportModal } from '@/components/employees/ExportModal';
 import { DepartmentsModal } from '@/components/employees/DepartmentsModal';
 import { Button, Badge, Input, Modal, Spinner, Avatar } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
+import { KanbanBoard } from '../../components/KanbanBoard';
 import { toast } from 'sonner';
 import { format, isValid, differenceInDays } from 'date-fns';
 
@@ -643,6 +644,24 @@ export default function InternsPage() {
   const [activeTab, setActiveTab]   = useState<'info' | 'docs' | 'onboarding' | 'actions'>('info');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeptManager, setShowDeptManager] = useState(false);
+  const [viewMode, setViewMode] = useState<'cards' | 'table' | 'kanban'>(() => {
+    try {
+      const v = localStorage.getItem('interns_view');
+      return v === 'table' || v === 'kanban' ? v : 'cards';
+    } catch { return 'cards'; }
+  });
+  const [kanbanGroup, setKanbanGroup] = useState<'period' | 'department'>(() => {
+    try { return localStorage.getItem('interns_kanban_group') === 'department' ? 'department' : 'period'; } catch { return 'period'; }
+  });
+  const changeKanbanGroup = (g: 'period' | 'department') => {
+    setKanbanGroup(g);
+    try { localStorage.setItem('interns_kanban_group', g); } catch { /* ignore */ }
+  };
+  const { data: kanbanDepts = [] } = useQuery({ queryKey: ['departments'], queryFn: listDepartments });
+  const changeView = (m: 'cards' | 'table' | 'kanban') => {
+    setViewMode(m);
+    try { localStorage.setItem('interns_view', m); } catch { /* storage unavailable: keep in memory only */ }
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ['interns', search],
@@ -683,6 +702,35 @@ export default function InternsPage() {
     onError: () => toast.error('Erreur lors de la suppression'),
   });
 
+  // Kanban drag & drop (department view): update instantly, roll back on error
+  const moveMut = useMutation({
+    mutationFn: ({ id, department }: { id: string; department: string }) => updateIntern(id, { department }),
+    onMutate: async ({ id, department }) => {
+      await qc.cancelQueries({ queryKey: ['interns'] });
+      const snapshots = qc.getQueriesData<{ data: Intern[]; count: number }>({ queryKey: ['interns'] });
+      qc.setQueriesData<{ data: Intern[]; count: number }>({ queryKey: ['interns'] }, old =>
+        old && Array.isArray(old.data) ? { ...old, data: old.data.map(i => (i.id === id ? { ...i, department } : i)) } : old);
+      return { snapshots };
+    },
+    onError: (e: unknown, _vars, ctx) => {
+      ctx?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error(getApiError(e, 'Impossible de déplacer ce stagiaire'));
+    },
+    onSuccess: () => toast.success('Stagiaire déplacé'),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['interns'] }),
+  });
+
+  // Internship period derived from its dates (read-only grouping)
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const periodOf = (i: Intern) => {
+    const s = (i.internship_start || '').slice(0, 10);
+    const e = (i.internship_end || '').slice(0, 10);
+    if (!s && !e) return 'none';
+    if (s && s > todayIso) return 'upcoming';
+    if (e && e < todayIso) return 'done';
+    return 'ongoing';
+  };
+
   const closeModal = () => { setEditing(null); setPrefill(null); };
 
   const openDossier = (intern: Intern, tab: typeof activeTab = 'info') => {
@@ -720,13 +768,28 @@ export default function InternsPage() {
             placeholder="Rechercher par nom..."
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
+        <div role="group" aria-label="Mode d'affichage"
+          style={{ display: 'flex', border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+          {([['cards', 'Cartes', <LayoutGrid size={14} key="g" />], ['table', 'Tableau', <List size={14} key="l" />], ['kanban', 'Kanban', <Columns3 size={14} key="k" />]] as const).map(([m, label, icon]) => (
+            <button key={m} onClick={() => changeView(m)} aria-pressed={viewMode === m} title={`Affichage ${label.toLowerCase()}`}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', fontSize: 12, fontWeight: 600,
+                border: 'none', cursor: 'pointer',
+                background: viewMode === m ? 'var(--primary-soft)' : 'var(--surface)',
+                color: viewMode === m ? 'var(--primary)' : 'var(--ink-2)',
+              }}>
+              {icon} {label}
+            </button>
+          ))}
+        </div>
         <button className="btn btn-ghost btn-sm" onClick={() => setShowDeptManager(true)}
           style={{ padding: '0 12px', fontSize: 11, color: 'var(--ink-2)', whiteSpace: 'nowrap', border: '1px solid var(--line)', borderRadius: 8 }}>
           ⚙ Gérer les départements
         </button>
       </div>
 
-      {/* Selection bar */}
+      {/* Selection bar (cards view always; table view only once something is selected) */}
+      {(viewMode === 'cards' || selectedIds.size > 0) && (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--ink-2)' }}>
           <input
@@ -761,6 +824,7 @@ export default function InternsPage() {
           </>
         )}
       </div>
+      )}
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
@@ -770,6 +834,137 @@ export default function InternsPage() {
           <p style={{ fontWeight: 500, marginBottom: 8 }}>Aucun stagiaire</p>
           <p style={{ fontSize: 13, marginBottom: 20 }}>Ajoutez un stagiaire manuellement ou importez un CV.</p>
           <Button onClick={() => setEditing({} as Intern)}><Plus size={14} /> Ajouter</Button>
+        </div>
+      ) : viewMode === 'kanban' ? (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, color: 'var(--ink-2)', fontWeight: 600 }}>Grouper par</span>
+            <button onClick={() => changeKanbanGroup('period')} style={{ padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 8, border: `1px solid ${kanbanGroup === 'period' ? 'var(--primary)' : 'var(--line)'}`, background: kanbanGroup === 'period' ? 'var(--primary-soft)' : 'var(--surface)', color: kanbanGroup === 'period' ? 'var(--primary)' : 'var(--ink-2)' }}>Période de stage</button>
+            <button onClick={() => changeKanbanGroup('department')} style={{ padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 8, border: `1px solid ${kanbanGroup === 'department' ? 'var(--primary)' : 'var(--line)'}`, background: kanbanGroup === 'department' ? 'var(--primary-soft)' : 'var(--surface)', color: kanbanGroup === 'department' ? 'var(--primary)' : 'var(--ink-2)' }}>Département</button>
+            <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>
+              {kanbanGroup === 'department'
+                ? '· Glissez une carte dans une autre colonne pour modifier son département.'
+                : '· Lecture seule : la période découle des dates du stage.'}
+            </span>
+          </div>
+          <KanbanBoard
+            items={interns}
+            getId={i => i.id}
+            columns={kanbanGroup === 'period'
+              ? [
+                  { id: 'ongoing', label: 'En cours', color: 'var(--success)' },
+                  { id: 'upcoming', label: 'À venir', color: 'var(--primary)' },
+                  { id: 'done', label: 'Terminés', color: 'var(--ink-3)' },
+                  { id: 'none', label: 'Dates non renseignées', color: 'var(--warn)' },
+                ]
+              : [...kanbanDepts.map(d => ({ id: d.name, label: d.name })), { id: '', label: 'Sans département', color: 'var(--ink-3)' }]}
+            getColumn={i => (kanbanGroup === 'period' ? periodOf(i) : i.department || '')}
+            onMove={kanbanGroup === 'department' ? (intern, col) => moveMut.mutate({ id: intern.id, department: col }) : undefined}
+            onOpen={intern => openDossier(intern)}
+            renderCard={intern => (
+              <>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <Avatar name={intern.full_name} src={intern.photo_url} size={34} />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontWeight: 600, fontSize: 13 }}>{intern.full_name}</p>
+                    <p style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 500 }}>{intern.position || 'Stagiaire'}</p>
+                  </div>
+                  <button className="btn btn-ghost btn-sm" title="Modifier" onClick={e => { e.stopPropagation(); setEditing(intern); }}><Pencil size={12} /></button>
+                </div>
+                {kanbanGroup === 'period' && intern.department && <div style={{ marginTop: 8 }}><Badge variant="default">{intern.department}</Badge></div>}
+                {(intern.internship_start || intern.internship_end) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 11, color: 'var(--ink-2)' }}>
+                    <Calendar size={11} /> {safeFormat(intern.internship_start)} → {safeFormat(intern.internship_end)}
+                  </div>
+                )}
+                {intern.email && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 11, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <Mail size={11} /> {intern.email}
+                  </div>
+                )}
+              </>
+            )}
+          />
+        </>
+      ) : viewMode === 'table' ? (
+        <div className="card" style={{ overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr>
+                  <th style={{ padding: '10px 16px', width: 40, background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      ref={el => { if (el) el.indeterminate = someSelected; }}
+                      onChange={toggleAll}
+                      style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)' }}
+                      title={allSelected ? 'Désélectionner tout' : 'Sélectionner tout'}
+                    />
+                  </th>
+                  {['Stagiaire', 'Département', 'Email', 'Téléphone', 'Tuteur', 'Période', 'Rémunération', ''].map(h => (
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-3)', fontSize: 11, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '.06em', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {interns.map(intern => (
+                  <tr key={intern.id}
+                    style={{ borderBottom: '1px solid var(--line)', cursor: 'pointer', background: selectedIds.has(intern.id) ? 'var(--primary-soft)' : '' }}
+                    onClick={() => openDossier(intern)}
+                    onMouseEnter={e => { if (!selectedIds.has(intern.id)) e.currentTarget.style.background = 'var(--surface-2)'; }}
+                    onMouseLeave={e => { if (!selectedIds.has(intern.id)) e.currentTarget.style.background = ''; }}>
+                    <td style={{ padding: '10px 16px' }} onClick={e => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(intern.id)}
+                        onChange={() => toggleOne(intern.id)}
+                        style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)' }}
+                      />
+                    </td>
+                    <td style={{ padding: '10px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Avatar name={intern.full_name} src={intern.photo_url} size={30} />
+                        <div>
+                          <p style={{ fontWeight: 500 }}>{intern.full_name}</p>
+                          <p style={{ color: 'var(--primary)', fontSize: 11, fontWeight: 500 }}>{intern.position || 'Stagiaire'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>{intern.department || '—'}</td>
+                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>{intern.email || '—'}</td>
+                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>{intern.phone || '—'}</td>
+                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>{intern.manager || '—'}</td>
+                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
+                      {intern.internship_start || intern.internship_end
+                        ? `${safeFormat(intern.internship_start)} → ${safeFormat(intern.internship_end)}`
+                        : '—'}
+                    </td>
+                    <td style={{ padding: '10px 16px', whiteSpace: 'nowrap', fontWeight: 600, color: (intern as any).remuneration > 0 ? 'var(--success)' : 'var(--ink-3)' }}>
+                      {(intern as any).remuneration > 0 ? `${(intern as any).remuneration} DH` : '—'}
+                    </td>
+                    <td style={{ padding: '10px 16px' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button className="btn btn-ghost btn-sm" title="Onboarding" onClick={() => openDossier(intern, 'onboarding')}>
+                          <ClipboardList size={13} />
+                        </button>
+                        <button className="btn btn-ghost btn-sm" title="Dossier" onClick={() => openDossier(intern)}>
+                          <Eye size={13} />
+                        </button>
+                        <button className="btn btn-ghost btn-sm" title="Modifier" onClick={() => setEditing(intern)}>
+                          <Pencil size={13} />
+                        </button>
+                        <button className="btn btn-ghost btn-sm" title="Supprimer" style={{ color: 'var(--danger)' }}
+                          onClick={() => { if (confirm('Supprimer ce stagiaire ?')) deleteMut.mutate(intern.id); }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>

@@ -271,7 +271,7 @@ export function HrKpis() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" horizontal={false} />
                 <XAxis type="number" tick={axis} axisLine={false} tickLine={false} allowDecimals={false} />
                 <YAxis type="category" dataKey="name" tick={{ ...axis, fill: 'var(--ink-2)' as string }} axisLine={false} tickLine={false} width={120} />
-                <Tooltip contentStyle={TIP} cursor={{ fill: 'var(--surface-2)' }} formatter={(v: number) => [`${v} employé${v > 1 ? 's' : ''}`, '']} />
+                <Tooltip contentStyle={TIP} cursor={{ fill: 'var(--surface-2)' }} formatter={(v) => [`${v} employé${Number(v) > 1 ? 's' : ''}`, '']} />
                 <Bar dataKey="value" radius={[0, 5, 5, 0]} barSize={14}>
                   {k.by_department.slice(0, 8).map((_, i) => <Cell key={i} fill={P[i % P.length]} />)}
                 </Bar>

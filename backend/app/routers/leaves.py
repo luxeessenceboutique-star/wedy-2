@@ -128,7 +128,7 @@ def create_leave(
         title=f"Congé créé pour un employé",
         body=f"Une demande de congé ({data.get('type', '')}) a été créée du {data.get('start_date', '')} au {data.get('end_date', '')}.",
         notif_type="leave_pending",
-        link="/leaves",
+        link=f"/app/requests?kind=leave&id={leave['id']}",
     )
     return leave
 

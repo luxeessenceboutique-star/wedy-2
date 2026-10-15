@@ -13,6 +13,7 @@ export const en = {
     recruitment: 'Recruitment',
     performance: 'Performance',
     time_off: 'Time off',
+    requests: 'Requests',
     payroll: 'Payroll',
     onboarding: 'HR Onboarding',
     training: 'Training',

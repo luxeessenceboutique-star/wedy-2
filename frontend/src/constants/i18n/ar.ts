@@ -13,6 +13,7 @@ export const ar = {
     recruitment: 'التوظيف',
     performance: 'الأداء',
     time_off: 'الإجازات',
+    requests: 'الطلبات',
     payroll: 'الرواتب',
     onboarding: 'التأهيل الوظيفي',
     training: 'التدريب',

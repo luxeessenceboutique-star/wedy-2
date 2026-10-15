@@ -115,7 +115,7 @@ def submit_leave(
             f"du {payload.get('start_date', '')} au {payload.get('end_date', '')}"
         ),
         notif_type="leave_pending",
-        link="/leaves",
+        link=f"/app/requests?kind=leave&id={leave.get('id', '')}",
     )
     return leave
 
@@ -155,7 +155,7 @@ def submit_doc_request(
         title=f"Demande de document — {emp['full_name']}",
         body=f"{emp['full_name']} a demandé : {payload.get('doc_type', 'document')}",
         notif_type="document_request",
-        link="/documents",
+        link=f"/app/requests?kind=document&id={doc_req.get('id', '')}",
     )
     return doc_req
 

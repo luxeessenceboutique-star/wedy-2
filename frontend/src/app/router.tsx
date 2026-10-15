@@ -23,6 +23,7 @@ import AnalyticsPage from '@/pages/app/AnalyticsPage';
 import AuditPage from '@/pages/app/AuditPage';
 import IntegrationsPage from '@/pages/app/IntegrationsPage';
 import UsersPage from '@/pages/app/UsersPage';
+import RequestsPage from '@/pages/app/RequestsPage';
 import SettingsPage from '@/pages/app/SettingsPage';
 import HelpPage from '@/pages/app/HelpPage';
 import SecurityPage from '@/pages/app/SecurityPage';
@@ -95,6 +96,7 @@ export function AppRoutes() {
       <Route path="/app/recruitment" element={<RequireHR><RecruitmentPage /></RequireHR>} />
       <Route path="/app/interns" element={<RequireHR><InternsPage /></RequireHR>} />
       <Route path="/app/timeoff" element={<RequireHR><TimeOffPage /></RequireHR>} />
+      <Route path="/app/requests" element={<RequireHR><RequestsPage /></RequireHR>} />
       <Route path="/app/payroll" element={<RequireHR><PayrollPage /></RequireHR>} />
       <Route path="/app/performance" element={<RequireHR><PerformancePage /></RequireHR>} />
       <Route path="/app/integrations" element={<RequireHR><IntegrationsPage /></RequireHR>} />

@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bell, CheckCheck, RefreshCw, AlertTriangle, Calendar, FileText, Users } from 'lucide-react';
+import { Bell, CheckCheck, RefreshCw, AlertTriangle, Calendar, FileText, Users, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '@/services/api';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Spinner, Button } from '../../components/ui';
@@ -10,12 +11,33 @@ import { useLang } from '../../lib/lang';
 interface SmartNotif {
   id: string; type: string; icon: string; color: string;
   title: string; body: string; time: string; unread: boolean; priority: number;
+  link?: string | null;
 }
 
 const fetchNotifs = () =>
   api.get<{ data: SmartNotif[]; unread_count: number; count: number }>('/notifications').then(r => r.data);
 
 const markAllRead = () => api.post('/notifications/mark-all-read').then(r => r.data);
+
+/** Where a notification leads. Uses the stored link when it is an app page, else falls back on the type
+ *  (older notifications were saved with links such as "/leaves" that are not pages of the app). */
+function notifTarget(n: SmartNotif): string | null {
+  const link = n.link || '';
+  if (link.startsWith('/app/')) return link;
+  switch (n.type) {
+    case 'leave_pending':      return '/app/requests?kind=leave';
+    case 'document_request':   return '/app/requests?kind=document';
+    case 'employee_request':   return '/app/requests?kind=other';
+    case 'contract_expiring':
+    case 'cdd_risk':
+    case 'new_employee':       return '/app/employees';
+    case 'document_generated': return '/app/history';
+  }
+  const legacy: Record<string, string> = {
+    '/leaves': '/app/requests?kind=leave', '/documents': '/app/requests?kind=document', '/requests': '/app/requests',
+  };
+  return legacy[link] ?? null;
+}
 
 function TypeIcon({ type, color }: { type: string; color: string }) {
   const icons: Record<string, React.ReactNode> = {
@@ -36,9 +58,18 @@ function TypeIcon({ type, color }: { type: string; color: string }) {
   );
 }
 
-function NotifRow({ n }: { n: SmartNotif }) {
+function NotifRow({ n, onOpen }: { n: SmartNotif; onOpen: (n: SmartNotif) => void }) {
+  const clickable = !!notifTarget(n) || n.unread;
   return (
-    <div style={{
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen(n)}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(n); } }}
+      onMouseEnter={e => { if (clickable) e.currentTarget.style.background = 'var(--surface-2)'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = n.unread ? `${n.color}08` : 'var(--surface)'; }}
+      style={{
+      cursor: clickable ? 'pointer' : 'default',
       display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 18px',
       background: n.unread ? `${n.color}08` : 'var(--surface)',
       borderBottom: '1px solid var(--line)', position: 'relative', transition: 'background 0.15s',
@@ -54,6 +85,7 @@ function NotifRow({ n }: { n: SmartNotif }) {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
         <span style={{ fontSize: 11, color: 'var(--ink-3)', whiteSpace: 'nowrap' }}>{n.time}</span>
         {n.unread && <span style={{ width: 7, height: 7, borderRadius: '50%', background: n.color, display: 'block' }} />}
+        {notifTarget(n) && <ChevronRight size={14} style={{ color: 'var(--ink-3)' }} />}
       </div>
     </div>
   );
@@ -62,6 +94,7 @@ function NotifRow({ n }: { n: SmartNotif }) {
 export default function NotificationsPage() {
   const { t } = useLang();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
 
   const { data, isLoading, refetch } = useQuery({
@@ -77,6 +110,17 @@ export default function NotificationsPage() {
       toast.success(t('notif_all_marked'));
     },
   });
+
+  // Click: mark as read (badge updates at once) and go to the place the notification is about
+  const openNotif = (n: SmartNotif) => {
+    if (n.unread) {
+      qc.setQueryData<{ data: SmartNotif[]; unread_count: number; count: number }>(['notifications'], old =>
+        old ? { ...old, unread_count: Math.max(0, old.unread_count - 1), data: old.data.map(x => (x.id === n.id ? { ...x, unread: false } : x)) } : old);
+      api.patch(`/notifications/${n.id}/read`).catch(() => {}).finally(() => qc.invalidateQueries({ queryKey: ['notifications'] }));
+    }
+    const target = notifTarget(n);
+    if (target) navigate(target);
+  };
 
   const TYPE_LABELS: Record<string, string> = {
     contract_expiring: t('cat_contracts'),
@@ -146,7 +190,7 @@ export default function NotificationsPage() {
             </p>
           </div>
         ) : (
-          filtered.map(n => <NotifRow key={n.id} n={n} />)
+          filtered.map(n => <NotifRow key={n.id} n={n} onOpen={openNotif} />)
         )}
       </div>
 

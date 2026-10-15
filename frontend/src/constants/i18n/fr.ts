@@ -15,6 +15,7 @@ export const fr = {
     recruitment: 'Recrutement',
     performance: 'Performance',
     time_off: 'Congés',
+    requests: 'Demandes',
     payroll: 'Paie',
     onboarding: 'Onboarding RH',
     training: 'Formation',

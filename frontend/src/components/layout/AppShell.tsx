@@ -6,12 +6,12 @@ import {
   Puzzle, Bell, Settings, HelpCircle,
   ClipboardList,
   UserCog, GraduationCap, UserCheck, BookOpen, Star,
-  Network, Video, Briefcase, Calendar, Target,
+  Network, Video, Briefcase, Calendar, Target, Inbox,
 } from 'lucide-react';
 import { SidebarShell, type NavSection } from './SidebarShell';
 import { useAuth } from '@/lib/auth';
 import { useLang } from '@/lib/lang';
-import { listNotifications } from '@/services/api';
+import { listNotifications, getInboxCount } from '@/services/api';
 
 export { PageHeader } from './PageHeader';
 
@@ -25,6 +25,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     refetchInterval: 20000,
   });
   const unreadCount = notifData?.unread_count ?? (notifData?.data ?? []).filter((n: any) => n.unread || !n.is_read).length;
+
+  // Pending employee requests (leaves, documents, other) → badge on the "Demandes" item
+  const { data: pendingRequests = 0 } = useQuery({
+    queryKey: ['requests-count'],
+    queryFn: getInboxCount,
+    refetchInterval: 30000,
+    retry: false,
+  });
 
   React.useEffect(() => {
     document.documentElement.removeAttribute('data-direction');
@@ -49,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       items: [
         { label: t('employees'),      icon: <Users size={15} />,         to: '/app/employees' },
         { label: t('interns'),        icon: <GraduationCap size={15} />, to: '/app/interns' },
+        { label: t('requests'),       icon: <Inbox size={15} />,         to: '/app/requests', badgeCount: pendingRequests > 0 ? pendingRequests : undefined },
         { label: t('recruitment'),     icon: <Target size={15} />,        to: '/app/recruitment' },
         { label: t('candidats'),      icon: <UserPlus size={15} />,      to: '/app/candidats' },
         { label: t('annonces'),       icon: <Wand2 size={15} />,         to: '/app/annonces', badge: 'AI' },

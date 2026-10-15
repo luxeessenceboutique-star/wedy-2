@@ -12,6 +12,7 @@ import { subMonths, format } from 'date-fns';
 import { listEmployees, listDocuments, getDashboardMetrics, listRequests } from '@/services/api';
 import { Badge, Spinner, StatCard } from '../../components/ui';
 import { PageHeader } from '../../components/layout/AppShell';
+import { HrKpis } from '../../components/dashboard/HrKpis';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import { useLang } from '../../lib/lang';
@@ -157,20 +158,11 @@ export default function DashboardPage() {
         subtitle={t('dashboard_subtitle')}
       />
 
-      {/* ── Stat cards ── */}
-      {metricsLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spinner /></div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 28 }}>
-          <StatCard icon={<Users size={19} />}       label={t('total_employees_label')} value={metrics?.total_employees ?? 0} change={t('active_workforce')} to="/app/employees" />
-          <StatCard icon={<Briefcase size={19} />}   label={t('interns')}               value={metrics?.total_interns ?? 0} color="var(--accent)" to="/app/interns" />
-          <StatCard icon={<MessageSquare size={19} />} label={t('pending_requests_label')} value={metrics?.pending_requests ?? 0} color="var(--warn)" changePositive={false} to="/app/requests" />
-          <StatCard icon={<FileText size={19} />}    label="Documents ce mois"          value={metrics?.docs_this_month ?? 0} color="var(--violet)" to="/app/history" />
-        </div>
-      )}
+      {/* ── HR KPIs (priority + other indicators) ── */}
+      <HrKpis />
 
-      {/* ── Charts row 1: Monthly trend + Dept donut ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, marginBottom: 20 }}>
+      {/* ── Documents: monthly trend + types ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 20, marginBottom: 24 }}>
 
         {/* Area chart — monthly docs */}
         <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '20px 22px', boxShadow: 'var(--shadow-sm)' }}>
@@ -206,40 +198,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Donut — department distribution */}
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '20px 18px', boxShadow: 'var(--shadow-sm)' }}>
-          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', letterSpacing: '-.02em', marginBottom: 2 }}>
-            Départements
-          </p>
-          <p style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 16 }}>Répartition des employés</p>
-          {!hasDeptData ? (
-            <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', fontSize: 13 }}>Aucune donnée</div>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={140}>
-                <PieChart>
-                  <Pie data={deptDist} cx="50%" cy="50%" innerRadius={38} outerRadius={62} dataKey="value" labelLine={false} label={DonutLabel}>
-                    {deptDist.map((_, i) => <Cell key={i} fill={P[i % P.length]} />)}
-                  </Pie>
-                  <Tooltip formatter={(v, n) => [v, n]} contentStyle={TIP_STYLE as React.CSSProperties} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 10 }}>
-                {deptDist.map((d, i) => (
-                  <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: P[i % P.length], flexShrink: 0 }} />
-                    <span style={{ fontSize: 11.5, color: 'var(--ink-2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
-                    <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--ink)' }}>{d.value}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── Charts row 2: Doc types bar + Contract donut ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, marginBottom: 24 }}>
 
         {/* Bar chart — document types */}
         <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '20px 22px', boxShadow: 'var(--shadow-sm)' }}>
@@ -261,37 +219,6 @@ export default function DashboardPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          )}
-        </div>
-
-        {/* Donut — contract types */}
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14, padding: '20px 18px', boxShadow: 'var(--shadow-sm)' }}>
-          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', letterSpacing: '-.02em', marginBottom: 2 }}>
-            Types de contrat
-          </p>
-          <p style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: 16 }}>Répartition des contrats</p>
-          {contractDist.length === 0 ? (
-            <div style={{ height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', fontSize: 13 }}>Aucune donnée</div>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={140}>
-                <PieChart>
-                  <Pie data={contractDist} cx="50%" cy="50%" innerRadius={38} outerRadius={62} dataKey="value" labelLine={false} label={DonutLabel}>
-                    {contractDist.map((_, i) => <Cell key={i} fill={P[i % P.length]} />)}
-                  </Pie>
-                  <Tooltip formatter={(v, n) => [v, n]} contentStyle={TIP_STYLE as React.CSSProperties} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 10 }}>
-                {contractDist.map((d, i) => (
-                  <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: P[i % P.length], flexShrink: 0 }} />
-                    <span style={{ fontSize: 11.5, color: 'var(--ink-2)', flex: 1 }}>{d.name}</span>
-                    <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--ink)' }}>{d.value}</span>
-                  </div>
-                ))}
-              </div>
-            </>
           )}
         </div>
       </div>

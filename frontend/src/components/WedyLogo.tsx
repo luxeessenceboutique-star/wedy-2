@@ -5,30 +5,24 @@ export function WedyLogo({ size = 28, showText = true, mono = false }: {
   showText?: boolean;
   mono?: boolean;
 }) {
-  const id = `wl-${size}`;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden>
-        {!mono && (
-          <defs>
-            <linearGradient id={id} x1="6" y1="32" x2="34" y2="8" gradientUnits="userSpaceOnUse">
-              <stop stopColor="var(--primary)" />
-              <stop offset="1" stopColor="var(--accent)" />
-            </linearGradient>
-          </defs>
-        )}
-        <path
-          d="M7 30 L19 19 L31 9"
-          stroke={mono ? '#fff' : `url(#${id})`}
-          strokeWidth="2.6"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle cx="7"  cy="30" r="3"   fill={mono ? '#fff' : 'var(--primary)'} />
-        <circle cx="19" cy="19" r="3.4" fill={mono ? '#fff' : 'var(--accent)'} />
-        <circle cx="31" cy="9"  r="4.6" fill={mono ? '#fff' : `url(#${id})`} />
-      </svg>
+      <img
+        src="/wedy-avatar.png"
+        alt="Wedy"
+        width={size}
+        height={size}
+        draggable={false}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          objectFit: 'cover',
+          flexShrink: 0,
+          background: mono ? 'rgba(255,255,255,0.22)' : 'var(--primary-soft)',
+          border: mono ? '1.5px solid rgba(255,255,255,0.55)' : '1.5px solid var(--line)',
+        }}
+      />
 
       {showText && (
         <span style={{
@@ -36,7 +30,7 @@ export function WedyLogo({ size = 28, showText = true, mono = false }: {
           fontWeight: 700,
           fontSize: size * 0.65,
           letterSpacing: '-0.03em',
-          color: 'var(--ink)',
+          color: mono ? '#fff' : 'var(--ink)',
           lineHeight: 1,
         }}>
           Wedy

@@ -122,14 +122,14 @@ export default function LoginPage() {
             </h2>
             <p style={{ fontSize: 13.5, color: 'var(--ink-2)' }}>
               {tab === 'login'
-                ? 'Connectez-vous à votre espace RH.'
+                ? 'Connectez-vous avec votre compte Tybot.'
                 : 'Rejoignez Wedy pour gérer vos RH.'}
             </p>
           </div>
 
           {/* Tabs */}
           <div style={{
-            display: 'flex', gap: 0, marginBottom: 28,
+            display: 'none' /* sign-up is handled by Tybot */, gap: 0, marginBottom: 28,
             background: 'var(--surface-2)',
             borderRadius: 10, padding: 3,
             border: '1px solid var(--line)',

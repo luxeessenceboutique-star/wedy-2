@@ -24,21 +24,24 @@ def get_current_user(
     supabase: Client = Depends(get_db),
 ) -> dict:
     """
-    Decode Supabase JWT payload locally (no HTTP call).
-    Validate user existence via database lookup.
+    Identity comes from Tybot (token validated against the Tybot API).
+    The Wedy role comes from the local user_roles table, looked up via the user's e-mail.
     """
-    token = credentials.credentials
-    payload = _decode_jwt_payload(token)
+    from app.services import tybot_auth
 
-    user_id: str = payload.get("sub")
-    email: str = payload.get("email", "")
+    identity = tybot_auth.verify_token(credentials.credentials)
+    email = identity["email"]
+    full_name = identity.get("full_name") or email
 
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalide: sub manquant")
+    try:
+        user_id = tybot_auth.resolve_wedy_user_id(supabase, email, identity.get("full_name", ""))
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[AUTH] user resolution failed for {email}: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Impossible de charger votre compte, réessayez.")
 
     raw_role = "employee"
-    full_name = email
-
     try:
         role_res = supabase.table("user_roles").select("role").eq("user_id", user_id).maybe_single().execute()
         if role_res is not None and role_res.data:
@@ -53,21 +56,21 @@ def get_current_user(
 
     try:
         profile_res = supabase.table("profiles").select("full_name").eq("user_id", user_id).maybe_single().execute()
-        if profile_res.data:
-            full_name = profile_res.data.get("full_name") or email
+        if profile_res is not None and profile_res.data:
+            full_name = profile_res.data.get("full_name") or full_name
     except Exception:
-        pass  # table may not exist yet — use email as name
+        pass
 
-    # Normalize legacy "rh" → "hr"
+    # Normalize legacy "rh" -> "hr"
     role_name = "hr" if raw_role == "rh" else raw_role
 
     print(f"[AUTH] user={email} role={role_name}")
     return {
-        "id": user_id, 
-        "email": email, 
-        "role_name": role_name, 
-        "role": role_name, 
-        "full_name": full_name
+        "id": user_id,
+        "email": email,
+        "role_name": role_name,
+        "role": role_name,
+        "full_name": full_name,
     }
 
 def require_role(*roles: str):

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, ChevronUp, FileUp, Eye, X, Upload, Download } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, FileText, ChevronDown, ChevronUp, FileUp, Eye, X, Upload, Download, LayoutGrid, List, Mail, Phone, Calendar, Columns3 } from 'lucide-react';
 import { listEmployees, createEmployee, updateEmployee, deleteEmployee, listDepartments, listContractTypes, getApiError } from '@/services/api';
 import type { Employee } from '@/services/api';
 import { Button, Badge, Card, Input, Select, Modal, Spinner, Empty, Avatar } from '../../components/ui';
@@ -9,8 +9,9 @@ import { CVImportModal } from '@/components/employees/CVImportModal';
 import { SmartImportModal } from '@/components/employees/SmartImportModal';
 import { ExportModal } from '@/components/employees/ExportModal';
 import { DepartmentsModal } from '@/components/employees/DepartmentsModal';
+import { KanbanBoard } from '../../components/KanbanBoard';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLang } from '../../lib/lang';
 
 const EMPLOYEE_COLS = [
@@ -40,6 +41,38 @@ const EMPLOYEE_COLS = [
 const STATUS_COLORS: Record<string, 'success' | 'warning' | 'danger' | 'default'> = {
   active: 'success', inactive: 'danger', 'on-leave': 'warning',
 };
+
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'active',     label: 'Actif' },
+  { value: 'on-leave',   label: 'En congé' },
+  { value: 'inactive',   label: 'Inactif' },
+  { value: 'terminated', label: 'Terminé' },
+];
+
+/** Status badge that is also a dropdown: change it straight from the table. */
+function StatusSelect({ value, disabled, onChange }: { value: string; disabled?: boolean; onChange: (v: string) => void }) {
+  const variant = STATUS_COLORS[value] ?? 'default';
+  const known = STATUS_OPTIONS.some(o => o.value === value);
+  const cls = variant === 'success' ? 'badge-success' : variant === 'warning' ? 'badge-warning' : variant === 'danger' ? 'badge-danger' : '';
+  return (
+    <select
+      className={`badge ${cls}`}
+      value={value}
+      disabled={disabled}
+      title="Changer le statut"
+      onChange={e => onChange(e.target.value)}
+      style={{
+        appearance: 'none', WebkitAppearance: 'none', cursor: disabled ? 'wait' : 'pointer',
+        paddingRight: 22, opacity: disabled ? 0.6 : 1, fontFamily: 'inherit',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center',
+      }}
+    >
+      {!known && <option value={value}>{value}</option>}
+      {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  );
+}
 
 // CONTRACT_TYPES is now loaded dynamically via useQuery + listContractTypes
 const today = new Date().toISOString().split('T')[0];
@@ -275,6 +308,24 @@ export default function EmployeesPage() {
   const [showImport, setShowImport] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showDeptManager, setShowDeptManager] = useState(false);
+  const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState<'cards' | 'table' | 'kanban'>(() => {
+    try {
+      const v = localStorage.getItem('employees_view');
+      return v === 'cards' || v === 'kanban' ? v : 'table';
+    } catch { return 'table'; }
+  });
+  const [kanbanGroup, setKanbanGroup] = useState<'status' | 'department'>(() => {
+    try { return localStorage.getItem('employees_kanban_group') === 'department' ? 'department' : 'status'; } catch { return 'status'; }
+  });
+  const changeKanbanGroup = (g: 'status' | 'department') => {
+    setKanbanGroup(g);
+    try { localStorage.setItem('employees_kanban_group', g); } catch { /* ignore */ }
+  };
+  const changeView = (m: 'cards' | 'table' | 'kanban') => {
+    setViewMode(m);
+    try { localStorage.setItem('employees_view', m); } catch { /* storage unavailable: keep in memory only */ }
+  };
   const [editing, setEditing] = useState<Employee | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -297,6 +348,45 @@ export default function EmployeesPage() {
     mutationFn: ({ id, data }: { id: string; data: Partial<Employee> }) => updateEmployee(id, data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['employees'] }); setEditing(null); toast.success('Employee updated'); },
     onError: (e: unknown) => toast.error(getApiError(e, 'Error updating')),
+  });
+
+  // Inline status change: update the table instantly, roll back if the server refuses
+  const statusMut = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) => updateEmployee(id, { status }),
+    onMutate: async ({ id, status }) => {
+      await qc.cancelQueries({ queryKey: ['employees'] });
+      const snapshots = qc.getQueriesData<{ data: Employee[]; count: number }>({ queryKey: ['employees'] });
+      qc.setQueriesData<{ data: Employee[]; count: number }>({ queryKey: ['employees'] }, old =>
+        old ? { ...old, data: old.data.map(e => (e.id === id ? { ...e, status } : e)) } : old);
+      return { snapshots };
+    },
+    onError: (e: unknown, _vars, ctx) => {
+      ctx?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error(getApiError(e, 'Impossible de changer le statut'));
+    },
+    onSuccess: (_d, { status }) => {
+      const label = STATUS_OPTIONS.find(o => o.value === status)?.label ?? status;
+      toast.success(`Statut : ${label}`);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['employees'] }),
+  });
+
+  // Kanban drag & drop: change status or department, update instantly, roll back on error
+  const moveMut = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<Employee> }) => updateEmployee(id, patch),
+    onMutate: async ({ id, patch }) => {
+      await qc.cancelQueries({ queryKey: ['employees'] });
+      const snapshots = qc.getQueriesData<{ data: Employee[]; count: number }>({ queryKey: ['employees'] });
+      qc.setQueriesData<{ data: Employee[]; count: number }>({ queryKey: ['employees'] }, old =>
+        old && Array.isArray(old.data) ? { ...old, data: old.data.map(e => (e.id === id ? { ...e, ...patch } : e)) } : old);
+      return { snapshots };
+    },
+    onError: (e: unknown, _vars, ctx) => {
+      ctx?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data));
+      toast.error(getApiError(e, 'Impossible de déplacer cet employé'));
+    },
+    onSuccess: () => toast.success('Employé déplacé'),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['employees'] }),
   });
 
   const deleteMut = useMutation({
@@ -359,6 +449,20 @@ export default function EmployeesPage() {
           <option value="on-leave">{t('status_on_leave')}</option>
           <option value="terminated">Terminé</option>
         </select>
+        <div role="group" aria-label="Mode d'affichage"
+          style={{ display: 'flex', border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+          {([['cards', 'Cartes', <LayoutGrid size={14} key="g" />], ['table', 'Tableau', <List size={14} key="l" />], ['kanban', 'Kanban', <Columns3 size={14} key="k" />]] as const).map(([m, label, icon]) => (
+            <button key={m} onClick={() => changeView(m)} aria-pressed={viewMode === m} title={`Affichage ${label.toLowerCase()}`}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '0 14px', fontSize: 12, fontWeight: 600,
+                border: 'none', cursor: 'pointer',
+                background: viewMode === m ? 'var(--primary-soft)' : 'var(--surface)',
+                color: viewMode === m ? 'var(--primary)' : 'var(--ink-2)',
+              }}>
+              {icon} {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Selection bar */}
@@ -385,7 +489,126 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Table */}
+      {/* List: kanban, cards or table */}
+      {viewMode === 'kanban' && !isLoading && employees.length > 0 ? (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, color: 'var(--ink-2)', fontWeight: 600 }}>Grouper par</span>
+            <button onClick={() => changeKanbanGroup('status')} style={{ padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 8, border: `1px solid ${kanbanGroup === 'status' ? 'var(--primary)' : 'var(--line)'}`, background: kanbanGroup === 'status' ? 'var(--primary-soft)' : 'var(--surface)', color: kanbanGroup === 'status' ? 'var(--primary)' : 'var(--ink-2)' }}>Statut</button>
+            <button onClick={() => changeKanbanGroup('department')} style={{ padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 8, border: `1px solid ${kanbanGroup === 'department' ? 'var(--primary)' : 'var(--line)'}`, background: kanbanGroup === 'department' ? 'var(--primary-soft)' : 'var(--surface)', color: kanbanGroup === 'department' ? 'var(--primary)' : 'var(--ink-2)' }}>Département</button>
+            <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>· Glissez une carte dans une autre colonne pour modifier {kanbanGroup === 'status' ? 'son statut' : 'son département'}.</span>
+          </div>
+          <KanbanBoard
+            items={employees}
+            getId={e => e.id}
+            columns={kanbanGroup === 'status'
+              ? [
+                  { id: 'active', label: 'Actif', color: 'var(--success)' },
+                  { id: 'on-leave', label: 'En congé', color: 'var(--warn)' },
+                  { id: 'inactive', label: 'Inactif', color: 'var(--danger)' },
+                  { id: 'terminated', label: 'Terminé', color: 'var(--ink-3)' },
+                ]
+              : [...departments.map(d => ({ id: d.name, label: d.name })), { id: '', label: 'Sans département', color: 'var(--ink-3)' }]}
+            getColumn={e => (kanbanGroup === 'status' ? e.status : e.department || '')}
+            onMove={(emp, col) => moveMut.mutate({ id: emp.id, patch: kanbanGroup === 'status' ? { status: col } : { department: col } })}
+            onOpen={emp => navigate(`/app/employees/${emp.id}`)}
+            renderCard={emp => (
+              <>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <Avatar name={emp.full_name} src={(emp as any).photo_url} size={34} />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontWeight: 600, fontSize: 13 }}>{emp.full_name}</p>
+                    <p style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 500 }}>{emp.position || '—'}</p>
+                  </div>
+                  <button className="btn btn-ghost btn-sm" title="Edit" onClick={e => { e.stopPropagation(); setEditing(emp); }}><Pencil size={12} /></button>
+                </div>
+                <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {kanbanGroup === 'status'
+                    ? (emp.department ? <Badge>{emp.department}</Badge> : null)
+                    : <Badge variant={STATUS_COLORS[emp.status] ?? 'default'}>{STATUS_OPTIONS.find(o => o.value === emp.status)?.label ?? emp.status}</Badge>}
+                  {emp.contract_type && <Badge>{emp.contract_type}</Badge>}
+                </div>
+                {emp.email && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 11, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <Mail size={11} /> {emp.email}
+                  </div>
+                )}
+              </>
+            )}
+          />
+        </>
+      ) : viewMode === 'cards' && !isLoading && employees.length > 0 ? (
+        <>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--ink-2)', marginBottom: 14, width: 'fit-content' }}>
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={el => { if (el) el.indeterminate = someSelected; }}
+              onChange={toggleAll}
+              style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)' }}
+            />
+            Sélectionner tout
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            {employees.map(emp => (
+              <div key={emp.id} className="card card-pad hover-scale"
+                style={{ cursor: 'pointer', transition: 'all 0.2s', outline: selectedIds.has(emp.id) ? '2px solid var(--primary)' : 'none' }}
+                onClick={() => navigate(`/app/employees/${emp.id}`)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14, gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center', minWidth: 0 }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(emp.id)}
+                      onChange={() => toggleOne(emp.id)}
+                      onClick={e => e.stopPropagation()}
+                      style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)', flexShrink: 0 }}
+                    />
+                    <Avatar name={emp.full_name} src={(emp as any).photo_url} size={44} />
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ fontWeight: 600, fontSize: 14 }}>{emp.full_name}</p>
+                      <p style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 500 }}>{emp.position || '—'}</p>
+                      {emp.department && <span style={{ marginTop: 2, display: 'inline-block' }}><Badge variant="default">{emp.department}</Badge></span>}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                    <Link to={`/app/employees/${emp.id}`}>
+                      <button className="btn btn-ghost btn-sm" title="Voir le dossier"><Eye size={12} /></button>
+                    </Link>
+                    <Link to={`/app/generate?employee_id=${emp.id}`}>
+                      <button className="btn btn-ghost btn-sm" title="Generate document"><FileText size={12} /></button>
+                    </Link>
+                    <button className="btn btn-ghost btn-sm" title="Edit" onClick={() => setEditing(emp)}><Pencil size={12} /></button>
+                    <button className="btn btn-ghost btn-sm" title="Delete" style={{ color: 'var(--danger)' }}
+                      onClick={() => { if (confirm(`Delete ${emp.full_name}?`)) deleteMut.mutate(emp.id); }}>
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7, fontSize: 12, color: 'var(--ink-2)' }}>
+                  {emp.email && <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Mail size={12} /> {emp.email}</div>}
+                  {emp.phone && <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Phone size={12} /> {emp.phone}</div>}
+                  {emp.hire_date && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <Calendar size={12} /> Embauché le {new Date(emp.hire_date).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line)' }}
+                  onClick={e => e.stopPropagation()}>
+                  <Badge>{emp.contract_type || '—'}</Badge>
+                  <StatusSelect
+                    value={emp.status}
+                    disabled={statusMut.isPending && statusMut.variables?.id === emp.id}
+                    onChange={v => { if (v !== emp.status) statusMut.mutate({ id: emp.id, status: v }); }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
       <Card pad={false}>
         {isLoading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spinner /></div>
@@ -443,7 +666,11 @@ export default function EmployeesPage() {
                       <Badge>{emp.contract_type || '—'}</Badge>
                     </td>
                     <td style={{ padding: '10px 16px' }}>
-                      <Badge variant={STATUS_COLORS[emp.status] ?? 'default'}>{emp.status}</Badge>
+                      <StatusSelect
+                        value={emp.status}
+                        disabled={statusMut.isPending && statusMut.variables?.id === emp.id}
+                        onChange={v => { if (v !== emp.status) statusMut.mutate({ id: emp.id, status: v }); }}
+                      />
                     </td>
                     <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>
                       {emp.hire_date ? new Date(emp.hire_date).toLocaleDateString() : '—'}
@@ -471,6 +698,7 @@ export default function EmployeesPage() {
           </div>
         )}
       </Card>
+      )}
 
       {/* Add modal */}
       <Modal open={showModal} onClose={() => setShowModal(false)} title="Ajouter un employé" width={760}>

@@ -1,7 +1,15 @@
 import { api } from './client';
 import type { Employee } from './employees';
 
-export type Intern = Employee & { school?: string; };
+export type Intern = Employee & {
+  school?: string;
+  /** register columns (ETAT DES STAGIAIRES) */
+  education_summary?: string;
+  internship_period?: string;
+  internship_status?: string;
+  internship_type?: string;
+  school_contact?: string;
+};
 
 export const listInterns = (params?: Record<string, string | number>) =>
   api.get<{ data: Intern[]; count: number }>('/interns', { params }).then(r => r.data);
@@ -11,6 +19,10 @@ export const createIntern = (body: Partial<Intern>) =>
 
 export const updateIntern = (id: string, body: Partial<Intern>) =>
   api.patch<Intern>(`/interns/${id}`, body).then(r => r.data);
+
+/** Hire an intern: active employee (CDI), hire date set, register status « Embauché ». */
+export const convertIntern = (id: string, body?: { contract_type?: string; hire_date?: string }) =>
+  api.post<Intern>(`/interns/${id}/convert`, body ?? {}).then(r => r.data);
 
 export const deleteIntern = (id: string) =>
   api.delete(`/interns/${id}`);

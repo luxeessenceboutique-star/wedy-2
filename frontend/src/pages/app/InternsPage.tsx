@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
   listInterns, createIntern, updateIntern, deleteIntern, uploadDocument, listDocuments, deleteDocument,
-  getInternOnboarding, updateInternOnboarding, listInternEvaluations, createInternEvaluation, deleteInternEvaluation,
+  convertIntern, getInternOnboarding, updateInternOnboarding, listInternEvaluations, createInternEvaluation, deleteInternEvaluation,
   sendForSignature, listDepartments, getApiError,
 } from '@/services/api';
 import type { Intern, InternOnboarding, InternEvaluation, ChecklistItem, Objective } from '@/services/api';
@@ -51,6 +51,28 @@ const PHASES = [
   { id: 'evaluation',  label: 'Évaluation',       color: 'var(--violet)',  bg: 'var(--violet-soft)' },
   { id: 'completed',   label: 'Terminé',          color: 'var(--success)', bg: 'var(--success-soft)' },
 ];
+
+// Statut du stage (register "ETAT DES STAGIAIRES")
+const STAGE_OPTIONS = ['En cours', 'Embauché', 'Terminé', 'Fin de stage', 'Validé', 'Quitté', 'Désistement', 'Déperdition', 'Arrêté', 'Démissionné', 'Expulsion', 'Annulée'];
+const stageVariant = (st?: string): 'primary' | 'success' | 'warning' | 'danger' | 'default' =>
+  !st ? 'default'
+    : st === 'En cours' ? 'primary'
+    : ['Embauché', 'Terminé', 'Fin de stage', 'Validé'].includes(st) ? 'success'
+    : ['Quitté', 'Désistement', 'Déperdition'].includes(st) ? 'warning'
+    : 'danger';
+const stageColor = (st?: string) =>
+  ({ primary: 'var(--primary)', success: 'var(--success)', warning: 'var(--warn)', danger: 'var(--danger)', default: 'var(--ink-3)' })[stageVariant(st)];
+
+// Types de stage
+const INTERNSHIP_TYPES = [
+  'Stage fonctionnel',
+  'Stage d’apprentissage',
+  'Stage fonctionnel pré-embauche',
+  'Stage PFE (Projet de Fin d’Études)',
+  'Stage PFA (Projet de Fin d’Année)',
+  'Stage pré-embauche',
+];
+const TYPE_COLORS = ['var(--primary)', 'var(--violet)', 'var(--accent)', 'var(--success)', 'var(--warn)', 'var(--danger)'];
 
 const phaseIndex = (p: string) => PHASES.findIndex(x => x.id === p);
 const phaseMeta  = (p: string) => PHASES.find(x => x.id === p) ?? PHASES[0];
@@ -594,7 +616,9 @@ function InternForm({ initial, onSave, onCancel, loading }: {
         <Input label="Nom complet *" value={form.full_name ?? ''} onChange={set('full_name')} required placeholder="Amine Alami" />
         <Input label="Email" type="email" value={form.email ?? ''} onChange={set('email')} placeholder="amine@gmail.com" />
         <Input label="Téléphone" value={form.phone ?? ''} onChange={set('phone')} placeholder="+212 6 00 00 00 00" />
-        <Input label="École / Formation" value={form.position ?? ''} onChange={set('position')} placeholder="ENSA Casablanca" />
+        <Input label="Mission" value={form.position ?? ''} onChange={set('position')} placeholder="DEV FULL STACK" />
+        <Input label="École" value={form.school ?? ''} onChange={set('school')} placeholder="ENSA Casablanca" />
+        <Input label="Étude / Diplôme" value={form.education_summary ?? ''} onChange={set('education_summary')} placeholder="Licence pro en développement informatique" />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <label className="label">Département</label>
           <select className="select" value={form.department ?? ''} onChange={set('department')}>
@@ -606,6 +630,22 @@ function InternForm({ initial, onSave, onCancel, loading }: {
         <Input label="Début du stage" type="date" value={form.internship_start ?? ''} onChange={set('internship_start')} />
         <Input label="Fin du stage" type="date" value={form.internship_end ?? ''} onChange={set('internship_end')} />
         <Input label="Rémunération (DH)" type="number" value={form.remuneration ?? 0} onChange={set('remuneration')} placeholder="2000" />
+        <Input label="Période de stage" value={form.internship_period ?? ''} onChange={set('internship_period')} placeholder="3 mois" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label className="label">Statut du stage</label>
+          <select className="select" value={form.internship_status ?? ''} onChange={set('internship_status')}>
+            <option value="">— Sélectionner —</option>
+            {STAGE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <label className="label">Type de stage</label>
+          <select className="select" value={form.internship_type ?? ''} onChange={set('internship_type')}>
+            <option value="">— Sélectionner —</option>
+            {INTERNSHIP_TYPES.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
+        <Input label="Contact du responsable (école)" value={form.school_contact ?? ''} onChange={set('school_contact')} placeholder="prof@ecole.ma" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -614,6 +654,12 @@ function InternForm({ initial, onSave, onCancel, loading }: {
           const val = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
           setForm(f => ({ ...f, languages: val } as any));
         }} placeholder="Français, Anglais..." />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <label className="label">Observation</label>
+        <textarea className="input" rows={2} style={{ resize: 'none', padding: '10px 12px' }}
+          value={form.notes ?? ''} onChange={set('notes')} placeholder="Ex. stage prolongé, a décidé de partir…" />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -627,6 +673,41 @@ function InternForm({ initial, onSave, onCancel, loading }: {
         <Button type="submit" loading={loading}>{initial?.id ? 'Enregistrer' : 'Ajouter le stagiaire'}</Button>
       </div>
     </form>
+  );
+}
+
+// ── Inline select: change a value straight from the table ──────────────────────
+
+function InlineSelect({ value, options, placeholder, badge, disabled, maxWidth = 230, onChange }: {
+  value: string; options: string[]; placeholder: string; badge?: 'primary' | 'success' | 'warning' | 'danger' | 'default';
+  disabled?: boolean; maxWidth?: number; onChange: (v: string) => void;
+}) {
+  const known = !value || options.includes(value);
+  const cls = badge ? `badge ${{ primary: 'badge-primary', success: 'badge-success', warning: 'badge-warning', danger: 'badge-danger', default: '' }[badge]}` : '';
+  return (
+    <select
+      className={cls || undefined}
+      value={value}
+      disabled={disabled}
+      onChange={e => onChange(e.target.value)}
+      onClick={e => e.stopPropagation()}
+      title={value || placeholder}
+      style={{
+        appearance: 'none', WebkitAppearance: 'none', fontFamily: 'inherit', cursor: disabled ? 'wait' : 'pointer',
+        maxWidth, paddingRight: 22, opacity: disabled ? 0.6 : 1,
+        textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center',
+        ...(badge ? {} : {
+          fontSize: 12, padding: '4px 22px 4px 10px', borderRadius: 999, border: `1px ${value ? 'solid' : 'dashed'} var(--line)`,
+          background: value ? 'var(--surface-2)' : 'transparent', color: value ? 'var(--ink)' : 'var(--ink-3)',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
+        }),
+      }}>
+      <option value="">{placeholder}</option>
+      {!known && <option value={value}>{value}</option>}
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
   );
 }
 
@@ -650,10 +731,15 @@ export default function InternsPage() {
       return v === 'table' || v === 'kanban' ? v : 'cards';
     } catch { return 'cards'; }
   });
-  const [kanbanGroup, setKanbanGroup] = useState<'period' | 'department'>(() => {
-    try { return localStorage.getItem('interns_kanban_group') === 'department' ? 'department' : 'period'; } catch { return 'period'; }
+  const [stageFilter, setStageFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [kanbanGroup, setKanbanGroup] = useState<'stage' | 'type' | 'period' | 'department'>(() => {
+    try {
+      const g = localStorage.getItem('interns_kanban_group');
+      return g === 'department' || g === 'period' || g === 'type' ? g : 'stage';
+    } catch { return 'stage'; }
   });
-  const changeKanbanGroup = (g: 'period' | 'department') => {
+  const changeKanbanGroup = (g: 'stage' | 'type' | 'period' | 'department') => {
     setKanbanGroup(g);
     try { localStorage.setItem('interns_kanban_group', g); } catch { /* ignore */ }
   };
@@ -664,8 +750,8 @@ export default function InternsPage() {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ['interns', search],
-    queryFn: () => listInterns(search ? { search } : {}),
+    queryKey: ['interns', search, stageFilter, typeFilter],
+    queryFn: () => listInterns({ limit: 1000, ...(search && { search }), ...(stageFilter && { stage: stageFilter }), ...(typeFilter && { internship_type: typeFilter }) }),
   });
 
   const interns = data?.data ?? [];
@@ -690,6 +776,16 @@ export default function InternsPage() {
     onError: (e: any) => toast.error(getApiError(e, 'Erreur')),
   });
 
+  const convertMut = useMutation({
+    mutationFn: (id: string) => convertIntern(id),
+    onSuccess: e => {
+      ['interns', 'employees', 'dashboard-kpis', 'dashboard-metrics'].forEach(k => qc.invalidateQueries({ queryKey: [k] }));
+      setViewingIntern(null);
+      toast.success(`${e.full_name} est maintenant employé permanent (CDI)`);
+    },
+    onError: (e: unknown) => toast.error(getApiError(e, 'La conversion a échoué')),
+  });
+
   const updateMut = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Intern> }) => updateIntern(id, data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['interns'] }); setEditing(null); toast.success('Mis à jour'); },
@@ -704,19 +800,19 @@ export default function InternsPage() {
 
   // Kanban drag & drop (department view): update instantly, roll back on error
   const moveMut = useMutation({
-    mutationFn: ({ id, department }: { id: string; department: string }) => updateIntern(id, { department }),
-    onMutate: async ({ id, department }) => {
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<Intern> }) => updateIntern(id, patch),
+    onMutate: async ({ id, patch }) => {
       await qc.cancelQueries({ queryKey: ['interns'] });
       const snapshots = qc.getQueriesData<{ data: Intern[]; count: number }>({ queryKey: ['interns'] });
       qc.setQueriesData<{ data: Intern[]; count: number }>({ queryKey: ['interns'] }, old =>
-        old && Array.isArray(old.data) ? { ...old, data: old.data.map(i => (i.id === id ? { ...i, department } : i)) } : old);
+        old && Array.isArray(old.data) ? { ...old, data: old.data.map(i => (i.id === id ? { ...i, ...patch } : i)) } : old);
       return { snapshots };
     },
     onError: (e: unknown, _vars, ctx) => {
       ctx?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data));
-      toast.error(getApiError(e, 'Impossible de déplacer ce stagiaire'));
+      toast.error(getApiError(e, 'Impossible de modifier ce stagiaire'));
     },
-    onSuccess: () => toast.success('Stagiaire déplacé'),
+    onSuccess: () => toast.success('Stagiaire mis à jour'),
     onSettled: () => qc.invalidateQueries({ queryKey: ['interns'] }),
   });
 
@@ -742,7 +838,7 @@ export default function InternsPage() {
     <div style={{ padding: '24px 28px' }}>
       <PageHeader
         title="Stagiaires"
-        subtitle={`${total} stagiaire${total !== 1 ? 's' : ''} actif${total !== 1 ? 's' : ''}`}
+        subtitle={`${total} stagiaire${total !== 1 ? 's' : ''} · ${interns.filter(i => i.internship_status === 'En cours').length} en cours`}
         action={
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="soft" onClick={() => setShowCVImport(true)}>
@@ -768,6 +864,16 @@ export default function InternsPage() {
             placeholder="Rechercher par nom..."
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
+        <select className="select" style={{ width: 170, flexShrink: 0 }} value={stageFilter} onChange={e => setStageFilter(e.target.value)}
+          title="Filtrer par statut du stage">
+          <option value="">Tous les statuts</option>
+          {STAGE_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+        <select className="select" style={{ width: 190, flexShrink: 0 }} value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
+          title="Filtrer par type de stage">
+          <option value="">Tous les types de stage</option>
+          {INTERNSHIP_TYPES.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
         <div role="group" aria-label="Mode d'affichage"
           style={{ display: 'flex', border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
           {([['cards', 'Cartes', <LayoutGrid size={14} key="g" />], ['table', 'Tableau', <List size={14} key="l" />], ['kanban', 'Kanban', <Columns3 size={14} key="k" />]] as const).map(([m, label, icon]) => (
@@ -839,18 +945,24 @@ export default function InternsPage() {
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12, color: 'var(--ink-2)', fontWeight: 600 }}>Grouper par</span>
+            <button onClick={() => changeKanbanGroup('stage')} style={{ padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 8, border: `1px solid ${kanbanGroup === 'stage' ? 'var(--primary)' : 'var(--line)'}`, background: kanbanGroup === 'stage' ? 'var(--primary-soft)' : 'var(--surface)', color: kanbanGroup === 'stage' ? 'var(--primary)' : 'var(--ink-2)' }}>Statut du stage</button>
+            <button onClick={() => changeKanbanGroup('type')} style={{ padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 8, border: `1px solid ${kanbanGroup === 'type' ? 'var(--primary)' : 'var(--line)'}`, background: kanbanGroup === 'type' ? 'var(--primary-soft)' : 'var(--surface)', color: kanbanGroup === 'type' ? 'var(--primary)' : 'var(--ink-2)' }}>Type de stage</button>
             <button onClick={() => changeKanbanGroup('period')} style={{ padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 8, border: `1px solid ${kanbanGroup === 'period' ? 'var(--primary)' : 'var(--line)'}`, background: kanbanGroup === 'period' ? 'var(--primary-soft)' : 'var(--surface)', color: kanbanGroup === 'period' ? 'var(--primary)' : 'var(--ink-2)' }}>Période de stage</button>
             <button onClick={() => changeKanbanGroup('department')} style={{ padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', borderRadius: 8, border: `1px solid ${kanbanGroup === 'department' ? 'var(--primary)' : 'var(--line)'}`, background: kanbanGroup === 'department' ? 'var(--primary-soft)' : 'var(--surface)', color: kanbanGroup === 'department' ? 'var(--primary)' : 'var(--ink-2)' }}>Département</button>
             <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>
-              {kanbanGroup === 'department'
-                ? '· Glissez une carte dans une autre colonne pour modifier son département.'
-                : '· Lecture seule : la période découle des dates du stage.'}
+              {kanbanGroup === 'period'
+                ? '· Lecture seule : la période découle des dates du stage.'
+                : `· Glissez une carte dans une autre colonne pour modifier ${kanbanGroup === 'stage' ? 'son statut' : kanbanGroup === 'type' ? 'son type de stage' : 'son département'}.`}
             </span>
           </div>
           <KanbanBoard
             items={interns}
             getId={i => i.id}
-            columns={kanbanGroup === 'period'
+            columns={kanbanGroup === 'type'
+              ? [...INTERNSHIP_TYPES.map((o, i) => ({ id: o, label: o, color: TYPE_COLORS[i % TYPE_COLORS.length] })), { id: '', label: 'Non renseigné', color: 'var(--ink-3)' }]
+              : kanbanGroup === 'stage'
+              ? [...STAGE_OPTIONS.map(o => ({ id: o, label: o, color: stageColor(o) })), { id: '', label: 'Non renseigné', color: 'var(--ink-3)' }]
+              : kanbanGroup === 'period'
               ? [
                   { id: 'ongoing', label: 'En cours', color: 'var(--success)' },
                   { id: 'upcoming', label: 'À venir', color: 'var(--primary)' },
@@ -858,8 +970,10 @@ export default function InternsPage() {
                   { id: 'none', label: 'Dates non renseignées', color: 'var(--warn)' },
                 ]
               : [...kanbanDepts.map(d => ({ id: d.name, label: d.name })), { id: '', label: 'Sans département', color: 'var(--ink-3)' }]}
-            getColumn={i => (kanbanGroup === 'period' ? periodOf(i) : i.department || '')}
-            onMove={kanbanGroup === 'department' ? (intern, col) => moveMut.mutate({ id: intern.id, department: col }) : undefined}
+            getColumn={i => (kanbanGroup === 'stage' ? (i.internship_status || '') : kanbanGroup === 'type' ? (i.internship_type || '') : kanbanGroup === 'period' ? periodOf(i) : i.department || '')}
+            onMove={kanbanGroup === 'period' ? undefined : (intern, col) => moveMut.mutate({
+              id: intern.id, patch: kanbanGroup === 'stage' ? { internship_status: col } : kanbanGroup === 'type' ? { internship_type: col } : { department: col },
+            })}
             onOpen={intern => openDossier(intern)}
             renderCard={intern => (
               <>
@@ -871,10 +985,15 @@ export default function InternsPage() {
                   </div>
                   <button className="btn btn-ghost btn-sm" title="Modifier" onClick={e => { e.stopPropagation(); setEditing(intern); }}><Pencil size={12} /></button>
                 </div>
-                {kanbanGroup === 'period' && intern.department && <div style={{ marginTop: 8 }}><Badge variant="default">{intern.department}</Badge></div>}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                  {kanbanGroup !== 'stage' && intern.internship_status && <Badge variant={stageVariant(intern.internship_status)}>{intern.internship_status}</Badge>}
+                  {kanbanGroup !== 'department' && intern.department && <Badge variant="default">{intern.department}</Badge>}
+                  {kanbanGroup !== 'type' && intern.internship_type && <Badge variant="violet">{intern.internship_type}</Badge>}
+                </div>
                 {(intern.internship_start || intern.internship_end) && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontSize: 11, color: 'var(--ink-2)' }}>
                     <Calendar size={11} /> {safeFormat(intern.internship_start)} → {safeFormat(intern.internship_end)}
+                    {intern.internship_period && <span style={{ color: 'var(--ink-3)' }}>· {intern.internship_period}</span>}
                   </div>
                 )}
                 {intern.email && (
@@ -888,11 +1007,11 @@ export default function InternsPage() {
         </>
       ) : viewMode === 'table' ? (
         <div className="card" style={{ overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflow: 'auto', maxHeight: 'calc(100vh - 290px)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr>
-                  <th style={{ padding: '10px 16px', width: 40, background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>
+                  <th style={{ padding: '10px 14px', minWidth: 40, width: 40, background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', position: 'sticky', top: 0, left: 0, zIndex: 3 }}>
                     <input
                       type="checkbox"
                       checked={allSelected}
@@ -902,19 +1021,22 @@ export default function InternsPage() {
                       title={allSelected ? 'Désélectionner tout' : 'Sélectionner tout'}
                     />
                   </th>
-                  {['Stagiaire', 'Département', 'Email', 'Téléphone', 'Tuteur', 'Période', 'Rémunération', ''].map(h => (
-                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-3)', fontSize: 11, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '.06em', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>{h}</th>
+                  {['Nom et prénom', 'Type de stage', 'Statut stage', 'Mission', 'Département', 'Étude', 'École', 'Email', 'Téléphone', 'Date de début', 'Date de fin', 'Période de stage', 'Contact responsable', 'Observation', ''].map(h => (
+                    <th key={h} style={{ ...{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-3)', fontSize: 11, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '.06em', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', position: 'sticky', top: 0, zIndex: 1 }, ...(h === 'Nom et prénom' ? { left: 40, zIndex: 3, minWidth: 190 } : {}) }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {interns.map(intern => (
+                {interns.map(intern => {
+                  const rowBg = selectedIds.has(intern.id) ? 'var(--primary-soft)' : 'var(--surface)';
+                  const busy = moveMut.isPending && moveMut.variables?.id === intern.id;
+                  return (
                   <tr key={intern.id}
-                    style={{ borderBottom: '1px solid var(--line)', cursor: 'pointer', background: selectedIds.has(intern.id) ? 'var(--primary-soft)' : '' }}
+                    style={{ borderBottom: '1px solid var(--line)', cursor: 'pointer', background: rowBg }}
                     onClick={() => openDossier(intern)}
                     onMouseEnter={e => { if (!selectedIds.has(intern.id)) e.currentTarget.style.background = 'var(--surface-2)'; }}
-                    onMouseLeave={e => { if (!selectedIds.has(intern.id)) e.currentTarget.style.background = ''; }}>
-                    <td style={{ padding: '10px 16px' }} onClick={e => e.stopPropagation()}>
+                    onMouseLeave={e => { if (!selectedIds.has(intern.id)) e.currentTarget.style.background = 'var(--surface)'; }}>
+                    <td style={{ padding: '9px 14px', position: 'sticky', left: 0, zIndex: 1, background: 'inherit' }} onClick={e => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selectedIds.has(intern.id)}
@@ -922,28 +1044,33 @@ export default function InternsPage() {
                         style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)' }}
                       />
                     </td>
-                    <td style={{ padding: '10px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <Avatar name={intern.full_name} src={intern.photo_url} size={30} />
-                        <div>
-                          <p style={{ fontWeight: 500 }}>{intern.full_name}</p>
-                          <p style={{ color: 'var(--primary)', fontSize: 11, fontWeight: 500 }}>{intern.position || 'Stagiaire'}</p>
-                        </div>
+                    <td style={{ padding: '9px 14px', whiteSpace: 'nowrap', position: 'sticky', left: 40, zIndex: 1, background: 'inherit', boxShadow: '1px 0 0 var(--line)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                        <Avatar name={intern.full_name} src={intern.photo_url} size={28} />
+                        <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{intern.full_name}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>{intern.department || '—'}</td>
-                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>{intern.email || '—'}</td>
-                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>{intern.phone || '—'}</td>
-                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)' }}>{intern.manager || '—'}</td>
-                    <td style={{ padding: '10px 16px', color: 'var(--ink-2)', whiteSpace: 'nowrap' }}>
-                      {intern.internship_start || intern.internship_end
-                        ? `${safeFormat(intern.internship_start)} → ${safeFormat(intern.internship_end)}`
-                        : '—'}
+                    <td style={{ padding: '9px 14px', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+                      <InlineSelect value={intern.internship_type || ''} options={INTERNSHIP_TYPES} placeholder="— Choisir —" disabled={busy}
+                        onChange={v => moveMut.mutate({ id: intern.id, patch: { internship_type: (v || null) as unknown as string } })} />
                     </td>
-                    <td style={{ padding: '10px 16px', whiteSpace: 'nowrap', fontWeight: 600, color: (intern as any).remuneration > 0 ? 'var(--success)' : 'var(--ink-3)' }}>
-                      {(intern as any).remuneration > 0 ? `${(intern as any).remuneration} DH` : '—'}
+                    <td style={{ padding: '9px 14px', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+                      <InlineSelect value={intern.internship_status || ''} options={STAGE_OPTIONS} placeholder="— Statut —" disabled={busy}
+                        badge={intern.internship_status ? stageVariant(intern.internship_status) : undefined} maxWidth={150}
+                        onChange={v => moveMut.mutate({ id: intern.id, patch: { internship_status: (v || null) as unknown as string } })} />
                     </td>
-                    <td style={{ padding: '10px 16px' }} onClick={e => e.stopPropagation()}>
+                    <td style={{ padding: '9px 14px', fontSize: 12.5, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--primary)', fontWeight: 500 }} title={intern.position || ''}>{intern.position || '—'}</td>
+                    <td style={{ padding: '9px 14px', fontSize: 12.5, maxWidth: 170, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink-2)' }} title={intern.department || ''}>{intern.department || '—'}</td>
+                    <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intern.education_summary || ''}>{intern.education_summary || '—'}</td>
+                    <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intern.school || ''}>{intern.school || '—'}</td>
+                    <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, maxWidth: 210, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intern.email || ''}>{intern.email || '—'}</td>
+                    <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, whiteSpace: 'nowrap' }}>{intern.phone || '—'}</td>
+                    <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, whiteSpace: 'nowrap' }}>{intern.internship_start ? safeFormat(intern.internship_start) : '—'}</td>
+                    <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, whiteSpace: 'nowrap' }}>{intern.internship_end ? safeFormat(intern.internship_end) : '—'}</td>
+                    <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, whiteSpace: 'nowrap' }}>{intern.internship_period || '—'}</td>
+                    <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intern.school_contact || ''}>{intern.school_contact || '—'}</td>
+                    <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intern.notes || ''}>{intern.notes || '—'}</td>
+                    <td style={{ padding: '9px 14px' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: 4 }}>
                         <button className="btn btn-ghost btn-sm" title="Onboarding" onClick={() => openDossier(intern, 'onboarding')}>
                           <ClipboardList size={13} />
@@ -961,7 +1088,8 @@ export default function InternsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -986,6 +1114,7 @@ export default function InternsPage() {
                     <p style={{ fontWeight: 600, fontSize: 14 }}>{intern.full_name}</p>
                     <p style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 500 }}>{intern.position || 'Stagiaire'}</p>
                     {intern.department && <span style={{ marginTop: 2 }}><Badge variant="default">{intern.department}</Badge></span>}
+                    {intern.internship_status && <span style={{ marginTop: 2, marginLeft: intern.department ? 6 : 0 }}><Badge variant={stageVariant(intern.internship_status)}>{intern.internship_status}</Badge></span>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 4 }} onClick={e => e.stopPropagation()}>
@@ -1096,8 +1225,17 @@ export default function InternsPage() {
                     <p style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 10 }}>Détails Stage</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
                       {[
+                        ['Statut du stage', viewingIntern.internship_status || '—'],
+                        ['Type de stage', viewingIntern.internship_type || '—'],
+                        ['Mission', viewingIntern.position || '—'],
+                        ['Étude', viewingIntern.education_summary || '—'],
+                        ['École', viewingIntern.school || '—'],
+                        ['Téléphone', viewingIntern.phone || '—'],
                         ['Début', safeFormat(viewingIntern.internship_start)],
                         ['Fin', safeFormat(viewingIntern.internship_end)],
+                        ['Période', viewingIntern.internship_period || '—'],
+                        ['Contact responsable', viewingIntern.school_contact || '—'],
+                        ['Observation', viewingIntern.notes || '—'],
                         ['Superviseur', viewingIntern.manager || '—'],
                         ['Rémunération', `${(viewingIntern as any).remuneration || 0} DH`],
                         ['Département', viewingIntern.department || '—'],
@@ -1199,8 +1337,8 @@ export default function InternsPage() {
                     <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 14 }}>
                       Transfert vers la liste des employés actifs avec contrat CDI.
                     </p>
-                    <Button variant="primary" disabled={viewingIntern.status === 'active'}
-                      onClick={() => { if (confirm(`Convertir ${viewingIntern.full_name} en employé permanent ?`)) updateMut.mutate({ id: viewingIntern.id, data: { status: 'active', contract_type: 'CDI' } }); }}>
+                    <Button variant="primary" loading={convertMut.isPending} disabled={viewingIntern.status === 'active'}
+                      onClick={() => { if (confirm(`Convertir ${viewingIntern.full_name} en employé permanent ?`)) convertMut.mutate(viewingIntern.id); }}>
                       <CheckCircle2 size={14} /> Confirmer l'embauche
                     </Button>
                   </div>

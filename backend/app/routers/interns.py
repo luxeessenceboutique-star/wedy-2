@@ -43,11 +43,14 @@ DEFAULT_OBJECTIVES = [
 @router.get("")
 def list_interns(
     skip: int = 0,
-    limit: int = 50,
+    limit: int = 500,
+    search: str = "",
+    stage: str = "",
+    internship_type: str = "",
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    res = intern_repository.list_interns(supabase, skip, limit)
+    res = intern_repository.list_interns(supabase, skip, min(limit, 2000), search, stage, internship_type)
     return {"data": res.data, "count": res.count or 0}
 
 
@@ -92,6 +95,40 @@ def update_intern(
         raise HTTPException(status_code=404, detail="Stagiaire non trouvé")
     log_action(supabase, current_user["id"], "UPDATE", "intern", intern_id)
     return res.data[0]
+
+
+@router.post("/{intern_id}/convert")
+def convert_intern_to_employee(
+    intern_id: str,
+    payload: dict | None = None,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """Hire an intern: becomes an active employee (CDI by default) with hire date + contract start,
+    and the internship register status becomes « Embauché »."""
+    from datetime import date
+    payload = payload or {}
+    res = intern_repository.get_intern(supabase, intern_id)
+    intern = getattr(res, "data", None) if res is not None else None
+    if not intern:
+        raise HTTPException(status_code=404, detail="Stagiaire introuvable (déjà converti en employé ?)")
+
+    start = str(payload.get("hire_date") or date.today())
+    update = {
+        "status": "active",
+        "contract_type": payload.get("contract_type") or "CDI",
+        "internship_status": "Embauché",
+    }
+    if not intern.get("hire_date"):
+        update["hire_date"] = start
+    if not intern.get("contract_start"):
+        update["contract_start"] = start
+
+    out = intern_repository.update_intern(supabase, intern_id, update)
+    if not out.data:
+        raise HTTPException(status_code=400, detail="La conversion a échoué")
+    log_action(supabase, current_user["id"], "CONVERT_TO_EMPLOYEE", "intern", intern_id)
+    return out.data[0]
 
 
 @router.delete("/{intern_id}", status_code=204)

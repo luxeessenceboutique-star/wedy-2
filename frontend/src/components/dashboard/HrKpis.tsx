@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   Users, UserCheck, Inbox, Calendar, UserX, FileWarning, Percent, CheckCircle2, XCircle, Clock, FileClock, ChevronRight,
-  ArrowUpRight,
+  ArrowUpRight, GraduationCap,
 } from 'lucide-react';
 import {
   BarChart, Bar, PieChart, Pie, Cell, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -27,6 +27,7 @@ const GRAD = {
   violet: ['#5444b8', '#6d5ad6'],
   red:    ['#b8402c', '#d1503a'],
   cyan:   ['#0b7f90', '#0f98ab'],
+  indigo: ['#2f4bb0', '#4a69d8'],
 } as const;
 
 const TIP: React.CSSProperties = {
@@ -198,9 +199,12 @@ export function HrKpis() {
       <SectionTitle right={<span style={{ fontSize: 12, color: 'var(--ink-3)', textTransform: 'capitalize' }}>Aujourd'hui · {todayLabel}</span>}>
         Indicateurs prioritaires
       </SectionTitle>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(128px, 1fr))', gap: 12, marginBottom: 24 }}>
         <Tile icon={<Users />} label="Total employés" value={w.total} grad={GRAD.teal} to="/app/employees"
           sub={`${w.active} actif${w.active > 1 ? 's' : ''} · ${w.inactive} inactif${w.inactive > 1 ? 's' : ''}`} />
+        <Tile icon={<GraduationCap />} label="Stagiaires" value={w.interns} grad={GRAD.indigo} to="/app/interns"
+          sub={`${w.interns_in_progress} en cours`}
+          hint="Nombre de stagiaires dans le registre (tous statuts) ; « en cours » = statut du stage « En cours »" />
         <Tile icon={<UserCheck />} label="Employés présents" value={t.present} grad={GRAD.green} to="/app/employees"
           sub={k.workday ? `sur ${w.active} actifs` : 'Jour non ouvré'}
           hint="Estimé : employés actifs moins ceux en congé ou absents aujourd'hui (d'après les congés approuvés, sans pointage)" />

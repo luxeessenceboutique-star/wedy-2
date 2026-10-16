@@ -13,12 +13,19 @@
 --   Statut stage       -> employees.internship_status  (NEW)
 --   Contact responsable-> employees.school_contact     (NEW)
 --   Type de stage      -> employees.internship_type    (NEW: Stage fonctionnel, d'apprentissage, pré-embauche, PFE, PFA...)
+--   Sheet "ETAT TESTS" (developer recruitment tests): Code Source / Demo Link / CV / NOTE RH / NOTE TEST
+--                      -> employees.test_code_source / test_demo_link / test_cv / test_note_rh / test_note_test (NEW)
 -- ════════════════════════════════════════════════════════════
 ALTER TABLE rh.employees
   ADD COLUMN IF NOT EXISTS internship_period text,
   ADD COLUMN IF NOT EXISTS internship_status text,
   ADD COLUMN IF NOT EXISTS school_contact    text,
-  ADD COLUMN IF NOT EXISTS internship_type   text;
+  ADD COLUMN IF NOT EXISTS internship_type   text,
+  ADD COLUMN IF NOT EXISTS test_code_source  text,
+  ADD COLUMN IF NOT EXISTS test_demo_link    text,
+  ADD COLUMN IF NOT EXISTS test_cv           text,
+  ADD COLUMN IF NOT EXISTS test_note_rh      text,
+  ADD COLUMN IF NOT EXISTS test_note_test    text;
 
 CREATE INDEX IF NOT EXISTS idx_employees_internship_status ON rh.employees (internship_status);
 

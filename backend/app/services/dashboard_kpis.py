@@ -71,11 +71,12 @@ def compute_kpis(sb: Client, days: int = 30, today: Optional[date] = None) -> di
     hol = _holidays(sb, warnings)
 
     # ── Workforce ────────────────────────────────────────────────────────────
-    emp = _all(sb, "employees", "id,full_name,status,department,contract_type,contract_end,hire_date,cin,updated_at", warnings, required=True)
+    emp = _all(sb, "employees", "id,full_name,status,department,contract_type,contract_end,hire_date,cin,updated_at,internship_status", warnings, required=True)
     workforce = [e for e in emp if e.get("status") != "intern"]
     active = [e for e in workforce if e.get("status") in ACTIVE_STATUSES]
     inactive = [e for e in workforce if e.get("status") in INACTIVE_STATUSES]
     interns = sum(1 for e in emp if e.get("status") == "intern")
+    interns_in_progress = sum(1 for e in emp if e.get("status") == "intern" and e.get("internship_status") == "En cours")
     active_ids = {e["id"] for e in active}
 
     # ── Leaves ───────────────────────────────────────────────────────────────
@@ -168,7 +169,8 @@ def compute_kpis(sb: Client, days: int = 30, today: Optional[date] = None) -> di
         "period_days": days,
         "today": today.isoformat(),
         "workday": workday,
-        "workforce": {"total": len(workforce), "active": len(active), "inactive": len(inactive), "interns": interns},
+        "workforce": {"total": len(workforce), "active": len(active), "inactive": len(inactive), "interns": interns,
+                      "interns_in_progress": interns_in_progress},
         "today_status": {
             "present": present, "on_leave": len(on_leave_ids), "absent": len(absent_ids),
             "late": None, "late_available": False,

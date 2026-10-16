@@ -18,7 +18,7 @@ export interface DashboardKpis {
   period_days: number;
   today: string;
   workday: boolean;
-  workforce: { total: number; active: number; inactive: number; interns: number };
+  workforce: { total: number; active: number; inactive: number; interns: number; interns_in_progress: number };
   today_status: { present: number; on_leave: number; absent: number; late: number | null; late_available: boolean };
   requests: {
     pending: number; pending_leave: number; pending_document: number; pending_other: number;

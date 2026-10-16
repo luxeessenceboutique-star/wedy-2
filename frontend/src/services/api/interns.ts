@@ -8,6 +8,12 @@ export type Intern = Employee & {
   internship_period?: string;
   internship_status?: string;
   internship_type?: string;
+  /** developer recruitment test (sheet "ETAT TESTS") */
+  test_code_source?: string;
+  test_demo_link?: string;
+  test_cv?: string;
+  test_note_rh?: string;
+  test_note_test?: string;
   school_contact?: string;
 };
 

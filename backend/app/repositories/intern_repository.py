@@ -2,15 +2,21 @@
 from supabase import Client
 
 
-def list_interns(supabase: Client, skip: int, limit: int):
-    return (
-        supabase.table("employees")
-        .select("*", count="exact")
-        .eq("status", "intern")
-        .order("created_at", desc=True)
-        .range(skip, skip + limit - 1)
-        .execute()
-    )
+def list_interns(supabase: Client, skip: int, limit: int, search: str = "", stage: str = "", internship_type: str = ""):
+    query = supabase.table("employees").select("*", count="exact").eq("status", "intern")
+    # PostgREST "or" filters use , ( ) as separators: strip them from user input
+    term = "".join(c for c in (search or "") if c not in ",()%*\\").strip()
+    if term:
+        query = query.or_(f"full_name.ilike.%{term}%,email.ilike.%{term}%,school.ilike.%{term}%,position.ilike.%{term}%")
+    if stage:
+        query = query.eq("internship_status", stage)
+    if internship_type:
+        query = query.eq("internship_type", internship_type)
+    # most recent internships first, undated ones last
+    query = query.range(skip, skip + limit - 1)
+    # raw order parameter: this client cannot express "NULLS LAST" (Postgres puts NULLs first on DESC)
+    query.params = query.params.set("order", "internship_start.desc.nullslast")
+    return query.execute()
 
 
 def get_intern(supabase: Client, intern_id: str):

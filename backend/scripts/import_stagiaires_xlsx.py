@@ -3,6 +3,7 @@ Import the intern register "ETAT DES STAGIAIRES TYTHON.xlsx" into the platform (
 
   python scripts/import_stagiaires_xlsx.py "<file.xlsx>"                # dry run: prints what would be added
   python scripts/import_stagiaires_xlsx.py "<file.xlsx>" --apply        # writes to the database
+  python scripts/import_stagiaires_xlsx.py "<file.xlsx>" --tests        # adds the "ETAT TESTS" candidates (dry run without --apply)
   python scripts/import_stagiaires_xlsx.py "<file.xlsx>" --fill-types  # sets "Type de stage" on interns already imported
   python scripts/import_stagiaires_xlsx.py --undo import_ids.json       # removes what a previous --apply added
 
@@ -14,6 +15,7 @@ Sheets read
 The same person found in both sheets is merged into one record. Existing interns are never duplicated
 (matched on e-mail, or on the normalized name + start date). The "ETAT TESTS" sheet (candidates) is ignored.
 """
+import difflib
 import json
 import os
 import re
@@ -179,6 +181,123 @@ def connect():
                          options=ClientOptions(schema=os.getenv("SUPABASE_SCHEMA", "public")))
 
 
+# ── Sheet "ETAT TESTS" (developer recruitment tests) ──────────────────────────────
+
+TEST_STATUS = {"valide": "Validé", "en attente": "En attente", "non valide": "Non validé", "quitte": "Quitté", "a distance": "À distance"}
+TAG_STATUS = {"stagiaire en cours": "En cours", "stagiaire quitte": "Quitté", "stagiaire non valide": "Non validé"}
+
+
+def person_key(name: str) -> str:
+    s = re.sub(r"[-'’]", "", strip_accents(name).lower())
+    return " ".join(sorted(re.findall(r"[a-z]+", s)))
+
+
+def same_person(a: str, b: str) -> bool:
+    """Same person written differently: 'Sif-Eddine' / 'Sifeddine', 'ANAS' / 'ANASS', 'IHSANE NAJI' / 'IHSANE EN NAJI'."""
+    ka, kb = person_key(a), person_key(b)
+    if not ka or not kb:
+        return False
+    if ka == kb:
+        return True
+    ta, tb = set(ka.split()), set(kb.split())
+    small, big = (ta, tb) if len(ta) <= len(tb) else (tb, ta)
+    if len(small) >= 2 and small <= big:
+        return True
+    return difflib.SequenceMatcher(None, ka, kb).ratio() >= 0.9
+
+
+def note_text(v) -> str | None:
+    if isinstance(v, (datetime, date)):                # "5/4" typed in Excel became a date: show it back as typed
+        return f"{v.month}/{v.day}"
+    return clean(v)
+
+
+def read_tests(wb) -> tuple[list[dict], int]:
+    ws = next(w for w in wb.worksheets if w.title.strip() == "ETAT TESTS")
+    rows, header, nameless = [], False, 0
+    for r in ws.iter_rows(min_row=1, values_only=True):
+        if r[3] and str(r[3]).strip().upper().startswith("NOM ET PRENOM"):
+            header = True
+            continue
+        if not header:
+            continue
+        name = clean(r[3])
+        if not name:
+            nameless += 1 if r[10] else 0
+            continue
+        sd, clean_start = parse_dates(r[9])
+        notes = []
+        raw_j = clean(r[9])
+        if raw_j and not sd and raw_j != "-":
+            notes.append(f"Début : {raw_j}")
+        bd, _ = parse_dates(r[1])
+        if bd:
+            notes.append(f"Date indiquée : {bd[0].strftime('%d/%m/%Y')}")
+        k = strip_accents(str(r[10] or "")).lower().strip()
+        tag = strip_accents(str(r[13] or "")).lower().strip() if len(r) > 13 else ""
+        rows.append({
+            "full_name": name, "position": "Développeur (test de recrutement)",
+            "internship_start": sd[0].isoformat() if sd else None,
+            "internship_status": TAG_STATUS.get(tag) or TEST_STATUS.get(k) or (norm_status(r[10]) if k else None),
+            "test_code_source": clean(r[4]), "test_demo_link": clean(r[5]), "test_cv": clean(r[6]),
+            "test_note_rh": note_text(r[7]), "test_note_test": note_text(r[8]),
+            "notes": " | ".join(notes) or None, "_src": "tests",
+        })
+    # the same candidate listed several times: one record
+    merged: list[dict] = []
+    for r in rows:
+        for m in merged:
+            if same_person(m["full_name"], r["full_name"]):
+                for f, v in r.items():
+                    if f in ("test_note_test", "test_note_rh") and v and m.get(f) and v not in m[f]:
+                        m[f] = f"{m[f]} | {v}"
+                    elif f != "_src" and v and not m.get(f):
+                        m[f] = v
+                m["_dups"] = m.get("_dups", 0) + 1
+                break
+        else:
+            merged.append(dict(r))
+    return merged, nameless
+
+
+def run_tests_import(wb, apply: bool) -> None:
+    cands, nameless = read_tests(wb)
+    sb = connect()
+    db = sb.table("employees").select("*").eq("status", "intern").range(0, 9999).execute().data or []
+    TEST_FIELDS = ("test_code_source", "test_demo_link", "test_cv", "test_note_rh", "test_note_test")
+    updates, inserts, matches = [], [], []
+    for c in cands:
+        hit = [d for d in db if same_person(d["full_name"], c["full_name"])]
+        if hit:
+            hit.sort(key=lambda d: d.get("internship_start") or "", reverse=True)
+            d = hit[0]
+            patch = {f: c[f] for f in TEST_FIELDS if c.get(f) and not d.get(f)}
+            if c.get("internship_start") and not d.get("internship_start"):
+                patch["internship_start"] = c["internship_start"]
+            matches.append((c["full_name"], d["full_name"], d.get("internship_status")))
+            if patch:
+                updates.append((d["id"], patch))
+        else:
+            inserts.append({k: v for k, v in c.items() if not k.startswith("_") and v is not None} | {"status": "intern"})
+    dups = sum(c.get("_dups", 0) for c in cands)
+    print(f"Sheet 'ETAT TESTS': {len(cands) + dups} named rows -> {len(cands)} people ({dups} repeated rows merged) | {nameless} nameless 'EN ATTENTE' placeholder rows ignored")
+    print(f"Already in the register (fields completed, not duplicated): {len(matches)}")
+    for a, b, st in matches:
+        print(f"   {a}  ==  {b}  [{st}]")
+    print(f"New people to add: {len(inserts)} | statuses:", dict(Counter(i.get('internship_status') for i in inserts).most_common()))
+    if not apply:
+        print("\nDry run only. Re-run with --apply to write to the database.")
+        return
+    for i, patch in updates:
+        sb.table("employees").update(patch).eq("id", i).execute()
+    ids = []
+    for i in range(0, len(inserts), 50):
+        ids += [x["id"] for x in sb.table("employees").insert(inserts[i:i + 50]).execute().data or []]
+    out = os.path.join(os.path.dirname(os.path.abspath(sys.argv[1])), "import_ids_tests.json")
+    json.dump(ids, open(out, "w", encoding="utf-8"))
+    print(f"Updated {len(updates)} existing interns, added {len(ids)} new ones. Ids saved in {out} (undo: --undo \"{out}\").")
+
+
 def main() -> None:
     args = sys.argv[1:]
     if args[:1] == ["--undo"]:
@@ -192,6 +311,9 @@ def main() -> None:
     path = next(a for a in args if not a.startswith("--"))
     apply = "--apply" in args
     wb = openpyxl.load_workbook(path, data_only=True)
+    if "--tests" in args:
+        run_tests_import(wb, apply)
+        return
     main_rows, pfe_rows = read_main(wb), read_pfe(wb)
     rows = merge(main_rows, pfe_rows)
 

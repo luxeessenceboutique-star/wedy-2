@@ -53,12 +53,12 @@ const PHASES = [
 ];
 
 // Statut du stage (register "ETAT DES STAGIAIRES")
-const STAGE_OPTIONS = ['En cours', 'Embauché', 'Terminé', 'Fin de stage', 'Validé', 'Quitté', 'Désistement', 'Déperdition', 'Arrêté', 'Démissionné', 'Expulsion', 'Annulée'];
+const STAGE_OPTIONS = ['En cours', 'Embauché', 'Terminé', 'Fin de stage', 'Validé', 'Quitté', 'Désistement', 'Déperdition', 'Arrêté', 'Démissionné', 'Expulsion', 'Annulée', 'En attente', 'En cours de décision', 'Non validé', 'À distance'];
 const stageVariant = (st?: string): 'primary' | 'success' | 'warning' | 'danger' | 'default' =>
   !st ? 'default'
-    : st === 'En cours' ? 'primary'
+    : st === 'En cours' || st === 'À distance' ? 'primary'
     : ['Embauché', 'Terminé', 'Fin de stage', 'Validé'].includes(st) ? 'success'
-    : ['Quitté', 'Désistement', 'Déperdition'].includes(st) ? 'warning'
+    : ['Quitté', 'Désistement', 'Déperdition', 'En attente', 'En cours de décision'].includes(st) ? 'warning'
     : 'danger';
 const stageColor = (st?: string) =>
   ({ primary: 'var(--primary)', success: 'var(--success)', warning: 'var(--warn)', danger: 'var(--danger)', default: 'var(--ink-3)' })[stageVariant(st)];
@@ -71,8 +71,9 @@ const INTERNSHIP_TYPES = [
   'Stage PFE (Projet de Fin d’Études)',
   'Stage PFA (Projet de Fin d’Année)',
   'Stage pré-embauche',
+  'En cours de décision',
 ];
-const TYPE_COLORS = ['var(--primary)', 'var(--violet)', 'var(--accent)', 'var(--success)', 'var(--warn)', 'var(--danger)'];
+const TYPE_COLORS = ['var(--primary)', 'var(--violet)', 'var(--accent)', 'var(--success)', 'var(--warn)', 'var(--danger)', 'var(--ink-3)'];
 
 const phaseIndex = (p: string) => PHASES.findIndex(x => x.id === p);
 const phaseMeta  = (p: string) => PHASES.find(x => x.id === p) ?? PHASES[0];
@@ -676,6 +677,18 @@ function InternForm({ initial, onSave, onCancel, loading }: {
   );
 }
 
+/** Link to a test project / demo: short label, full address on hover. */
+function ExtLink({ url }: { url?: string | null }) {
+  if (!url) return <span style={{ color: 'var(--ink-3)' }}>—</span>;
+  const label = url.includes('github.com') ? 'GitHub' : url.includes('drive.google') ? 'Drive'
+    : url.includes('vercel') || url.includes('netlify') || url.includes('render.com') ? 'Démo' : 'Lien';
+  if (!url.startsWith('http')) return <span title={url}>{url}</span>;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" title={url} onClick={e => e.stopPropagation()}
+      style={{ color: 'var(--primary)', fontWeight: 600 }}>{label} ↗</a>
+  );
+}
+
 // ── Inline select: change a value straight from the table ──────────────────────
 
 function InlineSelect({ value, options, placeholder, badge, disabled, maxWidth = 230, onChange }: {
@@ -835,7 +848,7 @@ export default function InternsPage() {
   };
 
   return (
-    <div style={{ padding: '24px 28px' }}>
+    <div style={{ padding: '24px 28px', ...(viewMode === 'table' ? { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' } : {}) }}>
       <PageHeader
         title="Stagiaires"
         subtitle={`${total} stagiaire${total !== 1 ? 's' : ''} · ${interns.filter(i => i.internship_status === 'En cours').length} en cours`}
@@ -1006,8 +1019,8 @@ export default function InternsPage() {
           />
         </>
       ) : viewMode === 'table' ? (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          <div style={{ overflow: 'auto', maxHeight: 'calc(100vh - 290px)' }}>
+        <div className="card" style={{ overflow: 'hidden', flex: 1, minHeight: 240, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ overflow: 'auto', flex: 1, minHeight: 0 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr>
@@ -1021,7 +1034,7 @@ export default function InternsPage() {
                       title={allSelected ? 'Désélectionner tout' : 'Sélectionner tout'}
                     />
                   </th>
-                  {['Nom et prénom', 'Type de stage', 'Statut stage', 'Mission', 'Département', 'Étude', 'École', 'Email', 'Téléphone', 'Date de début', 'Date de fin', 'Période de stage', 'Contact responsable', 'Observation', ''].map(h => (
+                  {['Nom et prénom', 'Type de stage', 'Statut stage', 'Mission', 'Département', 'Étude', 'École', 'Email', 'Téléphone', 'Date de début', 'Date de fin', 'Période de stage', 'Contact responsable', 'Observation', 'Code source', 'Demo', 'CV', 'Note RH', 'Note test', ''].map(h => (
                     <th key={h} style={{ ...{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-3)', fontSize: 11, whiteSpace: 'nowrap', textTransform: 'uppercase', letterSpacing: '.06em', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', position: 'sticky', top: 0, zIndex: 1 }, ...(h === 'Nom et prénom' ? { left: 40, zIndex: 3, minWidth: 190 } : {}) }}>{h}</th>
                   ))}
                 </tr>
@@ -1070,6 +1083,11 @@ export default function InternsPage() {
                     <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, whiteSpace: 'nowrap' }}>{intern.internship_period || '—'}</td>
                     <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intern.school_contact || ''}>{intern.school_contact || '—'}</td>
                     <td style={{ padding: '9px 14px', color: 'var(--ink-2)', fontSize: 12.5, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intern.notes || ''}>{intern.notes || '—'}</td>
+                    <td style={{ padding: '9px 14px', fontSize: 12.5, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}><ExtLink url={intern.test_code_source} /></td>
+                    <td style={{ padding: '9px 14px', fontSize: 12.5, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}><ExtLink url={intern.test_demo_link} /></td>
+                    <td style={{ padding: '9px 14px', fontSize: 12.5, whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}><ExtLink url={intern.test_cv} /></td>
+                    <td style={{ padding: '9px 14px', fontSize: 12.5, color: 'var(--ink-2)', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intern.test_note_rh || ''}>{intern.test_note_rh || '—'}</td>
+                    <td style={{ padding: '9px 14px', fontSize: 12.5, color: 'var(--ink-2)', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={intern.test_note_test || ''}>{intern.test_note_test || '—'}</td>
                     <td style={{ padding: '9px 14px' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: 4 }}>
                         <button className="btn btn-ghost btn-sm" title="Onboarding" onClick={() => openDossier(intern, 'onboarding')}>
@@ -1236,13 +1254,17 @@ export default function InternsPage() {
                         ['Période', viewingIntern.internship_period || '—'],
                         ['Contact responsable', viewingIntern.school_contact || '—'],
                         ['Observation', viewingIntern.notes || '—'],
+                        ...(viewingIntern.test_code_source ? [['Code source (test)', viewingIntern.test_code_source]] : []),
+                        ...(viewingIntern.test_demo_link ? [['Démo (test)', viewingIntern.test_demo_link]] : []),
+                        ...(viewingIntern.test_note_rh ? [['Note RH', viewingIntern.test_note_rh]] : []),
+                        ...(viewingIntern.test_note_test ? [['Note test', viewingIntern.test_note_test]] : []),
                         ['Superviseur', viewingIntern.manager || '—'],
                         ['Rémunération', `${(viewingIntern as any).remuneration || 0} DH`],
                         ['Département', viewingIntern.department || '—'],
                       ].map(([label, val]) => (
                         <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: 'var(--ink-2)' }}>{label}</span>
-                          <span style={{ fontWeight: 600 }}>{val}</span>
+                          <span style={{ fontWeight: 600, maxWidth: '62%', textAlign: 'right', wordBreak: 'break-word' }}>{val}</span>
                         </div>
                       ))}
                     </div>

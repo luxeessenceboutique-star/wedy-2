@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
   getEmployee, updateEmployee, listEmployeeDocuments, listEmployeeFiles,
-  uploadEmployeeFile, deleteEmployeeFile, getEmployeeFileUrl,
+  uploadEmployeeFile, deleteEmployeeFile, downloadEmployeeFile,
   listLeaveRequests, listPayslips, listGoals, listReviews,
   downloadDoc, printDocument, listDepartments,
   analyzeEmployeeFolder, applyAnalysis, sendForSignature,
@@ -248,11 +248,12 @@ function FilesTab({ employeeId }: { employeeId: string }) {
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                    <a href={getEmployeeFileUrl(f.file_path)} target="_blank" rel="noreferrer">
-                      <button style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Download size={12} /> {t('download')}
-                      </button>
-                    </a>
+                    <button
+                      onClick={() => downloadEmployeeFile(f.file_path, f.name).catch(e => toast.error(getApiError(e, 'Error')))}
+                      style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--line)', background: 'none', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
+                    >
+                      <Download size={12} /> {t('download')}
+                    </button>
                     <button
                       onClick={() => { if (confirm(`${t('delete')} "${f.name}" ?`)) deleteMut.mutate(f.id); }}
                       style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid #fecaca', background: 'none', cursor: 'pointer', color: '#dc2626' }}

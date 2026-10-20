@@ -56,13 +56,26 @@ export const uploadEmployeeFile = (employee_id: string, file: File, file_type: s
   const form = new FormData();
   form.append('file', file);
   form.append('file_type', file_type);
-  return api.post<EmployeeFile>(`/employees/${employee_id}/files`, form).then(r => r.data);
+  return api.post<EmployeeFile>(`/employees/${employee_id}/files`, form, { timeout: 0 }).then(r => r.data);
 };
 
 export const deleteEmployeeFile = (employee_id: string, file_id: string) =>
   api.delete(`/employees/${employee_id}/files/${file_id}`);
 
 export const getEmployeeFileUrl = (file_path: string) => `${BASE}/uploads/${file_path}`;
+
+/** Download a protected upload: the endpoint needs the Bearer token, so a plain link can't be used. */
+export const downloadEmployeeFile = async (file_path: string, name: string) => {
+  const res = await api.get<Blob>(`/uploads/${file_path}`, { responseType: 'blob', timeout: 0 });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
 
 export type AnalysisResult = {
   files_analyzed: number;

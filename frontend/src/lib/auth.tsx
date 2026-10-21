@@ -1,26 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { api, getMe } from '@/services/api';
+import { AuthContext, type User } from './authContext';
 
-interface User {
-  id: string;
-  email: string;
-  role_name?: string;
-  role?: string;
-  full_name?: string;
-  profile?: Record<string, unknown>;
-  roles?: string[];
-}
-
-interface AuthCtx {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<{ role: string }>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
-}
-
-const Ctx = createContext<AuthCtx>(null!);
-export const useAuth = () => useContext(Ctx);
+export const useAuth = () => useContext(AuthContext);
 
 export const isHRRole      = (role?: string) => ['hr', 'admin', 'rh'].includes(role ?? '');
 export const isEmployeeRole = (role?: string) => role === 'employee';
@@ -90,5 +72,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   };
 
-  return <Ctx.Provider value={{ user, loading, login, signup, logout }}>{children}</Ctx.Provider>;
+  return <AuthContext.Provider value={{ user, loading, login, signup, logout }}>{children}</AuthContext.Provider>;
 }

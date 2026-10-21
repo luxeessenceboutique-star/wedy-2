@@ -210,9 +210,9 @@ export function HrKpis() {
           hint="Estimé : employés actifs moins ceux en congé ou absents aujourd'hui (d'après les congés approuvés, sans pointage)" />
         <Tile icon={<Inbox />} label="Demandes en attente" value={r.pending} grad={GRAD.amber} to="/app/requests"
           sub={r.pending ? reqParts.join(' · ') : 'Rien à valider'} />
-        <Tile icon={<Calendar />} label="Congés en cours" value={t.on_leave} grad={GRAD.violet} to="/app/timeoff"
+        <Tile icon={<Calendar />} label="Congés en cours" value={t.on_leave} grad={GRAD.violet} to="/app/timeoff?today=leave"
           sub="en congé aujourd'hui" hint="Employés dont un congé approuvé couvre aujourd'hui (hors maladie / sans solde)" />
-        <Tile icon={<UserX />} label="Absences du jour" value={t.absent} grad={GRAD.red} to="/app/timeoff"
+        <Tile icon={<UserX />} label="Absences du jour" value={t.absent} grad={GRAD.red} to="/app/absences"
           sub="maladie / sans solde" hint="Employés en congé maladie ou sans solde aujourd'hui" />
         <Tile icon={<FileWarning />} label="Documents à traiter" value={d.to_process} grad={GRAD.cyan}
           to={d.pending_requests ? '/app/requests?kind=document' : '/app/employees'}

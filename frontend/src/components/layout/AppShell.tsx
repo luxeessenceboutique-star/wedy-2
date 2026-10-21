@@ -6,7 +6,7 @@ import {
   Puzzle, Bell, Settings, HelpCircle,
   ClipboardList,
   UserCog, GraduationCap, UserCheck, BookOpen, Star,
-  Network, Video, Briefcase, Calendar, Target, Inbox,
+  Network, Video, Briefcase, Calendar, Target, Inbox, UserX,
 } from 'lucide-react';
 import { SidebarShell, type NavSection } from './SidebarShell';
 import { useAuth } from '@/lib/auth';
@@ -64,6 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         { label: t('planning_rh'),     icon: <Calendar size={15} />,      to: '/app/planning-rh' },
         { label: t('performance'),    icon: <TrendingUp size={15} />,    to: '/app/performance' },
         { label: t('time_off'),       icon: <Clock size={15} />,         to: '/app/timeoff' },
+        { label: t('absences'),       icon: <UserX size={15} />,         to: '/app/absences' },
         { label: t('payroll'),        icon: <DollarSign size={15} />,    to: '/app/payroll' },
         { label: t('org_chart'),      icon: <Network size={15} />,       to: '/app/orgchart' },
         { label: t('meetings'),       icon: <Video size={15} />,         to: '/app/meetings' },

@@ -1,7 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr" translate="no">
   <head>
     <meta charset="UTF-8" />
+    <!-- The app translates itself (FR / EN / AR). Browser auto-translation rewrites the text nodes React owns
+         and crashes it with "insertBefore / removeChild" errors, so it is switched off. -->
+    <meta name="google" content="notranslate" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wedy — AI-powered HR Platform</title>

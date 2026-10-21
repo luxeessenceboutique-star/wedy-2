@@ -7,6 +7,7 @@ import { PageHeader } from '../../components/layout/AppShell';
 import { Card, Badge, Spinner, Button } from '../../components/ui';
 import { listLeaves, reviewLeave, createLeave, listEmployees, getLeaveBalance, getApiError, type LeaveRequest } from '@/services/api';
 import { useLang } from '../../lib/lang';
+import { useSearchParams } from 'react-router-dom';
 
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const WEEK_DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
@@ -268,6 +269,9 @@ export default function TimeOffPage() {
   const { t } = useLang();
   const [showModal, setShowModal] = useState(false);
   const [filter, setFilter] = useState('all');
+  // Arriving from a dashboard tile: ?today=leave (congés en cours) or ?today=absence (maladie / sans solde)
+  const [params, setParams] = useSearchParams();
+  const todayMode = params.get('today') === 'absence' ? 'absence' : params.get('today') === 'leave' ? 'leave' : null;
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [calDate, setCalDate] = useState(new Date());
   const [selectedEmpId, setSelectedEmpId] = useState('');
@@ -312,10 +316,15 @@ export default function TimeOffPage() {
     [allLeaves, selectedEmpId],
   );
 
-  const displayLeaves = useMemo(() =>
-    leaves.filter(l => !selectedEmpId || l.employee_id === selectedEmpId),
-    [leaves, selectedEmpId],
-  );
+  const displayLeaves = useMemo(() => {
+    const iso = new Date().toISOString().slice(0, 10);
+    return leaves.filter(l => {
+      if (selectedEmpId && l.employee_id !== selectedEmpId) return false;
+      if (!todayMode) return true;
+      const absence = l.type === 'sick' || l.type === 'unpaid';
+      return l.status === 'approved' && l.start_date <= iso && iso <= (l.end_date || l.start_date) && (todayMode === 'absence') === absence;
+    });
+  }, [leaves, selectedEmpId, todayMode]);
 
   const pendingCount = filteredByEmployee.filter(l => l.status === 'pending').length;
   const approvedCount = filteredByEmployee.filter(l => l.status === 'approved').length;
@@ -357,6 +366,13 @@ export default function TimeOffPage() {
           </div>
         ))}
       </div>
+
+      {todayMode && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '10px 16px', background: 'var(--primary-soft)', borderRadius: 10, fontSize: 13 }}>
+          <span>Aujourd'hui : <strong>{todayMode === 'absence' ? 'absences (maladie / sans solde)' : 'congés en cours'}</strong></span>
+          <button className="btn btn-ghost btn-sm" onClick={() => setParams({})}>Voir tout</button>
+        </div>
+      )}
 
       {selectedEmployee && (
         <div style={{

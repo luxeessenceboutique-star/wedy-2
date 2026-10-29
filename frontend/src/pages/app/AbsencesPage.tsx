@@ -1,15 +1,16 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Plus, UserX, Thermometer, Wallet, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, UserX, Thermometer, AlertTriangle, ArrowLeft, Trash2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from '../../components/layout/AppShell';
 import { Avatar, Badge, Button, Modal, Spinner } from '../../components/ui';
-import { listLeaves, createLeave, reviewLeave, listEmployees, getApiError, type LeaveRequest } from '@/services/api';
+import { listLeaves, createLeave, reviewLeave, updateLeave, deleteLeave, listEmployees, getApiError, type LeaveRequest } from '@/services/api';
 
-const ABSENCE_TYPES: Record<string, { label: string; variant: 'danger' | 'warning'; icon: React.ReactNode }> = {
-  sick:   { label: 'Maladie',    variant: 'danger',  icon: <Thermometer size={15} /> },
-  unpaid: { label: 'Sans solde', variant: 'warning', icon: <Wallet size={15} /> },
+// Two kinds of absence: justified by sickness, or unjustified (unpaid leave stays a leave, on the Congés page)
+const ABSENCE_TYPES: Record<string, { label: string; variant: 'danger' | 'warning'; icon: React.ReactNode; justified: boolean }> = {
+  sick:        { label: 'Maladie',       variant: 'warning', icon: <Thermometer size={15} />,   justified: true },
+  unjustified: { label: 'Non justifiée', variant: 'danger',  icon: <AlertTriangle size={15} />, justified: false },
 };
 
 const iso = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -65,10 +66,39 @@ function DeclareModal({ open, date, onClose }: { open: boolean; date: string; on
   );
 }
 
+/** Free-text justification of an absence, saved on Enter / blur / the check button. */
+function JustificationCell({ leave }: { leave: LeaveRequest }) {
+  const qc = useQueryClient();
+  const saved = leave.justification ?? '';
+  const [value, setValue] = useState(saved);
+  useEffect(() => setValue(saved), [saved]);
+  const mut = useMutation({
+    mutationFn: (v: string) => updateLeave(leave.id, { justification: v.trim() }),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ['absences-all'] });
+      toast.success(v.trim() ? 'Justification enregistrée' : 'Justification retirée');
+    },
+    onError: (e: unknown) => toast.error(getApiError(e, "Impossible d'enregistrer la justification")),
+  });
+  const dirty = value.trim() !== saved.trim();
+  const save = () => { if (dirty && !mut.isPending) mut.mutate(value); };
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <input className="input" value={value} placeholder="Ajouter une justification…"
+        onChange={e => setValue(e.target.value)} onBlur={save}
+        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') setValue(saved); }}
+        style={{ minWidth: 210, fontSize: 12.5, padding: '5px 9px' }} />
+      {dirty
+        ? <button className="btn btn-soft btn-sm" title="Enregistrer" disabled={mut.isPending} onMouseDown={e => e.preventDefault()} onClick={save}><Check size={13} /></button>
+        : saved ? <Badge variant="success">Justifiée</Badge> : null}
+    </div>
+  );
+}
+
 export default function AbsencesPage() {
   const today = iso(new Date());
   const [date, setDate] = useState(today);
-  const [type, setType] = useState<'all' | 'sick' | 'unpaid'>('all');
+  const [type, setType] = useState<'all' | 'sick' | 'unjustified'>('all');
   const [showForm, setShowForm] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -77,6 +107,19 @@ export default function AbsencesPage() {
     refetchInterval: 60_000,
   });
 
+  const qc = useQueryClient();
+  const delMut = useMutation({
+    mutationFn: (id: string) => deleteLeave(id),
+    onSuccess: () => {
+      ['absences-all', 'leaves', 'leaves-all', 'dashboard-kpis'].forEach(k => qc.invalidateQueries({ queryKey: [k] }));
+      toast.success('Absence supprimée');
+    },
+    onError: (e: unknown) => toast.error(getApiError(e, 'Suppression impossible')),
+  });
+  const askDelete = (l: LeaveRequest) => {
+    if (window.confirm(`Supprimer l'absence de ${l.employees?.full_name || 'cet employé'} (${fmt(l.start_date)} → ${fmt(l.end_date)}) ?`)) delMut.mutate(l.id);
+  };
+
   const absences = useMemo(() =>
     (data?.data ?? []).filter(l => l.status === 'approved' && ABSENCE_TYPES[l.type]), [data]);
   const covers = (l: LeaveRequest, d: string) => l.start_date <= d && d <= (l.end_date || l.start_date);
@@ -84,6 +127,9 @@ export default function AbsencesPage() {
   const upcoming = absences.filter(l => l.start_date > date && l.start_date <= addDays(date, 14))
     .sort((a, b) => a.start_date.localeCompare(b.start_date));
   const count = (t: string) => absences.filter(l => covers(l, date) && l.type === t).length;
+  const sickToday = onDay.filter(l => l.type === 'sick');
+  const absentToday = onDay.filter(l => l.type === 'unjustified');
+  const justifiedCount = absentToday.filter(l => l.justification).length;
 
   const Row = ({ l }: { l: LeaveRequest }) => (
     <tr style={{ borderBottom: '1px solid var(--line)' }}>
@@ -98,13 +144,60 @@ export default function AbsencesPage() {
       <td style={{ padding: '10px 16px', whiteSpace: 'nowrap' }}>{fmt(l.start_date)}</td>
       <td style={{ padding: '10px 16px', whiteSpace: 'nowrap' }}>{fmt(l.end_date)}</td>
       <td style={{ padding: '10px 16px' }}>{l.days ?? dayCount(l.start_date, l.end_date)} j</td>
-      <td style={{ padding: '10px 16px', color: 'var(--ink-2)', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={l.reason || ''}>{l.reason || '—'}</td>
+      <td style={{ padding: '10px 16px' }}>
+        <Badge variant={ABSENCE_TYPES[l.type].justified || l.justification ? 'success' : 'danger'}>{ABSENCE_TYPES[l.type].justified || l.justification ? 'Oui' : 'Non'}</Badge>
+      </td>
+      <td style={{ padding: '10px 16px', color: 'var(--ink-2)', maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={l.reason || ''}>{l.reason || '—'}</td>
+      <td style={{ padding: '10px 16px' }}>
+        <button className="btn btn-ghost btn-sm" title="Supprimer cette absence" style={{ color: 'var(--danger)' }}
+          disabled={delMut.isPending && delMut.variables === l.id} onClick={() => askDelete(l)}>
+          <Trash2 size={13} />
+        </button>
+      </td>
     </tr>
   );
   const Head = () => (
-    <thead><tr>{['Employé', 'Service', 'Type', 'Du', 'Au', 'Durée', 'Motif'].map(h => (
+    <thead><tr>{['Employé', 'Service', 'Type', 'Du', 'Au', 'Durée', 'Justifiée', 'Motif', ''].map((h, i) => (
       <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>{h}</th>
     ))}</tr></thead>
+  );
+  const Cell = ({ l, children }: { l: LeaveRequest; children?: React.ReactNode }) => (
+    <>
+      <td style={{ padding: '10px 14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <Avatar name={l.employees?.full_name || '?'} size={26} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 600 }}>{l.employees?.full_name || '—'}</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{l.employees?.department || '—'}</div>
+          </div>
+        </div>
+      </td>
+      <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', color: 'var(--ink-2)' }}>{fmt(l.start_date)} → {fmt(l.end_date)}</td>
+      <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>{l.days ?? dayCount(l.start_date, l.end_date)} j</td>
+      {children}
+      <td style={{ padding: '10px 14px' }}>
+        <button className="btn btn-ghost btn-sm" title="Supprimer cette absence" style={{ color: 'var(--danger)' }}
+          disabled={delMut.isPending && delMut.variables === l.id} onClick={() => askDelete(l)}>
+          <Trash2 size={13} />
+        </button>
+      </td>
+    </>
+  );
+  const th = { padding: '9px 14px', textAlign: 'left' as const, fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase' as const, letterSpacing: '.06em', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' };
+  const Panel = ({ title, hint, icon, color, count: n, empty, children }: { title: string; hint: string; icon: React.ReactNode; color: string; count: number; empty: string; children: React.ReactNode }) => (
+    <div className="card" style={{ overflow: 'hidden', minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: '1px solid var(--line)', borderTop: `3px solid ${color}` }}>
+        <span style={{ color, display: 'flex' }}>{icon}</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15 }}>{title}</div>
+          <div style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{hint}</div>
+        </div>
+        <span style={{ fontSize: 22, fontWeight: 800, color }}>{n}</span>
+      </div>
+      {n === 0
+        ? <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--ink-3)', fontSize: 13 }}>{empty}</div>
+        : <div style={{ overflowX: 'auto' }}>{children}</div>}
+    </div>
   );
   const Seg = ({ v, label }: { v: typeof type; label: string }) => (
     <button onClick={() => setType(v)} style={{ padding: '6px 14px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', borderRadius: 8,
@@ -116,7 +209,7 @@ export default function AbsencesPage() {
     <div>
       <PageHeader
         title="Absences du jour"
-        subtitle="Maladie et congés sans solde, jour par jour."
+        subtitle="Absences justifiées (maladie) et non justifiées, jour par jour."
         action={
           <div style={{ display: 'flex', gap: 8 }}>
             <Link to="/app/timeoff"><Button variant="ghost"><ArrowLeft size={14} /> Congés</Button></Link>
@@ -131,14 +224,14 @@ export default function AbsencesPage() {
           <button className="btn btn-ghost btn-sm" onClick={() => setDate(addDays(date, 1))} title="Jour suivant"><ChevronRight size={15} /></button>
           {date !== today && <button className="btn btn-soft btn-sm" onClick={() => setDate(today)}>Aujourd'hui</button>}
           <span style={{ width: 1, height: 22, background: 'var(--line)', margin: '0 4px' }} />
-          <Seg v="all" label="Toutes" /><Seg v="sick" label="Maladie" /><Seg v="unpaid" label="Sans solde" />
+          <Seg v="all" label="Toutes" /><Seg v="sick" label="Maladie" /><Seg v="unjustified" label="Non justifiées" />
         </div>
 
         <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
           {[
-            { label: 'Absents ce jour', value: count('sick') + count('unpaid'), color: 'var(--danger)', icon: <UserX size={16} /> },
-            { label: 'Maladie', value: count('sick'), color: 'var(--danger)', icon: ABSENCE_TYPES.sick.icon },
-            { label: 'Sans solde', value: count('unpaid'), color: 'var(--warn)', icon: ABSENCE_TYPES.unpaid.icon },
+            { label: 'Absents ce jour', value: count('sick') + count('unjustified'), color: 'var(--ink)', icon: <UserX size={16} /> },
+            { label: 'Maladie (justifiées)', value: count('sick'), color: 'var(--warn)', icon: ABSENCE_TYPES.sick.icon },
+            { label: 'Absences non justifiées', value: count('unjustified'), color: 'var(--danger)', icon: ABSENCE_TYPES.unjustified.icon },
           ].map(s => (
             <div key={s.label} style={{ flex: '1 1 160px', padding: '14px 18px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: s.color }}>{s.icon}<span style={{ fontSize: 26, fontWeight: 800 }}>{s.value}</span></div>
@@ -151,13 +244,38 @@ export default function AbsencesPage() {
           : isError ? <div style={{ padding: 32, textAlign: 'center', color: 'var(--danger)' }}>Impossible de charger les absences. <button className="btn btn-ghost btn-sm" onClick={() => refetch()}>Réessayer</button></div>
           : (
             <>
-              <div className="card" style={{ overflow: 'hidden', marginBottom: 24 }}>
-                {onDay.length === 0 ? (
-                  <div style={{ padding: 44, textAlign: 'center', color: 'var(--ink-2)' }}>
-                    <UserX size={34} style={{ opacity: 0.25, margin: '0 auto 10px' }} />
-                    <p style={{ fontWeight: 600 }}>Aucune absence le {fmt(date)}</p>
-                  </div>
-                ) : <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}><Head /><tbody>{onDay.map(l => <Row key={l.id} l={l} />)}</tbody></table></div>}
+              {/* Two separate columns: the sick on one side, the absent (unjustified) on the other */}
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${type === 'all' ? 460 : 640}px, 1fr))`, gap: 16, marginBottom: 24, alignItems: 'start' }}>
+                {type !== 'unjustified' && (
+                  <Panel title="Malades" hint="Absence justifiée par la maladie" icon={ABSENCE_TYPES.sick.icon} color="var(--warn)"
+                    count={sickToday.length} empty={`Aucun malade le ${fmt(date)}`}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead><tr>{['Employé', 'Période', 'Durée', 'Motif', ''].map((h, i) => <th key={i} style={th}>{h}</th>)}</tr></thead>
+                      <tbody>{sickToday.map(l => (
+                        <tr key={l.id} style={{ borderBottom: '1px solid var(--line)' }}>
+                          <Cell l={l}>
+                            <td style={{ padding: '10px 14px', color: 'var(--ink-2)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={l.reason || ''}>{l.reason || '—'}</td>
+                          </Cell>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </Panel>
+                )}
+                {type !== 'sick' && (
+                  <Panel title="Absents" hint={absentToday.length ? `Absence non justifiée · ${justifiedCount} justifiée${justifiedCount > 1 ? 's' : ''} après coup` : 'Absence non justifiée'}
+                    icon={ABSENCE_TYPES.unjustified.icon} color="var(--danger)" count={absentToday.length} empty={`Aucun absent le ${fmt(date)}`}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead><tr>{['Employé', 'Période', 'Durée', 'Justification', ''].map((h, i) => <th key={i} style={th}>{h}</th>)}</tr></thead>
+                      <tbody>{absentToday.map(l => (
+                        <tr key={l.id} style={{ borderBottom: '1px solid var(--line)' }}>
+                          <Cell l={l}>
+                            <td style={{ padding: '8px 14px' }}><JustificationCell leave={l} /></td>
+                          </Cell>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </Panel>
+                )}
               </div>
 
               {upcoming.length > 0 && (

@@ -87,7 +87,7 @@ def approve_request(
 # ══════════════════════════════════════════════════════════════════════════════
 
 LEAVE_LABELS = {
-    "annual": "Congé annuel", "sick": "Congé maladie", "personal": "Congé personnel",
+    "annual": "Congé annuel", "sick": "Congé maladie", "personal": "Congé personnel", "unjustified": "Absence non justifiée",
     "maternity": "Congé maternité", "paternity": "Congé paternité", "unpaid": "Congé sans solde",
 }
 DOC_LABELS = {

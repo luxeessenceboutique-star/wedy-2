@@ -12,7 +12,7 @@ from typing import Optional
 from fastapi import HTTPException
 from supabase import Client
 
-ABSENCE_TYPES = {"sick", "unpaid"}          # counted as "absences"; every other leave type is a "congé"
+ABSENCE_TYPES = {"sick", "unjustified"}     # counted as "absences"; every other leave type (incl. unpaid) is a "congé"
 ACTIVE_STATUSES = {"active", "on-leave"}    # still part of the workforce
 INACTIVE_STATUSES = {"inactive", "terminated"}
 PENDING_DOC = ("pending", "in_progress")

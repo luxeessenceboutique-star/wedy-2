@@ -14,11 +14,11 @@ const WEEK_DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 
 const TYPE_LABELS: Record<string, string> = {
   annual: 'Congé annuel', sick: 'Maladie', personal: 'Personnel',
-  maternity: 'Maternité', paternity: 'Paternité', unpaid: 'Sans solde',
+  maternity: 'Maternité', paternity: 'Paternité', unpaid: 'Sans solde', unjustified: 'Absence non justifiée',
 };
 const TYPE_COLORS: Record<string, string> = {
   annual: 'var(--primary)', sick: '#EF4444', personal: 'var(--violet)',
-  maternity: 'var(--violet)', paternity: 'var(--accent)', unpaid: 'var(--ink-3)',
+  maternity: 'var(--violet)', paternity: 'var(--accent)', unpaid: 'var(--ink-3)', unjustified: 'var(--danger)',
 };
 const STATUS_VARIANT: Record<string, 'warning' | 'success' | 'danger' | 'default'> = {
   pending: 'warning', approved: 'success', rejected: 'danger',
@@ -321,7 +321,7 @@ export default function TimeOffPage() {
     return leaves.filter(l => {
       if (selectedEmpId && l.employee_id !== selectedEmpId) return false;
       if (!todayMode) return true;
-      const absence = l.type === 'sick' || l.type === 'unpaid';
+      const absence = l.type === 'sick' || l.type === 'unjustified';
       return l.status === 'approved' && l.start_date <= iso && iso <= (l.end_date || l.start_date) && (todayMode === 'absence') === absence;
     });
   }, [leaves, selectedEmpId, todayMode]);

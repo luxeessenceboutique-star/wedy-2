@@ -4,6 +4,7 @@ export type LeaveRequest = {
   id: string; employee_id: string; type: string;
   start_date: string; end_date: string; days: number;
   reason?: string; status: string;
+  justification?: string | null;
   created_at: string;
   employees?: { id: string; full_name: string; position?: string; department?: string };
 };
@@ -28,6 +29,9 @@ export const createLeave = (body: {
 
 export const reviewLeave = (id: string, status: 'approved' | 'rejected') =>
   api.patch<LeaveRequest>(`/leaves/${id}/review`, null, { params: { status } }).then(r => r.data);
+
+export const updateLeave = (id: string, body: { reason?: string; justification?: string }) =>
+  api.patch<LeaveRequest>(`/leaves/${id}`, body).then(r => r.data);
 
 export const deleteLeave = (id: string) => api.delete(`/leaves/${id}`);
 

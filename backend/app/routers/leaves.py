@@ -17,7 +17,7 @@ router = APIRouter(prefix="/leaves", tags=["Leaves"])
 
 class LeaveRequestCreate(BaseModel):
     employee_id: str
-    type: str  # annual | sick | personal | maternity | paternity | unpaid
+    type: str  # annual | sick | personal | maternity | paternity | unpaid | unjustified (absence)
     start_date: date
     end_date: date
     days: int
@@ -27,6 +27,7 @@ class LeaveRequestCreate(BaseModel):
 class LeaveRequestUpdate(BaseModel):
     status: Optional[str] = None
     reason: Optional[str] = None
+    justification: Optional[str] = None
 
 
 # ── List ──────────────────────────────────────────────────────
@@ -226,6 +227,18 @@ def delete_leave(
     res = leave_repository.delete_leave(supabase, leave_id)
     if not res.data:
         raise HTTPException(status_code=404, detail="Leave request not found")
+    leave = res.data[0]
+    # An approved leave had been deducted from the balance (DB trigger): give the days back
+    col = {"annual": "annual_used", "sick": "sick_used", "personal": "personal_used"}.get(leave.get("type"))
+    if col and leave.get("status") == "approved" and leave.get("days"):
+        try:
+            year = int(str(leave.get("start_date"))[:4])
+            bal = (supabase.table("leave_balances").select(f"id,{col}")
+                   .eq("employee_id", leave["employee_id"]).eq("year", year).limit(1).execute().data or [])
+            if bal:
+                supabase.table("leave_balances").update({col: max(0, (bal[0].get(col) or 0) - leave["days"])}).eq("id", bal[0]["id"]).execute()
+        except Exception as e:
+            print(f"[leaves] balance not restored after delete: {e}")
     log_action(supabase, current_user["id"], "DELETE", "leave_request", leave_id)
 
 

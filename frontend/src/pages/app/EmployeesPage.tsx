@@ -11,7 +11,8 @@ import { ExportModal } from '@/components/employees/ExportModal';
 import { DepartmentsModal } from '@/components/employees/DepartmentsModal';
 import { KanbanBoard } from '../../components/KanbanBoard';
 import { toast } from 'sonner';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { readEmployeeFilters, filtersToQuery, rememberEmployeeList, EMPTY_FILTERS } from '../../lib/listMemory';
 import { useLang } from '../../lib/lang';
 
 const EMPLOYEE_COLS = [
@@ -300,9 +301,21 @@ function EmployeeForm({ initial, onSave, onCancel, loading }: {
 export default function EmployeesPage() {
   const qc = useQueryClient();
   const { t } = useLang();
-  const [search, setSearch] = useState('');
-  const [dept, setDept] = useState('');
-  const [status, setStatus] = useState('');
+  // The filters survive a visit to a profile: they are kept in the address and remembered for the session
+  const location = useLocation();
+  const [initialFilters] = useState(() => readEmployeeFilters(location.search));
+  const [search, setSearch] = useState(initialFilters.q);
+  const [dept, setDept] = useState(initialFilters.dept);
+  const [status, setStatus] = useState(initialFilters.status);
+  React.useEffect(() => {
+    const f = { q: search, dept, status };
+    rememberEmployeeList(f);
+    const wanted = filtersToQuery(f);
+    if (wanted !== location.search.replace(/^\?/, '')) {
+      navigate({ pathname: location.pathname, search: wanted ? `?${wanted}` : '' }, { replace: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, dept, status]);
   const [showModal, setShowModal] = useState(false);
   const [showCVImport, setShowCVImport] = useState(false);
   const [showImport, setShowImport] = useState(false);
@@ -449,6 +462,12 @@ export default function EmployeesPage() {
           <option value="on-leave">{t('status_on_leave')}</option>
           <option value="terminated">Terminé</option>
         </select>
+        {(search || dept || status) && (
+          <button className="btn btn-ghost btn-sm" title="Retirer la recherche, le département et le statut"
+            onClick={() => { setSearch(EMPTY_FILTERS.q); setDept(EMPTY_FILTERS.dept); setStatus(EMPTY_FILTERS.status); }}>
+            <X size={13} /> Effacer les filtres
+          </button>
+        )}
         <div role="group" aria-label="Mode d'affichage"
           style={{ display: 'flex', border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
           {([['cards', 'Cartes', <LayoutGrid size={14} key="g" />], ['table', 'Tableau', <List size={14} key="l" />], ['kanban', 'Kanban', <Columns3 size={14} key="k" />]] as const).map(([m, label, icon]) => (

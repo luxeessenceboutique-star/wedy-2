@@ -26,7 +26,7 @@ from app.routers import (
     templates, leaves, analytics, copilot, payroll,
     audit_log, generate, smartdb, performance, users, assets,
     webhooks, employee_onboarding, training, talents, portal, orgchart,
-    tenders, annonces, candidats, creneaux, entretiens, contract_types
+    tenders, annonces, candidats, creneaux, entretiens, contract_types, planning_notes
 )
 
 from app.dependencies import get_current_user  # used in protected upload below
@@ -59,6 +59,7 @@ app.include_router(cv.router, prefix="/api")
 app.include_router(requests.router, prefix="/api")
 app.include_router(departments.router, prefix="/api")
 app.include_router(contract_types.router, prefix="/api")
+app.include_router(planning_notes.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(templates.router, prefix="/api")

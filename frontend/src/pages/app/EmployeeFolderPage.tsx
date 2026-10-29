@@ -1,5 +1,6 @@
 ﻿import React, { useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { employeesListUrl } from '../../lib/listMemory';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft, Pencil, Wand2, Upload, Trash2, Download, FileText,
@@ -541,7 +542,7 @@ export default function EmployeeFolderPage() {
   if (isError || !employee) return (
     <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-2)' }}>
       <p>{t('employee_not_found')}</p>
-      <Button variant="ghost" onClick={() => navigate('/app/employees')}>← {t('cancel')}</Button>
+      <Button variant="ghost" onClick={() => navigate(employeesListUrl())}>← {t('cancel')}</Button>
     </div>
   );
 
@@ -574,7 +575,7 @@ export default function EmployeeFolderPage() {
     <div style={{ padding: '24px 28px', maxWidth: 900, margin: '0 auto' }}>
       {/* Back link */}
       <button
-        onClick={() => navigate('/app/employees')}
+        onClick={() => navigate(employeesListUrl())}
         style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 13, marginBottom: 20, padding: 0 }}
       >
         <ArrowLeft size={14} /> {t('nav_people')}

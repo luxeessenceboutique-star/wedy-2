@@ -23,6 +23,7 @@ class TokenResponse(BaseModel):
     email: str
     role: str
     role_name: Optional[str] = None
+    refresh_token: Optional[str] = None
 
 
 class TokenData(BaseModel):

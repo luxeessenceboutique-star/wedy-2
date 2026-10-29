@@ -68,7 +68,26 @@ def login(email: str, password: str) -> dict:
         "full_name": u.get("first_name") or "",
     }
     _token_cache[_key(token)] = (time.time() + _TTL, identity)
-    return {"access_token": token, **identity}
+    # Tybot access tokens are short-lived: keep the refresh token (body, nested session or cookie) so the app can renew them
+    refresh = data.get("refresh_token") or (data.get("session") or {}).get("refresh_token") or r.cookies.get("refresh_token")
+    return {"access_token": token, "refresh_token": refresh, **identity}
+
+
+def refresh(refresh_token: str) -> dict:
+    """Renew a Tybot access token. Returns {access_token, refresh_token}."""
+    try:
+        r = httpx.post(_url("/auth/refresh-token"), json={"refresh_token": refresh_token}, timeout=20)
+    except httpx.HTTPError as e:
+        logger.error(f"[TYBOT] refresh unreachable: {e}")
+        raise HTTPException(status_code=503, detail="Service d'authentification Tybot indisponible")
+    if r.status_code in (400, 401, 403):
+        raise HTTPException(status_code=401, detail="Session expirée, reconnectez-vous")
+    if r.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"Réponse inattendue de Tybot ({r.status_code})")
+    data = r.json()
+    if not data.get("access_token"):
+        raise HTTPException(status_code=502, detail="Tybot n'a pas renvoyé de jeton")
+    return {"access_token": data["access_token"], "refresh_token": data.get("refresh_token") or refresh_token}
 
 
 def verify_token(token: str) -> dict:

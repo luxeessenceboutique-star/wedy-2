@@ -1,4 +1,5 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
     format, addMonths, subMonths, startOfMonth, endOfMonth,
     startOfWeek, endOfWeek, isSameMonth, isSameDay,
@@ -8,14 +9,16 @@ import {
 import { fr } from 'date-fns/locale';
 import {
     Calendar as CalendarIcon, ChevronLeft, ChevronRight,
-    Plus, Users, Search, Video, Clock, Filter, Bot, X
+    Plus, Users, Search, Video, Clock, Filter, Bot, X, StickyNote
 } from 'lucide-react';
 import { Button, Card, Spinner } from '../../components/ui';
 import { toast } from 'sonner';
 import { CheckCircle } from 'lucide-react';
 import { useLang } from '../../lib/lang';
 import type { Interview, Employee } from '@/services/api';
-import { listInterviews, listCandidates, scheduleInterview, updateInterviewStatus } from '@/services/api';
+import { listInterviews, listCandidates, scheduleInterview, updateInterviewStatus, listPlanningNotes } from '@/services/api';
+import type { PlanningNote } from '@/services/api';
+import PlanningDayNotes from './PlanningDayNotes';
 
 type ViewMode = 'month' | 'week' | 'day';
 
@@ -64,6 +67,19 @@ export default function CalendrierRHPage() {
     const monthEnd = endOfMonth(monthStart);
     const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
     const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+    // Notes written by the HR team, for every day shown in the grid
+    const rangeStart = format(startDate, 'yyyy-MM-dd');
+    const rangeEnd = format(endDate, 'yyyy-MM-dd');
+    const { data: notes = [] } = useQuery({
+        queryKey: ['planning-notes', rangeStart, rangeEnd],
+        queryFn: () => listPlanningNotes(rangeStart, rangeEnd),
+    });
+    const notesByDay = useMemo(() => {
+        const m = new Map<string, PlanningNote[]>();
+        notes.forEach(n => m.set(n.note_date, [...(m.get(n.note_date) ?? []), n]));
+        return m;
+    }, [notes]);
 
     const nextPeriod = () => {
         if (viewMode === 'month') setCurrentDate(addMonths(currentDate, 1));
@@ -139,6 +155,7 @@ export default function CalendrierRHPage() {
                         );
                         const isCurrentMonth = isSameMonth(day, monthStart);
                         const isToday = isSameDay(day, new Date());
+                        const dayNotes = notesByDay.get(format(day, 'yyyy-MM-dd')) ?? [];
 
                         return (
                             <div key={i}
@@ -190,6 +207,19 @@ export default function CalendrierRHPage() {
                                             <div style={{ fontSize: 9, opacity: 0.7 }}>{(e as any).job_title || t('cand_no_position')}</div>
                                         </div>
                                     ))}
+                                    {dayNotes.slice(0, 2).map(n => (
+                                        <div key={n.id} title={n.content} style={{
+                                            fontSize: 10, padding: '3px 7px', borderRadius: 6, fontWeight: 600,
+                                            background: 'var(--warn-soft)', color: 'var(--ink)', border: '1px solid var(--warn)',
+                                            display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden'
+                                        }}>
+                                            <StickyNote size={10} style={{ flexShrink: 0, color: 'var(--warn)' }} />
+                                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.content}</span>
+                                        </div>
+                                    ))}
+                                    {dayNotes.length > 2 && (
+                                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', paddingLeft: 4 }}>+{dayNotes.length - 2} note{dayNotes.length - 2 > 1 ? 's' : ''}</div>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -204,6 +234,8 @@ export default function CalendrierRHPage() {
             isSameDay(parseISO(e.date), currentDate) &&
             activeFilters.includes(e.type)
         );
+
+        const dayNotes = notesByDay.get(format(currentDate, 'yyyy-MM-dd')) ?? [];
 
         return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -270,6 +302,8 @@ export default function CalendrierRHPage() {
                         </div>
                     )}
                 </div>
+
+                <PlanningDayNotes date={currentDate} notes={dayNotes} />
             </div>
         );
     };

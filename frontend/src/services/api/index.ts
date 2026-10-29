@@ -24,3 +24,4 @@ export * from './notifications';
 export * from './webhooks';
 export * from './orgchart';
 export * from './recruitment';
+export * from './planningNotes';

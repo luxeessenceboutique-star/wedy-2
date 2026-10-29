@@ -174,9 +174,9 @@ def convert_document_to_template(raw_text: str) -> str:
 
 FOLDER_ANALYSIS_SYSTEM = """You are an expert HR data extractor for a Moroccan company.
 You receive text extracted from documents in an employee's folder (CV, diplomas, certificates, contracts, payslips, etc.).
-Extract ALL employee information and return it as a single valid JSON object.
+Extract ONLY the information that is literally written in these documents and return it as a single valid JSON object.
 
-Return ONLY a JSON object with these keys (omit any key you cannot find with confidence):
+Return ONLY a JSON object with these keys (omit every key whose value is not literally written in the documents):
 {
   "full_name": "string",
   "cin": "string - Moroccan national ID",
@@ -206,9 +206,112 @@ Return ONLY a JSON object with these keys (omit any key you cannot find with con
 
 Rules:
 - Return ONLY the raw JSON, no markdown, no explanation
-- Only include fields you found explicitly in the documents
+- Copy values exactly as written. NEVER guess, infer, deduce, translate, complete or "improve" anything.
+- If a value is not literally present in the documents, OMIT the key. An empty answer is better than a wrong one.
+- Do NOT deduce: the department from a job title, the contract type from the context, the nationality from a name or a country,
+  the hire date from a CV timeline, a salary, or a manager.
+- "position" is only the job the person holds in THIS company, stated by a contract, work certificate or payslip.
+  The jobs listed on a CV are previous experience, not the current position.
+- Never write "notes".
 - Dates must be in YYYY-MM-DD format; convert from French formats (ex: 15/03/1995 → 1995-03-15)
-- salary must be a number (MAD/month)"""
+- salary must be a number (MAD/month), only when a contract or payslip states it"""
+
+# Every extracted value is then checked against the documents' text (see _ground_extracted).
+
+
+_FR_MONTHS = ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"]
+_TEXT_FIELDS = ("full_name", "position", "department", "manager", "address", "city", "nationality", "notes")
+_ID_FIELDS = ("cin", "matricule", "cnss_number", "bank_account")
+_DATE_FIELDS = ("birth_date", "hire_date", "contract_start", "contract_end")
+
+
+def _plain(value) -> str:
+    import unicodedata
+    text = unicodedata.normalize("NFD", str(value))
+    return "".join(c for c in text if unicodedata.category(c) != "Mn").lower()
+
+
+def _ground_extracted(data: dict, file_contents: list[dict]) -> dict:
+    """Keep only what the documents really say.
+
+    The model sometimes "completes" a record (department from a job title, a position taken from an old job,
+    a made-up note). Each value is looked for in the documents' text:
+      - all documents are text  -> an ungrounded value is removed (listed in `_removed`)
+      - some are scans (images) -> it cannot be verified: kept but listed in `_unverified` (the UI never pre-selects it)
+    """
+    import re
+    if not isinstance(data, dict):
+        return {}
+    hay = _plain(" ".join((fc.get("text") or "") for fc in file_contents))
+    if not hay.strip():
+        return data                                         # nothing readable to compare with (scans only)
+    has_images = any(fc.get("images") for fc in file_contents)
+    hay_words = set(re.findall("[a-z0-9]+", hay))
+    hay_alnum = re.sub("[^a-z0-9]", "", hay)
+    hay_digits = re.sub("[^0-9]", "", hay)
+
+    def word_found(w: str) -> bool:
+        return w in hay_words or (len(w) >= 6 and any(h.startswith(w[:-2]) for h in hay_words))
+
+    def text_ok(val) -> bool:
+        words = [w for w in re.findall("[a-z0-9]+", _plain(val)) if len(w) >= 3]
+        return not words or sum(word_found(w) for w in words) / len(words) >= 0.75
+
+    def date_ok(val) -> bool:
+        m = re.fullmatch("([0-9]{4})-([0-9]{2})-([0-9]{2})", str(val).strip())
+        if not m:
+            return False
+        y, mo, d = m.group(1), int(m.group(2)), int(m.group(3))
+        forms = [f"{d:02d}/{mo:02d}/{y}", f"{d}/{mo}/{y}", f"{d:02d}-{mo:02d}-{y}", f"{d:02d}.{mo:02d}.{y}", f"{y}-{mo:02d}-{d:02d}",
+                 f"{d} {_FR_MONTHS[mo - 1]} {y}", f"{d:02d} {_FR_MONTHS[mo - 1]} {y}"]
+        return any(f in hay for f in forms) or f"{d:02d}{mo:02d}{y}" in hay_alnum
+
+    def ok(key: str, val) -> bool:
+        if val in (None, "", [], {}):
+            return True
+        if key in _TEXT_FIELDS:
+            return text_ok(val)
+        if key in _ID_FIELDS:
+            token = re.sub("[^a-z0-9]", "", _plain(val))
+            return len(token) >= 4 and token in hay_alnum
+        if key == "phone":
+            digits = re.sub("[^0-9]", "", str(val))
+            return len(digits) >= 8 and digits[-9:] in hay_digits
+        if key == "email":
+            return _plain(val).strip() in hay
+        if key in _DATE_FIELDS:
+            return date_ok(val)
+        if key == "salary":
+            try:
+                digits = str(int(float(val)))
+            except (TypeError, ValueError):
+                return False
+            return len(digits) >= 3 and digits in hay_digits
+        if key == "contract_type":
+            return _plain(val).strip() in hay_words
+        return True
+
+    out, removed, unverified = {}, [], []
+    for key, val in data.items():
+        if key == "skills" and isinstance(val, list):
+            out[key] = [x for x in val if text_ok(x)] if not has_images else val
+        elif key == "languages" and isinstance(val, list):
+            out[key] = [x for x in val if text_ok(x)] if not has_images else val
+        elif key in ("education", "certifications") and isinstance(val, list):
+            keep = [it for it in val if isinstance(it, dict) and any(text_ok(it.get(k)) for k in ("school", "degree", "name", "issuer") if it.get(k))]
+            out[key] = keep if not has_images else val
+        elif ok(key, val):
+            out[key] = val
+        elif has_images:
+            out[key] = val
+            unverified.append(key)
+        else:
+            removed.append(key)
+    if removed:
+        out["_removed"] = removed
+    if unverified:
+        out["_unverified"] = unverified
+    return out
 
 
 def analyze_employee_folder(file_contents: list[dict]) -> dict:
@@ -255,6 +358,7 @@ def analyze_employee_folder(file_contents: list[dict]) -> dict:
             resp = ac.messages.create(
                 model="claude-sonnet-4-6",
                 max_tokens=2048,
+                temperature=0.0,
                 system=FOLDER_ANALYSIS_SYSTEM,
                 messages=[{"role": "user", "content": content}],
             )
@@ -303,9 +407,10 @@ def analyze_employee_folder(file_contents: list[dict]) -> dict:
         if raw.startswith("json"):
             raw = raw[4:]
     try:
-        return json.loads(raw.strip())
+        parsed = json.loads(raw.strip())
     except json.JSONDecodeError:
         return {}
+    return _ground_extracted(parsed, file_contents)
 
 
 def convert_to_html_template(raw_text: str) -> str:

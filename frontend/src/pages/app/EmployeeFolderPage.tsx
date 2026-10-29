@@ -275,6 +275,17 @@ function FilesTab({ employeeId }: { employeeId: string }) {
 
 type ExtractedData = AnalysisResult['extracted'];
 
+/** Same value written differently (case, accents, spaces, dashes, phone formatting). */
+const plainValue = (v: unknown) =>
+  String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const sameValue = (key: string, a: unknown, b: unknown) =>
+  key === 'phone'
+    ? plainValue(a).replace(/[^0-9]/g, '').slice(-9) === plainValue(b).replace(/[^0-9]/g, '').slice(-9)
+    : plainValue(a) === plainValue(b);
+type FieldState = 'identical' | 'new' | 'conflict';
+const fieldState = (key: string, current: string, extracted: string): FieldState =>
+  !current.trim() ? 'new' : sameValue(key, current, extracted) ? 'identical' : 'conflict';
+
 function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
   employee: Employee;
   result: ExtractedData;
@@ -307,12 +318,15 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
     { key: 'notes', label: 'Notes', emp: 'notes' },
   ];
 
+  // Nothing is ever overwritten without a click: only fields that are EMPTY today and were verified in the
+  // documents are pre-selected. Different values ("conflict") and unverified ones start unchecked.
   const initialSelected = new Set<string>(
     APPLY_FIELDS.filter(f => {
       const extracted = result[f.key];
       if (extracted === undefined || extracted === null || extracted === '' || Array.isArray(extracted)) return false;
+      if (f.key === 'notes' || result._unverified?.includes(f.key as string)) return false;
       const current = f.emp ? String((employee as Record<string, unknown>)[f.emp as string] ?? '') : '';
-      return String(extracted) !== current;
+      return fieldState(f.key as string, current, String(extracted)) === 'new';
     }).map(f => f.key)
   );
 
@@ -344,6 +358,15 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
           <p style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 10 }}>
             {selected.size} {t('fields_selected')} — {t('fields_apply_desc')}
           </p>
+          {result._removed?.length ? (
+            <p style={{ fontSize: 12, color: '#92400e', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
+              {result._removed.length} information{result._removed.length > 1 ? 's' : ''} proposée{result._removed.length > 1 ? 's' : ''} par l'IA
+              {result._removed.length > 1 ? ' ont' : ' a'} été ignorée{result._removed.length > 1 ? 's' : ''} car absente{result._removed.length > 1 ? 's' : ''} des documents.
+            </p>
+          ) : null}
+          <p style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 10 }}>
+            Seuls les champs <strong>vides</strong> sont cochés d'office. Une valeur différente de l'actuelle n'est jamais appliquée sans que vous la cochiez.
+          </p>
           {/* Header */}
           <div style={{ display: 'grid', gridTemplateColumns: '24px 110px 1fr 1fr', gap: 8, padding: '6px 6px', borderBottom: '1px solid var(--line)', marginBottom: 4 }}>
             <div />
@@ -355,16 +378,18 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
             {applicableFields.map(f => {
               const extracted = String(result[f.key] ?? '');
               const current = f.emp ? String((employee as Record<string, unknown>)[f.emp as string] ?? '') : '';
-              const isNew = !current;
-              const isDiff = extracted !== current;
-              const isChecked = selected.has(f.key);
+              const state = fieldState(f.key as string, current, extracted);
+              const isNew = state === 'new';
+              const isDiff = state !== 'identical';
+              const unverified = !!result._unverified?.includes(f.key as string);
+              const isChecked = state !== 'identical' && selected.has(f.key);
               return (
                 <div
                   key={f.key}
-                  onClick={() => toggle(f.key)}
+                  onClick={() => { if (state !== 'identical') toggle(f.key); }}
                   style={{
                     display: 'grid', gridTemplateColumns: '24px 110px 1fr 1fr', gap: 8, alignItems: 'center',
-                    padding: '7px 6px', borderRadius: 6, cursor: 'pointer',
+                    padding: '7px 6px', borderRadius: 6, cursor: state === 'identical' ? 'default' : 'pointer', opacity: state === 'identical' ? 0.6 : 1,
                     background: isChecked ? (isNew ? '#f0fdf4' : 'var(--primary-soft)') : '#fafafa',
                     border: `1px solid ${isChecked ? (isNew ? '#86efac' : '#bfdbfe') : 'transparent'}`,
                     transition: 'all 0.1s',
@@ -381,6 +406,9 @@ function AnalysisPanel({ employee, result, onApply, onClose, applying }: {
                   </span>
                   <span style={{ fontSize: 12, fontWeight: isDiff ? 600 : 400, color: isNew ? '#15803d' : isDiff ? '#1d4ed8' : 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {extracted}
+                    {state === 'identical' && <em style={{ fontWeight: 400, fontSize: 10.5, color: 'var(--ink-3)' }}> · identique</em>}
+                    {state === 'conflict' && <em style={{ fontWeight: 600, fontSize: 10.5, color: '#b45309' }}> · différent de l'actuel</em>}
+                    {unverified && <em style={{ fontWeight: 600, fontSize: 10.5, color: '#b45309' }}> · à vérifier (document scanné)</em>}
                   </span>
                 </div>
               );
@@ -521,7 +549,7 @@ export default function EmployeeFolderPage() {
       setAnalysisResult(data.extracted);
       setAnalysisOpen(true);
     },
-    onError: (e: Error) => toast.error(`Error : ${e.message}`),
+    onError: (e: unknown) => toast.error(getApiError(e, "L'analyse du dossier a échoué")),
   });
 
   const applyMut = useMutation({
@@ -532,7 +560,8 @@ export default function EmployeeFolderPage() {
       setAnalysisOpen(false);
       toast.success(t('save'));
     },
-    onError: () => toast.error("Error"),
+    // show the server's real reason instead of a bare "Error"
+    onError: (e: unknown) => toast.error(getApiError(e, "Les données n'ont pas pu être enregistrées")),
   });
 
   if (isLoading) return (

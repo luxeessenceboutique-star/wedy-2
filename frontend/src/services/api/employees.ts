@@ -87,6 +87,10 @@ export type AnalysisResult = {
     contract_type?: string; contract_start?: string; contract_end?: string;
     salary?: number; manager?: string; cnss_number?: string;
     bank_account?: string; notes?: string;
+    /** values the server dropped because they are not written in the documents */
+    _removed?: string[];
+    /** values that could not be checked (scanned documents): never pre-selected */
+    _unverified?: string[];
     education?: { degree: string; field: string; school: string; year: string }[];
     certifications?: { name: string; issuer: string; year: string }[];
     skills?: string[];

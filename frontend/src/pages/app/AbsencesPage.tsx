@@ -87,7 +87,7 @@ function JustificationCell({ leave }: { leave: LeaveRequest }) {
       <input className="input" value={value} placeholder="Ajouter une justification…"
         onChange={e => setValue(e.target.value)} onBlur={save}
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') setValue(saved); }}
-        style={{ minWidth: 210, fontSize: 12.5, padding: '5px 9px' }} />
+        style={{ minWidth: 160, fontSize: 12.5, padding: '5px 9px' }} />
       {dirty
         ? <button className="btn btn-soft btn-sm" title="Enregistrer" disabled={mut.isPending} onMouseDown={e => e.preventDefault()} onClick={save}><Check size={13} /></button>
         : saved ? <Badge variant="success">Justifiée</Badge> : null}
@@ -120,6 +120,23 @@ export default function AbsencesPage() {
     if (window.confirm(`Supprimer l'absence de ${l.employees?.full_name || 'cet employé'} (${fmt(l.start_date)} → ${fmt(l.end_date)}) ?`)) delMut.mutate(l.id);
   };
 
+  // Tick the absences to remove, then delete them together
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggleSel = (id: string) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const setMany = (ids: string[], on: boolean) => setSelected(prev => { const n = new Set(prev); ids.forEach(i => (on ? n.add(i) : n.delete(i))); return n; });
+  const bulkDel = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await Promise.allSettled(ids.map(id => deleteLeave(id)));
+      return { done: ids.filter((_, i) => res[i].status === 'fulfilled'), failed: res.filter(r => r.status === 'rejected').length };
+    },
+    onSuccess: ({ done, failed }) => {
+      ['absences-all', 'leaves', 'leaves-all', 'dashboard-kpis'].forEach(k => qc.invalidateQueries({ queryKey: [k] }));
+      setSelected(prev => { const n = new Set(prev); done.forEach(i => n.delete(i)); return n; });
+      if (failed) toast.error(`${done.length} supprimée(s), ${failed} en échec`);
+      else toast.success(`${done.length} absence${done.length > 1 ? 's' : ''} supprimée${done.length > 1 ? 's' : ''}`);
+    },
+  });
+
   const absences = useMemo(() =>
     (data?.data ?? []).filter(l => l.status === 'approved' && ABSENCE_TYPES[l.type]), [data]);
   const covers = (l: LeaveRequest, d: string) => l.start_date <= d && d <= (l.end_date || l.start_date);
@@ -130,9 +147,15 @@ export default function AbsencesPage() {
   const sickToday = onDay.filter(l => l.type === 'sick');
   const absentToday = onDay.filter(l => l.type === 'unjustified');
   const justifiedCount = absentToday.filter(l => l.justification).length;
+  const visibleIds = new Set([...onDay, ...upcoming].map(l => l.id));
+  const selectedVisible = [...selected].filter(id => visibleIds.has(id));
 
   const Row = ({ l }: { l: LeaveRequest }) => (
     <tr style={{ borderBottom: '1px solid var(--line)' }}>
+      <td style={{ padding: '10px 6px 10px 16px', width: 30 }}>
+        <input type="checkbox" checked={selected.has(l.id)} onChange={() => toggleSel(l.id)} title="Sélectionner pour supprimer"
+          style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)' }} />
+      </td>
       <td style={{ padding: '10px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <Avatar name={l.employees?.full_name || '?'} size={28} />
@@ -157,12 +180,16 @@ export default function AbsencesPage() {
     </tr>
   );
   const Head = () => (
-    <thead><tr>{['Employé', 'Service', 'Type', 'Du', 'Au', 'Durée', 'Justifiée', 'Motif', ''].map((h, i) => (
+    <thead><tr><th style={{ width: 30, background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }} />{['Employé', 'Service', 'Type', 'Du', 'Au', 'Durée', 'Justifiée', 'Motif', ''].map((h, i) => (
       <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '.06em', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>{h}</th>
     ))}</tr></thead>
   );
   const Cell = ({ l, children }: { l: LeaveRequest; children?: React.ReactNode }) => (
     <>
+      <td style={{ padding: '10px 6px 10px 14px', width: 30 }}>
+        <input type="checkbox" checked={selected.has(l.id)} onChange={() => toggleSel(l.id)} title="Sélectionner pour supprimer"
+          style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)' }} />
+      </td>
       <td style={{ padding: '10px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <Avatar name={l.employees?.full_name || '?'} size={26} />
@@ -184,6 +211,12 @@ export default function AbsencesPage() {
     </>
   );
   const th = { padding: '9px 14px', textAlign: 'left' as const, fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textTransform: 'uppercase' as const, letterSpacing: '.06em', background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' };
+  const HeadCheck = ({ ids }: { ids: string[] }) => (
+    <th style={{ ...th, width: 30, padding: '9px 6px 9px 14px' }}>
+      <input type="checkbox" title="Tout sélectionner" checked={ids.length > 0 && ids.every(i => selected.has(i))}
+        onChange={e => setMany(ids, e.target.checked)} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--primary)' }} />
+    </th>
+  );
   const Panel = ({ title, hint, icon, color, count: n, empty, children }: { title: string; hint: string; icon: React.ReactNode; color: string; count: number; empty: string; children: React.ReactNode }) => (
     <div className="card" style={{ overflow: 'hidden', minWidth: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: '1px solid var(--line)', borderTop: `3px solid ${color}` }}>
@@ -244,13 +277,25 @@ export default function AbsencesPage() {
           : isError ? <div style={{ padding: 32, textAlign: 'center', color: 'var(--danger)' }}>Impossible de charger les absences. <button className="btn btn-ghost btn-sm" onClick={() => refetch()}>Réessayer</button></div>
           : (
             <>
+              {selectedVisible.length > 0 && (
+                <div style={{ position: 'sticky', top: 0, zIndex: 5, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 14,
+                  padding: '10px 16px', background: 'var(--primary-soft)', border: '1px solid var(--primary)', borderRadius: 10 }}>
+                  <strong style={{ fontSize: 13, color: 'var(--primary)' }}>{selectedVisible.length} absence{selectedVisible.length > 1 ? 's' : ''} sélectionnée{selectedVisible.length > 1 ? 's' : ''}</strong>
+                  <button className="btn btn-danger btn-sm" disabled={bulkDel.isPending}
+                    onClick={() => { if (window.confirm(`Supprimer ${selectedVisible.length} absence${selectedVisible.length > 1 ? 's' : ''} ? Cette action est définitive.`)) bulkDel.mutate(selectedVisible); }}>
+                    <Trash2 size={13} /> {bulkDel.isPending ? 'Suppression…' : 'Supprimer la sélection'}
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setSelected(new Set())}>Tout désélectionner</button>
+                </div>
+              )}
+
               {/* Two separate columns: the sick on one side, the absent (unjustified) on the other */}
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${type === 'all' ? 460 : 640}px, 1fr))`, gap: 16, marginBottom: 24, alignItems: 'start' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${type === 'all' ? 580 : 640}px, 1fr))`, gap: 16, marginBottom: 24, alignItems: 'start' }}>
                 {type !== 'unjustified' && (
                   <Panel title="Malades" hint="Absence justifiée par la maladie" icon={ABSENCE_TYPES.sick.icon} color="var(--warn)"
                     count={sickToday.length} empty={`Aucun malade le ${fmt(date)}`}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                      <thead><tr>{['Employé', 'Période', 'Durée', 'Motif', ''].map((h, i) => <th key={i} style={th}>{h}</th>)}</tr></thead>
+                      <thead><tr><HeadCheck ids={sickToday.map(l => l.id)} />{['Employé', 'Période', 'Durée', 'Motif', ''].map((h, i) => <th key={i} style={th}>{h}</th>)}</tr></thead>
                       <tbody>{sickToday.map(l => (
                         <tr key={l.id} style={{ borderBottom: '1px solid var(--line)' }}>
                           <Cell l={l}>
@@ -265,7 +310,7 @@ export default function AbsencesPage() {
                   <Panel title="Absents" hint={absentToday.length ? `Absence non justifiée · ${justifiedCount} justifiée${justifiedCount > 1 ? 's' : ''} après coup` : 'Absence non justifiée'}
                     icon={ABSENCE_TYPES.unjustified.icon} color="var(--danger)" count={absentToday.length} empty={`Aucun absent le ${fmt(date)}`}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                      <thead><tr>{['Employé', 'Période', 'Durée', 'Justification', ''].map((h, i) => <th key={i} style={th}>{h}</th>)}</tr></thead>
+                      <thead><tr><HeadCheck ids={absentToday.map(l => l.id)} />{['Employé', 'Période', 'Durée', 'Justification', ''].map((h, i) => <th key={i} style={th}>{h}</th>)}</tr></thead>
                       <tbody>{absentToday.map(l => (
                         <tr key={l.id} style={{ borderBottom: '1px solid var(--line)' }}>
                           <Cell l={l}>

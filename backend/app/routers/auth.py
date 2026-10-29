@@ -1,5 +1,6 @@
 """Auth router — /api/auth (Supabase SDK Version)"""
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from supabase import Client
 
 from app.database import get_db
@@ -34,7 +35,18 @@ def login(payload: LoginRequest, supabase: Client = Depends(get_db)):
         "email": t["email"],
         "role": role_name,
         "role_name": role_name,
+        "refresh_token": t.get("refresh_token"),
     }
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+@router.post("/refresh")
+def refresh_session(payload: RefreshRequest):
+    """Renew the Tybot access token without asking for the password again."""
+    return tybot_auth.refresh(payload.refresh_token)
 
 
 @router.post("/register", response_model=UserOut)

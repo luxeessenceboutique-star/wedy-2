@@ -51,6 +51,12 @@ Employee folder notes (`EmployeeFolderPage.tsx` + `EmployeeFolderView.tsx`, gene
 - Breadcrumb stays the shared Topbar's generic "Personnes › Employés" (not the employee's name) — the Topbar is one shared component driven by route, not per-page.
 - Compared at 1440 (and spot-checked 1024) against the reference with a real active employee (NIZAR TAOUSSI) and a real intern: layout, spacing, colors, radii all match; differences are only the data-dependent ones listed above.
 
+Requests notes (`RequestsPage.tsx`, hand-written against `/requests/inbox`, not generated — it already matched the reference closely but had 2 real bugs, fixed here):
+- "Analyse de Wedy" previously always showed a hardcoded placeholder sentence (the backend has no per-request AI analysis). It's now a real computed check for leave requests only (balance vs. days requested from `getLeaveBalance` + the matching `listLeaveRequests` row) and is hidden for document/other requests, where there's nothing genuine to compute.
+- The initial selected request no longer falls back to a non-pending item when nothing is pending (it used to make one item confusingly "leak" into the empty "En attente" list); it now shows the proper empty state + "Sélectionnez une demande" placeholder.
+- All labels (tabs, kind pills, status chips, per-row type) now go through `t()` — several were hardcoded French only, breaking EN/AR.
+- Fixed a React 19 lint error (setState-in-effect) by deriving the default selection during render instead.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -59,7 +65,7 @@ Employee folder notes (`EmployeeFolderPage.tsx` + `EmployeeFolderView.tsx`, gene
 | 2 | Dashboard | Wedy Dashboard | `/app` | `app/DashboardPage.tsx` (+ `components/dashboard/HrKpis.tsx`) | ☑ |
 | 3 | Employees | Wedy Employees | `/app/employees` | `app/EmployeesPage.tsx` + `EmployeesView.tsx` | ☑ |
 | 4 | Employee folder | Wedy Employee | `/app/employees/:id` | `app/EmployeeFolderPage.tsx` | ☑ |
-| 5 | Requests | Wedy Requests | `/app/requests` | `app/RequestsPage.tsx` | ◐ |
+| 5 | Requests | Wedy Requests | `/app/requests` | `app/RequestsPage.tsx` | ☑ |
 | 6 | Copilot | Wedy Copilot | `/app/copilot` | `app/CopilotPage.tsx` | ◐ |
 | 7 | Generate | Wedy Generate | `/app/generate` | `app/GeneratePage.tsx` | ◐ |
 | 8 | Templates | Wedy Templates | `/app/templates` | `app/TemplatesPage.tsx` | ◐ |

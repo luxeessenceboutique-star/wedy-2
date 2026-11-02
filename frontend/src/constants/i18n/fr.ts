@@ -1174,6 +1174,10 @@ export const fr = {
     req_done_refused: "Demande refusée — l'employé a été notifié.",
     req_toast_approved: '{type} approuvée · {name}', req_toast_refused: '{type} refusée · {name}',
     req_err_decide: 'Action impossible',
+    req_type_leave: 'Congé', req_type_doc: 'Document', req_type_other: 'Autre',
+    req_ai_sufficient: 'Solde suffisant : {balance} j disponibles pour {days} j demandés.',
+    req_ai_insufficient: 'Solde insuffisant : {balance} j disponibles pour {days} j demandés.',
+    req_select_hint: 'Sélectionnez une demande pour voir les détails.',
     /* ── Security ── */
     sec_score_label: 'SCORE DE SÉCURITÉ', sec_score_unit: 'sur 100',
     sec_level_excellent: 'Excellent', sec_level_good: 'Bon niveau de protection', sec_level_improve: 'À renforcer',

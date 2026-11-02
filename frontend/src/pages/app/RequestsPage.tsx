@@ -1,238 +1,375 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect, useRef, type CSSProperties } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Calendar, FileText, MessageSquare, Check, X, Loader2, Search, Inbox, Wand2, Clock } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Calendar, FileText, MessageSquare, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { PageHeader } from '../../components/layout/AppShell';
-import { Badge, Button, Spinner, Avatar } from '../../components/ui';
-import { listInbox, decideRequest, getApiError, type InboxItem, type InboxKind } from '@/services/api';
+import { Page, PageHeader } from '@/components/layout/AppShell';
+import { Spinner } from '@/components/ui';
+import { RV } from '@/components/motion';
+import { listInbox, decideRequest, getApiError, getLeaveBalance, listLeaveRequests, type InboxItem, type InboxKind } from '@/services/api';
+import { useLang, type TKey } from '@/lib/lang';
+import { tf } from '@/lib/format';
 
-type StateFilter = 'pending' | 'handled' | 'all';
-type KindFilter = 'all' | InboxKind;
+const AV = [
+  'linear-gradient(135deg,#0e6f84,#16b6c8)',
+  'linear-gradient(135deg,#5444b8,#9a8bf0)',
+  'linear-gradient(135deg,#0f6f49,#2bbd86)',
+  'linear-gradient(135deg,#a8650a,#e6a948)',
+  'linear-gradient(135deg,#b8402c,#ef6b54)',
+  'linear-gradient(135deg,#2f4bb0,#4a69d8)',
+];
+const avGrad = (name: string) => AV[(name.charCodeAt(0) + name.length) % AV.length];
+const initials = (name: string) => name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 
-const KIND_META: Record<InboxKind, { label: string; plural: string; icon: React.ReactNode; color: string; bg: string }> = {
-  leave:    { label: 'Congé',    plural: 'Congés',    icon: <Calendar size={16} />,      color: 'var(--primary)', bg: 'var(--primary-soft)' },
-  document: { label: 'Document', plural: 'Documents', icon: <FileText size={16} />,      color: 'var(--violet)',  bg: '#eef2ff' },
-  other:    { label: 'Autre',    plural: 'Autres',    icon: <MessageSquare size={16} />, color: 'var(--accent)',  bg: 'var(--surface-2)' },
+const KIND_META: Record<string, { icon: typeof Calendar; color: string; labelKey: string }> = {
+  leave:    { icon: Calendar,      color: '#6d5ad6', labelKey: 'req_type_leave' },
+  document: { icon: FileText,      color: '#0e6f84', labelKey: 'req_type_doc' },
+  other:    { icon: MessageSquare, color: '#b06b0c', labelKey: 'req_type_other' },
 };
 
-const STATUS_META: Record<string, { label: string; variant: 'warning' | 'primary' | 'success' | 'danger' | 'default' }> = {
-  pending:     { label: 'En attente', variant: 'warning' },
-  in_progress: { label: 'En cours de traitement', variant: 'primary' },
-  approved:    { label: 'Approuvée',  variant: 'success' },
-  completed:   { label: 'Approuvée',  variant: 'success' },
-  rejected:    { label: 'Refusée',    variant: 'danger'  },
+const STATUS_DARK: Record<string, { bg: string; color: string }> = {
+  pending:     { bg: 'rgba(230,169,72,.18)',    color: '#f0bd6a' },
+  approved:    { bg: 'rgba(43,189,134,.18)',    color: '#4fd3a0' },
+  completed:   { bg: 'rgba(43,189,134,.18)',    color: '#4fd3a0' },
+  rejected:    { bg: 'rgba(239,107,84,.18)',    color: '#ef8b78' },
 };
 
-const fmtDate = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+const STATUS_LIGHT: Record<string, { bg: string; color: string; labelKey: TKey }> = {
+  pending:     { bg: '#fbefda', color: '#8a5207', labelKey: 'status_pending_item' },
+  approved:    { bg: '#e1f5ec', color: '#0f6f49', labelKey: 'status_approved_item' },
+  completed:   { bg: '#e1f5ec', color: '#0f6f49', labelKey: 'status_approved_item' },
+  rejected:    { bg: '#fbe9e6', color: '#a33a28', labelKey: 'status_rejected_item' },
+  in_progress: { bg: '#e4f2f4', color: '#0b5f72', labelKey: 'doc_status_in_progress' },
+};
+
+const TAB_KEYS = ['pending', 'approved', 'refused', 'all'] as const;
+const TAB_LABEL_KEYS: Record<string, string> = {
+  pending: 'req_tab_pending', approved: 'req_tab_approved', refused: 'req_tab_refused', all: 'req_tab_all',
+};
+const KIND_KEYS = ['all', 'leave', 'document', 'other'] as const;
+const KIND_LABEL_KEYS: Record<string, string> = {
+  all: 'req_kind_all', leave: 'req_kind_leave', document: 'req_kind_doc', other: 'req_kind_other',
+};
+
+const fmtShortDate = (iso?: string | null) =>
+  iso ? new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '';
+
+const isPendingItem = (item: InboxItem) => item.state === 'pending';
+const isApprovedItem = (item: InboxItem) => item.status === 'approved' || item.status === 'completed';
+const isRefusedItem = (item: InboxItem) => item.status === 'rejected';
 
 export default function RequestsPage() {
+  const { t } = useLang();
   const qc = useQueryClient();
-  // Deep link from a notification: /app/requests?kind=leave&id=<request id>
   const [params] = useSearchParams();
-  const kindParam = params.get('kind');
+  const kindParam = params.get('kind') as InboxKind | null;
   const focusId = params.get('id');
-  const [stateFilter, setStateFilter] = useState<StateFilter>(kindParam || focusId ? 'all' : 'pending');
-  const [kindFilter, setKindFilter] = useState<KindFilter>(
-    kindParam === 'leave' || kindParam === 'document' || kindParam === 'other' ? kindParam : 'all');
-  const [flashId, setFlashId] = useState<string | null>(focusId);
-  const [q, setQ] = useState('');
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const [tab, setTab] = useState<'pending' | 'approved' | 'refused' | 'all'>(
+    kindParam || focusId ? 'all' : 'pending',
+  );
+  const [kindFilter, setKindFilter] = useState<string>(
+    kindParam === 'leave' || kindParam === 'document' || kindParam === 'other' ? kindParam : 'all',
+  );
+  const [curId, setCurId] = useState<string | null>(focusId);
+  const [comment, setComment] = useState('');
+  const nextTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { data, isLoading } = useQuery({
     queryKey: ['requests-inbox'],
     queryFn: listInbox,
     refetchInterval: 30000,
   });
 
-  // Scroll to the request the notification is about, highlight it for a few seconds
-  useEffect(() => {
-    if (!focusId || !data) return;
-    const el = document.querySelector(`[data-req-id="${CSS.escape(focusId)}"]`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    const t = setTimeout(() => setFlashId(null), 5000);
-    return () => clearTimeout(t);
-  }, [focusId, data]);
-
   const decideMut = useMutation({
     mutationFn: (v: { item: InboxItem; status: string; note?: string }) =>
       decideRequest(v.item.kind, v.item.id, v.status, v.note),
     onSuccess: (_d, v) => {
-      toast.success(`${STATUS_META[v.status]?.label ?? v.status} — ${v.item.employee_name}`);
+      const kindLabel = t((KIND_META[v.item.kind]?.labelKey ?? 'req_type_other') as TKey);
+      const msg = v.status === 'rejected' || v.status === 'refused'
+        ? tf(t('req_toast_refused'), { type: kindLabel, name: v.item.employee_name })
+        : tf(t('req_toast_approved'), { type: kindLabel, name: v.item.employee_name });
+      toast.success(msg);
       qc.invalidateQueries({ queryKey: ['requests-inbox'] });
       qc.invalidateQueries({ queryKey: ['requests-count'] });
       if (v.item.kind === 'leave') qc.invalidateQueries({ queryKey: ['leaves'] });
+      // auto-select next pending after 900ms
+      if (nextTimerRef.current) clearTimeout(nextTimerRef.current);
+      nextTimerRef.current = setTimeout(() => {
+        const all = data?.data ?? [];
+        const next = all.find(x => x.state === 'pending' && String(x.id) !== effectiveCurId);
+        if (next && tab === 'pending') setCurId(String(next.id));
+      }, 900);
     },
-    onError: (e: unknown) => toast.error(getApiError(e, 'Action impossible')),
+    onError: (e: unknown) => toast.error(getApiError(e, t('req_err_decide'))),
   });
 
-  const act = (item: InboxItem, status: string) => {
-    let note: string | undefined;
-    if (status === 'rejected') {
-      const answer = window.prompt(`Motif du refus pour ${item.employee_name} (facultatif)`, '');
-      if (answer === null) return; // cancelled
-      note = answer.trim() || undefined;
-    }
-    decideMut.mutate({ item, status, note });
+  useEffect(() => () => { if (nextTimerRef.current) clearTimeout(nextTimerRef.current); }, []);
+
+  const allItems: InboxItem[] = data?.data ?? [];
+
+  // Nothing picked yet: default to the first pending item, without a render-triggering effect.
+  // (Falling back to a non-pending item would make it appear, confusingly, in the "pending" list below.)
+  const defaultItem = allItems.find(i => i.state === 'pending');
+  const effectiveCurId = curId ?? (defaultItem ? String(defaultItem.id) : null);
+
+  const countOf = (tabKey: string) => {
+    if (tabKey === 'all') return allItems.length;
+    if (tabKey === 'pending') return allItems.filter(isPendingItem).length;
+    if (tabKey === 'approved') return allItems.filter(isApprovedItem).length;
+    if (tabKey === 'refused') return allItems.filter(isRefusedItem).length;
+    return 0;
   };
 
-  const all = data?.data ?? [];
-  const counts = data?.counts;
-  const needle = q.trim().toLowerCase();
-  const items = all.filter(i =>
-    (stateFilter === 'all' || (stateFilter === 'pending' ? i.state === 'pending' : i.state !== 'pending')) &&
-    (kindFilter === 'all' || i.kind === kindFilter) &&
-    (!needle || `${i.employee_name} ${i.title} ${i.details}`.toLowerCase().includes(needle)));
+  const visible = allItems.filter(i => {
+    const tabMatch =
+      tab === 'all' ? true :
+      tab === 'pending' ? (isPendingItem(i) || String(i.id) === effectiveCurId) :
+      tab === 'approved' ? isApprovedItem(i) :
+      tab === 'refused' ? isRefusedItem(i) :
+      true;
+    const kindMatch = kindFilter === 'all' || i.kind === kindFilter;
+    return tabMatch && kindMatch;
+  });
 
-  const busyId = decideMut.isPending ? decideMut.variables?.item.id : undefined;
+  const cur = allItems.find(i => String(i.id) === effectiveCurId);
+  const decide = (status: string) => {
+    if (!cur) return;
+    setComment('');
+    decideMut.mutate({ item: cur, status, note: comment.trim() || undefined });
+  };
 
-  const Seg = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
-    <button onClick={onClick} style={{
-      padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', borderRadius: 8,
-      border: `1px solid ${active ? 'var(--primary)' : 'var(--line)'}`,
-      background: active ? 'var(--primary-soft)' : 'var(--surface)',
-      color: active ? 'var(--primary)' : 'var(--ink-2)',
-    }}>{children}</button>
-  );
+  const isCurLeave = cur?.kind === 'leave' && !!cur.employee_id;
+  const { data: curLeaveBalance } = useQuery({
+    queryKey: ['requests-leave-balance', cur?.employee_id],
+    queryFn: () => getLeaveBalance(cur!.employee_id!),
+    enabled: isCurLeave,
+  });
+  const { data: curLeaveRows } = useQuery({
+    queryKey: ['requests-leave-detail', cur?.employee_id],
+    queryFn: () => listLeaveRequests({ employee_id: cur!.employee_id! }),
+    enabled: isCurLeave,
+  });
+  const curLeaveRow = curLeaveRows?.find(l => l.id === cur?.id);
+  const curBalanceDays = curLeaveBalance ? curLeaveBalance.annual_total - curLeaveBalance.annual_used : null;
+  const curRequestedDays = curLeaveRow?.days ?? null;
+  const curAfterDays = curBalanceDays != null && curRequestedDays != null ? Math.max(0, curBalanceDays - curRequestedDays) : null;
+  const curMotif = cur?.kind === 'leave' ? (curLeaveRow?.reason || '') : (cur?.details ?? '');
+  const curAiText = isCurLeave && curBalanceDays != null && curRequestedDays != null
+    ? (curBalanceDays < curRequestedDays
+        ? tf(t('req_ai_insufficient'), { balance: String(curBalanceDays).replace('.', ','), days: String(curRequestedDays) })
+        : tf(t('req_ai_sufficient'), { balance: String(curBalanceDays).replace('.', ','), days: String(curRequestedDays) }))
+    : null;
+
+  const curStatus = cur?.status ?? 'pending';
+  const curIsPending = cur ? isPendingItem(cur) : false;
+  const curIsDone = cur ? !isPendingItem(cur) : false;
+  const curSt = STATUS_LIGHT[curStatus] ?? STATUS_LIGHT.pending;
+  const curStDark = STATUS_DARK[curStatus] ?? STATUS_DARK.pending;
+
+  if (isLoading) {
+    return (
+      <Page>
+        <PageHeader title={t('requests')} subtitle={t('req_subtitle')} />
+        <div style={{ padding: 60, textAlign: 'center' }}><Spinner /></div>
+      </Page>
+    );
+  }
 
   return (
-    <div>
-      <PageHeader
-        title="Demandes des employés"
-        subtitle="Congés, documents et autres demandes soumis par vos équipes."
-        action={<Button variant="ghost" onClick={() => refetch()}>Actualiser</Button>}
-      />
-
-      <div style={{ padding: '0 30px 30px' }}>
-        {/* Stats */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-          {[
-            { label: 'En attente', value: counts?.pending ?? 0, color: 'var(--warn)', bg: 'var(--surface)', hot: (counts?.pending ?? 0) > 0 },
-            ...(['leave', 'document', 'other'] as InboxKind[]).map(k => ({
-              label: KIND_META[k].plural, value: counts?.[k] ?? 0, color: KIND_META[k].color, bg: 'var(--surface)', hot: false,
-            })),
-          ].map(s => (
-            <div key={s.label} style={{
-              flex: '1 1 140px', padding: '14px 18px', background: s.bg, borderRadius: 12,
-              border: `1px solid ${s.hot ? s.color : 'var(--line)'}`,
-            }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 2 }}>{s.label}</div>
-            </div>
-          ))}
+    <Page>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <RV as="h1" variant="up" className="wy-ph-title">{t('requests')}</RV>
+          <RV as="p" variant="up" delay={60} className="wy-ph-sub">{t('req_subtitle')}</RV>
         </div>
+        {/* Segmented tabs */}
+        <RV as="div" variant="up" delay={100} style={{ display: 'flex', padding: 4, borderRadius: 13, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+          {TAB_KEYS.map(k => {
+            const active = tab === k;
+            const n = countOf(k);
+            return (
+              <button key={k} type="button" onClick={() => setTab(k)} style={{
+                position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 7,
+                height: 36, padding: '0 13px', border: 'none', borderRadius: 10,
+                background: 'transparent', fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', whiteSpace: 'nowrap', color: active ? '#ffffff' : '#52646d',
+              }}>
+                {active && <span style={{ position: 'absolute', inset: 0, borderRadius: 10, background: '#0a1c24' }} className="wy-pill" />}
+                <span style={{ position: 'relative' }}>{t(TAB_LABEL_KEYS[k] as TKey)}</span>
+                <span style={{ position: 'relative', fontFamily: 'var(--font-mono)', fontSize: 11, padding: '1px 6px', borderRadius: 99, background: active ? 'rgba(255,255,255,.18)' : '#eef2f4', color: active ? '#ffffff' : '#52646d' }}>{n}</span>
+              </button>
+            );
+          })}
+        </RV>
+      </div>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
-          <Seg active={stateFilter === 'pending'} onClick={() => setStateFilter('pending')}>En attente{counts ? ` (${counts.pending})` : ''}</Seg>
-          <Seg active={stateFilter === 'handled'} onClick={() => setStateFilter('handled')}>Traitées</Seg>
-          <Seg active={stateFilter === 'all'} onClick={() => setStateFilter('all')}>Toutes</Seg>
-          <span style={{ width: 1, height: 22, background: 'var(--line)', margin: '0 4px' }} />
-          <Seg active={kindFilter === 'all'} onClick={() => setKindFilter('all')}>Tous types</Seg>
-          {(['leave', 'document', 'other'] as InboxKind[]).map(k => (
-            <Seg key={k} active={kindFilter === k} onClick={() => setKindFilter(k)}>{KIND_META[k].plural}</Seg>
-          ))}
-          <div style={{ position: 'relative', marginLeft: 'auto', minWidth: 220 }}>
-            <Search size={14} style={{ position: 'absolute', left: 10, top: 10, color: 'var(--ink-3)' }} />
-            <input className="input" placeholder="Rechercher un employé…" value={q}
-              onChange={e => setQ(e.target.value)} style={{ paddingLeft: 30, width: '100%' }} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
+        {/* ── Left: list ── */}
+        <RV as="div" variant="up" delay={120} style={{ flex: '1 1 380px', minWidth: 0, borderRadius: 20, background: '#ffffff', border: '1px solid #e2e8eb', overflow: 'hidden' }}>
+          {/* Kind filter pills */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '14px 16px', borderBottom: '1px solid #eef2f4' }}>
+            {KIND_KEYS.map(k => (
+              <button key={k} type="button" onClick={() => setKindFilter(k)} style={{
+                height: 32, padding: '0 12px', borderRadius: 99,
+                border: `1px solid ${kindFilter === k ? '#b9dfe5' : '#e2e8eb'}`,
+                background: kindFilter === k ? '#e4f2f4' : '#ffffff',
+                color: kindFilter === k ? '#0b5f72' : '#52646d',
+                fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+              }}>{t(KIND_LABEL_KEYS[k] as TKey)}</button>
+            ))}
           </div>
-        </div>
 
-        {data?.warnings?.length ? (
-          <div style={{ marginBottom: 12, padding: '10px 14px', borderRadius: 8, background: '#fef2f2', color: 'var(--danger)', fontSize: 13 }}>
-            Certaines demandes n'ont pas pu être chargées ({data.warnings.join(' ; ')}).
-          </div>
-        ) : null}
-
-        {/* List */}
-        {isLoading ? (
-          <div style={{ padding: 60, textAlign: 'center' }}><Spinner /></div>
-        ) : isError ? (
-          <div style={{ padding: 48, textAlign: 'center', color: 'var(--danger)' }}>
-            Impossible de charger les demandes. <button className="btn btn-ghost btn-sm" onClick={() => refetch()}>Réessayer</button>
-          </div>
-        ) : items.length === 0 ? (
-          <div style={{ padding: 56, textAlign: 'center', color: 'var(--ink-2)', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12 }}>
-            <Inbox size={36} style={{ opacity: 0.25, margin: '0 auto 12px' }} />
-            <p style={{ fontWeight: 600 }}>{stateFilter === 'pending' ? 'Aucune demande en attente' : 'Aucune demande'}</p>
-            <p style={{ fontSize: 13 }}>Les demandes soumises par les employés apparaîtront ici.</p>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {items.map(item => {
-              const km = KIND_META[item.kind];
-              const sm = STATUS_META[item.status] ?? { label: item.status, variant: 'default' as const };
-              const pending = item.state === 'pending';
-              const busy = busyId === item.id;
+          {visible.length === 0 ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', fontSize: 14, color: '#52646d' }}>{t('req_empty')}</div>
+          ) : (
+            visible.map((item, i) => {
+              const isSelected = String(item.id) === effectiveCurId;
+              const km = KIND_META[item.kind] ?? KIND_META.other;
+              const Icon = km.icon;
+              const stLight = STATUS_LIGHT[item.status] ?? STATUS_LIGHT.pending;
+              const ini = initials(item.employee_name);
+              const av = avGrad(item.employee_name);
               return (
-                <div key={`${item.kind}:${item.id}`} data-req-id={item.id} style={{
-                  display: 'flex', gap: 14, alignItems: 'center', padding: '14px 18px', flexWrap: 'wrap',
-                  background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12,
-                  borderLeft: `3px solid ${pending ? 'var(--warn)' : 'var(--line)'}`,
-                  boxShadow: flashId === item.id ? '0 0 0 2px var(--primary)' : undefined, transition: 'box-shadow .3s',
-                }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: km.bg, color: km.color,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} title={km.label}>
-                    {km.icon}
+                <button key={`${item.kind}:${item.id}`} type="button"
+                  onClick={() => { setCurId(String(item.id)); setComment(''); }}
+                  style={{
+                    position: 'relative', width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '13px 16px', border: 'none', borderBottom: '1px solid #eef2f4',
+                    background: isSelected ? '#f3fafb' : '#ffffff', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer',
+                    transition: 'background .15s',
+                  }}
+                  data-reveal="up" data-delay={String(i * 45)}
+                >
+                  {isSelected && <span style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: '0 3px 3px 0', background: '#16b6c8' }} />}
+                  <span style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: av, color: '#ffffff', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{ini}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#0a1c24', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.employee_name}</span>
+                      <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 11, color: '#7d8f97', flexShrink: 0 }}>{fmtShortDate(item.created_at)}</span>
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                      <span style={{ display: 'inline-flex', color: km.color }}><Icon size={13} /></span>
+                      <span style={{ fontSize: 13, color: '#33474f', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</span>
+                      <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: stLight.bg, color: stLight.color, flexShrink: 0 }}>{t(stLight.labelKey)}</span>
+                    </span>
+                  </span>
+                </button>
+              );
+            })
+          )}
+        </RV>
+
+        {/* ── Right: detail ── */}
+        {cur ? (
+          <RV as="div" variant="left" delay={160} style={{ flex: '1.3 1 440px', minWidth: 0, position: 'sticky', top: 90, borderRadius: 22, background: '#ffffff', border: '1px solid #e2e8eb', overflow: 'hidden' }}>
+            {/* Dark header */}
+            <div style={{ position: 'relative', overflow: 'hidden', padding: 24, background: '#06141a', color: '#e8eff1', isolation: 'isolate' }}>
+              <div aria-hidden="true" className="wedy-drift" style={{ position: 'absolute', right: -80, top: -120, width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(closest-side,rgba(14,111,132,.6),transparent)', zIndex: -1 } as CSSProperties} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                <span style={{ width: 54, height: 54, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avGrad(cur.employee_name), color: '#ffffff', fontSize: 17, fontWeight: 700, border: '2px solid rgba(255,255,255,.2)', flexShrink: 0 }}>
+                  {initials(cur.employee_name)}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, letterSpacing: '-.03em' }}>{cur.employee_name}</div>
+                  <div style={{ fontSize: 13.5, color: '#9fb4bb' }}>{cur.department ?? '—'}</div>
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 11px', borderRadius: 99, background: curStDark.bg, color: curStDark.color }}>{t(curSt.labelKey)}</span>
+              </div>
+              {/* Request type tile */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18, padding: 14, borderRadius: 14, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.08)' }}>
+                <span style={{ width: 38, height: 38, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(39,192,212,.15)', color: '#5fe3f0', flexShrink: 0 }}>
+                  {(() => { const Icon = (KIND_META[cur.kind] ?? KIND_META.other).icon; return <Icon size={18} />; })()}
+                </span>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 600 }}>{cur.title}</div>
+                  <div style={{ fontSize: 13, color: '#9fb4bb' }}>{cur.details ?? ''}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Motif */}
+              {curMotif && (
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#5f7079' }}>{t('req_motif')}</div>
+                  <div style={{ marginTop: 6, fontSize: 14.5, lineHeight: 1.55, color: '#1d3540' }}>{curMotif}</div>
+                </div>
+              )}
+
+              {/* Leave balance tiles */}
+              {cur.kind === 'leave' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 10 }}>
+                  <div style={{ padding: 12, borderRadius: 12, background: '#f3f6f7' }}>
+                    <div style={{ fontSize: 11.5, color: '#5f7079' }}>{t('req_solde')}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800 }}>{curBalanceDays != null ? String(curBalanceDays).replace('.', ',') : '—'} j</div>
                   </div>
-
-                  <div style={{ flex: '1 1 260px', minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                      <Avatar name={item.employee_name} size={22} />
-                      <span style={{ fontWeight: 600, fontSize: 13 }}>{item.employee_name}</span>
-                      {item.department && <span style={{ fontSize: 11, color: 'var(--ink-3)' }}>· {item.department}</span>}
-                    </div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{item.title}</div>
-                    {item.details && <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 2 }}>{item.details}</div>}
-                    {item.note && !pending && (
-                      <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 4, fontStyle: 'italic' }}>Note RH : {item.note}</div>
-                    )}
+                  <div style={{ padding: 12, borderRadius: 12, background: '#f3f6f7' }}>
+                    <div style={{ fontSize: 11.5, color: '#5f7079' }}>{t('req_requested')}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800 }}>{curRequestedDays ?? '—'} j</div>
                   </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 11, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Clock size={11} /> {fmtDate(item.created_at)}
-                      </span>
-                      <Badge variant={sm.variant}>{sm.label}</Badge>
+                  <div style={{ padding: 12, borderRadius: 12, background: '#e4f2f4' }}>
+                    <div style={{ fontSize: 11.5, color: '#0b5f72' }}>{t('req_after')}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: '#0b5f72' }}>
+                      {curAfterDays != null ? String(curAfterDays).replace('.', ',') : '—'} j
                     </div>
-
-                    {pending && (
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                        {busy && <Loader2 size={15} className="animate-spin" style={{ alignSelf: 'center' }} />}
-                        {item.kind === 'document' ? (
-                          <>
-                            {item.employee_id && (
-                              <Link to={`/app/generate?employee_id=${item.employee_id}`}>
-                                <button className="btn btn-ghost btn-sm" title="Générer le document"><Wand2 size={13} /> Générer</button>
-                              </Link>
-                            )}
-                            {item.status === 'pending' && (
-                              <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => act(item, 'in_progress')}>En cours de traitement</button>
-                            )}
-                            <button className="btn btn-soft btn-sm" disabled={busy} onClick={() => act(item, 'completed')}>
-                              <Check size={13} /> Approuvé
-                            </button>
-                          </>
-                        ) : (
-                          <button className="btn btn-soft btn-sm" disabled={busy} onClick={() => act(item, 'approved')}>
-                            <Check size={13} /> Approuver
-                          </button>
-                        )}
-                        <button className="btn btn-ghost btn-sm" disabled={busy} style={{ color: 'var(--danger)' }}
-                          onClick={() => act(item, 'rejected')}>
-                          <X size={13} /> Refuser
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
-              );
-            })}
+              )}
+
+              {/* AI insight: a real balance-vs-request check for leave; hidden when there is nothing computed to say */}
+              {curAiText && (
+                <div className="wy-ai">
+                  <img src="/wedy-avatar.png" alt="" className="wy-ai-avatar" />
+                  <div>
+                    <div className="wy-ai-label">{t('req_ai_label')}</div>
+                    <div className="wy-ai-text">{curAiText}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Pending: comment + actions */}
+              {curIsPending && (
+                <>
+                  <textarea
+                    value={comment}
+                    onChange={e => setComment(e.target.value)}
+                    rows={2}
+                    placeholder={t('req_comment_ph')}
+                    className="input"
+                    style={{ resize: 'vertical', minHeight: 64, height: 'auto', padding: '11px 13px' }}
+                  />
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button type="button" onClick={() => decide('rejected')} disabled={decideMut.isPending}
+                      className="btn btn-danger-outline" style={{ flex: 1, height: 46 }}>
+                      <X size={16} /> {t('req_refuse')}
+                    </button>
+                    <button type="button" onClick={() => decide(cur.kind === 'document' ? 'completed' : 'approved')} disabled={decideMut.isPending}
+                      style={{ flex: 1.4, position: 'relative', overflow: 'hidden', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 46, border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#0f6f49,#16a06b)', color: '#ffffff', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 12px 26px -12px rgba(22,160,107,.8)' }}>
+                      <span className="wedy-shine" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '40%', background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)', pointerEvents: 'none' }} />
+                      <span style={{ position: 'relative', display: 'inline-flex' }}><Check size={16} strokeWidth={2.4} /></span>
+                      <span style={{ position: 'relative' }}>{t('req_approve')}</span>
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* Done: status banner */}
+              {curIsDone && (
+                <RV as="div" variant="up" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 14, borderRadius: 14, background: curSt.bg, color: curSt.color, fontSize: 14, fontWeight: 600 }}>
+                  {curStatus === 'rejected' ? <X size={18} /> : <Check size={18} />}
+                  {curStatus === 'rejected' ? t('req_done_refused') : t('req_done_approved')}
+                </RV>
+              )}
+            </div>
+          </RV>
+        ) : (
+          <div style={{ flex: '1.3 1 440px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, color: '#7d8f97', fontSize: 14 }}>
+            {t('req_select_hint')}
           </div>
         )}
       </div>
-    </div>
+    </Page>
   );
 }

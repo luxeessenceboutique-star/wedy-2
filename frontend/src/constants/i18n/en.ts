@@ -1120,6 +1120,10 @@ export const en = {
     req_done_refused: 'Request declined — employee has been notified.',
     req_toast_approved: '{type} approved · {name}', req_toast_refused: '{type} declined · {name}',
     req_err_decide: 'Action failed',
+    req_type_leave: 'Leave', req_type_doc: 'Document', req_type_other: 'Other',
+    req_ai_sufficient: 'Sufficient balance: {balance}d available for {days}d requested.',
+    req_ai_insufficient: 'Insufficient balance: {balance}d available for {days}d requested.',
+    req_select_hint: 'Select a request to see its details.',
     /* ── Security ── */
     sec_score_label: 'SECURITY SCORE', sec_score_unit: 'out of 100',
     sec_level_excellent: 'Excellent', sec_level_good: 'Good protection', sec_level_improve: 'Needs improvement',

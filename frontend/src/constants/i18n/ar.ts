@@ -1120,6 +1120,10 @@ export const ar = {
     req_done_refused: 'تم رفض الطلب — تم إخطار الموظف.',
     req_toast_approved: 'تمت الموافقة على {type} · {name}', req_toast_refused: 'تم رفض {type} · {name}',
     req_err_decide: 'تعذّر تنفيذ الإجراء',
+    req_type_leave: 'إجازة', req_type_doc: 'وثيقة', req_type_other: 'أخرى',
+    req_ai_sufficient: 'رصيد كافٍ: {balance} يوم متاح مقابل {days} يوم مطلوب.',
+    req_ai_insufficient: 'رصيد غير كافٍ: {balance} يوم متاح مقابل {days} يوم مطلوب.',
+    req_select_hint: 'اختر طلبًا لعرض التفاصيل.',
     /* ── Security ── */
     sec_score_label: 'درجة الأمان', sec_score_unit: 'من 100',
     sec_level_excellent: 'ممتاز', sec_level_good: 'مستوى حماية جيد', sec_level_improve: 'يحتاج إلى تعزيز',

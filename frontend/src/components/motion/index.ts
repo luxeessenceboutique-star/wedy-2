@@ -6,3 +6,5 @@ export type { CountUpOptions } from './useCountUp';
 export { CountUp } from './CountUp';
 export { Orb } from './Orb';
 export { prefersReducedMotion } from '@/lib/inView';
+export { RV } from './RevealAny';
+export { CountText } from './CountText';

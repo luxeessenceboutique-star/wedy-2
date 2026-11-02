@@ -1,0 +1,15 @@
+/* hover / focus rules of Wedy Employees (style-hover / style-focus) */
+.emp-h1:hover { border-color: #9fb4bb !important; }
+.emp-h2:hover { background: #f3f6f7 !important; }
+.emp-h3:hover { border-color: #b9dfe5 !important; box-shadow: 0 12px 26px -18px rgba(10,28,36,.35) !important; }
+.emp-f4:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.emp-h5:hover { background: rgba(255,255,255,.18) !important; }
+.emp-h6:hover { color: #ffffff !important; }
+.emp-h7:hover { background: #f8fbfb !important; }
+.emp-h8:hover { background: #eef3f5 !important; color: #0a1c24 !important; }
+.emp-h9:hover { background: #e4f2f4 !important; color: #0e6f84 !important; }
+.emp-h10:hover { background: #fbe9e6 !important; color: #df5740 !important; }
+.emp-h11:hover { border-color: #b9dfe5 !important; box-shadow: 0 20px 40px -26px rgba(10,28,36,.4) !important; transform: translateY(-3px) !important; }
+.emp-h12:hover { border-color: #b9dfe5 !important; color: #0e6f84 !important; }
+.emp-h13:hover { color: #16b6c8 !important; }
+.emp-h14:hover { border-color: #9fb4bb !important; color: #0a1c24 !important; }

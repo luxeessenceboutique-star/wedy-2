@@ -21,28 +21,43 @@ Never invent facts — only work with information provided.
 When enhancing, preserve all variable placeholders like {{variable_name}} as-is."""
 
 
-def enhance_document(content: str, document_type: str, language: str = "fr", instructions: str = "") -> str:
-    """Use Claude to improve/enhance a generated HR document."""
+def _enhance_prompt(content: str, document_type: str, language: str, instructions: str) -> tuple[str, str]:
     lang_name = {"fr": "French", "en": "English", "ar": "Arabic"}.get(language, "French")
     extra = f"\nAdditional instructions: {instructions}" if instructions else ""
-
-    message = get_client().messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=2048,
-        system=SYSTEM_PROMPT,
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    f"Enhance the following {document_type} document written in {lang_name}. "
-                    f"Keep the same structure but improve clarity, formality, and legal precision. "
-                    f"Return ONLY the improved document text, no commentary.{extra}\n\n"
-                    f"Document:\n{content}"
-                ),
-            }
-        ],
+    user = (
+        f"The following {document_type} document may be written in a different language than the target. "
+        f"Rewrite it entirely in {lang_name} (translate if needed), keeping the same structure, and improve "
+        f"clarity, formality, and legal precision. Return ONLY the document text in {lang_name}, no commentary, "
+        f"no notes, no markdown.{extra}\n\nDocument:\n{content}"
     )
-    return message.content[0].text
+    return SYSTEM_PROMPT, user
+
+
+def enhance_document(content: str, document_type: str, language: str = "fr", instructions: str = "") -> str:
+    """Improve/translate a generated HR document. Tries Claude first, then the OpenAI-compatible
+    router (same fallback pattern as the Copilot chat) so the feature works with whichever key is configured."""
+    system, user = _enhance_prompt(content, document_type, language, instructions)
+
+    if settings.ANTHROPIC_API_KEY:
+        message = get_client().messages.create(
+            model="claude-sonnet-4-6", max_tokens=2048, system=system,
+            messages=[{"role": "user", "content": user}],
+        )
+        return message.content[0].text
+
+    if settings.OPENAI_API_KEY:
+        from openai import OpenAI
+        base = settings.OPENAI_BASE_URL or None
+        if base and not base.rstrip("/").endswith("/v1"):
+            base = base.rstrip("/") + "/v1"
+        oa = OpenAI(api_key=settings.OPENAI_API_KEY, base_url=base)
+        resp = oa.chat.completions.create(
+            model=settings.OPENAI_MODEL, max_tokens=2048,
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+        )
+        return resp.choices[0].message.content
+
+    raise RuntimeError("No AI API key configured")
 
 
 def extract_missing_variables(template: str, employee_data: dict) -> list[str]:

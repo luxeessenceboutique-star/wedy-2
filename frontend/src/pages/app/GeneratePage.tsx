@@ -1,694 +1,444 @@
-﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
+// Redesigned from design_handoff_wedy/design/Wedy Generate.dc.html.
+// Reuses the existing real wiring (listEmployees/listInterns/listTemplates/generateDocument/downloadDoc)
+// from the pre-redesign page; only the UI layer changed to the new 4-step wizard + styled paper result.
+import { useRef, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import {
-  Wand2, Check, ChevronRight, Download, Sparkles, CheckCircle2,
-  Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  Printer, RotateCcw, AlertCircle, Eye, EyeOff, Search, Users, GraduationCap
+  ArrowLeft, ArrowRight, Check, CircleAlert, CircleCheck, Download, FileText, GraduationCap,
+  History, Pencil, Plus, Search, Send, Sparkles, Users, WandSparkles,
 } from 'lucide-react';
-import { listEmployees, listInterns, listTemplates, generateDocument, downloadDoc, aiEnhance } from '@/services/api';
-import type { Employee, Template } from '@/services/api';
-import { Button, Badge, Card, Spinner } from '../../components/ui';
-import { PageHeader } from '../../components/layout/AppShell';
+import { RV } from '@/components/motion';
+import {
+  listEmployees, listInterns, listTemplates, generateDocument, downloadDoc, sendForSignature,
+  getApiError, type Employee, type Template,
+} from '@/services/api';
+import { Spinner } from '@/components/ui';
+import { avatarGradient, initialsOf } from '@/lib/visual';
 import { toast } from 'sonner';
-import { Avatar } from '../../components/ui';
-import { useLang } from '../../lib/lang';
+import { useLang, type TKey } from '@/lib/lang';
+import { tf } from '@/lib/format';
+import './GeneratePage.css';
 
-// ── Constants ────────────────────────────────────────────────────────────────
+const CAT_STYLE: Record<string, { label: string; bg: string; color: string }> = {
+  attestation: { label: 'Attestation', bg: '#e1f5ec', color: '#0f6f49' },
+  contrat: { label: 'Contrat', bg: '#e4f2f4', color: '#0b5f72' },
+  lettre: { label: 'Lettre', bg: '#fbefda', color: '#8a5207' },
+  avenant: { label: 'Avenant', bg: '#ece9fb', color: '#5444b8' },
+  autre: { label: 'Autre', bg: '#f3f6f7', color: '#52646d' },
+};
+const VAR_LABEL_KEYS: Record<string, TKey> = {
+  full_name: 'full_name_label', cin: 'gen_cin', email: 'gen_email', phone: 'phone_label',
+  address: 'address', city: 'city', nationality: 'nationality_label', position: 'position_label',
+  department: 'department_label', manager: 'manager_label', matricule: 'emp_matricule',
+  contract_type: 'contract_type_label', hire_date: 'hire_date_label', contract_start: 'contract_start_label',
+  contract_end: 'contract_end_label', internship_start: 'intern_start', internship_end: 'intern_end',
+  salary: 'salary_label', today: 'gen_today_label', company: 'company',
+};
+const LANGS = [
+  { k: 'fr', label: 'Français' }, { k: 'ar', label: 'العربية' }, { k: 'en', label: 'English' },
+];
+const isInternTemplate = (tpl: Template) => {
+  if (tpl.target_type === 'intern') return true;
+  if (tpl.target_type === 'both' || tpl.target_type === 'employee') return false;
+  return ['stage', 'stagiaire', 'convention'].some(kw => tpl.name_fr.toLowerCase().includes(kw) || (tpl.name_en ?? '').toLowerCase().includes(kw));
+};
+const isEmployeeTemplate = (tpl: Template) => tpl.target_type === 'both' || !isInternTemplate(tpl);
+const extractVars = (body = ''): string[] => [...new Set((body.match(/\{\{(\w+)\}\}/g) ?? []).map(m => m.replace(/[{}]/g, '')))];
+const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString() : '');
+const resolveVar = (name: string, emp: Employee): string => {
+  const MAP: Record<string, () => string> = {
+    full_name: () => emp.full_name || '', cin: () => emp.cin || '', email: () => emp.email || '', phone: () => emp.phone || '',
+    address: () => emp.address || '', city: () => emp.city || '', nationality: () => emp.nationality || '',
+    position: () => emp.position || '', department: () => emp.department || '', manager: () => emp.manager || '',
+    matricule: () => emp.matricule || '', contract_type: () => emp.contract_type || '', hire_date: () => fmt(emp.hire_date),
+    contract_start: () => fmt(emp.contract_start || emp.hire_date), contract_end: () => (emp.contract_end ? fmt(emp.contract_end) : ''),
+    internship_start: () => fmt(emp.internship_start), internship_end: () => (emp.internship_end ? fmt(emp.internship_end) : ''),
+    salary: () => (emp.salary ? `${Number(emp.salary).toLocaleString()} MAD` : ''), today: () => new Date().toLocaleDateString(), company: () => 'Tython SARL',
+  };
+  return MAP[name]?.() ?? '';
+};
 
-// ── Step indicator ────────────────────────────────────────────────────────────
-
-function StepIndicator({ step, labels }: { step: number; labels: string[] }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 28 }}>
-      {labels.map((label, i) => (
-        <React.Fragment key={i}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            <div style={{
-              width: 30, height: 30, borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700, flexShrink: 0,
-              background: i < step ? 'var(--primary)' : i === step ? 'var(--primary-soft)' : 'var(--surface-2)',
-              color: i < step ? '#fff' : i === step ? 'var(--primary)' : 'var(--ink-2)',
-              border: i === step ? '2px solid var(--primary)' : '2px solid transparent',
-              transition: 'all 0.2s',
-            }}>
-              {i < step ? <Check size={13} /> : i + 1}
-            </div>
-            <span style={{ fontSize: 10, fontWeight: 600, color: i === step ? 'var(--primary)' : 'var(--ink-3)', whiteSpace: 'nowrap' }}>
-              {label}
-            </span>
-          </div>
-          {i < labels.length - 1 && (
-            <div style={{ flex: 1, height: 2, background: i < step ? 'var(--primary)' : 'var(--line)', margin: '0 4px', marginBottom: 16 }} />
-          )}
-        </React.Fragment>
-      ))}
-    </div>
-  );
-}
-
-// ── Variable badge ────────────────────────────────────────────────────────────
-
-function VarBadge({ name }: { name: string }) {
-  return (
-    <code style={{
-      fontSize: 11, padding: '2px 7px', borderRadius: 5,
-      background: 'var(--primary-soft)', color: 'var(--primary)',
-      border: '1px solid #bae6fd', fontFamily: 'monospace',
-    }}>
-      {`{{${name}}}`}
-    </code>
-  );
-}
-
-// ── Inline editor toolbar ────────────────────────────────────────────────────
-
-function EditorToolbar({ onEdit, onOriginal, onPrint, modified }: {
-  onEdit: (cmd: string, val?: string) => void;
-  onOriginal: () => void;
-  onPrint: () => void;
-  modified: boolean;
-}) {
-  const { t } = useLang();
-  const btn = (onClick: () => void, icon: React.ReactNode, title: string, active = false) => (
-    <button
-      title={title}
-      onMouseDown={e => { e.preventDefault(); onClick(); }}
-      style={{
-        background: active ? 'var(--primary-soft)' : 'none',
-        border: '1px solid transparent', borderRadius: 5,
-        padding: '4px 7px', cursor: 'pointer',
-        color: active ? 'var(--primary)' : 'var(--ink-2)',
-        display: 'flex', alignItems: 'center',
-        transition: 'all 0.1s',
-      }}
-      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
-      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'none'; }}
-    >
-      {icon}
-    </button>
-  );
-
-  const sep = <div style={{ width: 1, height: 20, background: 'var(--line)', margin: '0 4px' }} />;
-
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 2,
-      padding: '6px 12px', background: 'var(--surface)',
-      border: '1px solid var(--line)', borderRadius: '8px 8px 0 0',
-      borderBottom: 'none', flexWrap: 'wrap',
-    }}>
-      {btn(() => onEdit('bold'), <Bold size={13} />, 'Gras (Ctrl+B)')}
-      {btn(() => onEdit('italic'), <Italic size={13} />, 'Italique (Ctrl+I)')}
-      {btn(() => onEdit('underline'), <Underline size={13} />, 'Souligné (Ctrl+U)')}
-      {sep}
-      {btn(() => onEdit('justifyLeft'), <AlignLeft size={13} />, 'Aligner gauche')}
-      {btn(() => onEdit('justifyCenter'), <AlignCenter size={13} />, 'Centrer')}
-      {btn(() => onEdit('justifyRight'), <AlignRight size={13} />, 'Aligner droite')}
-      {sep}
-      {btn(onOriginal, <RotateCcw size={13} />, t('resend'))}
-      {btn(onPrint, <Printer size={13} />, 'Print')}
-      {sep}
-      <span style={{ fontSize: 11, color: modified ? 'var(--warn)' : 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 4 }}>
-        {modified ? <><AlertCircle size={11} /> {t('status_pending_item')}</> : <><Check size={11} /> {t('status_active_item')}</>}
-      </span>
-    </div>
-  );
-}
-
-// ── Main page ─────────────────────────────────────────────────────────────────
+type Step = 0 | 1 | 2 | 3;
 
 export default function GeneratePage() {
   const { t } = useLang();
   const [params] = useSearchParams();
-  const navigate = useNavigate();
 
-  const [step, setStep]               = useState(0);
-  const [personType, setPersonType]   = useState<'employee' | 'intern'>('employee');
-  const [employeeId, setEmployeeId]   = useState(params.get('employee_id') ?? '');
-  const [templateId, setTemplateId]   = useState(params.get('template_id') ?? '');
-  const [tplSearch, setTplSearch]     = useState('');
+  const [step, setStep] = useState<Step>(0);
+  const [personType, setPersonType] = useState<'employee' | 'intern'>('employee');
+  const [q, setQ] = useState('');
+  const [employeeId, setEmployeeId] = useState(params.get('employee_id') ?? '');
+  const [templateId, setTemplateId] = useState(params.get('template_id') ?? '');
   const [tplCategory, setTplCategory] = useState('');
-  const [language, setLanguage]       = useState('fr');
-  const [useAI, setUseAI]             = useState(false);
-  const [extraVars, setExtraVars]     = useState<Record<string, string>>({});
-  const [result, setResult]           = useState<{ id: string; content: string; document_type: string } | null>(null);
-  const [originalContent, setOriginalContent] = useState('');
+  const [extraVars, setExtraVars] = useState<Record<string, string>>({});
+  const [language, setLanguage] = useState('fr');
+  const [useAI, setUseAI] = useState(true);
+  const [result, setResult] = useState<{ id: string; content: string; document_type: string; byAi: boolean; lang: string } | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [body, setBody] = useState('');
   const [modified, setModified] = useState(false);
-  const [enhancing, setEnhancing] = useState(false);
-  const [editMode, setEditMode] = useState(true);
 
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorStartRef = useRef('');
 
-  const { data: empData }    = useQuery({ queryKey: ['employees', 'active'], queryFn: () => listEmployees({ limit: 200, status: 'active' }) });
-  const { data: internData } = useQuery({ queryKey: ['interns'],   queryFn: () => listInterns({ limit: 200 }) });
-  const { data: tplData }    = useQuery({ queryKey: ['templates'], queryFn: () => listTemplates() });
+  const { data: empData } = useQuery({ queryKey: ['employees', 'active'], queryFn: () => listEmployees({ limit: 500, status: 'active' }) });
+  const { data: internData } = useQuery({ queryKey: ['interns'], queryFn: () => listInterns({ limit: 500 }) });
+  const { data: tplData } = useQuery({ queryKey: ['templates'], queryFn: () => listTemplates() });
 
-  const employees = empData?.data   ?? [];
-  const interns   = internData?.data ?? [];
-  const templates = tplData?.data   ?? [];
-
+  const employees = empData?.data ?? [];
+  const interns = internData?.data ?? [];
+  const templates = tplData?.data ?? [];
   const persons = personType === 'intern' ? interns : employees;
-  const selectedEmp = persons.find(e => e.id === employeeId) ?? employees.find(e => e.id === employeeId);
-  const selectedTpl = templates.find(t_item => t_item.id === templateId);
-
-  const LANG_OPTIONS = [
-    { value: 'fr', label: 'Français' },
-    { value: 'ar', label: 'العربية' },
-    { value: 'en', label: 'English' },
-  ];
-
-  const TODAY = new Date().toLocaleDateString();
-
-  // Maps template variable names → employee field values (for auto-fill)
-  const resolveVar = (varName: string, emp: Employee): string => {
-    const fmt = (d?: string | null) =>
-      d ? new Date(d).toLocaleDateString() : '';
-
-    const MAP: Record<string, () => string> = {
-      full_name: () => emp.full_name || '',
-      cin: () => emp.cin || '',
-      email: () => emp.email || '',
-      phone: () => emp.phone || '',
-      address: () => emp.address || '',
-      city: () => emp.city || '',
-      nationality: () => emp.nationality || '',
-      position: () => emp.position || '',
-      department: () => emp.department || '',
-      manager: () => emp.manager || '',
-      matricule: () => emp.matricule || '',
-      contract_type: () => emp.contract_type || '',
-      hire_date: () => fmt(emp.hire_date),
-      contract_start: () => fmt(emp.contract_start || emp.hire_date),
-      contract_end: () => emp.contract_end ? fmt(emp.contract_end) : 'à ce jour',
-      internship_start: () => fmt(emp.internship_start),
-      internship_end: () => emp.internship_end ? fmt(emp.internship_end) : 'à ce jour',
-      salary: () => emp.salary ? `${Number(emp.salary).toLocaleString()} MAD` : '',
-      today: () => new Date().toLocaleDateString(),
-      company: () => 'TYTHON',
-    };
-    return MAP[varName]?.() ?? '';
-  };
-
-  const empOptions = (emp: Employee) => {
-    const entries: { label: string; value: string }[] = [
-      { label: `${t('full_name_label')} — ${emp.full_name}`, value: emp.full_name },
-    ];
-    const add = (label: string, v: string | number | undefined | null) => {
-      if (v != null && v !== '') entries.push({ label: `${label} — ${v}`, value: String(v) });
-    };
-    add('CIN', emp.cin); add('Matricule', emp.matricule); add('Email', emp.email);
-    add(t('phone_label'), emp.phone); add(t('position_label'), emp.position); add(t('department_label'), emp.department);
-    add(t('hire_date_label'), emp.hire_date); add(t('contract_type_label'), emp.contract_type);
-    add(t('contract_start_label'), emp.contract_start); add(t('contract_end_label'), emp.contract_end);
-    add(t('salary_label'), emp.salary); add(t('manager_label'), emp.manager);
-    add(t('birth_date_label'), emp.birth_date); add(t('address'), emp.address);
-    add(t('city'), emp.city); add(t('nationality_label'), emp.nationality);
-    add(t('intern_start'), emp.internship_start); add(t('intern_end'), emp.internship_end);
-    entries.push({ label: `${t('company')} — TYTHON`, value: 'TYTHON' });
-    entries.push({ label: `${t('date')} — ${TODAY}`, value: TODAY });
-    return entries;
-  };
-
-  const extractVars = (body = ''): string[] =>
-    [...new Set((body.match(/\{\{(\w+)\}\}/g) ?? []).map(m => m.replace(/[{}]/g, '')))];
-
-  const isInternTemplate = (tpl: Template) => {
-    if (tpl.target_type === 'intern') return true;
-    if (tpl.target_type === 'both') return false;
-    if (tpl.target_type === 'employee') return false;
-    const INTERN_KEYWORDS = ['stage', 'stagiaire', 'convention'];
-    return INTERN_KEYWORDS.some(kw =>
-      tpl.name_fr.toLowerCase().includes(kw) ||
-      (tpl.name_en ?? '').toLowerCase().includes(kw)
-    );
-  };
-  const isEmployeeTemplate = (tpl: Template) =>
-    tpl.target_type === 'both' || !isInternTemplate(tpl);
-
-  const TPL_CATEGORIES = [
-    { value: '',            label: t('all') },
-    { value: 'attestation', label: 'Attestation' },
-    { value: 'contrat',     label: t('file_contract') },
-    { value: 'lettre',      label: 'Lettre' },
-    { value: 'avenant',     label: 'Avenant' },
-    { value: 'autre',       label: t('file_other') },
-  ];
-
-  const filteredTemplates = templates
-    .filter(t_item => t_item.is_active !== false)
-    .filter(t_item => !tplCategory || t_item.category === tplCategory)
-    .filter(t_item => !tplSearch ||
-      t_item.name_fr.toLowerCase().includes(tplSearch.toLowerCase()) ||
-      (t_item.name_en ?? '').toLowerCase().includes(tplSearch.toLowerCase())
-    )
-    .filter(t_item => personType === 'intern' ? isInternTemplate(t_item) : isEmployeeTemplate(t_item));
-
-  const templateVars = extractVars(selectedTpl?.body_template);
-
-  const autoFilled: Record<string, string> = {};
-  const missing: string[] = [];
-  if (selectedEmp) {
-    templateVars.forEach(v => {
-      const val = resolveVar(v, selectedEmp);
-      if (val) autoFilled[v] = val;
-      else if (!extraVars[v]) missing.push(v);
-    });
-  }
-
-  useEffect(() => {
-    if (result?.content && editorRef.current) {
-      editorRef.current.innerHTML = result.content;
-      setOriginalContent(result.content);
-      setModified(false);
-    }
-  }, [result]);
+  const person = [...employees, ...interns].find(e => e.id === employeeId);
+  const tpl = templates.find(x => x.id === templateId);
 
   const genMut = useMutation({
-    mutationFn: () => generateDocument({
-      employee_id: employeeId,
-      template_id: templateId,
-      language,
-      use_ai_enhancement: useAI,
-      extra_variables: extraVars,
-    }),
+    mutationFn: () => generateDocument({ employee_id: employeeId, template_id: templateId, language, use_ai_enhancement: useAI, extra_variables: extraVars }),
     onSuccess: data => {
-      setResult({ id: data.document.id, content: data.content, document_type: data.document.document_type });
-      setStep(3);
-      toast.success(t('save'));
+      setResult({ id: data.document.id, content: data.content, document_type: data.document.document_type, byAi: data.ai_enhanced, lang: language });
+      setBody(data.content);
+      editorStartRef.current = data.content;
+      setEditing(false); setModified(false); setStep(3);
+      toast.success(tf(t('gen_toast_done'), { tpl: data.document.document_type, name: person?.full_name ?? '' }));
     },
-    onError: (e: unknown) =>
-      toast.error('Error'),
+    onError: (e: unknown) => toast.error(getApiError(e, t('gen_err'))),
   });
 
-  const handleEnhance = async () => {
-    if (!result) return;
-    setEnhancing(true);
-    try {
-      const current = editorRef.current?.innerHTML || result.content;
-      const res = await aiEnhance({
-        document_content: current,
-        document_type: result.document_type,
-        language,
-        instructions: 'Improve clarity and professionalism',
-      });
-      if (editorRef.current) {
-        editorRef.current.innerHTML = res.enhanced_content;
-        setModified(true);
-      }
-      toast.success(t('save'));
-    } catch {
-      toast.error('AI Error');
-    } finally {
-      setEnhancing(false);
-    }
-  };
+  const templateVars = tpl ? extractVars(tpl.body_template) : [];
+  const vars = templateVars.map(v => {
+    const auto = person ? resolveVar(v, person) : '';
+    const value = extraVars[v] ?? auto;
+    return { name: v, value, missing: !value.trim(), auto: !!auto && value === auto };
+  });
+  const missingCount = vars.filter(v => v.missing).length;
 
-  const execCmd = (cmd: string, val?: string) => {
-    document.execCommand(cmd, false, val);
-    editorRef.current?.focus();
-    setModified(true);
-  };
+  const availableTemplates = templates
+    .filter(x => x.is_active !== false)
+    .filter(x => !tplCategory || x.category === tplCategory)
+    .filter(x => (person ? person.status === 'intern' : personType === 'intern') ? isInternTemplate(x) : isEmployeeTemplate(x));
 
-  const resetToOriginal = () => {
-    if (!editorRef.current) return;
-    editorRef.current.innerHTML = originalContent;
-    setModified(false);
-    toast.success(t('save'));
-  };
+  const filteredPersons = persons.filter(p => !q.trim() || `${p.full_name} ${p.position ?? ''}`.toLowerCase().includes(q.trim().toLowerCase()));
 
-  const handlePrint = () => {
-    const content = editorRef.current?.innerHTML || '';
-    const title = result?.document_type ?? 'Document';
-    const w = window.open('', '_blank')!;
-    w.document.write(
-      `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>` +
-      `<style>` +
-      `@page{size:A4;margin:2.5cm 2.8cm;}` +
-      `body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.8;margin:0;color:#1a1a1a;}` +
-      `img{max-width:100%;height:auto;}` +
-      `h1,h2,h3{text-align:center;}p{margin:4px 0;}` +
-      `</style></head><body>${content}</body></html>`
-    );
-    w.document.close();
-    setTimeout(() => { w.focus(); w.print(); }, 350);
-  };
+  const steps: { label: string }[] = [
+    { label: t('gen_step_person') }, { label: t('gen_step_template') }, { label: t('gen_step_vars') }, { label: t('gen_step_result') },
+  ];
+  const stepReachable = (i: number) => i === 0 || (i === 1 && person) || (i === 2 && person && tpl) || (i === 3 && !!result);
 
-  const STEPS = [t('employee'), t('tab_docs'), 'Variables', 'Result'];
+  const restart = () => { setStep(0); setTemplateId(''); setResult(null); setExtraVars({}); setBody(''); setEditing(false); setModified(false); };
+
+  const docTitle = (tpl?.[`name_${language}` as 'name_fr'] || tpl?.name_fr || '').toUpperCase();
+  // Real templates imported from a scanned PDF are pre-styled HTML (absolutely-positioned text over a
+  // background image) — rendering those as plain paragraphs would destroy them. Only templates authored as
+  // plain Jinja text (no markup at all) get the letterhead/paragraph treatment below.
+  const isRichHtml = /<img|position:\s*absolute/.test(result?.content ?? '');
+  const paras = isRichHtml ? [] : (result?.content ?? '').replace(/<[^>]+>/g, m => (m === '<br>' || m === '<br/>' ? '\n' : '')).split(/\n{2,}|\r\n\r\n/).map(p => p.trim()).filter(Boolean);
+  const rtl = (result?.lang ?? language) === 'ar';
+  const verifCode = result ? result.id.slice(0, 8).toUpperCase() : '';
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 960, margin: '0 auto' }}>
-      <PageHeader title={t('generate_document')} subtitle={t('generate_doc_subtitle')} />
+    <div style={{ padding: '28px 32px 56px', display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 1180, width: '100%', margin: '0 auto' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <RV as="h1" variant="up" className="wy-ph-title">{t('gen_title')}</RV>
+          <RV as="p" variant="up" delay={60} className="wy-ph-sub">{t('gen_subtitle')}</RV>
+        </div>
+        <RV as={Link} variant="up" delay={100} to="/app/history" className="gen-btn-sec" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 42, padding: '0 14px', borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', color: '#33474f', fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap' }}>
+          <History size={15} />{t('gen_history')}
+        </RV>
+      </div>
 
-      <StepIndicator step={step} labels={STEPS} />
-
-      {/* ── STEP 0: Type selector + person ── */}
-      {step === 0 && (
-        <Card>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Type &amp; {t('employee')}</h2>
-          <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 18 }}>
-            {t('generate_step0_desc')}
-          </p>
-
-          {/* Type toggle */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-            {([
-              { value: 'employee', label: t('employee'),   Icon: Users },
-              { value: 'intern',   label: t('intern'),  Icon: GraduationCap },
-            ] as const).map(({ value, label, Icon }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => { setPersonType(value); setEmployeeId(''); setTemplateId(''); setTplSearch(''); setTplCategory(''); }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '10px 20px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-                  border: personType === value ? '2px solid var(--primary)' : '1px solid var(--line)',
-                  background: personType === value ? 'var(--primary-soft)' : 'var(--surface)',
-                  color: personType === value ? 'var(--primary)' : 'var(--ink-2)',
-                  transition: 'all 0.15s',
-                }}
-              >
-                <Icon size={16} /> {label}
+      {/* ── Stepper ── */}
+      <RV variant="up" delay={100} style={{ position: 'relative', padding: '18px 22px', borderRadius: 20, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+        <div style={{ position: 'absolute', left: 'calc(22px + 12.5% - 11px)', right: 'calc(22px + 12.5% - 11px)', top: 36, height: 3, borderRadius: 3, background: '#eef2f4' }} />
+        <div style={{ position: 'absolute', left: 'calc(22px + 12.5% - 11px)', top: 36, height: 3, borderRadius: 3, width: `calc((100% - 44px - 25% + 22px) * ${step / 3})`, background: 'linear-gradient(90deg,#0e6f84,#16b6c8)', transition: 'width .7s cubic-bezier(.2,.8,.2,1)' }} />
+        <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))' }}>
+          {steps.map((s, i) => {
+            const reach = stepReachable(i);
+            return (
+              <button key={i} type="button" disabled={!reach} onClick={() => reach && setStep(i as Step)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, border: 'none', background: 'transparent', fontFamily: 'inherit', cursor: reach ? 'pointer' : 'default', padding: 0 }}>
+                {i < step ? (
+                  <span style={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', boxShadow: '0 0 0 5px #ffffff' }}><Check size={17} strokeWidth={2.6} /></span>
+                ) : i === step ? (
+                  <span style={{ position: 'relative', width: 38, height: 38, boxShadow: '0 0 0 5px #ffffff', borderRadius: '50%' }}>
+                    <span className="wedy-ping" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid #16b6c8' }} />
+                    <span style={{ position: 'relative', width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a1c24', color: '#ffffff', fontFamily: "'Geist Mono',monospace", fontSize: 13, fontWeight: 600 }}>{i + 1}</span>
+                  </span>
+                ) : (
+                  <span style={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f6f7', border: '1px solid #e2e8eb', color: '#7d8f97', fontFamily: "'Geist Mono',monospace", fontSize: 13, boxShadow: '0 0 0 5px #ffffff' }}>{i + 1}</span>
+                )}
+                <span style={{ fontSize: 13, fontWeight: 600, color: i <= step ? '#0a1c24' : '#7d8f97' }}>{s.label}</span>
               </button>
-            ))}
-          </div>
+            );
+          })}
+        </div>
+      </RV>
 
-          {/* Person list */}
-          {persons.length === 0 ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner /></div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10, marginBottom: 20 }}>
-              {persons.slice(0, 30).map(p => (
-                <div key={p.id} onClick={() => setEmployeeId(p.id)}
-                  style={{
-                    padding: '12px 14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                    border: employeeId === p.id ? '2px solid var(--primary)' : '1px solid var(--line)',
-                    background: employeeId === p.id ? 'var(--primary-soft)' : 'var(--surface)',
-                    display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.15s',
-                  }}>
-                  <Avatar name={p.full_name} size={32} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontWeight: 600, fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.full_name}</p>
-                    <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>
-                      {personType === 'intern'
-                        ? ((p as any).school || p.department || p.cin || '—')
-                        : (p.position || p.department || p.cin || '—')}
-                    </p>
-                  </div>
-                  {employeeId === p.id && <Check size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />}
-                </div>
+      {/* ── Step 0: person ── */}
+      {step === 0 && (
+        <RV variant="up" style={{ padding: 22, borderRadius: 22, background: '#ffffff', border: '1px solid #e2e8eb', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 19, letterSpacing: '-.02em' }}>{t('gen_who_title')}</div>
+              <div style={{ fontSize: 13.5, color: '#52646d', marginTop: 3 }}>{t('gen_who_sub')}</div>
+            </div>
+            <div style={{ display: 'flex', padding: 4, borderRadius: 12, background: '#f3f6f7' }}>
+              {(['employee', 'intern'] as const).map(k => (
+                <button key={k} type="button" onClick={() => { setPersonType(k); setEmployeeId(''); setTemplateId(''); }} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 7, height: 36, padding: '0 14px', border: 'none', borderRadius: 9, background: 'transparent', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: personType === k ? '#0a1c24' : '#52646d' }}>
+                  {personType === k && <span style={{ position: 'absolute', inset: 0, borderRadius: 9, background: '#ffffff', boxShadow: '0 1px 3px rgba(10,28,36,.14)' }} />}
+                  <span style={{ position: 'relative', display: 'inline-flex' }}>{k === 'employee' ? <Users size={15} /> : <GraduationCap size={15} />}</span>
+                  <span style={{ position: 'relative' }}>{k === 'employee' ? t('gen_kind_employee') : t('gen_kind_intern')}</span>
+                </button>
               ))}
             </div>
-          )}
-
+          </div>
+          <div style={{ position: 'relative', maxWidth: 420 }}>
+            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', marginTop: -7.5, color: '#7d8f97', pointerEvents: 'none' }} />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder={t('gen_search_ph')} className="gen-input" style={{ width: '100%', height: 42, padding: '0 12px 0 36px', borderRadius: 11, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 14, color: '#0a1c24', outline: 'none' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(230px,1fr))', gap: 10 }}>
+            {filteredPersons.map((p, i) => {
+              const on = p.id === employeeId;
+              return (
+                <RV key={p.id} as="button" variant="up" delay={i * 40} type="button" onClick={() => setEmployeeId(p.id)} className="gen-person" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 11, padding: 12, borderRadius: 14, border: `1px solid ${on ? '#16b6c8' : '#e2e8eb'}`, background: on ? '#f3fafb' : '#ffffff', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer', boxShadow: on ? '0 0 0 3px rgba(22,182,200,.16)' : 'none' }}>
+                  <span style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarGradient(p.full_name), color: '#ffffff', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{initialsOf(p.full_name)}</span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#0a1c24', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.full_name}</span>
+                    <span style={{ display: 'block', fontSize: 12.5, color: '#5f7079', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{[p.position, p.contract_type].filter(Boolean).join(' · ')}</span>
+                  </span>
+                  {on && <span style={{ width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0e6f84', color: '#ffffff', flexShrink: 0 }}><Check size={13} strokeWidth={3} /></span>}
+                </RV>
+              );
+            })}
+          </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button disabled={!employeeId} onClick={() => setStep(1)}>
-              {t('next')} <ChevronRight size={14} />
-            </Button>
+            <button type="button" disabled={!person} onClick={() => person && setStep(1)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 44, padding: '0 18px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: person ? 'pointer' : 'default', opacity: person ? 1 : 0.45, transition: 'opacity .2s' }}>
+              {t('gen_choose_template')}<ArrowRight size={16} />
+            </button>
           </div>
-        </Card>
+        </RV>
       )}
 
-      {/* ── STEP 1: Select template ── */}
+      {/* ── Step 1: template ── */}
       {step === 1 && (
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 8 }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>{t('select_template')}</h2>
-            <span style={{ fontSize: 12, color: 'var(--ink-2)', background: 'var(--surface-2)', padding: '3px 10px', borderRadius: 20 }}>
-              {personType === 'intern' ? '🎓 '+t('intern') : '👤 '+t('employee')} · {filteredTemplates.length} {t('tab_docs')}
+        <RV variant="up" style={{ padding: 22, borderRadius: 22, background: '#ffffff', border: '1px solid #e2e8eb', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 19, letterSpacing: '-.02em' }}>{t('gen_which_title')}</div>
+              <div style={{ fontSize: 13.5, color: '#52646d', marginTop: 3 }}>{tf(t('gen_which_sub'), { count: availableTemplates.length, name: person?.full_name.split(' ')[0] ?? '' })}</div>
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {[['', t('all')], ...Object.entries(CAT_STYLE).map(([k, v]) => [k, v.label])].map(([k, label]) => (
+                <button key={k} type="button" onClick={() => setTplCategory(k)} style={{ height: 34, padding: '0 12px', borderRadius: 99, border: `1px solid ${tplCategory === k ? '#0a1c24' : '#e2e8eb'}`, background: tplCategory === k ? '#0a1c24' : '#ffffff', color: tplCategory === k ? '#ffffff' : '#33474f', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>{label}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 12 }}>
+            {availableTemplates.map((x, i) => {
+              const on = x.id === templateId;
+              const cat = CAT_STYLE[x.category] ?? CAT_STYLE.autre;
+              const nvars = extractVars(x.body_template).length;
+              return (
+                <RV key={x.id} as="button" variant="up" delay={i * 50} type="button" onClick={() => setTemplateId(x.id)} className="gen-tpl" style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10, padding: 16, borderRadius: 16, border: `1px solid ${on ? '#16b6c8' : '#e2e8eb'}`, background: on ? '#f3fafb' : '#ffffff', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer', boxShadow: on ? '0 0 0 3px rgba(22,182,200,.16)' : 'none' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <span style={{ width: 40, height: 40, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: cat.bg, color: cat.color }}><FileText size={19} /></span>
+                    {on && <span style={{ width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0e6f84', color: '#ffffff' }}><Check size={13} strokeWidth={3} /></span>}
+                  </span>
+                  <span>
+                    <span style={{ display: 'block', fontSize: 14.5, fontWeight: 600, color: '#0a1c24', lineHeight: 1.3 }}>{x.name_fr}</span>
+                    {x.name_en && <span style={{ display: 'block', fontSize: 12.5, color: '#5f7079', marginTop: 2 }}>{x.name_en}</span>}
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', width: '100%' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: cat.bg, color: cat.color }}>{cat.label}</span>
+                    <span style={{ marginLeft: 'auto', fontSize: 11.5, color: '#7d8f97' }}>{tf(t('gen_nvars'), { n: nvars })}</span>
+                  </span>
+                </RV>
+              );
+            })}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+            <button type="button" onClick={() => setStep(0)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 44, padding: '0 16px', borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, color: '#33474f', cursor: 'pointer' }}><ArrowLeft size={16} />{t('gen_back')}</button>
+            <button type="button" disabled={!tpl} onClick={() => { if (tpl) { setExtraVars({}); setStep(2); } }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 44, padding: '0 18px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: tpl ? 'pointer' : 'default', opacity: tpl ? 1 : 0.45 }}>{t('gen_check_vars')}<ArrowRight size={16} /></button>
+          </div>
+        </RV>
+      )}
+
+      {/* ── Step 2: variables ── */}
+      {step === 2 && tpl && person && (
+        <RV variant="up" style={{ position: 'relative', overflow: 'hidden', padding: 22, borderRadius: 22, background: '#ffffff', border: '1px solid #e2e8eb', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', padding: '12px 14px', borderRadius: 14, background: '#f3f6f7' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#52646d' }}>
+              <span style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarGradient(person.full_name), color: '#ffffff', fontSize: 10.5, fontWeight: 700 }}>{initialsOf(person.full_name)}</span>
+              <strong style={{ color: '#0a1c24' }}>{person.full_name}</strong>
             </span>
+            <span style={{ color: '#a3b1b7' }}>·</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#52646d' }}><FileText size={14} color="#0e6f84" /><strong style={{ color: '#0a1c24' }}>{tpl.name_fr}</strong></span>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 16 }}>
-            {t('generate_step1_desc')}
-          </p>
-
-          {/* Search */}
-          <div style={{ position: 'relative', marginBottom: 14 }}>
-            <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
-            <input
-              className="input"
-              placeholder={`${t('search')}...`}
-              value={tplSearch}
-              onChange={e => setTplSearch(e.target.value)}
-              style={{ paddingLeft: 34 }}
-            />
-          </div>
-
-          {/* Category filter */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 18, flexWrap: 'wrap' }}>
-            {TPL_CATEGORIES.map(cat => (
-              <button
-                key={cat.value}
-                type="button"
-                onClick={() => setTplCategory(cat.value)}
-                style={{
-                  padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 500,
-                  cursor: 'pointer', border: 'none',
-                  background: tplCategory === cat.value ? 'var(--primary)' : 'var(--surface-2)',
-                  color: tplCategory === cat.value ? '#fff' : 'var(--ink-2)',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {cat.label}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, alignItems: 'flex-start' }}>
+            <div style={{ flex: '1.4 1 380px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <span style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16 }}>{tf(t('gen_vars_count'), { n: vars.length })}</span>
+                <span style={{ fontSize: 12.5, color: missingCount ? '#8a5207' : '#0f6f49', fontWeight: 600 }}>{missingCount ? tf(t('gen_vars_missing'), { n: missingCount }) : t('gen_vars_complete')}</span>
+              </div>
+              {vars.map((v, i) => (
+                <RV key={v.name} variant="up" delay={i * 40} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 12, border: `1px solid ${v.missing ? 'rgba(230,169,72,.45)' : '#eef2f4'}`, background: v.missing ? '#fffaf1' : '#ffffff', flexWrap: 'wrap' }}>
+                  <code style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11.5, fontWeight: 600, padding: '3px 7px', borderRadius: 7, background: '#e4f2f4', color: '#0b5f72', whiteSpace: 'nowrap' }}>{`{{${v.name}}}`}</code>
+                  <span style={{ width: 150, fontSize: 12.5, color: '#52646d' }}>{t(VAR_LABEL_KEYS[v.name] ?? 'gen_var_other')}</span>
+                  <input value={v.value} onChange={e => setExtraVars(s => ({ ...s, [v.name]: e.target.value }))} placeholder={t('gen_to_fill')} className="gen-input" style={{ flex: 1, minWidth: 160, height: 36, padding: '0 10px', borderRadius: 9, border: `1px solid ${v.missing ? 'rgba(230,169,72,.7)' : '#d6dfe3'}`, background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' }} />
+                  {v.auto ? <CircleCheck size={16} color="#16a06b" /> : v.missing ? <CircleAlert size={16} color="#df9326" /> : null}
+                </RV>
+              ))}
+            </div>
+            <div style={{ flex: '1 1 280px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ padding: 16, borderRadius: 16, border: '1px solid #e2e8eb' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#33474f' }}>{t('gen_lang_title')}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6, marginTop: 10 }}>
+                  {LANGS.map(l => {
+                    const ok = l.k === 'fr' || useAI;
+                    const on = language === l.k;
+                    return (
+                      <button key={l.k} type="button" disabled={!ok} onClick={() => ok && setLanguage(l.k)} title={ok ? '' : t('gen_lang_locked')} style={{ height: 44, borderRadius: 11, border: `1px solid ${on ? '#0a1c24' : '#d6dfe3'}`, background: on ? '#0a1c24' : '#ffffff', color: on ? '#ffffff' : '#33474f', fontFamily: l.k === 'ar' ? "'Noto Kufi Arabic',sans-serif" : 'inherit', fontSize: 13.5, fontWeight: 600, cursor: ok ? 'pointer' : 'not-allowed', opacity: ok ? 1 : 0.4 }}>{l.label}</button>
+                    );
+                  })}
+                </div>
+              </div>
+              <button type="button" onClick={() => setUseAI(s => !s)} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: 16, borderRadius: 16, border: `1px solid ${useAI ? 'rgba(109,90,214,.35)' : '#e2e8eb'}`, background: useAI ? '#f4f2fd' : '#ffffff', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
+                <span style={{ position: 'relative', width: 40, height: 24, borderRadius: 99, background: useAI ? '#6d5ad6' : '#c3ced3', flexShrink: 0, marginTop: 1 }}>
+                  <span style={{ position: 'absolute', top: 3, left: useAI ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#ffffff', boxShadow: '0 1px 3px rgba(10,28,36,.3)', transition: 'left .25s cubic-bezier(.2,.8,.2,1)' }} />
+                </span>
+                <span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#0a1c24' }}><Sparkles size={14} color="#6d5ad6" />{t('gen_ai_title')}</span>
+                  <span style={{ display: 'block', marginTop: 3, fontSize: 12.5, lineHeight: 1.45, color: '#52646d' }}>{t('gen_ai_desc')}</span>
+                </span>
               </button>
-            ))}
+              <button type="button" disabled={genMut.isPending} onClick={() => genMut.mutate()} style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 50, border: 'none', borderRadius: 14, background: 'linear-gradient(135deg,#5444b8,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 16px 34px -14px rgba(109,90,214,.8)' }}>
+                <span className="wedy-shine" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '40%', background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)' }} />
+                <WandSparkles size={17} style={{ position: 'relative' }} /><span style={{ position: 'relative' }}>{t('gen_generate')}</span>
+              </button>
+              <button type="button" onClick={() => setStep(1)} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 40, borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, color: '#33474f', cursor: 'pointer' }}><ArrowLeft size={15} />{t('gen_change_template')}</button>
+            </div>
           </div>
-
-          {/* Template grid */}
-          {filteredTemplates.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--ink-2)', fontSize: 13 }}>
-              {t('no_results')}
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10, marginBottom: 20 }}>
-              {filteredTemplates.map(tpl => {
-                const vars = extractVars(tpl.body_template);
-                return (
-                  <div key={tpl.id} onClick={() => setTemplateId(tpl.id)}
-                    style={{
-                      padding: '14px', borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                      border: templateId === tpl.id ? '2px solid var(--primary)' : '1px solid var(--line)',
-                      background: templateId === tpl.id ? 'var(--primary-soft)' : 'var(--surface)',
-                      transition: 'all 0.15s',
-                    }}>
-                    <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tpl.name_fr}</p>
-                    {tpl.name_en && tpl.name_en !== tpl.name_fr && (
-                      <p style={{ fontSize: 11, color: 'var(--ink-2)', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tpl.name_en}</p>
-                    )}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Badge>{tpl.category}</Badge>
-                      {templateId === tpl.id && <Check size={12} style={{ color: 'var(--primary)' }} />}
-                    </div>
-                    {vars.length > 0 && (
-                      <p style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 6 }}>
-                        {vars.length} variables
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+          {genMut.isPending && (
+            <RV variant="fade" style={{ position: 'absolute', inset: 0, zIndex: 5, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: 'rgba(255,255,255,.88)', backdropFilter: 'blur(6px)' }}>
+              <span style={{ position: 'relative', width: 76, height: 76 }}>
+                <span className="wedy-ping" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid rgba(22,182,200,.6)' }} />
+                <span className="wedy-spin" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'conic-gradient(from 0deg,rgba(109,90,214,0),rgba(109,90,214,.7),rgba(22,182,200,.9),rgba(22,182,200,0))' }} />
+                <img src="/wedy-avatar.png" alt="" style={{ position: 'absolute', inset: 5, width: 66, height: 66, borderRadius: '50%', objectFit: 'cover', background: '#e4f2f4', border: '3px solid #ffffff' }} />
+              </span>
+              <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 18 }}>{t('gen_busy')}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, width: 260 }}>
+                <span className="wedy-scan" style={{ display: 'block', height: 7, width: '100%', borderRadius: 4, background: 'linear-gradient(90deg,#eef2f4,#d9eef1,#eef2f4)' }} />
+                <span style={{ display: 'block', height: 7, width: '82%', borderRadius: 4, background: '#eef2f4' }} />
+                <span style={{ display: 'block', height: 7, width: '64%', borderRadius: 4, background: '#eef2f4' }} />
+              </div>
+            </RV>
           )}
-
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" onClick={() => setStep(0)}>{t('cancel')}</Button>
-            <Button disabled={!templateId} onClick={() => setStep(2)}>
-              {t('next')} <ChevronRight size={14} />
-            </Button>
-          </div>
-        </Card>
+        </RV>
       )}
 
-      {/* ── STEP 2: Variables + Options ── */}
-      {step === 2 && selectedEmp && selectedTpl && (
-        <Card>
-          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Variables &amp; Options</h2>
-          <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 20 }}>
-            {t('generate_step2_desc')}
-          </p>
-
-          {/* Summary */}
-          <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, display: 'flex', gap: 24, flexWrap: 'wrap', borderLeft: '3px solid var(--primary)' }}>
-            <div>
-              <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: '0 0 2px' }}>{t('employee')}</p>
-              <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>{selectedEmp.full_name}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: '0 0 2px' }}>Template</p>
-              <p style={{ fontWeight: 600, fontSize: 13, margin: 0 }}>{selectedTpl.name_fr}</p>
-            </div>
-          </div>
-
-          {/* Variables */}
-          {templateVars.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: 'var(--fg)' }}>
-                Variables ({templateVars.length})
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {templateVars.map(v => {
-                  const auto = autoFilled[v];
-                  const current = extraVars[v] ?? auto ?? '';
-                  const isAuto = !!auto && current === auto;
-                  const opts = selectedEmp ? empOptions(selectedEmp) : [];
-                  return (
-                    <div key={v} style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '10px 14px', borderRadius: 8,
-                      background: isAuto ? '#f0fdf4' : current ? 'var(--warn-soft)' : 'var(--surface-2)',
-                      border: `1px solid ${isAuto ? '#bbf7d0' : current ? '#fde68a' : 'var(--line)'}`,
-                    }}>
-                      <VarBadge name={v} />
-                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {isAuto && <CheckCircle2 size={13} style={{ color: '#16a34a', flexShrink: 0 }} />}
-                        <select
-                          value={current}
-                          onChange={e => setExtraVars(ev => ({ ...ev, [v]: e.target.value }))}
-                          style={{
-                            flex: 1, padding: '5px 10px', fontSize: 13,
-                            border: `1px solid ${isAuto ? '#86efac' : current ? '#fdba74' : 'var(--line)'}`,
-                            borderRadius: 6,
-                            background: isAuto ? '#f0fdf4' : current ? '#fff7ed' : '#fff',
-                            color: isAuto ? '#15803d' : current ? '#92400e' : 'var(--fg)',
-                            fontWeight: 500, cursor: 'pointer', outline: 'none',
-                          }}
-                        >
-                          {!auto && <option value="">— {t('select')} —</option>}
-                          {opts.map(o => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {missing.length > 0 && (
-                <p style={{ fontSize: 12, color: '#b45309', marginTop: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <AlertCircle size={13} />
-                  {missing.length} fields missing
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Language + AI */}
-          <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 6 }}>{t('languages')}</label>
-              <select className="select" value={language} onChange={e => setLanguage(e.target.value)}>
-                {LANG_OPTIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 4 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
-                <input type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)} />
-                <Sparkles size={13} style={{ color: '#7c3aed' }} />
-                AI Enhancement
-              </label>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" onClick={() => setStep(1)}>{t('cancel')}</Button>
-            <Button loading={genMut.isPending} onClick={() => genMut.mutate()}>
-              <Wand2 size={14} /> {t('generate_document')}
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {/* ── STEP 3: Result with inline editor ── */}
-      {step === 3 && result && (
-        <div>
-          {/* Status bar */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: 12, padding: '12px 18px',
-            background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--success-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Check size={15} style={{ color: '#16a34a' }} />
-              </div>
-              <div>
-                <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>{t('status_active_item')}</p>
-                <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>
-                  {result.document_type} · {LANG_OPTIONS.find(l => l.value === language)?.label}
-                </p>
-              </div>
+      {/* ── Step 3: result ── */}
+      {step === 3 && result && tpl && person && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <RV variant="up" style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '14px 18px', borderRadius: 18, background: '#e1f5ec', border: '1px solid rgba(22,160,107,.25)' }}>
+            <span style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#16a06b', color: '#ffffff', flexShrink: 0 }}><Check size={18} strokeWidth={2.6} /></span>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0a1c24' }}>{t('gen_ready')}</div>
+              <div style={{ fontSize: 13, color: '#33474f' }}>{`${result.document_type} · ${person.full_name} · ${LANGS.find(l => l.k === result.lang)?.label ?? result.lang}`}</div>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button variant="ghost" size="sm" onClick={handleEnhance} loading={enhancing}>
-                <Sparkles size={13} /> AI
-              </Button>
-              <Button
-                variant="ghost" size="sm"
-                onClick={() => setEditMode(e => !e)}
-              >
-                {editMode ? <><EyeOff size={13} /> {t('read_only')}</> : <><Eye size={13} /> {t('edit')}</>}
-              </Button>
-              <Button variant="soft" size="sm" onClick={handlePrint}>
-                <Download size={13} /> PDF
-              </Button>
-              <Button variant="soft" size="sm" onClick={() => downloadDoc(result.id, 'docx', `${result.document_type ?? 'document'}.docx`).catch(e => toast.error(e.message))}>
-                <Download size={13} /> DOCX
-              </Button>
+              <button type="button" onClick={() => downloadDoc(result.id, 'pdf', `${result.document_type}.pdf`).catch((e: unknown) => toast.error(getApiError(e, t('gen_err'))))} className="gen-btn-dark" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 14px', border: 'none', borderRadius: 11, background: '#0a1c24', color: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}><Download size={15} />PDF</button>
+              <button type="button" onClick={() => downloadDoc(result.id, 'docx', `${result.document_type}.docx`).catch((e: unknown) => toast.error(getApiError(e, t('gen_err'))))} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 14px', borderRadius: 11, border: '1px solid #c9dcd3', background: '#ffffff', color: '#0a1c24', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}><FileText size={15} />DOCX</button>
+              <button type="button" onClick={async () => {
+                try {
+                  const res = await sendForSignature(result.id);
+                  const link = `${window.location.origin}/sign/${res.token}`;
+                  await navigator.clipboard.writeText(link);
+                  toast.success(tf(t('gen_sent'), { name: person.full_name.split(' ')[0] }));
+                } catch (e: unknown) { toast.error(getApiError(e, t('gen_err'))); }
+              }} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 14px', borderRadius: 11, border: '1px solid #c9dcd3', background: '#ffffff', color: '#0a1c24', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}><Send size={15} />{tf(t('gen_send_to'), { name: person.full_name.split(' ')[0] })}</button>
             </div>
-          </div>
+          </RV>
 
-          {/* Editor toolbar (only in edit mode) */}
-          {editMode && (
-            <EditorToolbar
-              onEdit={execCmd}
-              onOriginal={resetToOriginal}
-              onPrint={handlePrint}
-              modified={modified}
-            />
-          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
+            {/* ── Paper ── */}
+            <RV variant="up" delay={80} style={{ flex: '2 1 520px', minWidth: 0, padding: 22, borderRadius: 22, background: '#e9eef0' }}>
+              {isRichHtml ? (
+                // Pre-styled template (e.g. imported from a scanned PDF): render the backend's HTML as-is,
+                // in a scrollable frame, instead of forcing it into the plain-text letterhead below.
+                <div style={{ maxWidth: 760, margin: '0 auto', overflow: 'auto', borderRadius: 6, boxShadow: '0 30px 60px -30px rgba(10,28,36,.4), 0 0 0 1px #e2e8eb' }}>
+                  {editing ? (
+                    <div
+                      contentEditable suppressContentEditableWarning dir={rtl ? 'rtl' : 'ltr'}
+                      onBlur={e => { setBody(e.currentTarget.innerHTML); setModified(true); }}
+                      dangerouslySetInnerHTML={{ __html: body }}
+                      style={{ outline: '2px dashed #9fd6df', outlineOffset: -2 }}
+                    />
+                  ) : (
+                    <div dangerouslySetInnerHTML={{ __html: result.content }} />
+                  )}
+                </div>
+              ) : (
+                <div dir={rtl ? 'rtl' : 'ltr'} style={{ position: 'relative', maxWidth: 700, margin: '0 auto', background: '#ffffff', borderRadius: 6, boxShadow: '0 30px 60px -30px rgba(10,28,36,.4), 0 0 0 1px #e2e8eb', padding: '44px 48px 30px', minHeight: 640, display: 'flex', flexDirection: 'column', color: '#1d2a30', fontFamily: rtl ? "'Noto Kufi Arabic',sans-serif" : "Georgia,'Times New Roman',serif" }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ width: 46, height: 46, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#06141a,#0e6f84)', color: '#ffffff', fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 800, fontSize: 16, letterSpacing: '-.02em', flexShrink: 0 }}>TY</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16, color: '#0a1c24' }}>Tython SARL</div>
+                      <div style={{ fontFamily: "'Geist',system-ui,sans-serif", fontSize: 11.5, color: '#5f7079' }}>112 boulevard d'Anfa, 20040 Casablanca · +212 5 22 00 00 00</div>
+                    </div>
+                  </div>
+                  <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, color: '#7d8f97', marginTop: 10, direction: 'ltr', textAlign: rtl ? 'right' : 'left' }}>RC 345 678 · ICE 001 234 567 000 089 · CNSS 1 234 567</div>
+                  <div style={{ height: 2, background: 'linear-gradient(90deg,#0e6f84,#16b6c8)', marginTop: 14 }} />
+                  <div style={{ margin: '34px 0 26px', textAlign: 'center', fontFamily: rtl ? "'Noto Kufi Arabic',sans-serif" : "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: rtl ? '0' : '.12em', color: '#0a1c24' }}>{docTitle}</div>
+                  {!editing ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      {paras.map((p, i) => <p key={i} style={{ margin: 0, fontSize: 14.5, lineHeight: 1.85, textAlign: 'justify', whiteSpace: 'pre-wrap' }}>{p}</p>)}
+                    </div>
+                  ) : (
+                    <textarea value={body.replace(/<[^>]+>/g, '')} onChange={e => { setBody(e.target.value); setModified(true); }} dir={rtl ? 'rtl' : 'ltr'} style={{ width: '100%', minHeight: 300, resize: 'vertical', padding: 12, borderRadius: 8, border: '1.5px dashed #9fd6df', background: '#f8fdfd', fontFamily: 'inherit', fontSize: 14.5, lineHeight: 1.8, color: '#1d2a30', outline: 'none' }} />
+                  )}
+                  <div style={{ marginTop: 28, fontSize: 14, textAlign: rtl ? 'left' : 'right' }}>{tf(t('gen_place_date'), { date: new Date().toLocaleDateString() })}</div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 22 }}>
+                    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: 220 }}>
+                      <span style={{ fontFamily: "'Geist',system-ui,sans-serif", fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>{t('gen_signature_dept')}</span>
+                      <span style={{ fontFamily: "'Brush Script MT','Segoe Script',cursive", fontSize: 26, color: '#0b3f52', transform: 'rotate(-4deg)' }}>{initialsOf(person.manager || 'Wedy RH').slice(0, 1)}. {(person.manager || 'Wedy RH').split(' ').slice(-1)[0]}</span>
+                      <span style={{ position: 'absolute', right: -6, top: 6, width: 88, height: 88, borderRadius: '50%', border: '2.5px solid rgba(14,111,132,.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(14,111,132,.75)', fontFamily: "'Geist Mono',monospace", fontSize: 8.5, fontWeight: 700, letterSpacing: '.08em', lineHeight: 1.35, transform: 'rotate(-14deg)', direction: 'ltr' }}>
+                        <span>TYTHON</span><span style={{ fontSize: 7 }}>SARL</span><span>CASABLANCA</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ flex: 1 }} />
+                  <div style={{ marginTop: 34, paddingTop: 12, borderTop: '1px solid #eef2f4', display: 'flex', justifyContent: 'space-between', gap: 10, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, color: '#8a9ba3', direction: 'ltr' }}>
+                    <span>{`Généré par Wedy · ${verifCode}`}</span><span>{`Vérification : wedy.ma/v/${verifCode}`}</span>
+                  </div>
+                </div>
+              )}
+            </RV>
 
-          {/* Document preview / editor */}
-          <div style={{
-            border: '1px solid var(--line)',
-            borderRadius: editMode ? '0 0 10px 10px' : 10,
-            background: '#e5e7eb',
-            padding: 20,
-            maxHeight: 620,
-            overflowY: 'auto',
-          }} className="scroll">
-            <div
-              ref={editorRef}
-              contentEditable={editMode}
-              suppressContentEditableWarning
-              onInput={() => setModified(true)}
-              style={{
-                outline: editMode ? '2px dashed var(--primary)' : 'none',
-                minHeight: 400,
-                cursor: editMode ? 'text' : 'default',
-              }}
-              // Initial render (before ref effect kicks in)
-              dangerouslySetInnerHTML={result ? undefined : { __html: '' }}
-            />
-          </div>
-
-          {editMode && (
-            <p style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 6, textAlign: 'center' }}>
-              {t('edit_instruction')}
-            </p>
-          )}
-
-          {/* Footer */}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'space-between', marginTop: 14 }}>
-            <Button variant="ghost" onClick={() => { setStep(0); setResult(null); setModified(false); setExtraVars({}); }}>
-              ← {t('new_document')}
-            </Button>
-            <Button onClick={() => navigate('/app/history')}>
-              {t('save')} →
-            </Button>
+            {/* ── Side panel ── */}
+            <RV variant="left" delay={120} style={{ flex: '1 1 260px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ padding: 18, borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb', display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13.5 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><span style={{ color: '#5f7079' }}>{t('gen_summary_person')}</span><span style={{ fontWeight: 600, textAlign: 'right' }}>{person.full_name}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><span style={{ color: '#5f7079' }}>{t('gen_summary_template')}</span><span style={{ fontWeight: 600, textAlign: 'right' }}>{tpl.name_fr}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}><span style={{ color: '#5f7079' }}>{t('gen_summary_lang')}</span><span style={{ fontFamily: "'Geist Mono',monospace", fontWeight: 600 }}>{result.lang.toUpperCase()}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
+                  <span style={{ color: '#5f7079' }}>{t('gen_summary_by')}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, padding: '2px 9px', borderRadius: 99, background: result.byAi ? '#ece9fb' : '#eef2f4', color: result.byAi ? '#5444b8' : '#33474f' }}>{result.byAi ? t('gen_by_ai') : t('gen_by_template')}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, paddingTop: 10, borderTop: '1px solid #eef2f4', fontSize: 12.5, color: '#0f6f49' }}><History size={14} />{t('gen_added_history')}</div>
+              </div>
+              <button type="button" onClick={() => { if (editing) { setModified(body !== editorStartRef.current); } setEditing(s => !s); }} className="gen-btn-edit" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, color: '#0a1c24', cursor: 'pointer' }}>
+                {editing ? <Check size={15} /> : <Pencil size={15} />}{editing ? t('gen_edit_done') : t('gen_edit_text')}
+              </button>
+              {modified && <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#8a5207' }}><Pencil size={13} />{t('gen_modified')}</span>}
+              <button type="button" onClick={restart} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}>
+                <Plus size={15} strokeWidth={2.2} />{t('gen_new_doc_btn')}
+              </button>
+            </RV>
           </div>
         </div>
+      )}
+
+      {(empData === undefined || tplData === undefined) && step === 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
       )}
     </div>
   );

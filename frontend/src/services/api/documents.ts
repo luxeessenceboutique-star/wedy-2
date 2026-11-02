@@ -10,7 +10,7 @@ export type GeneratedDoc = {
 export const generateDocument = (body: {
   employee_id: string; template_id: string;
   language?: string; use_ai_enhancement?: boolean; extra_variables?: Record<string, string>;
-}) => api.post<{ document: GeneratedDoc; content: string }>('/documents/generate', body).then(r => r.data);
+}) => api.post<{ document: GeneratedDoc; content: string; ai_enhanced: boolean }>('/documents/generate', body).then(r => r.data);
 
 export const listDocuments = (params?: Record<string, string | number>) =>
   api.get<{ data: GeneratedDoc[]; count: number }>('/documents', { params }).then(r => r.data);

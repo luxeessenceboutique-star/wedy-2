@@ -114,12 +114,14 @@ def generate_doc(
     content = render_template(template.get("body_template", ""), ctx)
 
     # 4. Optional AI enhancement
+    ai_enhanced = False
     if payload.use_ai_enhancement:
         try:
             from app.services.ai_service import enhance_document
             content = enhance_document(content, template.get("name_fr", "document"), payload.language)
-        except Exception:
-            pass  # AI unavailable — use rendered content as-is
+            ai_enhanced = True
+        except Exception as e:
+            print(f"[generate] AI enhancement unavailable, using rendered template as-is: {e}")
 
     # 5. Persist to generated_documents
     doc_data = {
@@ -174,7 +176,7 @@ def generate_doc(
     log_action(supabase, current_user["id"], "GENERATE_DOCUMENT", "generated_documents",
                doc.get("id", ""))
 
-    return {"document": doc, "content": content}
+    return {"document": doc, "content": content, "ai_enhanced": ai_enhanced}
 
 
 # ── DOCX download ─────────────────────────────────────────────────────────────

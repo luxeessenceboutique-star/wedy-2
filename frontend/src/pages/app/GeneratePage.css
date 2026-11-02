@@ -1,0 +1,8 @@
+.gen-btn-sec:hover { color: #0a1c24 !important; border-color: #9fb4bb !important; }
+.gen-person { transition: border-color .2s, box-shadow .2s, background .2s; }
+.gen-person:hover { border-color: #b9dfe5 !important; }
+.gen-tpl { transition: border-color .2s, box-shadow .2s, transform .2s; }
+.gen-tpl:hover { transform: translateY(-2px); }
+.gen-input:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14); }
+.gen-btn-dark:hover { background: #16323c !important; }
+.gen-btn-edit:hover { border-color: #16b6c8 !important; color: #0e6f84 !important; }

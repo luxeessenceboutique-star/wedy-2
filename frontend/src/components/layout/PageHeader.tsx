@@ -1,20 +1,27 @@
-import React from 'react';
+import { useContext, type ReactNode } from 'react';
+import { Reveal } from '@/components/motion';
+import { cx } from '@/lib/visual';
+import { PageContext } from './pageContext';
 
-export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
+/**
+ * Page title block: Bricolage H1 `clamp(30px,3vw,40px)`, 15px subtitle, actions on the right.
+ * `count` renders the mono pill next to the title (e.g. the employee total).
+ * Pages not yet wrapped in <Page> keep the old side padding so they do not jump.
+ */
+export function PageHeader({ title, subtitle, action, count }: {
+  title: string; subtitle?: string; action?: ReactNode; count?: number | string;
+}) {
+  const inPage = useContext(PageContext);
   return (
-    <div style={{
-      padding: '26px 30px 0',
-      display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-      marginBottom: 22, gap: 16,
-    }}>
+    <div className={cx('wy-ph', !inPage && 'wy-ph--legacy')}>
       <div>
-        <h1 style={{
-          fontFamily: 'var(--font-display)', fontSize: 25, fontWeight: 700,
-          letterSpacing: '-0.02em', color: 'var(--ink)', marginBottom: 3,
-        }}>{title}</h1>
-        {subtitle && <p style={{ fontSize: 13, color: 'var(--ink-2)' }}>{subtitle}</p>}
+        <Reveal variant="up" className="wy-ph-title-row">
+          <h1 className="wy-ph-title">{title}</h1>
+          {count !== undefined && <span className="wy-ph-count">{count}</span>}
+        </Reveal>
+        {subtitle && <Reveal as="p" variant="up" delay={60} className="wy-ph-sub">{subtitle}</Reveal>}
       </div>
-      {action && <div style={{ flexShrink: 0, display: 'flex', gap: 8, alignItems: 'center' }}>{action}</div>}
+      {action && <Reveal variant="up" delay={100} className="wy-ph-actions">{action}</Reveal>}
     </div>
   );
 }

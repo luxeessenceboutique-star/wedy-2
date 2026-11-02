@@ -2,7 +2,7 @@
 // The markup keeps the reference's exact inline styles; `v` is the page logic (the reference's renderVals()).
 import { Fragment, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Briefcase, Calendar, Check, CircleCheck, CloudUpload, Download, FileClock, FileText, Mail, MapPin, Pencil, Receipt, ScanText, Sparkles, Star, StarHalf, User, WandSparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Briefcase, Calendar, Check, CircleCheck, CloudUpload, Download, FileClock, FileText, Mail, MapPin, Pencil, Receipt, ScanText, Sparkles, Star, Trash2, User, WandSparkles } from 'lucide-react';
 import { RV } from '@/components/motion';
 import { useLang } from '@/lib/lang';
 import { tf } from '@/lib/format';
@@ -14,7 +14,7 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
   return (
     <>
       <div style={{ padding: '26px 32px 56px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '1240px', width: '100%' }}>
-        <RV as={Link} variant='up' to="/app/employees" style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: '7px', fontSize: '13.5px', color: '#52646d' }} className="emf-h1">
+        <RV as={Link} variant='up' to={v.backTo} style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: '7px', fontSize: '13.5px', color: '#52646d' }} className="emf-h1">
           <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><ArrowLeft size={15} style={{ display: 'block' }} /></span>
           {t('emf_retour_aux_employes')}
         </RV>
@@ -27,47 +27,75 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '22px' }}>
             <div style={{ position: 'relative', width: '92px', height: '92px', flexShrink: '0' }}>
               <span style={{ position: 'absolute', inset: '0', borderRadius: '50%', border: '1.5px solid rgba(95,227,240,.6)' }} className="wedy-ping" />
-              <span style={{ position: 'relative', width: '92px', height: '92px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '32px', fontWeight: '700', color: '#ffffff', border: '3px solid rgba(255,255,255,.18)', boxShadow: '0 0 50px -10px rgba(39,192,212,.8)' }}>{'YB'}</span>
+              <span style={{ position: 'relative', width: '92px', height: '92px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: v.avatarGradient, fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '32px', fontWeight: '700', color: '#ffffff', border: '3px solid rgba(255,255,255,.18)', boxShadow: '0 0 50px -10px rgba(39,192,212,.8)' }}>{v.initials}</span>
             </div>
             <div style={{ flex: '1', minWidth: '240px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <h1 style={{ margin: '0', fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: 'clamp(28px,3vw,38px)', letterSpacing: '-.045em', lineHeight: '1.05', color: '#f1f8f9' }}>{t('emf_yasmine_benali')}</h1>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '700', padding: '4px 10px', borderRadius: '99px', background: 'rgba(43,189,134,.16)', color: '#4fd3a0' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2bbd86' }} />
-                  {t('emf_actif')}
+                <h1 style={{ margin: '0', fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: 'clamp(28px,3vw,38px)', letterSpacing: '-.045em', lineHeight: '1.05', color: '#f1f8f9' }}>{v.name}</h1>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '700', padding: '4px 10px', borderRadius: '99px', background: v.statusBg, color: v.statusColor }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: v.statusDot }} />
+                  {v.statusLabel}
                 </span>
               </div>
-              <div style={{ marginTop: '6px', fontSize: '15px', color: '#9fb4bb' }}>{t('emf_responsable_marketing_marketing')}</div>
+              <div style={{ marginTop: '6px', fontSize: '15px', color: '#9fb4bb' }}>{v.positionLine}</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '14px' }}>
-                <span style={{ fontSize: '12px', fontWeight: '700', padding: '4px 10px', borderRadius: '99px', background: 'rgba(154,139,240,.18)', color: '#c9c0f8' }}>{t('emf_cdd')}</span>
-                <span style={{ fontFamily: '\'Geist Mono\',monospace', fontSize: '12px', padding: '4px 10px', borderRadius: '99px', background: 'rgba(255,255,255,.06)', color: '#b9cbd0' }}>{t('emf_emp_0042')}</span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', padding: '4px 10px', borderRadius: '99px', background: 'rgba(255,255,255,.06)', color: '#b9cbd0' }}>
-                  <span style={{ display: 'inline-flex', width: '13px', height: '13px' }}><Calendar size={13} style={{ display: 'block' }} /></span>
-                  {t('emf_depuis_le_15_03_2022')}
-                </span>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', padding: '4px 10px', borderRadius: '99px', background: 'rgba(255,255,255,.06)', color: '#b9cbd0' }}>
-                  <span style={{ display: 'inline-flex', width: '13px', height: '13px' }}><MapPin size={13} style={{ display: 'block' }} /></span>
-                  {t('emf_casablanca')}
-                </span>
+                {v.contractType ? (
+                  <>
+                  <span style={{ fontSize: '12px', fontWeight: '700', padding: '4px 10px', borderRadius: '99px', background: 'rgba(154,139,240,.18)', color: '#c9c0f8' }}>{v.contractType}</span>
+                  </>
+                ) : null}
+                {v.empCode ? (
+                  <>
+                  <span style={{ fontFamily: '\'Geist Mono\',monospace', fontSize: '12px', padding: '4px 10px', borderRadius: '99px', background: 'rgba(255,255,255,.06)', color: '#b9cbd0' }}>{v.empCode}</span>
+                  </>
+                ) : null}
+                {v.startDateLabel ? (
+                  <>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', padding: '4px 10px', borderRadius: '99px', background: 'rgba(255,255,255,.06)', color: '#b9cbd0' }}>
+                    <span style={{ display: 'inline-flex', width: '13px', height: '13px' }}><Calendar size={13} style={{ display: 'block' }} /></span>
+                    {v.startDateLabel}
+                  </span>
+                  </>
+                ) : null}
+                {v.cityLabel ? (
+                  <>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', padding: '4px 10px', borderRadius: '99px', background: 'rgba(255,255,255,.06)', color: '#b9cbd0' }}>
+                    <span style={{ display: 'inline-flex', width: '13px', height: '13px' }}><MapPin size={13} style={{ display: 'block' }} /></span>
+                    {v.cityLabel}
+                  </span>
+                  </>
+                ) : null}
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '230px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '14px', background: 'rgba(223,87,64,.12)', border: '1px solid rgba(239,107,84,.3)' }}>
-                <span style={{ display: 'inline-flex', width: '18px', height: '18px', color: '#ef8b78' }}><FileClock size={18} style={{ display: 'block' }} /></span>
-                <div style={{ flex: '1' }}>
-                  <div style={{ fontSize: '13.5px', fontWeight: '600', color: '#ffd9d1' }}>{t('emf_contrat_fin_dans_12_jours')}</div>
-                  <div style={{ fontSize: '12px', color: '#d9a79c' }}>{t('emf_cdd_jusqu_au_12_11_2026')}</div>
+              {v.showExpiryAlert ? (
+                <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', borderRadius: '14px', background: 'rgba(223,87,64,.12)', border: '1px solid rgba(239,107,84,.3)' }}>
+                  <span style={{ display: 'inline-flex', width: '18px', height: '18px', color: '#ef8b78' }}><FileClock size={18} style={{ display: 'block' }} /></span>
+                  <div style={{ flex: '1' }}>
+                    <div style={{ fontSize: '13.5px', fontWeight: '600', color: '#ffd9d1' }}>{v.expiryTitle}</div>
+                    <div style={{ fontSize: '12px', color: '#d9a79c' }}>{v.expirySub}</div>
+                  </div>
                 </div>
-              </div>
+                </>
+              ) : null}
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button type="button" onClick={v.renew} style={{ flex: '1', position: 'relative', overflow: 'hidden', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px', height: '42px', padding: '0 14px', border: 'none', borderRadius: '12px', background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: '13.5px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  <span style={{ position: 'absolute', top: '0', bottom: '0', left: '0', width: '40%', background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)', pointerEvents: 'none' }} className="wedy-shine" />
-                  <span style={{ position: 'relative', display: 'inline-flex', width: '15px', height: '15px' }}><WandSparkles size={15} style={{ display: 'block' }} /></span>
-                  <span style={{ position: 'relative' }}>{t('emf_preparer_l_avenant')}</span>
-                </button>
-                <a href="mailto:yasmine.benali@tython.ma" aria-label={t('emf_email')} style={{ width: '42px', height: '42px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,.08)', color: '#e8eff1' }} className="emf-h2">
-                  <span style={{ display: 'inline-flex', width: '17px', height: '17px' }}><Mail size={17} style={{ display: 'block' }} /></span>
-                </a>
+                {v.showExpiryAlert ? (
+                  <>
+                  <button type="button" onClick={v.renew} style={{ flex: '1', position: 'relative', overflow: 'hidden', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px', height: '42px', padding: '0 14px', border: 'none', borderRadius: '12px', background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: '13.5px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <span style={{ position: 'absolute', top: '0', bottom: '0', left: '0', width: '40%', background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)', pointerEvents: 'none' }} className="wedy-shine" />
+                    <span style={{ position: 'relative', display: 'inline-flex', width: '15px', height: '15px' }}><WandSparkles size={15} style={{ display: 'block' }} /></span>
+                    <span style={{ position: 'relative' }}>{t('emf_preparer_l_avenant')}</span>
+                  </button>
+                  </>
+                ) : null}
+                {v.email ? (
+                  <>
+                  <a href={`mailto:${v.email}`} aria-label={t('emf_email')} style={{ width: '42px', height: '42px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,.08)', color: '#e8eff1' }} className="emf-h2">
+                    <span style={{ display: 'inline-flex', width: '17px', height: '17px' }}><Mail size={17} style={{ display: 'block' }} /></span>
+                  </a>
+                  </>
+                ) : null}
                 <button type="button" onClick={v.editToast} aria-label={t('emf_modifier')} style={{ width: '42px', height: '42px', border: 'none', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,.08)', color: '#e8eff1', cursor: 'pointer' }} className="emf-h3">
                   <span style={{ display: 'inline-flex', width: '16px', height: '16px' }}><Pencil size={16} style={{ display: 'block' }} /></span>
                 </button>
@@ -143,23 +171,30 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                   ) : null}
                 </div>
               </RV>
-              <RV as='div' variant='up' delay={220} style={{ padding: '22px', borderRadius: '20px', background: '#ffffff', border: '1px solid #e2e8eb' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginBottom: '14px' }}>
-                  <span style={{ display: 'inline-flex', width: '17px', height: '17px', color: '#16a06b' }}><Sparkles size={17} style={{ display: 'block' }} /></span>
-                  <span style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: '16px' }}>{t('emf_competences_langues')}</span>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
-                  <span style={{ fontSize: '12.5px', fontWeight: '600', padding: '5px 11px', borderRadius: '99px', background: '#e4f2f4', color: '#0b5f72' }}>{t('emf_marketing_digital')}</span>
-                  <span style={{ fontSize: '12.5px', fontWeight: '600', padding: '5px 11px', borderRadius: '99px', background: '#e4f2f4', color: '#0b5f72' }}>{t('emf_seo_sea')}</span>
-                  <span style={{ fontSize: '12.5px', fontWeight: '600', padding: '5px 11px', borderRadius: '99px', background: '#e4f2f4', color: '#0b5f72' }}>{t('emf_brand_management')}</span>
-                  <span style={{ fontSize: '12.5px', fontWeight: '600', padding: '5px 11px', borderRadius: '99px', background: '#e4f2f4', color: '#0b5f72' }}>{t('emf_google_analytics')}</span>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginTop: '10px' }}>
-                  <span style={{ fontSize: '12.5px', fontWeight: '600', padding: '5px 11px', borderRadius: '99px', background: '#ece9fb', color: '#5444b8', fontFamily: '\'Noto Kufi Arabic\',sans-serif' }}>{t('emf_s')}</span>
-                  <span style={{ fontSize: '12.5px', fontWeight: '600', padding: '5px 11px', borderRadius: '99px', background: '#ece9fb', color: '#5444b8' }}>{t('emf_francais')}</span>
-                  <span style={{ fontSize: '12.5px', fontWeight: '600', padding: '5px 11px', borderRadius: '99px', background: '#ece9fb', color: '#5444b8' }}>{t('emf_english')}</span>
-                </div>
-              </RV>
+              {v.hasSkillsOrLangs ? (
+                <>
+                <RV as='div' variant='up' delay={220} style={{ padding: '22px', borderRadius: '20px', background: '#ffffff', border: '1px solid #e2e8eb' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginBottom: '14px' }}>
+                    <span style={{ display: 'inline-flex', width: '17px', height: '17px', color: '#16a06b' }}><Sparkles size={17} style={{ display: 'block' }} /></span>
+                    <span style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: '16px' }}>{t('emf_competences_langues')}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                    {v.skills.map((s, sIndex) => (
+                      <Fragment key={sIndex}>
+                      <span style={{ fontSize: '12.5px', fontWeight: '600', padding: '5px 11px', borderRadius: '99px', background: '#e4f2f4', color: '#0b5f72' }}>{s}</span>
+                      </Fragment>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginTop: '10px' }}>
+                    {v.languages.map((l, lIndex) => (
+                      <Fragment key={lIndex}>
+                      <span style={{ fontSize: '12.5px', fontWeight: '600', padding: '5px 11px', borderRadius: '99px', background: '#ece9fb', color: '#5444b8' }}>{l}</span>
+                      </Fragment>
+                    ))}
+                  </div>
+                </RV>
+                </>
+              ) : null}
             </div>
           </div>
           </>
@@ -194,6 +229,11 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
               </RV>
               <RV as='div' variant='up' delay={80} style={{ borderRadius: '20px', background: '#ffffff', border: '1px solid #e2e8eb', overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: '16px' }}>{tf(t('emf_fichiers_filecount'), { fileCount: v.fileCount })}</div>
+                {v.files.length === 0 ? (
+                  <>
+                  <div style={{ padding: '32px 20px', textAlign: 'center', fontSize: '13px', color: '#7d8f97' }}>{t('file_no_files')}</div>
+                  </>
+                ) : null}
                 {v.files.map((fl, flIndex) => (
                   <Fragment key={flIndex}>
                     <RV as='div' variant='up' style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 20px', borderTop: '1px solid #eef2f4' }}>
@@ -204,8 +244,11 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                         <div style={{ fontSize: '13.5px', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fl.name}</div>
                         <div style={{ fontSize: '12px', color: '#5f7079' }}>{`${fl.type} · ${fl.size}`}</div>
                       </div>
-                      <button type="button" onClick={v.dlToast} aria-label={t('emf_telecharger')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
+                      <button type="button" onClick={fl.download} aria-label={t('emf_telecharger')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
                         <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><Download size={15} style={{ display: 'block' }} /></span>
+                      </button>
+                      <button type="button" onClick={fl.remove} aria-label={t('emf_supprimer')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
+                        <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><Trash2 size={15} style={{ display: 'block' }} /></span>
                       </button>
                     </RV>
                   </Fragment>
@@ -308,6 +351,11 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                 {t('emf_generer_un_document')}
               </Link>
             </div>
+            {v.docs.length === 0 ? (
+              <>
+              <div style={{ padding: '32px 20px', textAlign: 'center', fontSize: '13px', color: '#7d8f97' }}>{t('no_documents')}</div>
+              </>
+            ) : null}
             {v.docs.map((d, dIndex) => (
               <Fragment key={dIndex}>
                 <RV as='div' variant='up' delay={Number(d.delay)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 20px', borderTop: '1px solid #eef2f4', transition: 'background .15s' }} className="emf-h9">
@@ -316,11 +364,11 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                   </span>
                   <div style={{ flex: '1', minWidth: '0' }}>
                     <div dir={d.dir} style={{ fontSize: '14px', fontWeight: '600', textAlign: 'left' }}>{d.title}</div>
-                    <div style={{ fontSize: '12.5px', color: '#5f7079' }}>{tf(t('emf_genere_par_d_by'), { d_by: d.by })}</div>
+                    <div style={{ fontSize: '12.5px', color: '#5f7079' }}>{tf(t('emf_genere_le_d_date'), { d_date: d.date })}</div>
                   </div>
                   <span style={{ fontFamily: '\'Geist Mono\',monospace', fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '6px', background: '#e4f2f4', color: '#0e6f84' }}>{d.lang}</span>
                   <span style={{ fontFamily: '\'Geist Mono\',monospace', fontSize: '12px', color: '#7d8f97', minWidth: '84px', textAlign: 'right', whiteSpace: 'nowrap' }}>{d.date}</span>
-                  <button type="button" onClick={v.dlToast} aria-label={t('emf_telecharger')} style={{ width: '34px', height: '34px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
+                  <button type="button" onClick={d.download} aria-label={t('emf_telecharger')} style={{ width: '34px', height: '34px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
                     <span style={{ display: 'inline-flex', width: '16px', height: '16px' }}><Download size={16} style={{ display: 'block' }} /></span>
                   </button>
                 </RV>
@@ -335,22 +383,27 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '12px' }}>
               <RV as='div' variant='up' style={{ padding: '18px 20px', borderRadius: '18px', background: 'linear-gradient(135deg,#0b5f72,#0e7f96)', color: '#ffffff' }}>
                 <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '.06em', textTransform: 'uppercase', opacity: '.9' }}>{t('emf_solde_disponible')}</div>
-                <div style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '36px', fontWeight: '800', letterSpacing: '-.04em', marginTop: '6px' }}>{'14,5 j'}</div>
+                <div style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '36px', fontWeight: '800', letterSpacing: '-.04em', marginTop: '6px' }}>{v.leaveAvailable}</div>
                 <div style={{ fontSize: '12.5px', opacity: '.9' }}>{t('emf_1_5_j_acquis_par_mois')}</div>
               </RV>
               <RV as='div' variant='up' delay={60} style={{ padding: '18px 20px', borderRadius: '18px', background: '#ffffff', border: '1px solid #e2e8eb' }}>
-                <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '.06em', textTransform: 'uppercase', color: '#5f7079' }}>{t('emf_pris_en_2026')}</div>
-                <div style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '36px', fontWeight: '800', letterSpacing: '-.04em', marginTop: '6px' }}>{'8 j'}</div>
-                <div style={{ fontSize: '12.5px', color: '#52646d' }}>{t('emf_dont_1_j_de_maladie')}</div>
+                <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '.06em', textTransform: 'uppercase', color: '#5f7079' }}>{v.leaveTakenLabel}</div>
+                <div style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '36px', fontWeight: '800', letterSpacing: '-.04em', marginTop: '6px' }}>{v.leaveTaken}</div>
+                <div style={{ fontSize: '12.5px', color: '#52646d' }}>{v.leaveSickNote}</div>
               </RV>
               <RV as='div' variant='up' delay={120} style={{ padding: '18px 20px', borderRadius: '18px', background: '#ffffff', border: '1px solid #e2e8eb' }}>
                 <div style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '.06em', textTransform: 'uppercase', color: '#5f7079' }}>{t('emf_en_attente')}</div>
-                <div style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '36px', fontWeight: '800', letterSpacing: '-.04em', marginTop: '6px' }}>{'0'}</div>
-                <div style={{ fontSize: '12.5px', color: '#52646d' }}>{t('emf_aucune_demande')}</div>
+                <div style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '36px', fontWeight: '800', letterSpacing: '-.04em', marginTop: '6px' }}>{v.leavePendingCount}</div>
+                <div style={{ fontSize: '12.5px', color: '#52646d' }}>{v.leavePendingNote}</div>
               </RV>
             </div>
             <RV as='div' variant='up' delay={120} style={{ borderRadius: '20px', background: '#ffffff', border: '1px solid #e2e8eb', overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: '16px' }}>{t('emf_historique_des_conges')}</div>
+              {v.leaves.length === 0 ? (
+                <>
+                <div style={{ padding: '32px 20px', textAlign: 'center', fontSize: '13px', color: '#7d8f97' }}>{t('no_pending_requests')}</div>
+                </>
+              ) : null}
               {v.leaves.map((l, lIndex) => (
                 <Fragment key={lIndex}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 20px', borderTop: '1px solid #eef2f4' }}>
@@ -373,47 +426,56 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
         {v.tPay ? (
           <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,340px),1fr))', gap: '16px', alignItems: 'start' }}>
-            <RV as='div' variant='up' style={{ padding: '22px', borderRadius: '20px', background: '#ffffff', border: '1px solid #e2e8eb' }}>
-              <div style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: '16px' }}>{t('emf_octobre_2026')}</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '14px' }}>
-                <span style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '40px', fontWeight: '800', letterSpacing: '-.045em' }}>{'13 942'}</span>
-                <span style={{ fontSize: '14px', color: '#52646d' }}>{t('emf_mad_net')}</span>
-              </div>
-              <div style={{ display: 'flex', height: '12px', borderRadius: '99px', overflow: 'hidden', gap: '3px', marginTop: '16px' }}>
-                <RV as='span' variant='growx' style={{ width: '75%', background: '#0e6f84', borderRadius: '99px', transformOrigin: 'left' }} />
-                <RV as='span' variant='growx' delay={200} style={{ width: '6%', background: '#16b6c8', borderRadius: '99px', transformOrigin: 'left' }} />
-                <RV as='span' variant='growx' delay={300} style={{ width: '19%', background: '#6d5ad6', borderRadius: '99px', transformOrigin: 'left' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', marginTop: '16px', fontSize: '13.5px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', color: '#33474f' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0e6f84' }} />
-                    {t('emf_salaire_net')}
-                  </span>
-                  <span style={{ fontWeight: '600' }}>{t('emf_13_942_mad')}</span>
+            {v.lastPayslip ? (
+              <>
+              <RV as='div' variant='up' style={{ padding: '22px', borderRadius: '20px', background: '#ffffff', border: '1px solid #e2e8eb' }}>
+                <div style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: '16px' }}>{v.lastPayslip.month}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '14px' }}>
+                  <span style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '40px', fontWeight: '800', letterSpacing: '-.045em' }}>{v.lastPayslip.netFmt}</span>
+                  <span style={{ fontSize: '14px', color: '#52646d' }}>{t('emf_mad_net')}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', color: '#33474f' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16b6c8' }} />
-                    {t('emf_cnss_amo')}
-                  </span>
-                  <span style={{ fontWeight: '600' }}>{t('emf_1_111_mad')}</span>
+                <div style={{ display: 'flex', height: '12px', borderRadius: '99px', overflow: 'hidden', gap: '3px', marginTop: '16px' }}>
+                  <RV as='span' variant='growx' style={{ width: `${v.lastPayslip.netPct}%`, background: '#0e6f84', borderRadius: '99px', transformOrigin: 'left' }} />
+                  <RV as='span' variant='growx' delay={200} style={{ width: `${v.lastPayslip.cnssPct}%`, background: '#16b6c8', borderRadius: '99px', transformOrigin: 'left' }} />
+                  <RV as='span' variant='growx' delay={300} style={{ width: `${v.lastPayslip.irPct}%`, background: '#6d5ad6', borderRadius: '99px', transformOrigin: 'left' }} />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', color: '#33474f' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6d5ad6' }} />
-                    {'IR'}
-                  </span>
-                  <span style={{ fontWeight: '600' }}>{t('emf_3_447_mad')}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', marginTop: '16px', fontSize: '13.5px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', color: '#33474f' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0e6f84' }} />
+                      {t('emf_salaire_net')}
+                    </span>
+                    <span style={{ fontWeight: '600' }}>{v.lastPayslip.netFmt}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', color: '#33474f' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16b6c8' }} />
+                      {t('emf_cnss_amo')}
+                    </span>
+                    <span style={{ fontWeight: '600' }}>{v.lastPayslip.cnssFmt}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', color: '#33474f' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6d5ad6' }} />
+                      {'IR'}
+                    </span>
+                    <span style={{ fontWeight: '600' }}>{v.lastPayslip.irFmt}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '9px', borderTop: '1px solid #eef2f4' }}>
+                    <span style={{ color: '#5f7079' }}>{t('emf_salaire_brut')}</span>
+                    <span style={{ fontWeight: '700' }}>{v.lastPayslip.grossFmt}</span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '9px', borderTop: '1px solid #eef2f4' }}>
-                  <span style={{ color: '#5f7079' }}>{t('emf_salaire_brut')}</span>
-                  <span style={{ fontWeight: '700' }}>{t('emf_18_500_mad')}</span>
-                </div>
-              </div>
-            </RV>
+              </RV>
+              </>
+            ) : null}
             <RV as='div' variant='up' delay={80} style={{ borderRadius: '20px', background: '#ffffff', border: '1px solid #e2e8eb', overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: '16px' }}>{t('emf_bulletins_de_paie')}</div>
+              {v.slips.length === 0 ? (
+                <>
+                <div style={{ padding: '32px 20px', textAlign: 'center', fontSize: '13px', color: '#7d8f97' }}>{t('no_payslips')}</div>
+                </>
+              ) : null}
               {v.slips.map((p, pIndex) => (
                 <Fragment key={pIndex}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 20px', borderTop: '1px solid #eef2f4' }}>
@@ -425,7 +487,7 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                       <div style={{ fontSize: '12.5px', color: '#5f7079' }}>{p.note}</div>
                     </div>
                     <span style={{ fontFamily: '\'Geist Mono\',monospace', fontSize: '13px', fontWeight: '600' }}>{p.net}</span>
-                    <button type="button" onClick={v.dlToast} aria-label={t('emf_telecharger')} style={{ width: '34px', height: '34px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
+                    <button type="button" onClick={p.download} aria-label={t('emf_telecharger')} style={{ width: '34px', height: '34px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
                       <span style={{ display: 'inline-flex', width: '16px', height: '16px' }}><Download size={16} style={{ display: 'block' }} /></span>
                     </button>
                   </div>
@@ -438,24 +500,44 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
         {v.tPerf ? (
           <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,340px),1fr))', gap: '16px', alignItems: 'start' }}>
-            <RV as='div' variant='up' style={{ position: 'relative', overflow: 'hidden', padding: '24px', borderRadius: '20px', background: 'linear-gradient(140deg,#5444b8,#6d5ad6 55%,#0e7f96)', color: '#ffffff' }}>
-              <div style={{ fontFamily: '\'Geist Mono\',monospace', fontSize: '11px', letterSpacing: '.12em', opacity: '.85' }}>{t('emf_evaluation_annuelle_2025')}</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '12px' }}>
-                <span style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '56px', fontWeight: '800', letterSpacing: '-.05em', lineHeight: '1' }}>{'4,3'}</span>
-                <span style={{ fontSize: '18px', opacity: '.8' }}>{'/ 5'}</span>
-              </div>
-              <div style={{ display: 'flex', gap: '4px', marginTop: '12px' }}>
-                <span style={{ display: 'inline-flex', width: '18px', height: '18px', color: '#ffd36b' }}><Star size={18} style={{ display: 'block' }} /></span>
-                <span style={{ display: 'inline-flex', width: '18px', height: '18px', color: '#ffd36b' }}><Star size={18} style={{ display: 'block' }} /></span>
-                <span style={{ display: 'inline-flex', width: '18px', height: '18px', color: '#ffd36b' }}><Star size={18} style={{ display: 'block' }} /></span>
-                <span style={{ display: 'inline-flex', width: '18px', height: '18px', color: '#ffd36b' }}><Star size={18} style={{ display: 'block' }} /></span>
-                <span style={{ display: 'inline-flex', width: '18px', height: '18px', color: '#ffd36b' }}><StarHalf size={18} style={{ display: 'block' }} /></span>
-              </div>
-              <div style={{ marginTop: '12px', fontSize: '14.5px', fontWeight: '600' }}>{t('emf_depasse_les_attentes')}</div>
-              <div style={{ marginTop: '4px', fontSize: '13px', opacity: '.85', lineHeight: '1.5' }}>{t('emf_leadership_remarque_sur_la')}</div>
-            </RV>
+            {!v.hasReview ? (
+              <>
+              <RV as='div' variant='up' style={{ padding: '22px', borderRadius: '20px', background: '#ffffff', border: '1px dashed #d0dadf', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', fontSize: '13px', color: '#7d8f97', minHeight: '160px' }}>
+                {t('no_reviews')}
+              </RV>
+              </>
+            ) : null}
+            {v.hasReview ? (
+              <>
+              <RV as='div' variant='up' style={{ position: 'relative', overflow: 'hidden', padding: '24px', borderRadius: '20px', background: 'linear-gradient(140deg,#5444b8,#6d5ad6 55%,#0e7f96)', color: '#ffffff' }}>
+                <div style={{ fontFamily: '\'Geist Mono\',monospace', fontSize: '11px', letterSpacing: '.12em', opacity: '.85' }}>{v.reviewCycle}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '12px' }}>
+                  <span style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontSize: '56px', fontWeight: '800', letterSpacing: '-.05em', lineHeight: '1' }}>{v.reviewScore}</span>
+                  <span style={{ fontSize: '18px', opacity: '.8' }}>{'/ 5'}</span>
+                </div>
+                <div style={{ display: 'flex', gap: '4px', marginTop: '12px' }}>
+                  {v.reviewStars.map((filled, sIndex) => (
+                    <Fragment key={sIndex}>
+                    <span style={{ display: 'inline-flex', width: '18px', height: '18px', color: filled ? '#ffd36b' : 'rgba(255,255,255,.3)' }}><Star size={18} style={{ display: 'block' }} /></span>
+                    </Fragment>
+                  ))}
+                </div>
+                <div style={{ marginTop: '12px', fontSize: '14.5px', fontWeight: '600' }}>{v.reviewLabel}</div>
+                {v.reviewComment ? (
+                  <>
+                  <div style={{ marginTop: '4px', fontSize: '13px', opacity: '.85', lineHeight: '1.5' }}>{v.reviewComment}</div>
+                  </>
+                ) : null}
+              </RV>
+              </>
+            ) : null}
             <RV as='div' variant='up' delay={80} style={{ padding: '22px', borderRadius: '20px', background: '#ffffff', border: '1px solid #e2e8eb' }}>
               <div style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: '16px', marginBottom: '6px' }}>{t('emf_objectifs_2026')}</div>
+              {v.goals.length === 0 ? (
+                <>
+                <div style={{ padding: '18px 0', textAlign: 'center', fontSize: '13px', color: '#7d8f97' }}>{t('no_goals')}</div>
+                </>
+              ) : null}
               {v.goals.map((g, gIndex) => (
                 <Fragment key={gIndex}>
                   <div style={{ padding: '13px 0', borderTop: '1px solid #f0f3f4' }}>

@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Wedy — The AI-native HR platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #06141a; color: #e8eff1; font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #27c0d4; text-decoration: none; }
+    a:hover { color: #5fe3f0; }
+    ::selection { background: rgba(39,192,212,.35); color: #ffffff; }
+    button { font-family: inherit; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="position:relative;overflow-x:clip;background:#06141a;color:#e8eff1;font-family:'Geist',system-ui,sans-serif">
+
+<header data-nav="" style="position:fixed;top:14px;left:0;right:0;z-index:80;display:flex;justify-content:center;padding:0 16px;pointer-events:none">
+  <nav data-reveal="down" style="pointer-events:auto;display:flex;align-items:center;gap:8px;width:100%;max-width:1100px;padding:7px 7px 7px 8px;border-radius:999px;background:rgba(7,22,28,calc(.45 + var(--nav,0) * .4));border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);box-shadow:0 12px 40px -14px rgba(0,0,0,.6)">
+    <a href="#top" style="display:flex;align-items:center;gap:9px;padding-right:10px;color:#f1f8f9;text-decoration:none;flex-shrink:0">
+      <img src="assets/wedy-avatar.png" alt="Wedy" style="width:34px;height:34px;border-radius:50%;object-fit:cover;background:#0f262e;border:1.5px solid rgba(255,255,255,.2)">
+      <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:20px;letter-spacing:-.03em">Wedy</span>
+    </a>
+    <div style="flex:1;min-width:0;display:flex;flex-wrap:wrap;justify-content:center;gap:2px;height:38px;overflow:hidden">
+      <a href="#copilot" style="padding:9px 14px;border-radius:999px;font-size:14px;color:#a9bcc2;text-decoration:none;white-space:nowrap;transition:background .2s,color .2s" style-hover="background:rgba(255,255,255,.07);color:#ffffff">Copilot</a>
+      <a href="#features" style="padding:9px 14px;border-radius:999px;font-size:14px;color:#a9bcc2;text-decoration:none;white-space:nowrap;transition:background .2s,color .2s" style-hover="background:rgba(255,255,255,.07);color:#ffffff">Features</a>
+      <a href="#platform" style="padding:9px 14px;border-radius:999px;font-size:14px;color:#a9bcc2;text-decoration:none;white-space:nowrap;transition:background .2s,color .2s" style-hover="background:rgba(255,255,255,.07);color:#ffffff">Platform</a>
+      <a href="#security" style="padding:9px 14px;border-radius:999px;font-size:14px;color:#a9bcc2;text-decoration:none;white-space:nowrap;transition:background .2s,color .2s" style-hover="background:rgba(255,255,255,.07);color:#ffffff">Security</a>
+      <a href="#pricing" style="padding:9px 14px;border-radius:999px;font-size:14px;color:#a9bcc2;text-decoration:none;white-space:nowrap;transition:background .2s,color .2s" style-hover="background:rgba(255,255,255,.07);color:#ffffff">Pricing</a>
+    </div>
+    <a href="Wedy Login.dc.html" style="padding:9px 12px;font-size:14px;color:#cfdde1;text-decoration:none;white-space:nowrap;flex-shrink:0" style-hover="color:#ffffff">Sign in</a>
+    <a href="#pricing" data-magnet="" style="flex-shrink:0;display:inline-flex;align-items:center;gap:8px;padding:10px 16px 10px 18px;border-radius:999px;background:#effbfc;color:#06141a;font-weight:600;font-size:14px;text-decoration:none;white-space:nowrap;transform:translate(var(--tx,0px),var(--ty,0px));transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s" style-hover="color:#06141a;box-shadow:0 0 0 4px rgba(39,192,212,.25),0 10px 30px -6px rgba(39,192,212,.6)">Start free<span data-icon="arrow-right" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></a>
+  </nav>
+</header>
+
+<section id="top" data-mouse="" style="position:relative;padding:170px 24px 0;background:#06141a;overflow:hidden;isolation:isolate">
+  <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:72px 72px;-webkit-mask-image:radial-gradient(ellipse 70% 55% at 50% 28%,#000 25%,transparent 75%);mask-image:radial-gradient(ellipse 70% 55% at 50% 28%,#000 25%,transparent 75%)"></div>
+    <div data-loop="drift" style="position:absolute;left:-12%;top:-22%;width:780px;height:780px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent)"></div>
+    <div data-loop="drift" data-dur="27000" data-delay="-9000" style="position:absolute;right:-14%;top:-12%;width:840px;height:840px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.34),transparent)"></div>
+    <div data-loop="drift" data-dur="31000" data-delay="-16000" style="position:absolute;left:28%;top:30%;width:720px;height:540px;border-radius:50%;background:radial-gradient(closest-side,rgba(22,182,200,.24),transparent)"></div>
+    <div style="position:absolute;inset:0;background:radial-gradient(560px circle at var(--cx,50%) var(--cy,22%),rgba(95,227,240,.11),transparent 65%)"></div>
+  </div>
+
+  <div style="position:relative;max-width:1100px;margin:0 auto;text-align:center;display:flex;flex-direction:column;align-items:center">
+    <a href="#copilot" data-reveal="up" style="display:inline-flex;align-items:center;gap:10px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.11);color:#cfe9ee;font-size:13.5px;text-decoration:none;margin-bottom:30px;transition:border-color .25s,background .25s" style-hover="color:#ffffff;border-color:rgba(95,227,240,.45);background:rgba(39,192,212,.08)">
+      <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:12px;font-weight:600"><span data-icon="sparkles" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>New</span>
+      <span>AI-powered HR for Moroccan companies</span>
+      <span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#5fe3f0"></span>
+    </a>
+    <h1 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(46px,7.4vw,100px);line-height:.98;letter-spacing:-.05em;color:#f1f8f9;max-width:1040px;text-wrap:balance"><span data-reveal="word" data-delay="60" style="display:inline-block;margin:0 .11em">The</span><span data-reveal="word" data-delay="130" data-loop="shimmer" style="display:inline-block;margin:0 .11em;padding-bottom:.08em;background:linear-gradient(90deg,#5fe3f0,#27c0d4 30%,#9a8bf0 60%,#5fe3f0);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent">AI-native</span><span data-reveal="word" data-delay="200" style="display:inline-block;margin:0 .11em">HR</span><span data-reveal="word" data-delay="270" style="display:inline-block;margin:0 .11em">platform</span><span data-reveal="word" data-delay="340" style="display:inline-block;margin:0 .11em">for</span><span data-reveal="word" data-delay="410" style="display:inline-block;margin:0 .11em">modern</span><span data-reveal="word" data-delay="480" style="display:inline-block;margin:0 .11em">teams.</span></h1>
+    <p data-reveal="up" data-delay="560" style="margin:30px 0 0;max-width:660px;font-size:clamp(17px,1.6vw,20px);line-height:1.55;color:#9fb4bb;text-wrap:pretty">Wedy <span style="display:inline-flex;height:1.55em;overflow:hidden;vertical-align:bottom"><span data-rotator="" style="display:flex;flex-direction:column;align-items:flex-start"><span style="height:1.55em;white-space:nowrap;color:#5fe3f0;font-weight:600">drafts</span><span style="height:1.55em;white-space:nowrap;color:#b3a8f5;font-weight:600">translates</span><span style="height:1.55em;white-space:nowrap;color:#4fd3a0;font-weight:600">files</span><span style="height:1.55em;white-space:nowrap;color:#5fe3f0;font-weight:600">drafts</span></span></span> every HR document in French, Arabic and English — powered by Claude AI, built for Moroccan labor law.</p>
+    <div data-reveal="up" data-delay="680" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:38px">
+      <a href="#pricing" data-magnet="" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:10px;padding:16px 24px 16px 26px;border-radius:14px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-weight:600;font-size:16px;text-decoration:none;box-shadow:inset 0 0 0 1px rgba(95,227,240,.35),0 18px 44px -12px rgba(22,182,200,.7);transform:translate(var(--tx,0px),var(--ty,0px));transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .3s" style-hover="color:#ffffff;box-shadow:inset 0 0 0 1px rgba(95,227,240,.6),0 24px 54px -10px rgba(22,182,200,.9)">
+        <span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);pointer-events:none"></span>
+        <span style="position:relative">Start free trial</span>
+        <span data-icon="arrow-right" data-size="18" style="position:relative;display:inline-flex;width:18px;height:18px"></span>
+      </a>
+      <a href="#copilot" data-magnet="" style="display:inline-flex;align-items:center;gap:10px;padding:16px 22px 16px 16px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:#e8eff1;font-weight:600;font-size:16px;text-decoration:none;transform:translate(var(--tx,0px),var(--ty,0px));transition:transform .35s cubic-bezier(.2,.8,.2,1),background .2s" style-hover="color:#ffffff;background:rgba(255,255,255,.1)">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.12)"><span data-icon="play" data-size="12" style="display:inline-flex;width:12px;height:12px;margin-left:2px"></span></span>
+        See Wedy in action
+      </a>
+    </div>
+    <div data-reveal="fade" data-delay="820" style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-top:26px;font-size:13.5px;color:#8ea5ad">
+      <span style="display:inline-flex;align-items:center;gap:7px"><span data-icon="check" data-size="15" data-sw="2.2" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>No credit card required</span>
+      <span style="display:inline-flex;align-items:center;gap:7px"><span data-icon="check" data-size="15" data-sw="2.2" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Free 14-day trial</span>
+      <span style="display:inline-flex;align-items:center;gap:7px"><span data-icon="check" data-size="15" data-sw="2.2" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Cancel anytime</span>
+    </div>
+  </div>
+
+  <div data-reveal="blur" data-delay="300" data-dur="1500" style="position:relative;max-width:1180px;margin:78px auto 0">
+    <div aria-hidden="true" style="position:absolute;left:10%;right:10%;top:-50px;height:240px;background:radial-gradient(50% 60% at 50% 50%,rgba(39,192,212,.42),transparent);pointer-events:none"></div>
+    <div data-fit="1100" style="position:relative;left:50%;margin-left:-550px;width:1100px;transform:scale(var(--fit,1));transform-origin:50% 0;perspective:2000px">
+      <div data-scroll="tilt" style="transform:rotateX(calc((1 - var(--p,1)) * 18deg)) scale(calc(.95 + var(--p,1) * .05));transform-origin:50% 0;transition:transform .12s linear;-webkit-mask-image:linear-gradient(#000 70%,transparent 99%);mask-image:linear-gradient(#000 70%,transparent 99%)">
+        <div style="width:1100px;height:680px;border-radius:20px;background:linear-gradient(180deg,#0d222a,#08191f);border:1px solid rgba(255,255,255,.1);box-shadow:0 50px 120px -30px rgba(0,0,0,.85);overflow:hidden;display:flex;flex-direction:column;text-align:left">
+          <div style="height:42px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)">
+            <span style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.14)"></span>
+            <span style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.14)"></span>
+            <span style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.14)"></span>
+            <div style="margin:0 auto;display:flex;align-items:center;gap:7px;padding:5px 14px;border-radius:8px;background:rgba(255,255,255,.045);font-family:'Geist Mono',monospace;font-size:11.5px;color:#7f969e"><span data-icon="lock" data-size="11" style="display:inline-flex;width:11px;height:11px"></span>app.wedy.ai/app</div>
+            <span style="display:inline-flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e"><span style="position:relative;display:inline-flex;width:7px;height:7px"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;background:#2bbd86"></span><span style="position:relative;width:7px;height:7px;border-radius:50%;background:#2bbd86"></span></span>Live</span>
+          </div>
+          <div style="flex:1;display:flex;min-height:0">
+            <div style="width:214px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.06);padding:14px 10px;display:flex;flex-direction:column;gap:2px;background:rgba(255,255,255,.012)">
+              <div style="display:flex;align-items:center;gap:8px;padding:2px 6px 12px"><img src="assets/wedy-avatar.png" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.15)"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:15px;color:#eef5f7;letter-spacing:-.02em">Wedy</span></div>
+              <div style="display:flex;align-items:center;gap:8px;margin:0 2px 10px;padding:7px 10px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:12px;color:#6b838c"><span data-icon="search" data-size="13" style="display:inline-flex;width:13px;height:13px"></span><span style="flex:1">Search</span><span style="font-family:'Geist Mono',monospace;font-size:10px;padding:1px 5px;border-radius:5px;border:1px solid rgba(255,255,255,.08)">⌘K</span></div>
+              <div style="padding:6px 10px 4px;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:#5b737b">OVERVIEW</div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;font-size:12.5px;background:rgba(39,192,212,.12);color:#5fe3f0;font-weight:600;box-shadow:inset 2px 0 0 #27c0d4"><span data-icon="layout-dashboard" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Dashboard</div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;font-size:12.5px;color:#93a9b0"><span data-icon="bot" data-size="14" style="display:inline-flex;width:14px;height:14px"></span><span style="flex:1">AI Copilot</span><span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;background:rgba(39,192,212,.14);color:#5fe3f0;border:1px solid rgba(39,192,212,.3)">New</span></div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;font-size:12.5px;color:#93a9b0"><span data-icon="bell" data-size="14" style="display:inline-flex;width:14px;height:14px"></span><span style="flex:1">Notifications</span><span style="font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:99px;background:#27c0d4;color:#06141a">3</span></div>
+              <div style="padding:12px 10px 4px;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:#5b737b">PEOPLE</div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;font-size:12.5px;color:#93a9b0"><span data-icon="users" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Employees</div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;font-size:12.5px;color:#93a9b0"><span data-icon="inbox" data-size="14" style="display:inline-flex;width:14px;height:14px"></span><span style="flex:1">Requests</span><span style="font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:99px;background:#27c0d4;color:#06141a">6</span></div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;font-size:12.5px;color:#93a9b0"><span data-icon="target" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Recruitment</div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;font-size:12.5px;color:#93a9b0"><span data-icon="clock" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Time off</div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;font-size:12.5px;color:#93a9b0"><span data-icon="wallet" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Payroll</div>
+              <div style="padding:12px 10px 4px;font-family:'Geist Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:#5b737b">DOCUMENTS</div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;font-size:12.5px;color:#93a9b0"><span data-icon="wand-sparkles|wand-2" data-size="14" style="display:inline-flex;width:14px;height:14px"></span><span style="flex:1">Generate</span><span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;background:rgba(154,139,240,.16);color:#b3a8f5;border:1px solid rgba(154,139,240,.3)">AI</span></div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;font-size:12.5px;color:#93a9b0"><span data-icon="file-text" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Templates</div>
+              <div style="flex:1"></div>
+              <div style="display:flex;align-items:center;gap:9px;padding:10px 6px 2px;border-top:1px solid rgba(255,255,255,.06)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6d5ad6,#16b6c8);color:#ffffff;font-size:11px;font-weight:700">SI</span><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:#e3eef0">Salma Idrissi</div><div style="font-size:10.5px;color:#6b838c">HR Admin</div></div></div>
+            </div>
+            <div style="flex:1;min-width:0;padding:20px 22px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px">
+                <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:23px;color:#eef5f7;letter-spacing:-.03em">Good morning, Salma</div><div style="font-size:12px;color:#6b838c;margin-top:3px">Here's your team at a glance.</div></div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="display:flex;padding:3px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);font-size:11px;color:#7f969e"><span style="padding:4px 9px;border-radius:7px;background:rgba(39,192,212,.16);color:#5fe3f0;font-weight:600">30d</span><span style="padding:4px 9px">3m</span><span style="padding:4px 9px">6m</span><span style="padding:4px 9px">12m</span></div>
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:12px;font-weight:600"><span data-icon="wand-sparkles|wand-2" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Generate</span>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+                <div data-reveal="up" data-delay="500" style="position:relative;overflow:hidden;border-radius:14px;padding:13px 14px;height:108px;background:linear-gradient(135deg,#0b5f72,#0e7f96);color:#ffffff">
+                  <span style="position:absolute;right:-24px;top:-24px;width:86px;height:86px;border-radius:50%;background:rgba(255,255,255,.1)"></span>
+                  <span data-icon="users" data-size="40" style="position:absolute;right:10px;bottom:8px;opacity:.2;display:inline-flex"></span>
+                  <div style="position:relative;font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.88)">Total employees</div>
+                  <div data-count="" data-delay="600" style="position:relative;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:32px;letter-spacing:-.04em;line-height:1.1;margin-top:6px">128</div>
+                  <div style="position:relative;font-size:11px;color:rgba(255,255,255,.92)">126 active · 2 inactive</div>
+                </div>
+                <div data-reveal="up" data-delay="580" style="position:relative;overflow:hidden;border-radius:14px;padding:13px 14px;height:108px;background:linear-gradient(135deg,#0f6f49,#16915f);color:#ffffff">
+                  <span style="position:absolute;right:-24px;top:-24px;width:86px;height:86px;border-radius:50%;background:rgba(255,255,255,.1)"></span>
+                  <span data-icon="user-check" data-size="40" style="position:absolute;right:10px;bottom:8px;opacity:.2;display:inline-flex"></span>
+                  <div style="position:relative;font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.88)">Present today</div>
+                  <div data-count="" data-delay="680" style="position:relative;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:32px;letter-spacing:-.04em;line-height:1.1;margin-top:6px">117</div>
+                  <div style="position:relative;font-size:11px;color:rgba(255,255,255,.92)">of 126 active</div>
+                </div>
+                <div data-reveal="up" data-delay="660" style="position:relative;overflow:hidden;border-radius:14px;padding:13px 14px;height:108px;background:linear-gradient(135deg,#a8650a,#c9810f);color:#ffffff">
+                  <span style="position:absolute;right:-24px;top:-24px;width:86px;height:86px;border-radius:50%;background:rgba(255,255,255,.1)"></span>
+                  <span data-icon="inbox" data-size="40" style="position:absolute;right:10px;bottom:8px;opacity:.2;display:inline-flex"></span>
+                  <div style="position:relative;font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.88)">Pending requests</div>
+                  <div data-count="" data-delay="760" style="position:relative;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:32px;letter-spacing:-.04em;line-height:1.1;margin-top:6px">6</div>
+                  <div style="position:relative;font-size:11px;color:rgba(255,255,255,.92)">4 leave · 2 documents</div>
+                </div>
+                <div data-reveal="up" data-delay="740" style="position:relative;overflow:hidden;border-radius:14px;padding:13px 14px;height:108px;background:linear-gradient(135deg,#5444b8,#6d5ad6);color:#ffffff">
+                  <span style="position:absolute;right:-24px;top:-24px;width:86px;height:86px;border-radius:50%;background:rgba(255,255,255,.1)"></span>
+                  <span data-icon="calendar" data-size="40" style="position:absolute;right:10px;bottom:8px;opacity:.2;display:inline-flex"></span>
+                  <div style="position:relative;font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.88)">On leave today</div>
+                  <div data-count="" data-delay="840" style="position:relative;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:32px;letter-spacing:-.04em;line-height:1.1;margin-top:6px">5</div>
+                  <div style="position:relative;font-size:11px;color:rgba(255,255,255,.92)">approved leave</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:12px">
+                <div style="border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);padding:14px 16px">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                    <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14px;color:#eef5f7">Headcount evolution</div><div style="font-size:11px;color:#6b838c;margin-top:2px">Last 6 months</div></div>
+                    <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#4fd3a0;padding:3px 8px;border-radius:99px;background:rgba(43,189,134,.12)"><span data-icon="trending-up" data-size="12" style="display:inline-flex;width:12px;height:12px"></span>+14%</span>
+                  </div>
+                  <div style="position:relative;height:150px;margin-top:14px">
+                    <div style="position:absolute;left:0;right:0;top:25%;border-top:1px dashed rgba(255,255,255,.06)"></div>
+                    <div style="position:absolute;left:0;right:0;top:50%;border-top:1px dashed rgba(255,255,255,.06)"></div>
+                    <div style="position:absolute;left:0;right:0;top:75%;border-top:1px dashed rgba(255,255,255,.06)"></div>
+                    <svg viewBox="0 0 478 150" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+                      <defs><linearGradient id="wedyArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:#27c0d4;stop-opacity:.38"></stop><stop offset="1" style="stop-color:#27c0d4;stop-opacity:0"></stop></linearGradient></defs>
+                      <path data-reveal="fade" data-delay="1100" data-dur="1400" d="M4 118.2 C35 118.2 67 101.8 98 101.8 C129 101.8 161 107.3 192 107.3 C223 107.3 255 80 286 80 C317 80 349 52.7 380 52.7 C411 52.7 443 30.9 474 30.9 L474 150 L4 150 Z" style="fill:url(#wedyArea)"></path>
+                      <path data-reveal="draw" data-delay="800" data-dur="2000" d="M4 118.2 C35 118.2 67 101.8 98 101.8 C129 101.8 161 107.3 192 107.3 C223 107.3 255 80 286 80 C317 80 349 52.7 380 52.7 C411 52.7 443 30.9 474 30.9" style="fill:none;stroke:#27c0d4;stroke-width:2.5px;stroke-linecap:round"></path>
+                    </svg>
+                    <span style="position:absolute;left:99.16%;top:20.6%;width:10px;height:10px;margin:-5px 0 0 -5px">
+                      <span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;background:#27c0d4"></span>
+                      <span style="position:absolute;inset:0;border-radius:50%;background:#27c0d4;border:2px solid #08191f"></span>
+                    </span>
+                    <span data-reveal="pop" data-delay="2500" style="position:absolute;right:-6px;top:calc(20.6% - 36px);padding:3px 8px;border-radius:7px;background:#eef5f7;color:#06141a;font-size:11px;font-weight:700;white-space:nowrap">128 people</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:'Geist Mono',monospace;font-size:10px;color:#5b737b"><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span></div>
+                </div>
+                <div style="border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);padding:14px 12px 10px;display:flex;flex-direction:column;gap:5px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px 6px"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14px;color:#eef5f7">Live activity</span><span style="display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.08em;color:#2bbd86;font-family:'Geist Mono',monospace"><span data-loop="pulse" style="width:6px;height:6px;border-radius:50%;background:#2bbd86"></span>LIVE</span></div>
+                  <div data-reveal="left" data-delay="1100" style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:rgba(255,255,255,.025)"><span style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.14);color:#2bbd86;flex-shrink:0"><span data-icon="calendar-check" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:#e3eef0">Leave approved</div><div style="font-size:11px;color:#6b838c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Omar Alaoui · 3 days</div></div><span style="font-family:'Geist Mono',monospace;font-size:10px;color:#5b737b">2m</span></div>
+                  <div data-reveal="left" data-delay="1250" style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:rgba(255,255,255,.025)"><span style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.14);color:#5fe3f0;flex-shrink:0"><span data-icon="file-text" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:#e3eef0">Document generated</div><div style="font-size:11px;color:#6b838c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Attestation de travail · FR</div></div><span style="font-family:'Geist Mono',monospace;font-size:10px;color:#5b737b">6m</span></div>
+                  <div data-reveal="left" data-delay="1400" style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:rgba(255,255,255,.025)"><span style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(154,139,240,.16);color:#b3a8f5;flex-shrink:0"><span data-icon="user-plus" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:#e3eef0">Candidate hired</div><div style="font-size:11px;color:#6b838c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Mehdi Rami · Sales</div></div><span style="font-family:'Geist Mono',monospace;font-size:10px;color:#5b737b">1h</span></div>
+                  <div data-reveal="left" data-delay="1550" style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:rgba(255,255,255,.025)"><span style="width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(230,169,72,.15);color:#f0bd6a;flex-shrink:0"><span data-icon="clock" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:#e3eef0">Contract ending</div><div style="font-size:11px;color:#6b838c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Yasmine Benali · 12 days</div></div><span style="font-family:'Geist Mono',monospace;font-size:10px;color:#5b737b">3h</span></div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                <div style="border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);padding:14px 16px;height:130px"><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14px;color:#eef5f7">Contracts</div><div style="display:flex;height:10px;border-radius:99px;overflow:hidden;margin-top:16px;gap:3px"><span style="width:72%;background:#27c0d4;border-radius:99px"></span><span style="width:18%;background:#9a8bf0;border-radius:99px"></span><span style="width:10%;background:#e6a948;border-radius:99px"></span></div><div style="display:flex;gap:14px;margin-top:12px;font-size:11px;color:#93a9b0"><span>CDI 72%</span><span>CDD 18%</span><span>Interns 10%</span></div></div>
+                <div style="border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);padding:14px 16px;height:130px"><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14px;color:#eef5f7">By department</div><div style="display:flex;flex-direction:column;gap:7px;margin-top:14px"><span style="height:7px;width:100%;border-radius:99px;background:#27c0d4"></span><span style="height:7px;width:76%;border-radius:99px;background:#16b6c8"></span><span style="height:7px;width:65%;border-radius:99px;background:#9a8bf0"></span><span style="height:7px;width:41%;border-radius:99px;background:#2bbd86"></span></div></div>
+                <div style="border-radius:14px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);padding:14px 16px;height:130px"><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14px;color:#eef5f7">Attendance</div><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:30px;color:#eef5f7;margin-top:10px;letter-spacing:-.04em">96%</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div data-reveal="right" data-delay="1300" style="position:absolute;left:-64px;top:118px;z-index:3">
+        <div style="transform:translate3d(calc(var(--mx,0) * -16px),calc(var(--my,0) * -12px),0);transition:transform .5s cubic-bezier(.2,.8,.2,1)">
+          <div data-loop="float" data-seq-root="6400" style="width:262px;padding:14px;border-radius:18px;background:rgba(13,34,42,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 60px -20px rgba(0,0,0,.75)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6d5ad6,#9a8bf0);color:#ffffff;flex-shrink:0"><span data-icon="sparkles" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span>
+              <div style="min-width:0"><div style="font-size:13.5px;font-weight:600;color:#eef5f7">Attestation de travail</div><div style="font-size:11.5px;color:#8ea5ad">Yasmine Benali · Marketing Lead</div></div>
+            </div>
+            <div style="margin-top:13px;height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden"><div data-seq="x" data-at="0.04" data-len="0.4" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#9a8bf0,#5fe3f0);transform-origin:left"></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+              <span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#8ea5ad">Drafted by Wedy AI</span>
+              <div style="display:flex;gap:5px">
+                <span data-seq="pop" data-at="0.48" style="font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:rgba(39,192,212,.16);color:#5fe3f0">FR</span>
+                <span data-seq="pop" data-at="0.54" style="font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:rgba(154,139,240,.18);color:#b3a8f5">AR</span>
+                <span data-seq="pop" data-at="0.60" style="font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:rgba(43,189,134,.16);color:#4fd3a0">EN</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div data-reveal="left" data-delay="1600" style="position:absolute;right:-58px;top:230px;z-index:3">
+        <div style="transform:translate3d(calc(var(--mx,0) * 22px),calc(var(--my,0) * 16px),0);transition:transform .6s cubic-bezier(.2,.8,.2,1)">
+          <div data-loop="float2" style="width:294px;padding:16px;border-radius:20px;background:rgba(240,250,251,.97);color:#0a1c24;box-shadow:0 40px 80px -24px rgba(0,0,0,.8)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="position:relative;flex-shrink:0"><img src="assets/wedy-avatar.png" alt="" style="display:block;width:36px;height:36px;border-radius:50%;object-fit:cover;background:#e4f2f4"><span style="position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:#16a06b;border:2px solid #f0fafb"></span></span>
+              <div style="flex:1"><div style="font-size:13px;font-weight:700">Wedy Copilot</div><div style="font-size:11px;color:#52646d">Suggestion · just now</div></div>
+              <span data-icon="sparkles" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6d5ad6"></span>
+            </div>
+            <p style="margin:12px 0 0;font-size:13.5px;line-height:1.5;color:#1d3540">Yasmine's CDD ends in <strong style="color:#b8402c">12 days</strong>. Want me to draft the renewal?</p>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <span style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 10px;border-radius:10px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:12.5px;font-weight:600"><span data-icon="wand-sparkles|wand-2" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Draft renewal</span>
+              <span style="padding:8px 12px;border-radius:10px;border:1px solid #d4dce0;font-size:12.5px;font-weight:600;color:#52646d">Later</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div data-reveal="up" data-delay="1900" style="position:absolute;left:110px;top:540px;z-index:3">
+        <div style="transform:translate3d(calc(var(--mx,0) * -10px),calc(var(--my,0) * 10px),0);transition:transform .5s cubic-bezier(.2,.8,.2,1)">
+          <div data-loop="float" data-delay="-2500" style="display:flex;align-items:center;gap:12px;padding:12px 18px 12px 12px;border-radius:16px;background:rgba(13,34,42,.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.12);box-shadow:0 30px 60px -20px rgba(0,0,0,.75)">
+            <span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.18);color:#2bbd86;flex-shrink:0"><span data-icon="check" data-size="17" data-sw="2.4" style="display:inline-flex;width:17px;height:17px"></span></span>
+            <div><div style="font-size:13px;font-weight:600;color:#eef5f7">Leave approved · Omar Alaoui</div><div style="font-size:11.5px;color:#8ea5ad">3 days · synced to Google Calendar</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div data-mosaic="" aria-hidden="true" style="position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden;opacity:0"></div>
+</section>
+
+<section style="position:relative;padding:36px 0 130px;background:#06141a">
+  <p data-reveal="fade" style="margin:0 0 26px;text-align:center;font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#7f969e">Every HR document — in French, Arabic &amp; English</p>
+  <div style="display:flex;flex-direction:column;gap:12px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)">
+    <div data-loop="marquee" data-dur="64000" style="display:flex;width:max-content">
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Attestation de travail</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Contrat CDI</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Contrat CDD</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Convention de stage</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Attestation de salaire</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Lettre d'embauche</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Avenant au contrat</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Solde de tout compte</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Attestation de travail</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Contrat CDI</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Contrat CDD</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Convention de stage</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Attestation de salaire</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Lettre d'embauche</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Avenant au contrat</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#27c0d4"></span>Solde de tout compte</span>
+    </div>
+    <div data-loop="marquee-rev" data-dur="70000" style="display:flex;width:max-content;font-family:'Noto Kufi Arabic',sans-serif">
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>شهادة العمل</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>عقد عمل غير محدد المدة</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>عقد عمل محدد المدة</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>اتفاقية التدريب</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>شهادة الأجر</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>رسالة التوظيف</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>ملحق العقد</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>تصفية كل حساب</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>شهادة العمل</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>عقد عمل غير محدد المدة</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>عقد عمل محدد المدة</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>اتفاقية التدريب</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>شهادة الأجر</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>رسالة التوظيف</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>ملحق العقد</span>
+      <span dir="rtl" style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:10px 14px 10px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#9a8bf0"></span>تصفية كل حساب</span>
+    </div>
+    <div data-loop="marquee" data-dur="76000" style="display:flex;width:max-content">
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Work certificate</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Permanent contract</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Fixed-term contract</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Internship agreement</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Salary certificate</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Offer letter</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Contract amendment</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Final settlement</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Work certificate</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Permanent contract</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Fixed-term contract</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Internship agreement</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Salary certificate</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Offer letter</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Contract amendment</span>
+      <span style="display:inline-flex;align-items:center;gap:10px;margin-right:12px;padding:11px 20px 11px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);font-size:15px;color:#cfdde1;white-space:nowrap"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#2bbd86"></span>Final settlement</span>
+    </div>
+  </div>
+</section>
+
+<div style="position:relative;z-index:2;margin-top:-56px;background:#f3f6f7;color:#0a1c24;border-radius:44px 44px 0 0">
+<section id="copilot" style="padding:120px 24px 90px;scroll-margin-top:30px">
+  <div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:64px;align-items:center">
+    <div>
+      <div data-reveal="up" style="display:inline-flex;align-items:center;gap:10px;font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#0e6f84"><span style="width:24px;height:1px;background:#0e6f84"></span>01 — Wedy Copilot</div>
+      <h2 data-reveal="up" data-delay="80" style="margin:18px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(38px,4.8vw,62px);line-height:1;letter-spacing:-.045em;color:#0a1c24;text-wrap:balance">Meet Wedy, your AI HR <span style="position:relative;display:inline-block;white-space:nowrap"><span data-reveal="growx" data-delay="700" style="position:absolute;left:-4px;right:-4px;bottom:.04em;height:.36em;border-radius:6px;background:linear-gradient(90deg,rgba(22,182,200,.38),rgba(109,90,214,.32));transform-origin:left"></span><span style="position:relative">co-worker.</span></span></h2>
+      <p data-reveal="up" data-delay="160" style="margin:22px 0 0;max-width:520px;font-size:18px;line-height:1.6;color:#52646d;text-wrap:pretty">Ask in French, Arabic or English. Wedy drafts documents, answers labor-law questions and reads your team data — with full context on every employee.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:34px">
+        <button type="button" onClick="{{ pick0 }}" data-reveal="up" data-delay="200" style="position:relative;display:flex;align-items:flex-start;gap:14px;width:100%;padding:16px 18px;border-radius:18px;border:1px solid #e2e8eb;background:#ffffff;text-align:left;cursor:pointer;overflow:hidden;font-family:inherit;transition:border-color .2s,box-shadow .2s" style-hover="border-color:#b9dfe5;box-shadow:0 14px 30px -18px rgba(10,28,36,.3)">
+          <sc-if value="{{ s0 }}" hint-placeholder-val="{{ true }}">
+            <span style="position:absolute;inset:0;border-radius:18px;box-shadow:inset 0 0 0 1.5px #16b6c8;background:linear-gradient(135deg,rgba(22,182,200,.07),rgba(109,90,214,.05));pointer-events:none"></span>
+            <span style="position:absolute;left:18px;right:18px;bottom:0;height:3px;border-radius:3px;background:rgba(22,182,200,.15);overflow:hidden"><span data-scen-bar="" style="display:block;height:100%;background:linear-gradient(90deg,#16b6c8,#6d5ad6);transform-origin:left"></span></span>
+          </sc-if>
+          <span style="position:relative;flex-shrink:0;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="file-text" data-size="20" style="display:inline-flex;width:20px;height:20px"></span></span>
+          <span style="position:relative;display:flex;flex-direction:column;gap:3px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:17px;color:#0a1c24;letter-spacing:-.01em">Draft any HR document</span><span style="font-size:14px;line-height:1.5;color:#52646d">Contracts, certificates and letters from a single sentence.</span></span>
+        </button>
+        <button type="button" onClick="{{ pick1 }}" data-reveal="up" data-delay="280" style="position:relative;display:flex;align-items:flex-start;gap:14px;width:100%;padding:16px 18px;border-radius:18px;border:1px solid #e2e8eb;background:#ffffff;text-align:left;cursor:pointer;overflow:hidden;font-family:inherit;transition:border-color .2s,box-shadow .2s" style-hover="border-color:#b9dfe5;box-shadow:0 14px 30px -18px rgba(10,28,36,.3)">
+          <sc-if value="{{ s1 }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;inset:0;border-radius:18px;box-shadow:inset 0 0 0 1.5px #6d5ad6;background:linear-gradient(135deg,rgba(109,90,214,.07),rgba(22,182,200,.05));pointer-events:none"></span>
+            <span style="position:absolute;left:18px;right:18px;bottom:0;height:3px;border-radius:3px;background:rgba(109,90,214,.15);overflow:hidden"><span data-scen-bar="" style="display:block;height:100%;background:linear-gradient(90deg,#6d5ad6,#16b6c8);transform-origin:left"></span></span>
+          </sc-if>
+          <span style="position:relative;flex-shrink:0;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6"><span data-icon="scale" data-size="20" style="display:inline-flex;width:20px;height:20px"></span></span>
+          <span style="position:relative;display:flex;flex-direction:column;gap:3px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:17px;color:#0a1c24;letter-spacing:-.01em">Ask about Moroccan labor law</span><span style="font-size:14px;line-height:1.5;color:#52646d">Notice periods, leave rules, CNSS — explained in plain words.</span></span>
+        </button>
+        <button type="button" onClick="{{ pick2 }}" data-reveal="up" data-delay="360" style="position:relative;display:flex;align-items:flex-start;gap:14px;width:100%;padding:16px 18px;border-radius:18px;border:1px solid #e2e8eb;background:#ffffff;text-align:left;cursor:pointer;overflow:hidden;font-family:inherit;transition:border-color .2s,box-shadow .2s" style-hover="border-color:#b9dfe5;box-shadow:0 14px 30px -18px rgba(10,28,36,.3)">
+          <sc-if value="{{ s2 }}" hint-placeholder-val="{{ false }}">
+            <span style="position:absolute;inset:0;border-radius:18px;box-shadow:inset 0 0 0 1.5px #16a06b;background:linear-gradient(135deg,rgba(22,160,107,.07),rgba(22,182,200,.05));pointer-events:none"></span>
+            <span style="position:absolute;left:18px;right:18px;bottom:0;height:3px;border-radius:3px;background:rgba(22,160,107,.15);overflow:hidden"><span data-scen-bar="" style="display:block;height:100%;background:linear-gradient(90deg,#16a06b,#16b6c8);transform-origin:left"></span></span>
+          </sc-if>
+          <span style="position:relative;flex-shrink:0;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="chart-column|bar-chart-3" data-size="20" style="display:inline-flex;width:20px;height:20px"></span></span>
+          <span style="position:relative;display:flex;flex-direction:column;gap:3px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:17px;color:#0a1c24;letter-spacing:-.01em">Analyze your team data</span><span style="font-size:14px;line-height:1.5;color:#52646d">Absenteeism, headcount and turnover — answered in seconds.</span></span>
+        </button>
+      </div>
+      <div data-reveal="up" data-delay="200" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:22px">
+        <span style="font-size:13px;color:#5f7079;margin-right:4px">Quick commands</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12.5px;padding:5px 10px;border-radius:8px;background:#ffffff;border:1px solid #e2e8eb;color:#0e6f84">/doc</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12.5px;padding:5px 10px;border-radius:8px;background:#ffffff;border:1px solid #e2e8eb;color:#0e6f84">/emp</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12.5px;padding:5px 10px;border-radius:8px;background:#ffffff;border:1px solid #e2e8eb;color:#0e6f84">/congé</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:12.5px;padding:5px 10px;border-radius:8px;background:#ffffff;border:1px solid #e2e8eb;color:#0e6f84">/aide</span>
+      </div>
+    </div>
+
+    <div data-chat="" data-reveal="scale" data-delay="150" style="position:relative">
+      <div aria-hidden="true" style="position:absolute;inset:-40px -30px;background:radial-gradient(50% 50% at 75% 25%,rgba(22,182,200,.24),transparent),radial-gradient(45% 45% at 20% 85%,rgba(109,90,214,.2),transparent);pointer-events:none"></div>
+      <div style="position:relative;border-radius:28px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 50px 100px -40px rgba(10,28,36,.4),0 0 0 6px rgba(255,255,255,.55);overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid #edf1f3">
+          <span style="position:relative;flex-shrink:0"><img src="assets/wedy-avatar.png" alt="Wedy" style="display:block;width:44px;height:44px;border-radius:50%;object-fit:cover;background:#e4f2f4"><span style="position:absolute;right:0;bottom:0;width:12px;height:12px;border-radius:50%;background:#16a06b;border:2px solid #ffffff"></span></span>
+          <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:15px;color:#0a1c24">Wedy Copilot</div><div style="font-size:12.5px;color:#52646d">Powered by Claude · knows your team</div></div>
+          <div style="display:flex;gap:2px;padding:3px;border-radius:10px;background:#f3f6f7;font-size:12px;font-weight:600;color:#5f7079"><span style="padding:4px 9px;border-radius:7px;background:#ffffff;color:#0e6f84;box-shadow:0 1px 2px rgba(10,28,36,.1)">EN</span><span style="padding:4px 9px">FR</span><span style="padding:4px 9px;font-family:'Noto Kufi Arabic',sans-serif">ع</span></div>
+        </div>
+        <div style="height:450px;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:14px;background-color:#f8fafb;background-image:radial-gradient(#e3e9ec 1px,transparent 1px);background-size:20px 20px;overflow:hidden">
+          <div style="display:flex;gap:10px;align-items:flex-end;max-width:88%"><img src="assets/wedy-avatar.png" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#e4f2f4"><div style="padding:11px 14px;border-radius:16px 16px 16px 4px;background:#ffffff;border:1px solid #e8eef0;font-size:14px;line-height:1.5;color:#1d3540">Hi Salma — what can I take off your plate today?</div></div>
+          <sc-if value="{{ u0 }}" hint-placeholder-val="{{ true }}"><div data-reveal="up" style="align-self:flex-end;max-width:82%;padding:11px 15px;border-radius:16px 16px 4px 16px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:14px;line-height:1.5">Draft a work certificate for Yasmine Benali, Marketing Lead since March 15, 2022.</div></sc-if>
+          <sc-if value="{{ u1 }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="align-self:flex-end;max-width:82%;padding:11px 15px;border-radius:16px 16px 4px 16px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:14px;line-height:1.5">What's the legal notice period for a CDI in Morocco?</div></sc-if>
+          <sc-if value="{{ u2 }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="align-self:flex-end;max-width:82%;padding:11px 15px;border-radius:16px 16px 4px 16px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:14px;line-height:1.5">Which departments had the most absences this quarter?</div></sc-if>
+          <sc-if value="{{ typing }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="display:flex;gap:10px;align-items:flex-end"><img src="assets/wedy-avatar.png" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#e4f2f4"><div style="display:flex;gap:5px;padding:15px 16px;border-radius:16px 16px 16px 4px;background:#ffffff;border:1px solid #e8eef0"><span data-loop="dot" style="width:7px;height:7px;border-radius:50%;background:#16b6c8"></span><span data-loop="dot" data-delay="150" style="width:7px;height:7px;border-radius:50%;background:#16b6c8"></span><span data-loop="dot" data-delay="300" style="width:7px;height:7px;border-radius:50%;background:#16b6c8"></span></div></div></sc-if>
+          <sc-if value="{{ a0 }}" hint-placeholder-val="{{ true }}">
+            <div data-reveal="up" style="display:flex;gap:10px;align-items:flex-end;max-width:94%">
+              <img src="assets/wedy-avatar.png" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#e4f2f4">
+              <div style="display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:16px 16px 16px 4px;background:#ffffff;border:1px solid #e8eef0;min-width:0">
+                <div style="font-size:14px;line-height:1.5;color:#1d3540;padding:0 2px">Done — here's the work certificate, ready to sign.</div>
+                <div style="border-radius:12px;border:1px solid #e2e8eb;background:#fbfcfc;padding:14px 16px">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#0e6f84">ATTESTATION DE TRAVAIL</span><span style="font-family:'Geist Mono',monospace;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:#e4f2f4;color:#0e6f84">FR</span></div>
+                  <div data-reveal="fade" data-delay="250" style="margin-top:10px;font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.6;color:#33474f">Nous soussignés, <strong>Tython SARL</strong>, attestons que Mme <strong>Yasmine Benali</strong> occupe le poste de Responsable Marketing depuis le 15 mars 2022, en contrat à durée indéterminée.</div>
+                  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px">
+                    <div style="display:flex;flex-direction:column;gap:6px;width:55%"><span data-reveal="growx" data-delay="500" style="display:block;height:5px;width:100%;border-radius:4px;background:#e3eaed;transform-origin:left"></span><span data-reveal="growx" data-delay="600" style="display:block;height:5px;width:70%;border-radius:4px;background:#e3eaed;transform-origin:left"></span><span style="font-size:11px;color:#5f7079;margin-top:4px">Fait à Casablanca</span></div>
+                    <span data-reveal="pop" data-delay="900" style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:58px;height:58px;border-radius:50%;border:2px solid rgba(14,111,132,.6);color:#0e6f84;font-family:'Geist Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.08em;line-height:1.3;transform:rotate(-14deg)"><span>TYTHON</span><span>SARL</span></span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;background:#0a1c24;color:#ffffff;font-size:12.5px;font-weight:600"><span data-icon="download" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Download PDF</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;border:1px solid #e2e8eb;color:#33474f;font-size:12.5px;font-weight:600"><span data-icon="languages" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Translate to Arabic</span>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a1 }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="up" style="display:flex;gap:10px;align-items:flex-end;max-width:94%">
+              <img src="assets/wedy-avatar.png" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#e4f2f4">
+              <div style="display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:16px 16px 16px 4px;background:#ffffff;border:1px solid #e8eef0;min-width:0">
+                <div style="font-size:14px;line-height:1.5;color:#1d3540;padding:0 2px">Under Decree 2-04-469, the notice period depends on category and seniority:</div>
+                <div style="border-radius:12px;border:1px solid #e2e8eb;overflow:hidden;font-size:13px">
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;background:#f3f6f7;color:#5f7079;font-weight:600;font-size:12px"><span style="padding:9px 12px">Seniority</span><span style="padding:9px 12px">Managers</span><span style="padding:9px 12px">Employees &amp; workers</span></div>
+                  <div data-reveal="right" data-delay="150" style="display:grid;grid-template-columns:1fr 1fr 1.3fr;border-top:1px solid #edf1f3;color:#1d3540"><span style="padding:10px 12px">Under 1 year</span><span style="padding:10px 12px;font-weight:600;color:#0e6f84">1 month</span><span style="padding:10px 12px;font-weight:600;color:#0e6f84">8 days</span></div>
+                  <div data-reveal="right" data-delay="300" style="display:grid;grid-template-columns:1fr 1fr 1.3fr;border-top:1px solid #edf1f3;color:#1d3540"><span style="padding:10px 12px">1 to 5 years</span><span style="padding:10px 12px;font-weight:600;color:#0e6f84">2 months</span><span style="padding:10px 12px;font-weight:600;color:#0e6f84">1 month</span></div>
+                  <div data-reveal="right" data-delay="450" style="display:grid;grid-template-columns:1fr 1fr 1.3fr;border-top:1px solid #edf1f3;color:#1d3540"><span style="padding:10px 12px">Over 5 years</span><span style="padding:10px 12px;font-weight:600;color:#0e6f84">3 months</span><span style="padding:10px 12px;font-weight:600;color:#0e6f84">2 months</span></div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#5f7079;padding:0 2px"><span data-icon="info" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Indicative answer — confirm edge cases with your legal counsel.</div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a2 }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="up" style="display:flex;gap:10px;align-items:flex-end;max-width:94%">
+              <img src="assets/wedy-avatar.png" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#e4f2f4">
+              <div style="display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:16px 16px 16px 4px;background:#ffffff;border:1px solid #e8eef0;min-width:0;flex:1">
+                <div style="font-size:14px;line-height:1.5;color:#1d3540;padding:0 2px">Absence rate this quarter, by department:</div>
+                <div style="display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:12px;border:1px solid #e2e8eb;background:#fbfcfc">
+                  <div style="display:grid;grid-template-columns:104px 1fr 42px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">Logistics</span><span style="height:9px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="150" style="display:block;height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#df9326,#df5740);transform-origin:left"></span></span><span style="font-weight:700;color:#b8402c;text-align:right">6.2%</span></div>
+                  <div style="display:grid;grid-template-columns:104px 1fr 42px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">Customer care</span><span style="height:9px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="280" style="display:block;height:100%;width:77%;border-radius:99px;background:linear-gradient(90deg,#0e6f84,#16b6c8);transform-origin:left"></span></span><span style="font-weight:700;color:#0a1c24;text-align:right">4.8%</span></div>
+                  <div style="display:grid;grid-template-columns:104px 1fr 42px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">Sales</span><span style="height:9px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="410" style="display:block;height:100%;width:50%;border-radius:99px;background:linear-gradient(90deg,#0e6f84,#16b6c8);transform-origin:left"></span></span><span style="font-weight:700;color:#0a1c24;text-align:right">3.1%</span></div>
+                  <div style="display:grid;grid-template-columns:104px 1fr 42px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">Finance</span><span style="height:9px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="540" style="display:block;height:100%;width:23%;border-radius:99px;background:linear-gradient(90deg,#0e6f84,#16b6c8);transform-origin:left"></span></span><span style="font-weight:700;color:#0a1c24;text-align:right">1.4%</span></div>
+                </div>
+                <div data-reveal="up" data-delay="800" style="display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:#ece9fb;color:#3d2f99;font-size:13px;line-height:1.5"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px;margin-top:2px"></span><span>Logistics is nearly 2× the company average of 3.4%. Want a breakdown by team?</span></div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid #edf1f3;background:#ffffff">
+          <span data-icon="paperclip" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#7d8f97"></span>
+          <div ref="{{ inputBoxRef }}" style="flex:1;min-width:0;display:flex;align-items:center;height:44px;padding:0 14px;border-radius:12px;background:#f3f6f7;border:1px solid #e2e8eb;font-size:14px;color:#0a1c24;overflow:hidden;white-space:nowrap">
+            <span ref="{{ inputRef }}" style="white-space:pre"></span>
+            <span data-loop="blink" style="display:inline-block;width:2px;height:18px;margin-left:1px;background:#16b6c8;flex-shrink:0"></span>
+            <sc-if value="{{ showPh }}" hint-placeholder-val="{{ true }}"><span style="color:#6b7c84;margin-left:6px">Ask Wedy anything…</span></sc-if>
+          </div>
+          <span style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;flex-shrink:0;box-shadow:0 8px 20px -8px rgba(22,182,200,.8)"><span data-icon="arrow-up" data-size="18" data-sw="2.2" style="display:inline-flex;width:18px;height:18px"></span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features" style="padding:40px 24px 140px;scroll-margin-top:30px">
+  <div style="max-width:1200px;margin:0 auto">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px">
+      <div style="max-width:660px">
+        <div data-reveal="up" style="display:inline-flex;align-items:center;gap:10px;font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#0e6f84"><span style="width:24px;height:1px;background:#0e6f84"></span>02 — Features</div>
+        <h2 data-reveal="up" data-delay="80" style="margin:18px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(38px,4.8vw,62px);line-height:1;letter-spacing:-.045em;color:#0a1c24;text-wrap:balance">Everything HR teams need. Nothing they don't.</h2>
+      </div>
+      <p data-reveal="up" data-delay="160" style="max-width:380px;margin:0;font-size:17px;line-height:1.6;color:#52646d;text-wrap:pretty">From document generation to analytics — one platform, built around how Moroccan companies actually work.</p>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:56px">
+      <div data-reveal="up" data-tilt="4" style="position:relative;flex:7 1 480px;border-radius:28px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden;display:flex;flex-direction:column;transform:perspective(1200px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s" style-hover="box-shadow:0 40px 80px -40px rgba(10,28,36,.32)">
+        <span style="position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(420px circle at var(--sx,-999px) var(--sy,-999px),rgba(22,182,200,.12),transparent 45%)"></span>
+        <div data-seq-root="7000" style="position:relative;height:300px;background:linear-gradient(180deg,#eaf5f6,#ffffff);border-bottom:1px solid #eef2f4;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:30px;padding:0 28px">
+          <div style="display:flex;flex-direction:column;gap:8px;width:220px;flex-shrink:1;min-width:0">
+            <div style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#5f7079;margin-bottom:2px">TEMPLATES</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;font-size:13px;color:#33474f"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#7d8f97"></span>Contrat CDI</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#ffffff;border:1.5px solid #16b6c8;box-shadow:0 10px 22px -12px rgba(22,182,200,.7);font-size:13px;font-weight:600;color:#0a1c24"><span data-icon="file-check" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#0e6f84"></span><span style="flex:1;white-space:nowrap">Attestation de travail</span><span data-seq="pop" data-at="0.02" style="width:18px;height:18px;border-radius:50%;background:#16b6c8;color:#ffffff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span data-icon="check" data-size="11" data-sw="3" style="display:inline-flex;width:11px;height:11px"></span></span></div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;font-size:13px;color:#33474f"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#7d8f97"></span>Lettre d'embauche</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;font-size:13px;color:#33474f"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#7d8f97"></span>Convention de stage</div>
+          </div>
+          <div style="position:relative;width:216px;height:252px;border-radius:10px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 30px 60px -30px rgba(10,28,36,.4);padding:20px 18px;transform:rotate(2.5deg);flex-shrink:0">
+            <div data-seq="x" data-at="0.08" style="height:8px;width:62%;border-radius:4px;background:#0a1c24;transform-origin:left"></div>
+            <div data-seq="x" data-at="0.13" style="height:5px;width:40%;border-radius:3px;background:#a9b7bd;margin-top:8px;transform-origin:left"></div>
+            <div style="display:flex;flex-direction:column;gap:7px;margin-top:20px">
+              <div data-seq="x" data-at="0.19" style="height:5px;width:100%;border-radius:3px;background:#dde5e8;transform-origin:left"></div>
+              <div data-seq="x" data-at="0.23" style="height:5px;width:94%;border-radius:3px;background:#dde5e8;transform-origin:left"></div>
+              <div data-seq="x" data-at="0.27" style="height:5px;width:98%;border-radius:3px;background:#dde5e8;transform-origin:left"></div>
+              <div data-seq="x" data-at="0.31" style="height:5px;width:72%;border-radius:3px;background:#b9dfe5;transform-origin:left"></div>
+              <div data-seq="x" data-at="0.35" style="height:5px;width:96%;border-radius:3px;background:#dde5e8;transform-origin:left"></div>
+              <div data-seq="x" data-at="0.39" style="height:5px;width:60%;border-radius:3px;background:#dde5e8;transform-origin:left"></div>
+            </div>
+            <div style="position:absolute;left:18px;right:18px;bottom:18px;display:flex;justify-content:space-between;align-items:flex-end">
+              <div style="display:flex;flex-direction:column;gap:6px"><div data-seq="x" data-at="0.47" style="height:5px;width:72px;border-radius:3px;background:#dde5e8;transform-origin:left"></div><div data-seq="x" data-at="0.51" style="height:5px;width:50px;border-radius:3px;background:#dde5e8;transform-origin:left"></div></div>
+              <div data-seq="pop" data-at="0.58" style="width:60px;height:60px;border-radius:50%;border:2px solid #16b6c8;color:#0e6f84;display:flex;align-items:center;justify-content:center;transform:rotate(-14deg);background:rgba(22,182,200,.06)"><span data-icon="badge-check" data-size="26" style="display:inline-flex;width:26px;height:26px"></span></div>
+            </div>
+          </div>
+        </div>
+        <div style="position:relative;padding:26px 28px 30px">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="wand-sparkles|wand-2" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;color:#0e6f84">DOCUMENT GENERATION</span></div>
+          <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:27px;letter-spacing:-.03em;color:#0a1c24">HR documents in seconds, not hours.</h3>
+          <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#52646d;max-width:520px">Contracts, attestations and letters generated from employee data — every field filled, every time.</p>
+        </div>
+      </div>
+
+      <div data-reveal="up" data-delay="100" data-tilt="4" style="position:relative;flex:5 1 360px;border-radius:28px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden;display:flex;flex-direction:column;transform:perspective(1200px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s" style-hover="box-shadow:0 40px 80px -40px rgba(10,28,36,.32)">
+        <span style="position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(420px circle at var(--sx,-999px) var(--sy,-999px),rgba(109,90,214,.12),transparent 45%)"></span>
+        <div data-cycle="2800" style="position:relative;height:300px;background:radial-gradient(120% 90% at 50% 0%,#ece9fb,#ffffff 72%);border-bottom:1px solid #eef2f4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:24px">
+          <div style="display:grid;place-items:center;width:100%;min-height:124px;text-align:center">
+            <div data-cycle-item="" style="grid-area:1/1;display:flex;flex-direction:column;align-items:center;gap:10px">
+              <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(28px,3vw,36px);letter-spacing:-.035em;color:#0a1c24">Attestation de travail</div>
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:14.5px;color:#52646d;max-width:300px;line-height:1.5">Nous attestons que Mme Yasmine Benali occupe le poste de…</div>
+            </div>
+            <div data-cycle-item="" dir="rtl" style="grid-area:1/1;display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;font-family:'Noto Kufi Arabic',sans-serif">
+              <div style="font-weight:700;font-size:clamp(26px,2.8vw,34px);color:#0a1c24">شهادة العمل</div>
+              <div style="font-size:14px;color:#52646d;max-width:300px;line-height:1.8">نشهد بأن السيدة ياسمين بنعلي تشغل منصب مسؤولة التسويق…</div>
+            </div>
+            <div data-cycle-item="" style="grid-area:1/1;display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0">
+              <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(28px,3vw,36px);letter-spacing:-.035em;color:#0a1c24">Work certificate</div>
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:14.5px;color:#52646d;max-width:300px;line-height:1.5">We certify that Ms. Yasmine Benali holds the position of…</div>
+            </div>
+          </div>
+          <div style="position:relative;display:grid;grid-template-columns:repeat(3,64px);padding:4px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 8px 18px -12px rgba(10,28,36,.35)">
+            <span data-cycle-pill="" style="position:absolute;left:4px;top:4px;bottom:4px;width:64px;border-radius:9px;background:#0a1c24;transition:transform .6s cubic-bezier(.2,.8,.2,1)"></span>
+            <span data-cycle-tab="" data-on="#ffffff" data-off="#52646d" style="position:relative;text-align:center;padding:7px 0;font-size:13px;font-weight:600;color:#ffffff;transition:color .3s">FR</span>
+            <span data-cycle-tab="" data-on="#ffffff" data-off="#52646d" style="position:relative;text-align:center;padding:7px 0;font-size:13px;font-weight:600;color:#52646d;transition:color .3s;font-family:'Noto Kufi Arabic',sans-serif">ع</span>
+            <span data-cycle-tab="" data-on="#ffffff" data-off="#52646d" style="position:relative;text-align:center;padding:7px 0;font-size:13px;font-weight:600;color:#52646d;transition:color .3s">EN</span>
+          </div>
+        </div>
+        <div style="position:relative;padding:26px 28px 30px">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6"><span data-icon="languages" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;color:#6d5ad6">TRILINGUAL</span></div>
+          <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:27px;letter-spacing:-.03em;color:#0a1c24">Fluent in French, Arabic and English.</h3>
+          <p style="margin:8px 0 0;font-size:15.5px;line-height:1.6;color:#52646d">Every template in three languages — with true right-to-left layout for Arabic.</p>
+        </div>
+      </div>
+
+      <div data-reveal="up" data-tilt="5" style="position:relative;flex:1 1 320px;border-radius:28px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden;display:flex;flex-direction:column;transform:perspective(1200px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s" style-hover="box-shadow:0 40px 80px -40px rgba(10,28,36,.32)">
+        <span style="position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(380px circle at var(--sx,-999px) var(--sy,-999px),rgba(22,160,107,.12),transparent 45%)"></span>
+        <div style="height:250px;background:linear-gradient(180deg,#e7f5ee,#ffffff);border-bottom:1px solid #eef2f4;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:22px">
+          <div data-reveal="right" data-delay="100" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;font-size:13.5px;color:#1d3540"><span data-reveal="pop" data-delay="450" style="width:22px;height:22px;border-radius:50%;background:#16a06b;color:#ffffff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span><span style="flex:1">Notice periods</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#5f7079">2-04-469</span></div>
+          <div data-reveal="right" data-delay="200" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;font-size:13.5px;color:#1d3540"><span data-reveal="pop" data-delay="550" style="width:22px;height:22px;border-radius:50%;background:#16a06b;color:#ffffff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span><span style="flex:1">CNSS &amp; ICE on documents</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#5f7079">Auto</span></div>
+          <div data-reveal="right" data-delay="300" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;font-size:13.5px;color:#1d3540"><span data-reveal="pop" data-delay="650" style="width:22px;height:22px;border-radius:50%;background:#16a06b;color:#ffffff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span><span style="flex:1">Moroccan public holidays</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#5f7079">Preloaded</span></div>
+          <div data-reveal="right" data-delay="400" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;font-size:13.5px;color:#1d3540"><span data-reveal="pop" data-delay="750" style="width:22px;height:22px;border-radius:50%;background:#16a06b;color:#ffffff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span><span style="flex:1">Leave accrual</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#5f7079">1.5 d/month</span></div>
+        </div>
+        <div style="position:relative;padding:24px 26px 28px">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="scale" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;color:#0f7a51">COMPLIANCE</span></div>
+          <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:24px;letter-spacing:-.03em;color:#0a1c24">Built for Moroccan labor law.</h3>
+          <p style="margin:8px 0 0;font-size:15px;line-height:1.6;color:#52646d">Templates and rules aligned with the Code du travail, out of the box.</p>
+        </div>
+      </div>
+
+      <div data-reveal="up" data-delay="100" data-tilt="5" style="position:relative;flex:1 1 320px;border-radius:28px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden;display:flex;flex-direction:column;transform:perspective(1200px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s" style-hover="box-shadow:0 40px 80px -40px rgba(10,28,36,.32)">
+        <span style="position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(380px circle at var(--sx,-999px) var(--sy,-999px),rgba(22,182,200,.12),transparent 45%)"></span>
+        <div style="height:250px;background:linear-gradient(180deg,#e9f1f8,#ffffff);border-bottom:1px solid #eef2f4;display:flex;align-items:center;justify-content:center;padding:22px">
+          <div data-reveal="scale" data-delay="150" style="width:100%;max-width:300px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 22px 44px -26px rgba(10,28,36,.4);padding:16px">
+            <div style="display:flex;align-items:center;gap:12px"><span style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-weight:700;font-size:15px;flex-shrink:0">YB</span><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14.5px;color:#0a1c24">Yasmine Benali</div><div style="font-size:12px;color:#52646d">Marketing Lead · CDI</div></div><span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;background:#e1f5ec;color:#0f6f49">Active</span></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px">
+              <div style="padding:8px 10px;border-radius:10px;background:#f3f6f7"><div style="font-size:10.5px;color:#5f7079">Leave left</div><div data-count="" style="font-weight:700;font-size:15px;color:#0a1c24">14.5 d</div></div>
+              <div style="padding:8px 10px;border-radius:10px;background:#f3f6f7"><div style="font-size:10.5px;color:#5f7079">Documents</div><div data-count="" style="font-weight:700;font-size:15px;color:#0a1c24">12</div></div>
+              <div style="padding:8px 10px;border-radius:10px;background:#f3f6f7"><div style="font-size:10.5px;color:#5f7079">Seniority</div><div data-count="" style="font-weight:700;font-size:15px;color:#0a1c24">4.6 y</div></div>
+            </div>
+            <div style="margin-top:14px"><div style="display:flex;justify-content:space-between;font-size:11.5px;color:#52646d"><span>Profile completeness</span><span style="font-weight:700;color:#0e6f84">92%</span></div><div style="height:6px;border-radius:99px;background:#eef2f4;margin-top:6px;overflow:hidden"><div data-reveal="growx" data-delay="400" style="height:100%;width:92%;border-radius:99px;background:linear-gradient(90deg,#0e6f84,#16b6c8);transform-origin:left"></div></div></div>
+          </div>
+        </div>
+        <div style="position:relative;padding:24px 26px 28px">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="users" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;color:#0e6f84">EMPLOYEE RECORDS</span></div>
+          <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:24px;letter-spacing:-.03em;color:#0a1c24">One record per employee.</h3>
+          <p style="margin:8px 0 0;font-size:15px;line-height:1.6;color:#52646d">Contracts, documents, leave and history — centralized and always current.</p>
+        </div>
+      </div>
+
+      <div data-reveal="up" data-delay="200" data-tilt="5" style="position:relative;flex:1 1 320px;border-radius:28px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden;display:flex;flex-direction:column;transform:perspective(1200px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s" style-hover="box-shadow:0 40px 80px -40px rgba(10,28,36,.32)">
+        <span style="position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(380px circle at var(--sx,-999px) var(--sy,-999px),rgba(223,147,38,.12),transparent 45%)"></span>
+        <div style="height:250px;background:linear-gradient(180deg,#fbf3e6,#ffffff);border-bottom:1px solid #eef2f4;display:flex;align-items:center;justify-content:center;padding:22px">
+          <div style="display:flex;align-items:flex-end;gap:22px;width:100%;max-width:300px">
+            <div style="flex:1;display:flex;align-items:flex-end;gap:7px;height:130px">
+              <span data-reveal="growy" data-delay="100" style="flex:1;height:45%;border-radius:6px 6px 3px 3px;background:#d7e6ea;transform-origin:bottom"></span>
+              <span data-reveal="growy" data-delay="170" style="flex:1;height:60%;border-radius:6px 6px 3px 3px;background:#d7e6ea;transform-origin:bottom"></span>
+              <span data-reveal="growy" data-delay="240" style="flex:1;height:52%;border-radius:6px 6px 3px 3px;background:#d7e6ea;transform-origin:bottom"></span>
+              <span data-reveal="growy" data-delay="310" style="flex:1;height:70%;border-radius:6px 6px 3px 3px;background:#d7e6ea;transform-origin:bottom"></span>
+              <span data-reveal="growy" data-delay="380" style="flex:1;height:64%;border-radius:6px 6px 3px 3px;background:#d7e6ea;transform-origin:bottom"></span>
+              <span data-reveal="growy" data-delay="450" style="flex:1;height:82%;border-radius:6px 6px 3px 3px;background:#9fd6df;transform-origin:bottom"></span>
+              <span data-reveal="growy" data-delay="520" style="flex:1;height:96%;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,#16b6c8,#0e6f84);transform-origin:bottom"></span>
+            </div>
+            <div style="position:relative;width:100px;height:100px;flex-shrink:0">
+              <svg viewBox="0 0 100 100" style="display:block;width:100%;height:100%;transform:rotate(-90deg)"><circle cx="50" cy="50" r="42" style="fill:none;stroke:#eef2f4;stroke-width:9px"></circle><circle data-reveal="draw" data-frac="0.96" data-delay="300" cx="50" cy="50" r="42" style="fill:none;stroke:#16a06b;stroke-width:9px;stroke-linecap:round;stroke-dasharray:253.3px 263.9px"></circle></svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:23px;color:#0a1c24;letter-spacing:-.03em">96%</span><span style="font-size:10px;color:#5f7079">attendance</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="position:relative;padding:24px 26px 28px">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#b06b0c"><span data-icon="chart-column|bar-chart-3" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;color:#9a5c08">ANALYTICS</span></div>
+          <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:24px;letter-spacing:-.03em;color:#0a1c24">Insights, live.</h3>
+          <p style="margin:8px 0 0;font-size:15px;line-height:1.6;color:#52646d">Headcount, attendance and turnover dashboards that update as your team does.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div style="position:relative;z-index:3;margin-top:-44px;background:#06141a;color:#e8eff1;border-radius:44px 44px 0 0;overflow:hidden">
+  <div aria-hidden="true" style="position:absolute;left:50%;top:-260px;width:1100px;height:620px;margin-left:-550px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.42),transparent);pointer-events:none"></div>
+  <section id="platform" style="position:relative;padding:130px 24px 110px;scroll-margin-top:30px">
+    <div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:56px;align-items:center">
+      <div>
+        <div data-reveal="up" style="display:inline-flex;align-items:center;gap:10px;font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#5fe3f0"><span style="width:24px;height:1px;background:#5fe3f0"></span>03 — Platform</div>
+        <h2 data-reveal="up" data-delay="80" style="margin:18px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(38px,4.8vw,62px);line-height:1;letter-spacing:-.045em;color:#f1f8f9;text-wrap:balance">One platform. Every HR workflow.</h2>
+        <p data-reveal="up" data-delay="160" style="margin:22px 0 0;max-width:500px;font-size:18px;line-height:1.6;color:#9fb4bb;text-wrap:pretty">From the first job post to the final payslip, every module shares the same employee record — so nothing is ever typed twice.</p>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:34px">
+          <div data-reveal="up" data-delay="200" style="display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)"><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.13);color:#5fe3f0;flex-shrink:0"><span data-icon="database|layers" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-weight:600;font-size:15.5px;color:#eef5f7">One source of truth</div><div style="font-size:14px;line-height:1.55;color:#93a9b0;margin-top:3px">Employee data flows into documents, payroll and analytics automatically.</div></div></div>
+          <div data-reveal="up" data-delay="280" style="display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)"><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(154,139,240,.15);color:#b3a8f5;flex-shrink:0"><span data-icon="bell-ring|bell" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-weight:600;font-size:15.5px;color:#eef5f7">Approvals where you work</div><div style="font-size:14px;line-height:1.55;color:#93a9b0;margin-top:3px">Leave and recruiting notifications land in Slack, Teams or email.</div></div></div>
+          <div data-reveal="up" data-delay="360" style="display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)"><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.14);color:#4fd3a0;flex-shrink:0"><span data-icon="smartphone" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-weight:600;font-size:15.5px;color:#eef5f7">A portal for every employee</div><div style="font-size:14px;line-height:1.55;color:#93a9b0;margin-top:3px">Self-service leave, documents, training and org chart.</div></div></div>
+        </div>
+      </div>
+
+      <div data-reveal="scale" data-delay="120" data-dur="1200" style="position:relative;width:100%;max-width:600px;aspect-ratio:1/1;margin:0 auto">
+        <div style="position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,255,255,.05)"></div>
+        <div style="position:absolute;inset:8%;border-radius:50%;border:1px dashed rgba(255,255,255,.13)"></div>
+        <div style="position:absolute;inset:20%;border-radius:50%;border:1px dashed rgba(255,255,255,.15)"></div>
+        <div data-loop="spin" data-dur="9000" style="position:absolute;inset:8%;border-radius:50%;background:conic-gradient(from 0deg,rgba(95,227,240,0) 0deg,rgba(95,227,240,0) 270deg,rgba(95,227,240,.95) 356deg,rgba(95,227,240,0) 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px))"></div>
+        <div data-loop="spin-rev" data-dur="14000" style="position:absolute;inset:20%;border-radius:50%;background:conic-gradient(from 0deg,rgba(154,139,240,0) 0deg,rgba(154,139,240,0) 280deg,rgba(154,139,240,.9) 356deg,rgba(154,139,240,0) 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px))"></div>
+        <div style="position:absolute;inset:28%;border-radius:50%;background:radial-gradient(closest-side,rgba(39,192,212,.38),transparent)"></div>
+        <div style="position:absolute;left:50%;top:50%;width:136px;height:136px;margin:-68px 0 0 -68px">
+          <span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(95,227,240,.55)"></span>
+          <span data-loop="ping" data-delay="1300" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(95,227,240,.55)"></span>
+          <img src="assets/wedy-avatar.png" alt="Wedy" style="position:relative;display:block;width:136px;height:136px;border-radius:50%;object-fit:cover;background:#0f262e;border:2px solid rgba(95,227,240,.55);box-shadow:0 0 70px -8px rgba(39,192,212,.75)">
+          <span style="position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);white-space:nowrap;padding:4px 11px;border-radius:99px;background:#06141a;border:1px solid rgba(95,227,240,.45);font-family:'Geist Mono',monospace;font-size:11px;color:#5fe3f0">Wedy AI</span>
+        </div>
+
+        <div data-loop="spin" data-dur="80000" style="position:absolute;inset:0">
+          <div style="position:absolute;left:75.98%;top:65%;transform:translate(-50%,-50%)"><div data-loop="spin-rev" data-dur="80000" style="display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 6px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.11);box-shadow:0 12px 30px -12px rgba(0,0,0,.7);font-size:13px;font-weight:500;color:#dbe7ea;white-space:nowrap"><span style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.16);color:#5fe3f0"><span data-icon="users" data-size="13" style="display:inline-flex;width:13px;height:13px"></span></span>Employees</div></div>
+          <div style="position:absolute;left:50%;top:80%;transform:translate(-50%,-50%)"><div data-loop="spin-rev" data-dur="80000" style="display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 6px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.11);box-shadow:0 12px 30px -12px rgba(0,0,0,.7);font-size:13px;font-weight:500;color:#dbe7ea;white-space:nowrap"><span style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(154,139,240,.18);color:#b3a8f5"><span data-icon="target" data-size="13" style="display:inline-flex;width:13px;height:13px"></span></span>Recruitment</div></div>
+          <div style="position:absolute;left:24.02%;top:65%;transform:translate(-50%,-50%)"><div data-loop="spin-rev" data-dur="80000" style="display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 6px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.11);box-shadow:0 12px 30px -12px rgba(0,0,0,.7);font-size:13px;font-weight:500;color:#dbe7ea;white-space:nowrap"><span style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.16);color:#4fd3a0"><span data-icon="calendar" data-size="13" style="display:inline-flex;width:13px;height:13px"></span></span>Time off</div></div>
+          <div style="position:absolute;left:24.02%;top:35%;transform:translate(-50%,-50%)"><div data-loop="spin-rev" data-dur="80000" style="display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 6px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.11);box-shadow:0 12px 30px -12px rgba(0,0,0,.7);font-size:13px;font-weight:500;color:#dbe7ea;white-space:nowrap"><span style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(230,169,72,.16);color:#f0bd6a"><span data-icon="wallet" data-size="13" style="display:inline-flex;width:13px;height:13px"></span></span>Payroll</div></div>
+          <div style="position:absolute;left:50%;top:20%;transform:translate(-50%,-50%)"><div data-loop="spin-rev" data-dur="80000" style="display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 6px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.11);box-shadow:0 12px 30px -12px rgba(0,0,0,.7);font-size:13px;font-weight:500;color:#dbe7ea;white-space:nowrap"><span style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.16);color:#5fe3f0"><span data-icon="file-text" data-size="13" style="display:inline-flex;width:13px;height:13px"></span></span>Documents</div></div>
+          <div style="position:absolute;left:75.98%;top:35%;transform:translate(-50%,-50%)"><div data-loop="spin-rev" data-dur="80000" style="display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 6px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.11);box-shadow:0 12px 30px -12px rgba(0,0,0,.7);font-size:13px;font-weight:500;color:#dbe7ea;white-space:nowrap"><span style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(154,139,240,.18);color:#b3a8f5"><span data-icon="chart-column|bar-chart-3" data-size="13" style="display:inline-flex;width:13px;height:13px"></span></span>Analytics</div></div>
+        </div>
+
+        <div data-loop="spin-rev" data-dur="120000" style="position:absolute;inset:0">
+          <div style="position:absolute;left:92%;top:50%;transform:translate(-50%,-50%)"><div data-loop="spin" data-dur="120000" style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.09);font-size:12.5px;color:#c4d4d8;white-space:nowrap"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.16);color:#4fd3a0"><span data-icon="user-check" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span>Onboarding</div></div>
+          <div style="position:absolute;left:83.98%;top:74.69%;transform:translate(-50%,-50%)"><div data-loop="spin" data-dur="120000" style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.09);font-size:12.5px;color:#c4d4d8;white-space:nowrap"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(230,169,72,.16);color:#f0bd6a"><span data-icon="trending-up" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span>Performance</div></div>
+          <div style="position:absolute;left:62.98%;top:89.94%;transform:translate(-50%,-50%)"><div data-loop="spin" data-dur="120000" style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.09);font-size:12.5px;color:#c4d4d8;white-space:nowrap"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.16);color:#5fe3f0"><span data-icon="network" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span>Org chart</div></div>
+          <div style="position:absolute;left:37.02%;top:89.94%;transform:translate(-50%,-50%)"><div data-loop="spin" data-dur="120000" style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.09);font-size:12.5px;color:#c4d4d8;white-space:nowrap"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(154,139,240,.18);color:#b3a8f5"><span data-icon="book-open" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span>Training</div></div>
+          <div style="position:absolute;left:16.02%;top:74.69%;transform:translate(-50%,-50%)"><div data-loop="spin" data-dur="120000" style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.09);font-size:12.5px;color:#c4d4d8;white-space:nowrap"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.16);color:#4fd3a0"><span data-icon="inbox" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span>Requests</div></div>
+          <div style="position:absolute;left:8%;top:50%;transform:translate(-50%,-50%)"><div data-loop="spin" data-dur="120000" style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.09);font-size:12.5px;color:#c4d4d8;white-space:nowrap"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(230,169,72,.16);color:#f0bd6a"><span data-icon="megaphone" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span>Job posts</div></div>
+          <div style="position:absolute;left:16.02%;top:25.31%;transform:translate(-50%,-50%)"><div data-loop="spin" data-dur="120000" style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.09);font-size:12.5px;color:#c4d4d8;white-space:nowrap"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.16);color:#5fe3f0"><span data-icon="user-x" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span>Absences</div></div>
+          <div style="position:absolute;left:37.02%;top:10.06%;transform:translate(-50%,-50%)"><div data-loop="spin" data-dur="120000" style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.09);font-size:12.5px;color:#c4d4d8;white-space:nowrap"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(154,139,240,.18);color:#b3a8f5"><span data-icon="video" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span>Meetings</div></div>
+          <div style="position:absolute;left:62.98%;top:10.06%;transform:translate(-50%,-50%)"><div data-loop="spin" data-dur="120000" style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.09);font-size:12.5px;color:#c4d4d8;white-space:nowrap"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.16);color:#4fd3a0"><span data-icon="star" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span>Talents</div></div>
+          <div style="position:absolute;left:83.98%;top:25.31%;transform:translate(-50%,-50%)"><div data-loop="spin" data-dur="120000" style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:999px;background:rgba(10,30,37,.92);border:1px solid rgba(255,255,255,.09);font-size:12.5px;color:#c4d4d8;white-space:nowrap"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(230,169,72,.16);color:#f0bd6a"><span data-icon="clipboard-list" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span>Audit log</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="security" style="position:relative;padding:30px 24px 150px;scroll-margin-top:30px">
+    <div style="max-width:1200px;margin:0 auto">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:56px;align-items:center">
+        <div>
+          <div data-reveal="up" style="display:inline-flex;align-items:center;gap:10px;font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#5fe3f0"><span style="width:24px;height:1px;background:#5fe3f0"></span>04 — Security</div>
+          <h2 data-reveal="up" data-delay="80" style="margin:18px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(38px,4.8vw,62px);line-height:1;letter-spacing:-.045em;color:#f1f8f9;text-wrap:balance">Enterprise-grade security, by default.</h2>
+          <p data-reveal="up" data-delay="160" style="margin:22px 0 0;max-width:500px;font-size:18px;line-height:1.6;color:#9fb4bb;text-wrap:pretty">Employee data is the most sensitive data you hold. Wedy treats it that way — at every layer.</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:22px 26px;margin-top:36px">
+            <div data-reveal="up" data-delay="100" style="display:flex;gap:12px;align-items:flex-start"><span data-icon="shield-check" data-size="21" style="display:inline-flex;width:21px;height:21px;color:#5fe3f0;margin-top:1px"></span><div><div style="font-weight:600;font-size:15px;color:#eef5f7">Role-based access</div><div style="font-size:13.5px;color:#8ea5ad;margin-top:3px">Admin, HR Manager, Employee</div></div></div>
+            <div data-reveal="up" data-delay="160" style="display:flex;gap:12px;align-items:flex-start"><span data-icon="key-round|key" data-size="21" style="display:inline-flex;width:21px;height:21px;color:#5fe3f0;margin-top:1px"></span><div><div style="font-weight:600;font-size:15px;color:#eef5f7">Two-factor authentication</div><div style="font-size:13.5px;color:#8ea5ad;margin-top:3px">Optional, or enforced for admins</div></div></div>
+            <div data-reveal="up" data-delay="220" style="display:flex;gap:12px;align-items:flex-start"><span data-icon="globe" data-size="21" style="display:inline-flex;width:21px;height:21px;color:#5fe3f0;margin-top:1px"></span><div><div style="font-weight:600;font-size:15px;color:#eef5f7">IP allow-listing</div><div style="font-size:13.5px;color:#8ea5ad;margin-top:3px">Restrict access to your offices</div></div></div>
+            <div data-reveal="up" data-delay="280" style="display:flex;gap:12px;align-items:flex-start"><span data-icon="timer" data-size="21" style="display:inline-flex;width:21px;height:21px;color:#5fe3f0;margin-top:1px"></span><div><div style="font-weight:600;font-size:15px;color:#eef5f7">Session timeouts</div><div style="font-size:13.5px;color:#8ea5ad;margin-top:3px">Automatic sign-out when idle</div></div></div>
+            <div data-reveal="up" data-delay="340" style="display:flex;gap:12px;align-items:flex-start"><span data-icon="history" data-size="21" style="display:inline-flex;width:21px;height:21px;color:#5fe3f0;margin-top:1px"></span><div><div style="font-weight:600;font-size:15px;color:#eef5f7">Complete audit log</div><div style="font-size:13.5px;color:#8ea5ad;margin-top:3px">Every action, every user</div></div></div>
+            <div data-reveal="up" data-delay="400" style="display:flex;gap:12px;align-items:flex-start"><span data-icon="webhook" data-size="21" style="display:inline-flex;width:21px;height:21px;color:#5fe3f0;margin-top:1px"></span><div><div style="font-weight:600;font-size:15px;color:#eef5f7">Webhooks &amp; REST API</div><div style="font-size:13.5px;color:#8ea5ad;margin-top:3px">Plug Wedy into your systems</div></div></div>
+          </div>
+        </div>
+
+        <div data-reveal="scale" data-delay="120" style="position:relative">
+          <div aria-hidden="true" style="position:absolute;inset:-30px;background:radial-gradient(50% 50% at 50% 50%,rgba(39,192,212,.18),transparent);pointer-events:none"></div>
+          <div style="position:relative;border-radius:22px;background:#081a20;border:1px solid rgba(255,255,255,.09);box-shadow:0 40px 100px -30px rgba(0,0,0,.85);overflow:hidden">
+            <div style="display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.06)"><span style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.14)"></span><span style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.14)"></span><span style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.14)"></span><span style="margin-left:8px;font-family:'Geist Mono',monospace;font-size:12px;color:#7f969e">audit.log</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:11px;color:#2bbd86"><span data-loop="pulse" style="width:7px;height:7px;border-radius:50%;background:#2bbd86"></span>streaming</span></div>
+            <div style="height:372px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent)">
+              <div data-loop="marquee-y" data-dur="26000" style="display:flex;flex-direction:column">
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:41:07</span><span style="color:#4fd3a0">leave.approved</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Salma I. → Omar A. · 3 days</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:41:52</span><span style="color:#5fe3f0">document.generated</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Attestation de travail · FR</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:42:15</span><span style="color:#b3a8f5">employee.created</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Nadia Berrada · CDI</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:43:01</span><span style="color:#f0bd6a">candidate.hired</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Mehdi Rami · Sales</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:43:40</span><span style="color:#9fb4bb">user.login</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">salma@tython.ma · 2FA ✓</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:44:12</span><span style="color:#9fb4bb">role.updated</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Karim B. → HR Manager</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:44:58</span><span style="color:#5fe3f0">document.generated</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">عقد عمل · AR</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:45:30</span><span style="color:#4fd3a0">leave.requested</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Hind Tazi · 2 days</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:41:07</span><span style="color:#4fd3a0">leave.approved</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Salma I. → Omar A. · 3 days</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:41:52</span><span style="color:#5fe3f0">document.generated</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Attestation de travail · FR</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:42:15</span><span style="color:#b3a8f5">employee.created</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Nadia Berrada · CDI</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:43:01</span><span style="color:#f0bd6a">candidate.hired</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Mehdi Rami · Sales</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:43:40</span><span style="color:#9fb4bb">user.login</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">salma@tython.ma · 2FA ✓</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:44:12</span><span style="color:#9fb4bb">role.updated</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Karim B. → HR Manager</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:44:58</span><span style="color:#5fe3f0">document.generated</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">عقد عمل · AR</span></div>
+                <div style="display:grid;grid-template-columns:70px 158px minmax(0,1fr);gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.04);font-family:'Geist Mono',monospace;font-size:12.5px;white-space:nowrap"><span style="color:#5b737b">09:45:30</span><span style="color:#4fd3a0">leave.requested</span><span style="color:#b9cbd0;overflow:hidden;text-overflow:ellipsis">Hind Tazi · 2 days</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:110px">
+        <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px">
+          <h3 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:clamp(26px,3vw,38px);line-height:1.1;letter-spacing:-.035em;color:#f1f8f9;max-width:580px;text-wrap:balance">Connects with the tools your team already uses.</h3>
+          <span data-reveal="up" style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#7f969e">Integrations</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:30px">
+          <div data-reveal="up" data-delay="0" data-tilt="8" style="position:relative;display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);overflow:hidden;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(200px circle at var(--sx,-999px) var(--sy,-999px),rgba(95,227,240,.14),transparent 60%)"></span><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#effbfc;color:#0a1c24;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px;flex-shrink:0">GC</span><div style="min-width:0"><div style="font-weight:600;font-size:14.5px;color:#eef5f7">Google Calendar</div><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e;margin-top:2px">Two-way sync</div></div></div>
+          <div data-reveal="up" data-delay="50" data-tilt="8" style="position:relative;display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);overflow:hidden;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(200px circle at var(--sx,-999px) var(--sy,-999px),rgba(95,227,240,.14),transparent 60%)"></span><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#effbfc;color:#0a1c24;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px;flex-shrink:0">OL</span><div style="min-width:0"><div style="font-weight:600;font-size:14.5px;color:#eef5f7">Microsoft Outlook</div><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e;margin-top:2px">Event sync</div></div></div>
+          <div data-reveal="up" data-delay="100" data-tilt="8" style="position:relative;display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);overflow:hidden;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(200px circle at var(--sx,-999px) var(--sy,-999px),rgba(95,227,240,.14),transparent 60%)"></span><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#effbfc;color:#0a1c24;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px;flex-shrink:0">AC</span><div style="min-width:0"><div style="font-weight:600;font-size:14.5px;color:#eef5f7">Apple Calendar</div><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e;margin-top:2px">iCal feed</div></div></div>
+          <div data-reveal="up" data-delay="150" data-tilt="8" style="position:relative;display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);overflow:hidden;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(200px circle at var(--sx,-999px) var(--sy,-999px),rgba(95,227,240,.14),transparent 60%)"></span><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#3d2f99;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px;flex-shrink:0">SL</span><div style="min-width:0"><div style="font-weight:600;font-size:14.5px;color:#eef5f7">Slack</div><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e;margin-top:2px">HR notifications</div></div></div>
+          <div data-reveal="up" data-delay="200" data-tilt="8" style="position:relative;display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);overflow:hidden;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(200px circle at var(--sx,-999px) var(--sy,-999px),rgba(95,227,240,.14),transparent 60%)"></span><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#3d2f99;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px;flex-shrink:0">MT</span><div style="min-width:0"><div style="font-weight:600;font-size:14.5px;color:#eef5f7">Microsoft Teams</div><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e;margin-top:2px">Alerts</div></div></div>
+          <div data-reveal="up" data-delay="0" data-tilt="8" style="position:relative;display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);overflow:hidden;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(200px circle at var(--sx,-999px) var(--sy,-999px),rgba(95,227,240,.14),transparent 60%)"></span><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#3d2f99;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:15px;flex-shrink:0">@</span><div style="min-width:0"><div style="font-weight:600;font-size:14.5px;color:#eef5f7">SMTP email</div><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e;margin-top:2px">Your own server</div></div></div>
+          <div data-reveal="up" data-delay="50" data-tilt="8" style="position:relative;display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);overflow:hidden;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(200px circle at var(--sx,-999px) var(--sy,-999px),rgba(95,227,240,.14),transparent 60%)"></span><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#0f6f49;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px;flex-shrink:0">SP</span><div style="min-width:0"><div style="font-weight:600;font-size:14.5px;color:#eef5f7">Sage Paie</div><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e;margin-top:2px">Payroll export</div></div></div>
+          <div data-reveal="up" data-delay="100" data-tilt="8" style="position:relative;display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);overflow:hidden;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(200px circle at var(--sx,-999px) var(--sy,-999px),rgba(95,227,240,.14),transparent 60%)"></span><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#0f6f49;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px;flex-shrink:0">CG</span><div style="min-width:0"><div style="font-weight:600;font-size:14.5px;color:#eef5f7">Cegid</div><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e;margin-top:2px">Employee sync</div></div></div>
+          <div data-reveal="up" data-delay="150" data-tilt="8" style="position:relative;display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);overflow:hidden;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(200px circle at var(--sx,-999px) var(--sy,-999px),rgba(95,227,240,.14),transparent 60%)"></span><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#7a4706;font-family:'Geist Mono',monospace;font-weight:600;font-size:13px;flex-shrink:0">{ }</span><div style="min-width:0"><div style="font-weight:600;font-size:14.5px;color:#eef5f7">REST API</div><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e;margin-top:2px">Custom integrations</div></div></div>
+          <div data-reveal="up" data-delay="200" data-tilt="8" style="position:relative;display:flex;align-items:center;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);overflow:hidden;transform:perspective(800px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,background .3s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(200px circle at var(--sx,-999px) var(--sy,-999px),rgba(95,227,240,.14),transparent 60%)"></span><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#7a4706;flex-shrink:0"><span data-icon="webhook" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><div style="min-width:0"><div style="font-weight:600;font-size:14.5px;color:#eef5f7">Webhooks</div><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e;margin-top:2px">leave.approved, …</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div style="position:relative;z-index:4;margin-top:-44px;background:#f3f6f7;color:#0a1c24;border-radius:44px 44px 0 0">
+  <section id="pricing" style="padding:130px 24px 160px;scroll-margin-top:30px">
+    <div style="max-width:1200px;margin:0 auto">
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center">
+        <div data-reveal="up" style="display:inline-flex;align-items:center;gap:10px;font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#0e6f84"><span style="width:24px;height:1px;background:#0e6f84"></span>05 — Pricing<span style="width:24px;height:1px;background:#0e6f84"></span></div>
+        <h2 data-reveal="up" data-delay="80" style="margin:18px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(38px,4.8vw,62px);line-height:1;letter-spacing:-.045em;color:#0a1c24;text-wrap:balance">Simple, transparent pricing.</h2>
+        <p data-reveal="up" data-delay="160" style="margin:18px 0 0;font-size:18px;line-height:1.6;color:#52646d">Start free for 14 days. Scale as your team grows.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px;margin-top:60px;align-items:stretch">
+        <div data-reveal="up" style="display:flex;flex-direction:column;padding:34px;border-radius:28px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:22px;color:#0a1c24">Starter</div>
+          <div style="font-size:14.5px;color:#52646d;margin-top:6px">For small teams getting organized.</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:28px"><span data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:58px;letter-spacing:-.05em;line-height:1;color:#0a1c24">199</span><span style="font-size:15px;color:#52646d">MAD / month</span></div>
+          <a href="#top" style="margin-top:28px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 18px;border-radius:13px;border:1px solid #cfd8dc;color:#0a1c24;font-weight:600;font-size:15px;text-decoration:none;transition:background .2s,border-color .2s" style-hover="color:#0a1c24;background:#f3f6f7;border-color:#b3c1c7">Get started</a>
+          <div style="height:1px;background:#edf1f3;margin:28px 0 24px"></div>
+          <div style="display:flex;flex-direction:column;gap:13px">
+            <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#33474f"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>Up to 25 employees</div>
+            <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#33474f"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>50 documents / month</div>
+            <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#33474f"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>French + Arabic</div>
+            <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#33474f"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>Email support</div>
+          </div>
+        </div>
+
+        <div data-reveal="up" data-delay="100" style="position:relative;padding:1.5px;border-radius:30px;overflow:hidden;box-shadow:0 40px 90px -40px rgba(14,111,132,.75)">
+          <div data-loop="spin" data-dur="7000" style="position:absolute;left:50%;top:50%;width:180%;aspect-ratio:1/1;margin-left:-90%;margin-top:-90%;background:conic-gradient(from 0deg,rgba(95,227,240,0) 0deg,#5fe3f0 70deg,#9a8bf0 140deg,rgba(154,139,240,0) 200deg,rgba(95,227,240,0) 360deg)"></div>
+          <div style="position:relative;display:flex;flex-direction:column;height:100%;padding:34px;border-radius:28.5px;background:linear-gradient(180deg,#0c242b,#06141a);color:#e8eff1">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:22px;color:#f1f8f9">Professional</span><span style="font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff">Most popular</span></div>
+            <div style="font-size:14.5px;color:#9fb4bb;margin-top:6px">For growing HR teams that want AI everywhere.</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:28px"><span data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:58px;letter-spacing:-.05em;line-height:1;color:#ffffff">499</span><span style="font-size:15px;color:#9fb4bb">MAD / month</span></div>
+            <a href="#top" data-magnet="" style="position:relative;overflow:hidden;margin-top:28px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 18px;border-radius:13px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-weight:600;font-size:15px;text-decoration:none;box-shadow:0 14px 34px -12px rgba(22,182,200,.8);transform:translate(var(--tx,0px),var(--ty,0px));transition:transform .35s cubic-bezier(.2,.8,.2,1)" style-hover="color:#ffffff"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);pointer-events:none"></span><span style="position:relative">Start free trial</span><span data-icon="arrow-right" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px"></span></a>
+            <div style="height:1px;background:rgba(255,255,255,.08);margin:28px 0 24px"></div>
+            <div style="display:flex;flex-direction:column;gap:13px">
+              <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#cfdde1"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.18);color:#5fe3f0;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>Up to 100 employees</div>
+              <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#cfdde1"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.18);color:#5fe3f0;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>Unlimited documents</div>
+              <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#cfdde1"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.18);color:#5fe3f0;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>All languages + AI Copilot</div>
+              <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#cfdde1"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.18);color:#5fe3f0;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>Priority support</div>
+              <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#cfdde1"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.18);color:#5fe3f0;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>Custom templates</div>
+            </div>
+          </div>
+        </div>
+
+        <div data-reveal="up" data-delay="200" style="display:flex;flex-direction:column;padding:34px;border-radius:28px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:22px;color:#0a1c24">Enterprise</div>
+          <div style="font-size:14.5px;color:#52646d;margin-top:6px">For large organizations with advanced needs.</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-top:28px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:58px;letter-spacing:-.05em;line-height:1;color:#0a1c24">Custom</span></div>
+          <a href="#top" style="margin-top:28px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 18px;border-radius:13px;background:#0a1c24;color:#ffffff;font-weight:600;font-size:15px;text-decoration:none;transition:background .2s" style-hover="color:#ffffff;background:#16323c">Contact sales</a>
+          <div style="height:1px;background:#edf1f3;margin:28px 0 24px"></div>
+          <div style="display:flex;flex-direction:column;gap:13px">
+            <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#33474f"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>Unlimited everything</div>
+            <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#33474f"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>SAML SSO</div>
+            <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#33474f"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>Dedicated support</div>
+            <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#33474f"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>SLA guarantee</div>
+            <div style="display:flex;align-items:center;gap:11px;font-size:14.5px;color:#33474f"><span style="width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="check" data-size="12" data-sw="2.8" style="display:inline-flex;width:12px;height:12px"></span></span>Custom integrations</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div style="position:relative;z-index:5;margin-top:-44px;background:#06141a;color:#e8eff1;border-radius:44px 44px 0 0;overflow:hidden">
+  <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none">
+    <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:72px 72px;-webkit-mask-image:radial-gradient(ellipse 60% 50% at 50% 30%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse 60% 50% at 50% 30%,#000 20%,transparent 75%)"></div>
+    <div data-loop="drift" style="position:absolute;left:50%;top:0;width:900px;height:640px;margin-left:-450px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.5),transparent)"></div>
+    <div data-loop="drift" data-dur="26000" data-delay="-7000" style="position:absolute;left:58%;top:12%;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.28),transparent)"></div>
+  </div>
+  <section style="position:relative;padding:150px 24px 100px;text-align:center">
+    <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center">
+      <div data-reveal="scale" style="position:relative;width:96px;height:96px">
+        <span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(95,227,240,.55)"></span>
+        <span data-loop="ping" data-delay="1300" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(95,227,240,.55)"></span>
+        <img src="assets/wedy-avatar.png" alt="Wedy" style="position:relative;display:block;width:96px;height:96px;border-radius:50%;object-fit:cover;background:#0f262e;border:2px solid rgba(95,227,240,.55);box-shadow:0 0 60px -6px rgba(39,192,212,.7)">
+      </div>
+      <h2 data-reveal="up" data-delay="100" style="margin:38px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(44px,6.4vw,88px);line-height:.98;letter-spacing:-.05em;color:#f1f8f9;text-wrap:balance">Ready to transform your HR?</h2>
+      <p data-reveal="up" data-delay="200" style="margin:24px 0 0;font-size:19px;line-height:1.6;color:#9fb4bb;max-width:520px;text-wrap:pretty">Join HR teams using Wedy to automate their daily operations.</p>
+      <div data-reveal="up" data-delay="300" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:40px">
+        <a href="#top" data-magnet="" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:10px;padding:17px 26px 17px 28px;border-radius:14px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-weight:600;font-size:16.5px;text-decoration:none;box-shadow:inset 0 0 0 1px rgba(95,227,240,.35),0 18px 44px -12px rgba(22,182,200,.7);transform:translate(var(--tx,0px),var(--ty,0px));transition:transform .35s cubic-bezier(.2,.8,.2,1)" style-hover="color:#ffffff"><span data-loop="shine" data-delay="-1500" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);pointer-events:none"></span><span style="position:relative">Start free trial</span><span data-icon="arrow-right" data-size="18" style="position:relative;display:inline-flex;width:18px;height:18px"></span></a>
+        <a href="#pricing" data-magnet="" style="display:inline-flex;align-items:center;gap:10px;padding:17px 24px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:#e8eff1;font-weight:600;font-size:16.5px;text-decoration:none;transform:translate(var(--tx,0px),var(--ty,0px));transition:transform .35s cubic-bezier(.2,.8,.2,1),background .2s" style-hover="color:#ffffff;background:rgba(255,255,255,.1)">Book a demo</a>
+      </div>
+    </div>
+  </section>
+
+  <footer style="position:relative;padding:0 24px">
+    <div style="max-width:1200px;margin:0 auto;padding:56px 0 40px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-wrap:wrap;gap:48px;justify-content:space-between">
+      <div style="max-width:320px">
+        <div style="display:flex;align-items:center;gap:10px"><img src="assets/wedy-avatar.png" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;background:#0f262e;border:1.5px solid rgba(255,255,255,.2)"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:21px;letter-spacing:-.03em;color:#f1f8f9">Wedy</span></div>
+        <p style="margin:16px 0 0;font-size:14.5px;line-height:1.6;color:#8ea5ad">The AI-native HR platform for Moroccan companies.</p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:64px">
+        <div style="display:flex;flex-direction:column;gap:11px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#6b838c;margin-bottom:4px">PRODUCT</span><a href="#copilot" style="font-size:14.5px;color:#cfdde1;text-decoration:none" style-hover="color:#ffffff">Copilot</a><a href="#features" style="font-size:14.5px;color:#cfdde1;text-decoration:none" style-hover="color:#ffffff">Features</a><a href="#platform" style="font-size:14.5px;color:#cfdde1;text-decoration:none" style-hover="color:#ffffff">Platform</a><a href="#pricing" style="font-size:14.5px;color:#cfdde1;text-decoration:none" style-hover="color:#ffffff">Pricing</a></div>
+        <div style="display:flex;flex-direction:column;gap:11px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#6b838c;margin-bottom:4px">COMPANY</span><a href="#top" style="font-size:14.5px;color:#cfdde1;text-decoration:none" style-hover="color:#ffffff">About</a><a href="#top" style="font-size:14.5px;color:#cfdde1;text-decoration:none" style-hover="color:#ffffff">Contact</a><a href="#security" style="font-size:14.5px;color:#cfdde1;text-decoration:none" style-hover="color:#ffffff">Security</a></div>
+        <div style="display:flex;flex-direction:column;gap:11px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#6b838c;margin-bottom:4px">LEGAL</span><a href="#top" style="font-size:14.5px;color:#cfdde1;text-decoration:none" style-hover="color:#ffffff">Privacy</a><a href="#top" style="font-size:14.5px;color:#cfdde1;text-decoration:none" style-hover="color:#ffffff">Terms</a></div>
+      </div>
+    </div>
+    <div style="max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;padding-bottom:28px;font-size:13px;color:#7f969e">
+      <span>© 2026 Wedy · Powered by Claude AI</span>
+      <span style="display:flex;gap:16px"><span>English</span><span>Français</span><span style="font-family:'Noto Kufi Arabic',sans-serif">العربية</span></span>
+    </div>
+    <div aria-hidden="true" data-reveal="up" data-dur="1400" style="max-width:1300px;margin:0 auto;text-align:center;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:clamp(120px,27vw,400px);line-height:.8;letter-spacing:-.065em;background:linear-gradient(180deg,rgba(95,227,240,.5),rgba(39,192,212,.08) 72%,rgba(39,192,212,0));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;user-select:none;margin-bottom:-.1em;padding-top:.05em">wedy</div>
+  </footer>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;motion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Full&quot;,&quot;Subtle&quot;,&quot;Off&quot;],&quot;default&quot;:&quot;Full&quot;,&quot;tsType&quot;:&quot;'Full'|'Subtle'|'Off'&quot;,&quot;section&quot;:&quot;Animation&quot;},&quot;cursorLogo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Animation&quot;},&quot;chatAutoplay&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Animation&quot;},&quot;cursorGlow&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Animation&quot;}}">
+const PROMPTS = [
+  "Draft a work certificate for Yasmine Benali, Marketing Lead since March 15, 2022.",
+  "What's the legal notice period for a CDI in Morocco?",
+  "Which departments had the most absences this quarter?"
+];
+const EASE = 'cubic-bezier(.2,.8,.2,1)';
+const HOLD = 5200;
+const LOOPS = {
+  float: [[{ transform: 'translateY(0px)' }, { transform: 'translateY(-10px)' }, { transform: 'translateY(0px)' }], 6000, 'ease-in-out'],
+  float2: [[{ transform: 'translateY(0px)' }, { transform: 'translateY(-16px)' }, { transform: 'translateY(0px)' }], 7800, 'ease-in-out'],
+  drift: [[{ transform: 'translate(0,0) scale(1)' }, { transform: 'translate(7%,-6%) scale(1.12)' }, { transform: 'translate(-5%,5%) scale(.94)' }, { transform: 'translate(0,0) scale(1)' }], 22000, 'ease-in-out'],
+  spin: [[{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], 60000, 'linear'],
+  'spin-rev': [[{ transform: 'rotate(0deg)' }, { transform: 'rotate(-360deg)' }], 60000, 'linear'],
+  pulse: [[{ opacity: 1 }, { opacity: 0.3 }, { opacity: 1 }], 2000, 'ease-in-out'],
+  ping: [[{ transform: 'scale(1)', opacity: 0.6 }, { transform: 'scale(2.3)', opacity: 0 }], 2600, 'cubic-bezier(0,0,.2,1)'],
+  marquee: [[{ transform: 'translateX(0)' }, { transform: 'translateX(-50%)' }], 60000, 'linear'],
+  'marquee-rev': [[{ transform: 'translateX(-50%)' }, { transform: 'translateX(0)' }], 60000, 'linear'],
+  'marquee-y': [[{ transform: 'translateY(0)' }, { transform: 'translateY(-50%)' }], 28000, 'linear'],
+  shimmer: [[{ backgroundPosition: '0% 50%' }, { backgroundPosition: '200% 50%' }], 7000, 'linear'],
+  shine: [[{ transform: 'translateX(-150%) skewX(-20deg)', offset: 0 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 0.35 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 1 }], 4200, 'ease-in-out'],
+  blink: [[{ opacity: 1, offset: 0 }, { opacity: 1, offset: 0.5 }, { opacity: 0, offset: 0.5 }, { opacity: 0, offset: 1 }], 1000, 'linear'],
+  dot: [[{ transform: 'translateY(0px)', opacity: 0.35 }, { transform: 'translateY(-4px)', opacity: 1 }, { transform: 'translateY(0px)', opacity: 0.35 }], 1000, 'ease-in-out'],
+};
+
+class Component extends DCLogic {
+  state = { scen: 0, phase: 2 };
+  rootRef = React.createRef();
+  inputRef = React.createRef();
+  inputBoxRef = React.createRef();
+
+  mode() {
+    const m = this.props.motion ?? 'Full';
+    if (m !== 'Off' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'Off';
+    return m;
+  }
+
+  componentDidMount() {
+    this._alive = true;
+    this.init();
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+    window.addEventListener('resize', this.onResize, { passive: true });
+    window.addEventListener('pointermove', this.onPointer, { passive: true });
+    window.addEventListener('pointerdown', this.burstMosaic, { passive: true });
+    window.addEventListener('pointerout', this.onLeaveWindow, { passive: true });
+    window.addEventListener('scroll', this.kickMosaicOnScroll, { passive: true });
+    this.loadIcons(0);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (this._alive) this.onResize(); });
+  }
+
+  componentDidUpdate(prev) {
+    if (prev && prev.motion !== this.props.motion) { this.teardown(); this.init(); return; }
+    if (prev && prev.cursorLogo !== this.props.cursorLogo) this.kickMosaic();
+    if (prev && prev.chatAutoplay !== this.props.chatAutoplay && this.props.chatAutoplay !== false && this._chatIn && this.state.phase === 2) this.runScenario(this.state.scen);
+    this.scan();
+  }
+
+  componentWillUnmount() {
+    this._alive = false;
+    this.teardown();
+    window.removeEventListener('scroll', this.onScroll);
+    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('pointermove', this.onPointer);
+    window.removeEventListener('pointerdown', this.burstMosaic);
+    window.removeEventListener('pointerout', this.onLeaveWindow);
+    window.removeEventListener('scroll', this.kickMosaicOnScroll);
+    clearTimeout(this._iconT);
+  }
+
+  init() {
+    this._gen = (this._gen || 0) + 1;
+    this._ws = {};
+    ['reveal', 'count', 'loop', 'seq', 'cycle', 'rot', 'fit', 'chat', 'mosaic'].forEach(k => { this._ws[k] = new WeakSet(); });
+    this._ints = []; this._ts = []; this._resets = []; this._fits = []; this._chatIn = false;
+    this._io = new IntersectionObserver(es => es.forEach(this.onSeen), { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    this._vis = new IntersectionObserver(es => es.forEach(e => (e.target.__loops || []).forEach(a => { try { e.isIntersecting ? a.play() : a.pause(); } catch (_) {} })), { rootMargin: '200px' });
+    this._ro = new ResizeObserver(() => requestAnimationFrame(this.onResize));
+    const root = this.rootRef.current;
+    if (root) {
+      this._mo = new MutationObserver(ms => {
+        if (ms.every(x => x.target === this.inputRef.current || (x.target.closest && x.target.closest('[data-icon]')))) return;
+        clearTimeout(this._scanT); this._scanT = setTimeout(this.scan, 60);
+      });
+      this._mo.observe(root, { childList: true, subtree: true });
+    }
+    this.scan();
+  }
+
+  teardown() {
+    this._gen = (this._gen || 0) + 1;
+    ['_io', '_vis', '_mo', '_ro', '_chatIO'].forEach(k => { if (this[k]) { this[k].disconnect(); this[k] = null; } });
+    clearTimeout(this._scanT);
+    (this._ints || []).forEach(clearInterval); (this._ts || []).forEach(clearTimeout);
+    this.stopChat();
+    const root = this.rootRef.current;
+    if (root) {
+      try { root.getAnimations({ subtree: true }).forEach(a => a.cancel()); } catch (_) {}
+      root.querySelectorAll('[data-tilt]').forEach(t => this.resetTilt(t));
+      root.querySelectorAll('[data-magnet]').forEach(g => { g.style.setProperty('--tx', '0px'); g.style.setProperty('--ty', '0px'); });
+      root.querySelectorAll('[data-loop]').forEach(el => { el.__loops = null; });
+    }
+    if (this._hero) { this._hero.style.setProperty('--mx', '0'); this._hero.style.setProperty('--my', '0'); }
+    if (this._mraf) { cancelAnimationFrame(this._mraf); this._mraf = 0; }
+    if (this._mosaic) { this._mosaic.el.replaceChildren(); this._mosaic.el.style.opacity = '0'; this._mosaic = null; }
+    (this._resets || []).forEach(f => { try { f(); } catch (_) {} });
+    this._resets = [];
+  }
+
+  scan = () => {
+    const root = this.rootRef.current; const W = this._ws;
+    if (!root || !W || !this._alive) return;
+    const m = this.mode();
+    this.fillIcons(root);
+    const each = (sel, key, fn) => (W[key] || (W[key] = new WeakSet())) && root.querySelectorAll(sel).forEach(el => { if (!W[key].has(el)) { W[key].add(el); fn.call(this, el, m); } });
+    each('[data-reveal]', 'reveal', this.setupReveal);
+    each('[data-count]', 'count', this.setupCount);
+    each('[data-loop]', 'loop', this.setupLoop);
+    each('[data-seq]', 'seq', this.setupSeq);
+    each('[data-cycle]', 'cycle', this.setupCycle);
+    each('[data-rotator]', 'rot', this.setupRotator);
+    each('[data-fit]', 'fit', el => { this._fits.push(el); if (el.parentElement && this._ro) this._ro.observe(el.parentElement); });
+    each('[data-chat]', 'chat', this.setupChat);
+    each('[data-mosaic]', 'mosaic', this.setupMosaic);
+    this._tilts = [...root.querySelectorAll('[data-scroll="tilt"]')];
+    this._progs = [...root.querySelectorAll('[data-scroll="progress"]')];
+    this._hero = root.querySelector('[data-mouse]');
+    this._nav = root.querySelector('[data-nav]');
+    this.onResize();
+  };
+
+  setupReveal(el, m) {
+    if (m === 'Off') return;
+    const kind = el.dataset.reveal || 'up';
+    const sub = m === 'Subtle';
+    const d = sub ? 10 : 30;
+    let K;
+    switch (kind) {
+      case 'down': K = [{ opacity: 0, translate: `0 ${-d}px` }, { opacity: 1, translate: '0 0' }]; break;
+      case 'left': K = [{ opacity: 0, translate: `${d}px 0` }, { opacity: 1, translate: '0 0' }]; break;
+      case 'right': K = [{ opacity: 0, translate: `${-d}px 0` }, { opacity: 1, translate: '0 0' }]; break;
+      case 'fade': K = [{ opacity: 0 }, { opacity: 1 }]; break;
+      case 'scale': K = [{ opacity: 0, scale: sub ? '0.98' : '0.93' }, { opacity: 1, scale: '1' }]; break;
+      case 'blur': K = sub ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, filter: 'blur(16px)', translate: '0 40px' }, { opacity: 1, filter: 'blur(0px)', translate: '0 0' }]; break;
+      case 'word': K = sub ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, filter: 'blur(10px)', translate: '0 40%' }, { opacity: 1, filter: 'blur(0px)', translate: '0 0' }]; break;
+      case 'growx': K = [{ scale: '0 1' }, { scale: '1 1' }]; break;
+      case 'growy': K = [{ scale: '1 0' }, { scale: '1 1' }]; break;
+      case 'pop': K = [{ opacity: 0, scale: '0.4' }, { opacity: 1, scale: '1.08', offset: 0.7 }, { opacity: 1, scale: '1' }]; break;
+      case 'draw': {
+        let L = 0; try { L = el.getTotalLength(); } catch (_) {}
+        if (!L) return;
+        const f = +(el.dataset.frac || 1);
+        el.style.strokeDasharray = `${(L * f).toFixed(2)}px ${L.toFixed(2)}px`;
+        K = [{ strokeDashoffset: `${(L * f).toFixed(2)}px` }, { strokeDashoffset: '0px' }];
+        break;
+      }
+      default: K = [{ opacity: 0, translate: `0 ${d}px` }, { opacity: 1, translate: '0 0' }];
+    }
+    const base = kind === 'draw' ? 1800 : (kind === 'growx' || kind === 'growy') ? 1100 : kind === 'pop' ? 650 : 900;
+    const dur = (+el.dataset.dur || base) * (sub ? 0.7 : 1);
+    const delay = (+el.dataset.delay || 0) * (sub ? 0.5 : 1);
+    let a;
+    try { a = el.animate(K, { duration: dur, delay, easing: EASE, fill: 'both' }); } catch (_) { return; }
+    a.pause();
+    a.onfinish = () => { try { a.cancel(); } catch (_) {} };
+    el.__reveal = a;
+    this._io.observe(el);
+  }
+
+  onSeen = (e) => {
+    const el = e.target;
+    const above = e.boundingClientRect.bottom < 0;
+    if (!e.isIntersecting && !above) return;
+    if (this._io) this._io.unobserve(el);
+    const a = el.__reveal;
+    if (a) { try { above ? a.finish() : a.play(); } catch (_) {} }
+    if (el.__count) el.__count(above);
+  };
+
+  setupCount(el, m) {
+    const node = el.firstChild;
+    if (!node || el.childNodes.length !== 1 || node.nodeType !== 3) return;
+    const raw = node.nodeValue; const mt = raw.match(/\d[\d,]*(\.\d+)?/);
+    if (!mt || m === 'Off') return;
+    const numStr = mt[0], target = parseFloat(numStr.replace(/,/g, '')), dec = mt[1] ? mt[1].length - 1 : 0;
+    const pre = raw.slice(0, mt.index), post = raw.slice(mt.index + numStr.length);
+    const fmt = v => pre + (numStr.includes(',') ? v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }) : v.toFixed(dec)) + post;
+    node.nodeValue = fmt(0);
+    this._resets.push(() => { node.nodeValue = raw; });
+    const gen = this._gen;
+    el.__count = (instant) => {
+      if (instant) { node.nodeValue = raw; return; }
+      const dur = +el.dataset.countDur || 1700; const start = performance.now() + (+el.dataset.delay || 0);
+      const step = now => {
+        if (gen !== this._gen) { node.nodeValue = raw; return; }
+        const t = Math.max(0, Math.min(1, (now - start) / dur));
+        const k = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+        node.nodeValue = t >= 1 ? raw : fmt(dec ? target * k : Math.round(target * k));
+        if (t < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+    this._io.observe(el);
+  }
+
+  setupLoop(el, m) {
+    if (m === 'Off') return;
+    const kind = el.dataset.loop;
+    if (m === 'Subtle' && /^(float|float2|drift)$/.test(kind)) return;
+    const def = LOOPS[kind]; if (!def) return;
+    const [K, d0, ease] = def;
+    let a;
+    try { a = el.animate(K, { duration: +el.dataset.dur || d0, iterations: Infinity, easing: ease, delay: +el.dataset.delay || 0 }); } catch (_) { return; }
+    if (kind === 'spin' || kind === 'spin-rev') {
+      if (this._t0 == null) this._t0 = document.timeline ? document.timeline.currentTime : 0;
+      try { a.startTime = this._t0; } catch (_) {}
+    } else {
+      el.__loops = [a];
+      this._vis.observe(el);
+    }
+  }
+
+  setupSeq(el, m) {
+    if (m === 'Off') return;
+    const root = el.closest('[data-seq-root]'); if (!root) return;
+    const P = +root.dataset.seqRoot || 7000;
+    if (root.__st == null) root.__st = document.timeline ? document.timeline.currentTime : 0;
+    const kind = el.dataset.seq, at = +(el.dataset.at || 0), end = Math.min(at + (+(el.dataset.len || 0.1)), 0.84);
+    const map = { x: ['scale', '0 1', '1 1'], y: ['scale', '1 0', '1 1'], pop: ['scale', '0.3', '1'] };
+    let K;
+    if (kind === 'fade') K = [{ opacity: 0, offset: 0 }, { opacity: 0, offset: at, easing: EASE }, { opacity: 1, offset: end }, { opacity: 1, offset: 0.88 }, { opacity: 0, offset: 0.96 }, { opacity: 0, offset: 1 }];
+    else if (map[kind]) {
+      const [p, a, b] = map[kind]; const o0 = kind === 'pop' ? 0 : 1;
+      K = [
+        { [p]: a, opacity: o0, offset: 0 },
+        { [p]: a, opacity: o0, offset: at, easing: kind === 'pop' ? 'cubic-bezier(.3,1.6,.5,1)' : EASE },
+        { [p]: b, opacity: 1, offset: end },
+        { [p]: b, opacity: 1, offset: 0.88 },
+        { [p]: b, opacity: 0, offset: 0.96 },
+        { [p]: a, opacity: 0, offset: 1 },
+      ];
+    } else return;
+    try { const an = el.animate(K, { duration: P, iterations: Infinity }); an.startTime = root.__st; } catch (_) {}
+  }
+
+  setupCycle(el, m) {
+    const items = [...el.querySelectorAll('[data-cycle-item]')];
+    if (items.length < 2) return;
+    const pill = el.querySelector('[data-cycle-pill]');
+    const tabs = [...el.querySelectorAll('[data-cycle-tab]')];
+    const origC = tabs.map(t => t.style.color), origO = items.map(it => it.style.opacity);
+    let i = 0;
+    const paint = () => {
+      items.forEach((it, j) => { it.style.opacity = j === i ? '1' : '0'; });
+      if (pill) pill.style.transform = `translateX(${i * 100}%)`;
+      tabs.forEach((t, j) => { t.style.color = j === i ? (t.dataset.on || '') : (t.dataset.off || ''); });
+    };
+    paint();
+    this._resets.push(() => { items.forEach((it, j) => { it.style.opacity = origO[j]; }); if (pill) pill.style.transform = ''; tabs.forEach((t, j) => { t.style.color = origC[j]; }); });
+    if (m === 'Off') return;
+    this._ints.push(setInterval(() => {
+      const prev = items[i]; i = (i + 1) % items.length; const next = items[i];
+      paint();
+      try {
+        prev.animate([{ opacity: 1, filter: 'blur(0px)', translate: '0 0' }, { opacity: 0, filter: 'blur(8px)', translate: '0 -14px' }], { duration: 450, easing: EASE });
+        next.animate([{ opacity: 0, filter: 'blur(8px)', translate: '0 14px' }, { opacity: 1, filter: 'blur(0px)', translate: '0 0' }], { duration: 700, easing: EASE });
+      } catch (_) {}
+    }, +el.dataset.cycle || 2800));
+  }
+
+  setupRotator(el, m) {
+    const kids = [...el.children]; const mask = el.parentElement;
+    if (kids.length < 2 || !mask) return;
+    const n = kids.length - 1;
+    let i = 0;
+    const fitW = () => { const w = kids[i].offsetWidth; if (w) mask.style.width = w + 'px'; };
+    fitW();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitW);
+    this._resets.push(() => { mask.style.width = ''; mask.style.transition = ''; el.style.transform = ''; el.style.transition = ''; });
+    if (m === 'Off') return;
+    requestAnimationFrame(() => { mask.style.transition = 'width .6s ' + EASE; });
+    this._ints.push(setInterval(() => {
+      i++;
+      const h = kids[0].offsetHeight;
+      el.style.transition = 'transform .7s ' + EASE;
+      el.style.transform = `translateY(${-i * h}px)`;
+      fitW();
+      if (i >= n) this._ts.push(setTimeout(() => { el.style.transition = 'none'; el.style.transform = 'translateY(0px)'; i = 0; }, 760));
+    }, 2400));
+  }
+
+  setupChat(el, m) {
+    if (m === 'Off') { this.stopChat(); if (this.state.phase !== 2) this.setState({ phase: 2 }); return; }
+    this._chatIO = new IntersectionObserver(([e]) => {
+      if (!e || !this._alive) return;
+      if (e.isIntersecting && !this._chatIn) { this._chatIn = true; this.runScenario(this.state.scen); }
+      else if (!e.isIntersecting && this._chatIn) { this._chatIn = false; this.stopChat(); this.setInput(''); if (this.state.phase !== 2) this.setState({ phase: 2 }); }
+    }, { threshold: 0.3 });
+    this._chatIO.observe(el);
+  }
+
+  setupMosaic(el, m) {
+    el.replaceChildren();
+    if (m !== 'Full') return;
+    const N = 9, T = 11, G = 2, C = T + G, S = N * C, R = S / 2;
+    const tiles = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const ox = c * C - R, oy = r * C - R;
+      const dist = Math.hypot(ox + T / 2, oy + T / 2);
+      if (dist > R - 2) continue;
+      const d = document.createElement('div');
+      d.style.cssText = `position:absolute;left:0;top:0;width:${T}px;height:${T}px;border-radius:3px;background-color:rgba(15,38,46,.72);background-image:url(assets/wedy-avatar.png);background-size:${S}px ${S}px;background-position:${-c * C}px ${-r * C}px;box-shadow:0 0 0 .5px rgba(95,227,240,.28);will-change:transform`;
+      el.appendChild(d);
+      tiles.push({ el: d, ox, oy, n: dist / R, x: 0, y: 0, vx: 0, vy: 0, k: 0.17 - (dist / R) * 0.1 + Math.random() * 0.025, ph: Math.random() * 6.28, init: false });
+    }
+    this._mosaic = { el, tiles, R, op: 0 };
+  }
+
+  kickMosaic() { if (!this._mraf && this._mosaic) this._mraf = requestAnimationFrame(this.mosaicTick); }
+
+  mosaicTick = (now) => {
+    this._mraf = 0;
+    const M = this._mosaic, h = this._hero;
+    if (!M || !h || !this._alive) return;
+    const want = this._mIn && this.props.cursorLogo !== false && this.mode() === 'Full' ? 1 : 0;
+    M.op += (want - M.op) * 0.14;
+    M.el.style.opacity = M.op.toFixed(3);
+    const r = h.getBoundingClientRect();
+    const ax = (this._mx || 0) - r.left + 58, ay = (this._my || 0) - r.top + 58;
+    const spread = this._mHover ? 1.75 : 1;
+    const t0 = now || performance.now();
+    M.tiles.forEach(t => {
+      const tx = ax + t.ox * spread, ty = ay + t.oy * spread + Math.sin(t0 / 520 + t.ph) * 1.1;
+      if (!t.init) { t.x = tx + (Math.random() - 0.5) * 140; t.y = ty + (Math.random() - 0.5) * 140; t.init = true; }
+      t.vx = (t.vx + (tx - t.x) * t.k) * 0.74;
+      t.vy = (t.vy + (ty - t.y) * t.k) * 0.74;
+      t.x += t.vx; t.y += t.vy;
+      const sp = Math.hypot(t.vx, t.vy);
+      const rot = Math.max(-45, Math.min(45, t.vx * 2.4 - t.vy * 0.8));
+      const sc = (0.55 + M.op * 0.45) * (1 + Math.min(0.45, sp * 0.018));
+      t.el.style.transform = `translate3d(${t.x.toFixed(1)}px,${t.y.toFixed(1)}px,0) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+    });
+    if (M.op > 0.005 || want) this._mraf = requestAnimationFrame(this.mosaicTick);
+    else M.tiles.forEach(t => { t.init = false; });
+  };
+
+  burstMosaic = (e) => {
+    const M = this._mosaic; if (!M || !this._mIn || e.pointerType === 'touch') return;
+    M.tiles.forEach(t => {
+      const a = Math.atan2(t.oy, t.ox) + (Math.random() - 0.5) * 0.8, f = 14 + t.n * 22 + Math.random() * 10;
+      t.vx += Math.cos(a) * f; t.vy += Math.sin(a) * f;
+    });
+    this.kickMosaic();
+  };
+
+  kickMosaicOnScroll = () => {
+    const h = this._hero; if (!h || this._mx == null) return;
+    const r = h.getBoundingClientRect();
+    this._mIn = this._my >= r.top && this._my <= r.bottom && this._mx >= r.left && this._mx <= r.right;
+    this.kickMosaic();
+  };
+
+  onLeaveWindow = (e) => { if (!e.relatedTarget) { this._mIn = false; this.kickMosaic(); } };
+
+  setInput(t) {
+    const n = this.inputRef.current; if (n) n.textContent = t;
+    const b = this.inputBoxRef.current; if (b) b.scrollLeft = t ? b.scrollWidth : 0;
+  }
+
+  stopChat() {
+    this._tok = (this._tok || 0) + 1;
+    (this._timers || []).forEach(clearTimeout);
+    this._timers = [];
+    if (this._bar) { try { this._bar.cancel(); } catch (_) {} this._bar = null; }
+  }
+
+  animateBar(total) {
+    const root = this.rootRef.current; const bar = root && root.querySelector('[data-scen-bar]');
+    if (!bar) return;
+    try { this._bar = bar.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: total, easing: 'linear', fill: 'forwards' }); } catch (_) {}
+  }
+
+  runScenario(i) {
+    if (!this._alive) return;
+    this.stopChat();
+    const tok = this._tok;
+    const ok = () => this._alive && tok === this._tok;
+    const later = (ms, fn) => { this._timers.push(setTimeout(() => { if (ok()) fn(); }, ms)); };
+    if (this.mode() === 'Off') { this.setState({ scen: i, phase: 2 }); return; }
+    const text = PROMPTS[i];
+    const delays = Array.from(text, () => 14 + Math.random() * 26);
+    const total = 600 + delays.reduce((a, b) => a + b, 0) + 450 + 1400 + HOLD;
+    this.setState({ scen: i, phase: 0 }, () => { if (ok()) { this.setInput(''); this.animateBar(total); } });
+    let k = 0;
+    const send = () => {
+      this.setInput('');
+      this.setState({ phase: 1 });
+      later(1400, () => this.setState({ phase: 2 }));
+      later(1400 + HOLD, () => { if (this.props.chatAutoplay !== false) this.runScenario((i + 1) % PROMPTS.length); });
+    };
+    const type = () => { k++; this.setInput(text.slice(0, k)); if (k < text.length) later(delays[k], type); else later(450, send); };
+    later(600, type);
+  }
+
+  pick(i) { this._chatIn = true; this.runScenario(i); }
+
+  onPointer = (e) => {
+    if (this.mode() !== 'Full') return;
+    const x = e.clientX, y = e.clientY, glow = this.props.cursorGlow !== false;
+    const h = this._hero;
+    if (h && e.pointerType !== 'touch') {
+      const r = h.getBoundingClientRect();
+      this._mx = x; this._my = y;
+      this._mIn = y >= r.top && y <= r.bottom && x >= r.left && x <= r.right;
+      this._mHover = !!(e.target && e.target.closest && e.target.closest('a,button'));
+      this.kickMosaic();
+    }
+    if (h) {
+      const r = h.getBoundingClientRect();
+      if (y >= r.top && y <= r.bottom) {
+        h.style.setProperty('--mx', ((x - r.left) / r.width * 2 - 1).toFixed(3));
+        h.style.setProperty('--my', ((y - r.top) / r.height * 2 - 1).toFixed(3));
+        if (glow) { h.style.setProperty('--cx', (x - r.left).toFixed(0) + 'px'); h.style.setProperty('--cy', (y - r.top).toFixed(0) + 'px'); }
+      }
+    }
+    const tgt = e.target && e.target.closest ? e.target : null;
+    const t = tgt ? tgt.closest('[data-tilt]') : null;
+    if (t !== this._tiltEl) { if (this._tiltEl) this.resetTilt(this._tiltEl); this._tiltEl = t; }
+    if (t) {
+      const r = t.getBoundingClientRect(); const px = (x - r.left) / r.width, py = (y - r.top) / r.height; const amt = +(t.dataset.tilt || 6);
+      t.style.setProperty('--ry', ((px - 0.5) * amt).toFixed(2) + 'deg');
+      t.style.setProperty('--rx', ((0.5 - py) * amt).toFixed(2) + 'deg');
+      if (glow) { t.style.setProperty('--sx', (x - r.left).toFixed(0) + 'px'); t.style.setProperty('--sy', (y - r.top).toFixed(0) + 'px'); }
+    }
+    const g = tgt ? tgt.closest('[data-magnet]') : null;
+    if (g !== this._magEl) { if (this._magEl) { this._magEl.style.setProperty('--tx', '0px'); this._magEl.style.setProperty('--ty', '0px'); } this._magEl = g; }
+    if (g) { const r = g.getBoundingClientRect(); g.style.setProperty('--tx', ((x - r.left - r.width / 2) * 0.22).toFixed(1) + 'px'); g.style.setProperty('--ty', ((y - r.top - r.height / 2) * 0.32).toFixed(1) + 'px'); }
+  };
+
+  resetTilt(t) { t.style.setProperty('--rx', '0deg'); t.style.setProperty('--ry', '0deg'); t.style.setProperty('--sx', '-999px'); t.style.setProperty('--sy', '-999px'); }
+
+  onScroll = () => {
+    if (this._raf) return;
+    this._raf = requestAnimationFrame(() => {
+      this._raf = 0;
+      if (!this._alive) return;
+      const vh = window.innerHeight; const m = this.mode();
+      if (this._nav) this._nav.style.setProperty('--nav', Math.min(1, window.scrollY / 120).toFixed(3));
+      (this._tilts || []).forEach(el => {
+        const r = (el.parentElement || el).getBoundingClientRect();
+        const p = m === 'Full' ? Math.max(0, Math.min(1, (vh - r.top) / (vh * 0.9))) : 1;
+        el.style.setProperty('--p', p.toFixed(3));
+      });
+      (this._progs || []).forEach(el => {
+        const r = el.getBoundingClientRect();
+        const p = m === 'Off' ? 1 : Math.max(0, Math.min(1, (vh * 0.8 - r.top) / (vh * 0.5)));
+        el.style.setProperty('--p', p.toFixed(3));
+      });
+    });
+  };
+
+  onResize = () => {
+    if (!this._alive) return;
+    (this._fits || []).forEach(el => {
+      const d = +el.dataset.fit || 1100; const par = el.parentElement; if (!par) return;
+      const s = Math.min(1, par.clientWidth / d);
+      el.style.setProperty('--fit', s.toFixed(4));
+      const h = Math.ceil(el.offsetHeight * s) + 'px';
+      if (par.style.height !== h) par.style.height = h;
+    });
+    this.onScroll();
+  };
+
+  fillIcons(root) {
+    const L = window.lucide; if (!L || !L.icons) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    root.querySelectorAll('[data-icon]').forEach(el => {
+      if (el.firstChild) return;
+      let node = null;
+      for (const n of el.dataset.icon.split('|')) { node = L.icons[n.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase())]; if (node) break; }
+      if (!node) return;
+      const size = el.dataset.size || 18;
+      const svg = document.createElementNS(NS, 'svg');
+      const attrs = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': el.dataset.sw || 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+      Object.keys(attrs).forEach(k => svg.setAttribute(k, attrs[k]));
+      svg.style.display = 'block'; svg.style.flexShrink = '0';
+      const kids = node[0] === 'svg' ? node[2] : node;
+      (kids || []).forEach(c => { if (!Array.isArray(c)) return; const n = document.createElementNS(NS, c[0]); Object.keys(c[1] || {}).forEach(k => { if (k !== 'key') n.setAttribute(k, c[1][k]); }); svg.appendChild(n); });
+      el.appendChild(svg);
+    });
+  }
+
+  loadIcons(n) {
+    if (!this._alive) return;
+    if (window.lucide && window.lucide.icons) { const r = this.rootRef.current; if (r) this.fillIcons(r); return; }
+    if (n === 20 && !document.querySelector('script[data-lucide-fallback]')) {
+      const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js'; s.setAttribute('data-lucide-fallback', '1'); document.head.appendChild(s);
+    }
+    if (n < 100) this._iconT = setTimeout(() => this.loadIcons(n + 1), 120);
+  }
+
+  renderVals() {
+    const { scen, phase } = this.state;
+    return {
+      rootRef: this.rootRef, inputRef: this.inputRef, inputBoxRef: this.inputBoxRef,
+      s0: scen === 0, s1: scen === 1, s2: scen === 2,
+      u0: scen === 0 && phase >= 1, u1: scen === 1 && phase >= 1, u2: scen === 2 && phase >= 1,
+      typing: phase === 1,
+      a0: scen === 0 && phase >= 2, a1: scen === 1 && phase >= 2, a2: scen === 2 && phase >= 2,
+      showPh: phase !== 0,
+      pick0: () => this.pick(0), pick1: () => this.pick(1), pick2: () => this.pick(2),
+    };
+  }
+}
+</script>
+</body>
+</html>

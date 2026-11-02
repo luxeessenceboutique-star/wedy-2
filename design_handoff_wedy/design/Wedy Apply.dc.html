@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Responsable commercial B2B — Tython recrute</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder, textarea::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <header style="position:sticky;top:0;z-index:30;background:rgba(243,246,247,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid #e2e8eb">
+    <div style="max-width:1140px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:12px 24px"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#06141a,#0e6f84);color:#ffffff;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:13px">TY</span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:17px">Tython</span><span style="font-size:13px;color:#5f7079">· Carrières</span><a href="Wedy Job Posts.dc.html" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#33474f" style-hover="color:#0a1c24"><span data-icon="briefcase" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>4 postes ouverts</a></div>
+  </header>
+
+  <section style="position:relative;overflow:hidden;background:#06141a;color:#e8eff1;isolation:isolate">
+    <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none"><div data-loop="drift" style="position:absolute;left:-6%;top:-60%;width:620px;height:620px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.65),transparent)"></div><div data-loop="drift" data-dur="27000" data-delay="-9000" style="position:absolute;right:-4%;top:-40%;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.38),transparent)"></div><div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(ellipse 70% 80% at 30% 30%,#000 30%,transparent 80%);mask-image:radial-gradient(ellipse 70% 80% at 30% 30%,#000 30%,transparent 80%)"></div></div>
+    <div style="max-width:1140px;margin:0 auto;padding:54px 24px 46px">
+      <div data-reveal="up" style="display:flex;gap:8px;flex-wrap:wrap"><span style="font-size:12px;font-weight:700;padding:5px 11px;border-radius:99px;background:rgba(43,189,134,.16);color:#4fd3a0">CDI</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;background:rgba(255,255,255,.08);color:#cfdde1"><span data-icon="map-pin" data-size="12" style="display:inline-flex;width:12px;height:12px"></span>Casablanca · hybride</span><span style="font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;background:rgba(255,255,255,.08);color:#cfdde1">Publiée il y a 11 jours</span></div>
+      <h1 data-reveal="up" data-delay="80" style="margin:18px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(36px,5vw,62px);letter-spacing:-.05em;line-height:1">Responsable commercial B2B</h1>
+      <p data-reveal="up" data-delay="160" style="margin:16px 0 0;max-width:640px;font-size:17px;line-height:1.6;color:#b9cbd0">Rejoignez une agence digitale de 126 personnes qui accompagne les PME marocaines dans leur transformation. Vous développerez un portefeuille de clients ambitieux, avec une vraie autonomie.</p>
+    </div>
+  </section>
+
+  <div style="max-width:1140px;margin:0 auto;padding:28px 24px 64px;display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+    <div style="flex:1.3 1 460px;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="3">
+        <div data-reveal="up" data-delay="{{ b.delay }}" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:{{ b.tint }};color:{{ b.color }}"><span data-icon="{{ b.icon }}" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px">{{ b.title }}</span></div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px"><sc-for list="{{ b.items }}" as="i" hint-placeholder-count="4"><div style="display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.55;color:#1d3540"><span data-icon="check" data-size="16" data-sw="2.4" style="display:inline-flex;width:16px;height:16px;color:{{ b.color }};flex-shrink:0;margin-top:3px"></span>{{ i.t }}</div></sc-for></div>
+        </div>
+      </sc-for>
+      <div data-reveal="up" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+        <div style="padding:16px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800">126</div><div style="font-size:12.5px;color:#5f7079">collaborateurs</div></div>
+        <div style="padding:16px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800">46 %</div><div style="font-size:12.5px;color:#5f7079">de femmes</div></div>
+        <div style="padding:16px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800">2 j</div><div style="font-size:12.5px;color:#5f7079">de télétravail par semaine</div></div>
+      </div>
+    </div>
+
+    <div style="flex:1 1 360px;min-width:0;position:sticky;top:84px">
+      <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+        <form onSubmit="{{ submit }}" noValidate="" data-reveal="left" data-delay="120" style="display:flex;flex-direction:column;gap:13px;padding:22px;border-radius:22px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 30px 60px -40px rgba(10,28,36,.45)">
+          <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em">Postuler</div>
+          <div style="font-size:13px;color:#52646d;margin-top:-6px">Environ 2 minutes. Réponse sous 5 jours ouvrés.</div>
+          <sc-for list="{{ fields }}" as="f" hint-placeholder-count="4"><label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">{{ f.label }}<input type="{{ f.type }}" value="{{ f.value }}" onChange="{{ f.set }}" placeholder="{{ f.ph }}" style="height:44px;padding:0 12px;border-radius:11px;border:1px solid {{ f.border }};font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></label></sc-for>
+          <sc-if value="{{ noCv }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ attach }}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 14px;border-radius:14px;border:1.5px dashed {{ cvBorder }};background:#f8fdfd;font-family:inherit;cursor:pointer" style-hover="border-color:#16b6c8"><span data-loop="float" style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="cloud-upload|upload" data-size="20" style="display:inline-flex;width:20px;height:20px"></span></span><span style="font-size:13.5px;font-weight:600;color:#0a1c24">Ajouter votre CV</span><span style="font-size:12px;color:#5f7079">PDF ou DOCX · 5 Mo max.</span></button></sc-if>
+          <sc-if value="{{ hasCv }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="up" style="padding:12px;border-radius:14px;border:1px solid #e2e8eb;background:#fbfcfc">
+              <div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fbe9e6;color:#df5740"><span data-icon="file-text" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ cvName }}</span><span style="display:block;font-size:12px;color:#5f7079">284 Ko</span></span><button type="button" onClick="{{ removeCv }}" aria-label="Retirer le CV" style="width:30px;height:30px;border:none;border-radius:8px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center"><span data-icon="x" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button></div>
+              <sc-if value="{{ parsing }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;color:#5444b8"><span data-loop="spin" style="width:13px;height:13px;border-radius:50%;border:2px solid #dcd6f6;border-top-color:#6d5ad6"></span>Lecture de votre CV…</div></sc-if>
+              <sc-if value="{{ parsed }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="margin-top:10px;padding-top:10px;border-top:1px solid #eef2f4"><div style="font-size:12px;font-weight:700;color:#5444b8">Points forts repérés</div><div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px"><sc-for list="{{ skills }}" as="k" hint-placeholder-count="4"><span style="font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;background:#ece9fb;color:#5444b8">{{ k.t }}</span></sc-for></div></div></sc-if>
+            </div>
+          </sc-if>
+          <textarea value="{{ motivation }}" onChange="{{ onMotivation }}" rows="3" placeholder="Quelques mots sur votre motivation (optionnel)" style="resize:vertical;padding:10px 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></textarea>
+          <button type="button" onClick="{{ toggleConsent }}" style="display:flex;gap:10px;align-items:flex-start;padding:0;border:none;background:transparent;font-family:inherit;text-align:left;cursor:pointer"><span style="width:20px;height:20px;border-radius:6px;border:1.5px solid {{ consentBorder }};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;color:#ffffff;background:#ffffff"><sc-if value="{{ consent }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;border-radius:6px;background:#0e6f84;display:flex;align-items:center;justify-content:center"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span></sc-if></span><span style="font-size:12px;line-height:1.5;color:#52646d">J'accepte que mes données soient traitées pour ce recrutement, conformément à la loi 09-08, et conservées 24 mois.</span></button>
+          <sc-if value="{{ hasErr }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="display:flex;gap:8px;align-items:center;padding:10px 12px;border-radius:10px;background:#fbe9e6;color:#a33a28;font-size:13px"><span data-icon="circle-alert|alert-circle" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>{{ err }}</div></sc-if>
+          <button type="submit" style="position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border:none;border-radius:14px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 16px 32px -14px rgba(22,182,200,.85)"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><span style="position:relative">Envoyer ma candidature</span><span data-icon="arrow-right" data-size="17" style="position:relative;display:inline-flex;width:17px;height:17px"></span></button>
+        </form>
+      </sc-if>
+      <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+        <div data-reveal="scale" style="display:flex;flex-direction:column;gap:16px;padding:26px 22px;border-radius:22px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 30px 60px -40px rgba(10,28,36,.45)">
+          <span style="position:relative;width:64px;height:64px;align-self:center"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;background:rgba(22,160,107,.3)"></span><span style="position:relative;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#16a06b;color:#ffffff"><span data-icon="check" data-size="30" data-sw="2.6" style="display:inline-flex;width:30px;height:30px"></span></span></span>
+          <div style="text-align:center"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em">Merci {{ firstName }} !</div><div style="font-size:14px;line-height:1.55;color:#52646d;margin-top:6px">Votre candidature est bien reçue. Un email de confirmation vient de vous être envoyé.</div><div style="font-family:'Geist Mono',monospace;font-size:12px;color:#7d8f97;margin-top:8px">Référence {{ refNo }}</div></div>
+          <div style="display:flex;flex-direction:column;gap:0;padding:4px 0">
+            <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4"><div style="display:flex;gap:12px"><span style="display:flex;flex-direction:column;align-items:center"><span style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ s.bg }};color:{{ s.color }};font-size:11px;font-weight:700;flex-shrink:0">{{ s.n }}</span><sc-if value="{{ s.line }}" hint-placeholder-val="{{ true }}"><span style="width:2px;flex:1;min-height:18px;background:#e2e8eb"></span></sc-if></span><span style="padding-bottom:14px"><span style="display:block;font-size:13.5px;font-weight:600;color:#0a1c24">{{ s.t }}</span><span style="display:block;font-size:12.5px;color:#5f7079">{{ s.d }}</span></span></div></sc-for>
+          </div>
+          <button type="button" onClick="{{ reset }}" style="height:42px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;color:#33474f;cursor:pointer">Voir les autres offres</button>
+        </div>
+      </sc-if>
+      <div style="display:flex;align-items:center;justify-content:center;gap:7px;margin-top:14px;font-size:12px;color:#7d8f97"><img src="assets/wedy-avatar.png" alt="" style="width:18px;height:18px;border-radius:50%;object-fit:cover;background:#e4f2f4">Recrutement propulsé par Wedy</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const BLOCKS = [
+  ['Vos missions', 'target', '#e4f2f4', '#0b5f72', ['Développer un portefeuille de clients PME et ETI au Maroc', 'Piloter le cycle de vente, de la prospection à la signature', 'Construire des relations durables avec les décideurs', 'Travailler main dans la main avec les équipes créa et tech']],
+  ['Votre profil', 'user-check', '#ece9fb', '#5444b8', ["3 à 5 ans d'expérience en vente B2B, idéalement dans le digital", 'Excellent relationnel et goût du résultat', 'Français et arabe courants, bon niveau d\'anglais', 'Permis B']],
+  ['Ce que nous offrons', 'gift', '#e1f5ec', '#0f6f49', ['Fixe attractif et variable déplafonné', 'Mutuelle santé renforcée pour vous et votre famille', 'Formation continue et plan de développement personnalisé', 'Deux jours de télétravail par semaine']],
+];
+class Component extends DCLogic {
+  state = { done: false, f: { name: '', email: '', phone: '', linkedin: '' }, motivation: '', cv: null, parsing: false, parsed: false, consent: false, err: '', tried: false, ref: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._p); }
+  renderVals() {
+    const s = this.state, emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.f.email.trim());
+    const bad = k => s.tried && ((k === 'name' && !s.f.name.trim()) || (k === 'email' && !emailOk));
+    return {
+      rootRef: this.rootRef,
+      blocks: BLOCKS.map(([title, icon, tint, color, items], i) => ({ title, icon, tint, color, delay: String(i * 80), items: items.map(t => ({ t })) })),
+      isForm: !s.done, isDone: s.done,
+      fields: [['name', 'Nom complet *', 'text', 'Prénom Nom'], ['email', 'Email *', 'email', 'vous@exemple.ma'], ['phone', 'Téléphone', 'tel', '+212 6 00 00 00 00'], ['linkedin', 'Profil LinkedIn', 'url', 'linkedin.com/in/…']].map(([k, label, type, ph]) => ({ label, type, ph, value: s.f[k], border: bad(k) ? '#df5740' : '#d6dfe3', set: e => { const v = e.target.value; this.setState(x => ({ f: { ...x.f, [k]: v }, err: '' })); } })),
+      noCv: !s.cv, hasCv: !!s.cv, cvName: s.cv || '', cvBorder: s.tried && !s.cv ? '#df5740' : '#b9dfe5',
+      attach: () => { const n = (s.f.name.trim() || 'Candidat').split(' ').join('_'); this.setState({ cv: `CV_${n}.pdf`, parsing: true, parsed: false, err: '' }); this._p = setTimeout(() => this._a && this.setState({ parsing: false, parsed: true }), 1600); },
+      removeCv: () => this.setState({ cv: null, parsing: false, parsed: false }),
+      parsing: s.parsing, parsed: s.parsed, skills: ['Vente B2B', 'Négociation', 'CRM Salesforce', 'Anglais courant'].map(t => ({ t })),
+      motivation: s.motivation, onMotivation: e => this.setState({ motivation: e.target.value }),
+      consent: s.consent, consentBorder: s.tried && !s.consent ? '#df5740' : '#c3ced3', toggleConsent: () => this.setState(x => ({ consent: !x.consent, err: '' })),
+      hasErr: !!s.err, err: s.err,
+      submit: e => {
+        if (e && e.preventDefault) e.preventDefault();
+        const err = !s.f.name.trim() ? 'Indiquez votre nom complet.' : !emailOk ? 'Indiquez une adresse email valide.' : !s.cv ? 'Ajoutez votre CV pour continuer.' : !s.consent ? 'Merci d\'accepter le traitement de vos données.' : '';
+        if (err) { this.setState({ err, tried: true }); return; }
+        this.setState({ done: true, ref: 'CAND-2026-' + String(Math.floor(1000 + Math.random() * 9000)) });
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) {}
+      },
+      firstName: s.f.name.trim().split(' ')[0] || '', refNo: s.ref,
+      steps: [['Candidature reçue', "Aujourd'hui"], ['Étude de votre profil', 'Sous 5 jours ouvrés'], ['Entretien avec le directeur commercial', 'En visio ou à Casablanca'], ['Réponse finale', 'Par email']].map(([t, d], i, arr) => ({ t, d, n: i === 0 ? '✓' : String(i + 1), bg: i === 0 ? '#16a06b' : '#f3f6f7', color: i === 0 ? '#ffffff' : '#7d8f97', line: i < arr.length - 1 })),
+      reset: () => this.setState({ done: false, f: { name: '', email: '', phone: '', linkedin: '' }, motivation: '', cv: null, parsed: false, consent: false, tried: false, err: '' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

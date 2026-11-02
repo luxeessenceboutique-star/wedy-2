@@ -1,0 +1,418 @@
+- generic [ref=f3e4]:
+  - generic "WedyNav" [ref=f3e6]
+  - main [ref=f3e7]:
+    - generic [ref=f3e8]:
+      - generic [ref=f3e9]:
+        - generic [ref=f3e10]: Personnes
+        - generic [ref=f3e14]: Employés
+      - link "Demander à Wedy…" [ref=f3e15] [cursor=pointer]:
+        - /url: Wedy Copilot.dc.html
+      - link "Notifications" [ref=f3e20] [cursor=pointer]:
+        - /url: Wedy Notifications.dc.html
+    - generic [ref=f3e26]:
+      - generic [ref=f3e27]:
+        - generic [ref=f3e28]:
+          - generic [ref=f3e29]:
+            - heading "Employés" [level=1] [ref=f3e30]
+            - generic [ref=f3e31]: "14"
+          - paragraph [ref=f3e32]: Dossiers, contrats et documents de toute votre équipe.
+        - generic [ref=f3e33]:
+          - button "Départements" [ref=f3e34] [cursor=pointer]
+          - button "Importer" [ref=f3e40] [cursor=pointer]
+          - button "Exporter" [ref=f3e48] [cursor=pointer]
+          - button "Ajouter un employé" [ref=f3e53] [cursor=pointer]
+      - generic [ref=f3e57]:
+        - button "11 Actifs" [ref=f3e58] [cursor=pointer]:
+          - generic [ref=f3e66]:
+            - generic [ref=f3e67]: "11"
+            - generic [ref=f3e68]: Actifs
+        - button "2 En congé" [ref=f3e69] [cursor=pointer]:
+          - generic [ref=f3e74]:
+            - generic [ref=f3e75]: "2"
+            - generic [ref=f3e76]: En congé
+        - button "3 Contrats à échéance" [ref=f3e77] [cursor=pointer]:
+          - generic [ref=f3e85]:
+            - generic [ref=f3e86]: "3"
+            - generic [ref=f3e87]: Contrats à échéance
+        - button "1 Stagiaires" [ref=f3e88] [cursor=pointer]:
+          - generic [ref=f3e94]:
+            - generic [ref=f3e95]: "1"
+            - generic [ref=f3e96]: Stagiaires
+      - generic [ref=f3e97]:
+        - textbox "Rechercher un nom, un poste, un email…" [ref=f3e99]
+        - combobox [ref=f3e100] [cursor=pointer]:
+          - option "Tous les services" [selected]
+          - option "Opérations"
+          - option "Commercial"
+          - option "Tech"
+          - option "Finance"
+          - option "Marketing"
+          - option "RH"
+          - option "Service client"
+        - combobox [ref=f3e101] [cursor=pointer]:
+          - option "Tous les statuts" [selected]
+          - option "Actif"
+          - option "En congé"
+          - option "Inactif"
+          - option "Contrat à échéance"
+        - combobox [ref=f3e102] [cursor=pointer]:
+          - option "Tous les contrats" [selected]
+          - option "CDI"
+          - option "CDD"
+          - option "Stage"
+          - option "Freelance"
+        - generic [ref=f3e103]:
+          - button "Liste" [ref=f3e104] [cursor=pointer]
+          - button "Grille" [ref=f3e108] [cursor=pointer]
+          - button "Kanban" [ref=f3e115] [cursor=pointer]
+      - generic [ref=f3e119]:
+        - generic [ref=f3e121]:
+          - generic [ref=f3e122]:
+            - button "Tout sélectionner" [ref=f3e123] [cursor=pointer]
+            - generic [ref=f3e124]: Nom complet
+            - generic [ref=f3e125]: Poste
+            - generic [ref=f3e126]: Service
+            - generic [ref=f3e127]: Contrat
+            - generic [ref=f3e128]: Statut
+            - generic [ref=f3e129]: Embauche
+            - generic [ref=f3e130]: Fin contrat
+            - generic [ref=f3e131]: Actions
+          - generic [ref=f3e132]:
+            - button "Sélectionner" [ref=f3e133] [cursor=pointer]
+            - link "YB Yasmine Benali yasmine.benali@tython.ma" [ref=f3e134] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e135]: YB
+              - generic [ref=f3e137]:
+                - generic [ref=f3e138]: Yasmine Benali
+                - generic [ref=f3e140]: yasmine.benali@tython.ma
+            - generic [ref=f3e141]: Responsable Marketing
+            - generic [ref=f3e142]: Marketing
+            - generic [ref=f3e143]: CDD
+            - generic [ref=f3e144]:
+              - generic [ref=f3e145]: Actif
+              - combobox "Changer le statut" [ref=f3e150] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e151]: 15/03/2022
+            - generic [ref=f3e152]: 12 j
+            - generic [ref=f3e159]:
+              - link "Voir le dossier" [ref=f3e160] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e165] [cursor=pointer]
+              - button "Supprimer" [ref=f3e170] [cursor=pointer]
+          - generic [ref=f3e175]:
+            - button "Sélectionner" [ref=f3e176] [cursor=pointer]
+            - link "OA Omar Alaoui omar.alaoui@tython.ma" [ref=f3e177] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e178]: OA
+              - generic [ref=f3e180]:
+                - generic [ref=f3e181]: Omar Alaoui
+                - generic [ref=f3e183]: omar.alaoui@tython.ma
+            - generic [ref=f3e184]: Chef d'équipe logistique
+            - generic [ref=f3e185]: Opérations
+            - generic [ref=f3e186]: CDI
+            - generic [ref=f3e187]:
+              - generic [ref=f3e188]: En congé
+              - combobox "Changer le statut" [ref=f3e193] [cursor=pointer]:
+                - option "Actif"
+                - option "En congé" [selected]
+                - option "Inactif"
+            - generic [ref=f3e194]: 01/06/2019
+            - generic [ref=f3e195]: —
+            - generic [ref=f3e197]:
+              - link "Voir le dossier" [ref=f3e198] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e203] [cursor=pointer]
+              - button "Supprimer" [ref=f3e208] [cursor=pointer]
+          - generic [ref=f3e213]:
+            - button "Sélectionner" [ref=f3e214] [cursor=pointer]
+            - link "KB Karim Bennani karim.bennani@tython.ma" [ref=f3e215] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e216]: KB
+              - generic [ref=f3e218]:
+                - generic [ref=f3e219]: Karim Bennani
+                - generic [ref=f3e221]: karim.bennani@tython.ma
+            - generic [ref=f3e222]: Développeur senior
+            - generic [ref=f3e223]: Tech
+            - generic [ref=f3e224]: CDD
+            - generic [ref=f3e225]:
+              - generic [ref=f3e226]: Actif
+              - combobox "Changer le statut" [ref=f3e231] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e232]: 09/01/2023
+            - generic [ref=f3e233]: 19 j
+            - generic [ref=f3e240]:
+              - link "Voir le dossier" [ref=f3e241] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e246] [cursor=pointer]
+              - button "Supprimer" [ref=f3e251] [cursor=pointer]
+          - generic [ref=f3e256]:
+            - button "Sélectionner" [ref=f3e257] [cursor=pointer]
+            - link "HT Hind Tazi hind.tazi@tython.ma" [ref=f3e258] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e259]: HT
+              - generic [ref=f3e261]:
+                - generic [ref=f3e262]: Hind Tazi
+                - generic [ref=f3e264]: hind.tazi@tython.ma
+            - generic [ref=f3e265]: Chargée de clientèle
+            - generic [ref=f3e266]: Service client
+            - generic [ref=f3e267]: CDD
+            - generic [ref=f3e268]:
+              - generic [ref=f3e269]: Actif
+              - combobox "Changer le statut" [ref=f3e274] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e275]: 01/02/2024
+            - generic [ref=f3e276]: 27 j
+            - generic [ref=f3e283]:
+              - link "Voir le dossier" [ref=f3e284] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e289] [cursor=pointer]
+              - button "Supprimer" [ref=f3e294] [cursor=pointer]
+          - generic [ref=f3e299]:
+            - button "Sélectionner" [ref=f3e300] [cursor=pointer]
+            - link "NB Nadia Berrada nadia.berrada@tython.ma" [ref=f3e301] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e302]: NB
+              - generic [ref=f3e304]:
+                - generic [ref=f3e305]: Nadia Berrada
+                - generic [ref=f3e307]: nadia.berrada@tython.ma
+            - generic [ref=f3e308]: Comptable
+            - generic [ref=f3e309]: Finance
+            - generic [ref=f3e310]: CDI
+            - generic [ref=f3e311]:
+              - generic [ref=f3e312]: Actif
+              - combobox "Changer le statut" [ref=f3e317] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e318]: 14/09/2020
+            - generic [ref=f3e319]: —
+            - generic [ref=f3e321]:
+              - link "Voir le dossier" [ref=f3e322] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e327] [cursor=pointer]
+              - button "Supprimer" [ref=f3e332] [cursor=pointer]
+          - generic [ref=f3e337]:
+            - button "Sélectionner" [ref=f3e338] [cursor=pointer]
+            - link "MR Mehdi Rami mehdi.rami@tython.ma" [ref=f3e339] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e340]: MR
+              - generic [ref=f3e342]:
+                - generic [ref=f3e343]: Mehdi Rami
+                - generic [ref=f3e345]: mehdi.rami@tython.ma
+            - generic [ref=f3e346]: Commercial
+            - generic [ref=f3e347]: Commercial
+            - generic [ref=f3e348]: CDI
+            - generic [ref=f3e349]:
+              - generic [ref=f3e350]: Actif
+              - combobox "Changer le statut" [ref=f3e355] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e356]: 01/10/2026
+            - generic [ref=f3e357]: —
+            - generic [ref=f3e359]:
+              - link "Voir le dossier" [ref=f3e360] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e365] [cursor=pointer]
+              - button "Supprimer" [ref=f3e370] [cursor=pointer]
+          - generic [ref=f3e375]:
+            - button "Sélectionner" [ref=f3e376] [cursor=pointer]
+            - link "SE Sara El Fassi sara.elfassi@tython.ma" [ref=f3e377] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e378]: SE
+              - generic [ref=f3e380]:
+                - generic [ref=f3e381]: Sara El Fassi
+                - generic [ref=f3e383]: sara.elfassi@tython.ma
+            - generic [ref=f3e384]: Chargée RH
+            - generic [ref=f3e385]: RH
+            - generic [ref=f3e386]: CDI
+            - generic [ref=f3e387]:
+              - generic [ref=f3e388]: Actif
+              - combobox "Changer le statut" [ref=f3e393] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e394]: 19/04/2021
+            - generic [ref=f3e395]: —
+            - generic [ref=f3e397]:
+              - link "Voir le dossier" [ref=f3e398] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e403] [cursor=pointer]
+              - button "Supprimer" [ref=f3e408] [cursor=pointer]
+          - generic [ref=f3e413]:
+            - button "Sélectionner" [ref=f3e414] [cursor=pointer]
+            - link "LC Lina Chraibi lina.chraibi@tython.ma" [ref=f3e415] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e416]: LC
+              - generic [ref=f3e418]:
+                - generic [ref=f3e419]: Lina Chraibi
+                - generic [ref=f3e421]: lina.chraibi@tython.ma
+            - generic [ref=f3e422]: Stagiaire marketing
+            - generic [ref=f3e423]: Marketing
+            - generic [ref=f3e424]: Stage
+            - generic [ref=f3e425]:
+              - generic [ref=f3e426]: Actif
+              - combobox "Changer le statut" [ref=f3e431] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e432]: 01/09/2026
+            - generic [ref=f3e433]: 28/02/2027
+            - generic [ref=f3e435]:
+              - link "Voir le dossier" [ref=f3e436] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e441] [cursor=pointer]
+              - button "Supprimer" [ref=f3e446] [cursor=pointer]
+          - generic [ref=f3e451]:
+            - button "Sélectionner" [ref=f3e452] [cursor=pointer]
+            - link "YA Youssef Amrani youssef.amrani@tython.ma" [ref=f3e453] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e454]: YA
+              - generic [ref=f3e456]:
+                - generic [ref=f3e457]: Youssef Amrani
+                - generic [ref=f3e459]: youssef.amrani@tython.ma
+            - generic [ref=f3e460]: Directeur des opérations
+            - generic [ref=f3e461]: Opérations
+            - generic [ref=f3e462]: CDI
+            - generic [ref=f3e463]:
+              - generic [ref=f3e464]: Actif
+              - combobox "Changer le statut" [ref=f3e469] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e470]: 03/05/2017
+            - generic [ref=f3e471]: —
+            - generic [ref=f3e473]:
+              - link "Voir le dossier" [ref=f3e474] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e479] [cursor=pointer]
+              - button "Supprimer" [ref=f3e484] [cursor=pointer]
+          - generic [ref=f3e489]:
+            - button "Sélectionner" [ref=f3e490] [cursor=pointer]
+            - link "IK Imane Kettani imane.kettani@tython.ma" [ref=f3e491] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e492]: IK
+              - generic [ref=f3e494]:
+                - generic [ref=f3e495]: Imane Kettani
+                - generic [ref=f3e497]: imane.kettani@tython.ma
+            - generic [ref=f3e498]: Product designer
+            - generic [ref=f3e499]: Tech
+            - generic [ref=f3e500]: CDI
+            - generic [ref=f3e501]:
+              - generic [ref=f3e502]: Actif
+              - combobox "Changer le statut" [ref=f3e507] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e508]: 12/07/2022
+            - generic [ref=f3e509]: —
+            - generic [ref=f3e511]:
+              - link "Voir le dossier" [ref=f3e512] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e517] [cursor=pointer]
+              - button "Supprimer" [ref=f3e522] [cursor=pointer]
+          - generic [ref=f3e527]:
+            - button "Sélectionner" [ref=f3e528] [cursor=pointer]
+            - link "RO Rachid Ouazzani rachid.ouazzani@tython.ma" [ref=f3e529] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e530]: RO
+              - generic [ref=f3e532]:
+                - generic [ref=f3e533]: Rachid Ouazzani
+                - generic [ref=f3e535]: rachid.ouazzani@tython.ma
+            - generic [ref=f3e536]: Magasinier
+            - generic [ref=f3e537]: Opérations
+            - generic [ref=f3e538]: CDI
+            - generic [ref=f3e539]:
+              - generic [ref=f3e540]: Inactif
+              - combobox "Changer le statut" [ref=f3e545] [cursor=pointer]:
+                - option "Actif"
+                - option "En congé"
+                - option "Inactif" [selected]
+            - generic [ref=f3e546]: 20/11/2018
+            - generic [ref=f3e547]: —
+            - generic [ref=f3e549]:
+              - link "Voir le dossier" [ref=f3e550] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e555] [cursor=pointer]
+              - button "Supprimer" [ref=f3e560] [cursor=pointer]
+          - generic [ref=f3e565]:
+            - button "Sélectionner" [ref=f3e566] [cursor=pointer]
+            - link "SI Salma Idrissi salma.idrissi@tython.ma" [ref=f3e567] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e568]: SI
+              - generic [ref=f3e570]:
+                - generic [ref=f3e571]: Salma Idrissi
+                - generic [ref=f3e573]: salma.idrissi@tython.ma
+            - generic [ref=f3e574]: Responsable RH
+            - generic [ref=f3e575]: RH
+            - generic [ref=f3e576]: CDI
+            - generic [ref=f3e577]:
+              - generic [ref=f3e578]: Actif
+              - combobox "Changer le statut" [ref=f3e583] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e584]: 07/01/2020
+            - generic [ref=f3e585]: —
+            - generic [ref=f3e587]:
+              - link "Voir le dossier" [ref=f3e588] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e593] [cursor=pointer]
+              - button "Supprimer" [ref=f3e598] [cursor=pointer]
+          - generic [ref=f3e603]:
+            - button "Sélectionner" [ref=f3e604] [cursor=pointer]
+            - link "AB Anas Belhaj anas.belhaj@tython.ma" [ref=f3e605] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e606]: AB
+              - generic [ref=f3e608]:
+                - generic [ref=f3e609]: Anas Belhaj
+                - generic [ref=f3e611]: anas.belhaj@tython.ma
+            - generic [ref=f3e612]: Data analyst
+            - generic [ref=f3e613]: Tech
+            - generic [ref=f3e614]: Freelance
+            - generic [ref=f3e615]:
+              - generic [ref=f3e616]: Actif
+              - combobox "Changer le statut" [ref=f3e621] [cursor=pointer]:
+                - option "Actif" [selected]
+                - option "En congé"
+                - option "Inactif"
+            - generic [ref=f3e622]: 15/04/2025
+            - generic [ref=f3e623]: 15/04/2027
+            - generic [ref=f3e625]:
+              - link "Voir le dossier" [ref=f3e626] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e631] [cursor=pointer]
+              - button "Supprimer" [ref=f3e636] [cursor=pointer]
+          - generic [ref=f3e641]:
+            - button "Sélectionner" [ref=f3e642] [cursor=pointer]
+            - link "KZ Khadija Zerouali khadija.zerouali@tython.ma" [ref=f3e643] [cursor=pointer]:
+              - /url: Wedy Employee.dc.html
+              - generic [ref=f3e644]: KZ
+              - generic [ref=f3e646]:
+                - generic [ref=f3e647]: Khadija Zerouali
+                - generic [ref=f3e649]: khadija.zerouali@tython.ma
+            - generic [ref=f3e650]: Assistante commerciale
+            - generic [ref=f3e651]: Commercial
+            - generic [ref=f3e652]: CDD
+            - generic [ref=f3e653]:
+              - generic [ref=f3e654]: En congé
+              - combobox "Changer le statut" [ref=f3e659] [cursor=pointer]:
+                - option "Actif"
+                - option "En congé" [selected]
+                - option "Inactif"
+            - generic [ref=f3e660]: 02/03/2025
+            - generic [ref=f3e661]: 01/03/2027
+            - generic [ref=f3e663]:
+              - link "Voir le dossier" [ref=f3e664] [cursor=pointer]:
+                - /url: Wedy Employee.dc.html
+              - button "Générer un document" [ref=f3e669] [cursor=pointer]
+              - button "Supprimer" [ref=f3e674] [cursor=pointer]
+        - generic [ref=f3e679]:
+          - generic [ref=f3e680]: 14 employés affichés sur 14
+          - generic [ref=f3e681]: Page 1 sur 1

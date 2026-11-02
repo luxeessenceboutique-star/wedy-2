@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Congés — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="timeoff" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Personnes" title="Congés" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Congés</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Qui est absent, quand, et combien de jours il reste à chacun.</p>
+        </div>
+        <div data-reveal="up" data-delay="100" style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="Wedy Requests.dc.html" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-size:13.5px;font-weight:600;white-space:nowrap" style-hover="color:#0a1c24;border-color:#9fb4bb"><span data-icon="inbox" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>4 demandes en attente</a>
+          <button type="button" onClick="{{ addToast }}" style="display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)"><span data-icon="plus" data-size="16" data-sw="2.2" style="display:inline-flex;width:16px;height:16px"></span>Enregistrer un congé</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+        <div data-reveal="up" data-delay="60" style="padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#5444b8,#6d5ad6);color:#ffffff"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9">En congé aujourd'hui</div><div data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">5</div></div>
+        <div data-reveal="up" data-delay="110" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Jours posés en novembre</div><div data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">46</div></div>
+        <div data-reveal="up" data-delay="160" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Solde moyen</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">11,2 j</div></div>
+        <div data-reveal="up" data-delay="210" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Jours fériés ce mois</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">2</div></div>
+      </div>
+
+      <div data-reveal="up" data-delay="140" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid #eef2f4">
+          <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:17px">Novembre 2026</span>
+          <div style="display:flex;gap:14px;margin-left:auto;flex-wrap:wrap;font-size:12.5px;color:#33474f">
+            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:#16b6c8"></span>Annuel</span>
+            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:#6d5ad6"></span>Exceptionnel</span>
+            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:#df5740"></span>Maladie</span>
+            <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:repeating-linear-gradient(45deg,#f5e3c3 0 3px,#fbf3e4 3px 6px)"></span>Férié</span>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <div style="position:relative;min-width:980px;padding:0 20px 14px">
+            <div style="display:grid;grid-template-columns:170px minmax(0,1fr);align-items:end">
+              <span></span>
+              <div style="display:grid;grid-template-columns:repeat(30,minmax(0,1fr));padding:12px 0 8px">
+                <sc-for list="{{ days }}" as="d" hint-placeholder-count="30"><span style="display:flex;flex-direction:column;align-items:center;gap:2px;font-family:'Geist Mono',monospace;font-size:10.5px;color:{{ d.color }}"><span>{{ d.dow }}</span><span style="width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;background:{{ d.bg }}">{{ d.n }}</span></span></sc-for>
+              </div>
+            </div>
+            <div style="position:relative;display:grid;grid-template-columns:170px minmax(0,1fr)">
+              <span></span>
+              <div style="position:relative">
+                <div aria-hidden="true" style="position:absolute;inset:0;display:grid;grid-template-columns:repeat(30,minmax(0,1fr));pointer-events:none"><sc-for list="{{ days }}" as="d" hint-placeholder-count="30"><span style="background:{{ d.col }};border-left:1px solid #f1f4f5"></span></sc-for></div>
+              </div>
+            </div>
+            <div style="position:relative;margin-top:-1px">
+              <div aria-hidden="true" style="position:absolute;top:0;bottom:0;left:170px;right:0;display:grid;grid-template-columns:repeat(30,minmax(0,1fr));pointer-events:none"><sc-for list="{{ days }}" as="d" hint-placeholder-count="30"><span style="background:{{ d.col }};border-left:1px solid #f1f4f5"></span></sc-for></div>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="9">
+                <div style="position:relative;display:grid;grid-template-columns:170px minmax(0,1fr);align-items:center;height:46px;border-top:1px solid #f1f4f5">
+                  <span style="display:flex;align-items:center;gap:9px;min-width:0;padding-right:10px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ r.av }};color:#ffffff;font-size:10.5px;font-weight:700;flex-shrink:0">{{ r.ini }}</span><span style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span></span>
+                  <div style="position:relative;height:100%">
+                    <sc-for list="{{ r.bars }}" as="b" hint-placeholder-count="1"><span data-reveal="growx" data-delay="{{ b.delay }}" title="{{ b.title }}" style="position:absolute;top:9px;bottom:9px;left:{{ b.left }}%;width:{{ b.width }}%;border-radius:8px;background:{{ b.bg }};color:#ffffff;font-size:11px;font-weight:600;display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;transform-origin:left;box-shadow:0 6px 14px -8px {{ b.shadow }}">{{ b.label }}</span></sc-for>
+                  </div>
+                </div>
+              </sc-for>
+              <div aria-hidden="true" style="position:absolute;top:-36px;bottom:0;left:calc(170px + (100% - 170px) * 0.0167);width:2px;background:#16b6c8;box-shadow:0 0 10px rgba(22,182,200,.6);pointer-events:none"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div data-reveal="up" style="flex:2 1 520px;min-width:0;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="padding:16px 20px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Soldes de congés</div>
+          <sc-for list="{{ balances }}" as="b" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:minmax(150px,1.4fr) minmax(0,2fr) 90px;align-items:center;gap:14px;padding:11px 20px;border-top:1px solid #eef2f4"><span style="font-size:13.5px;font-weight:500">{{ b.name }}</span><span style="height:8px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" style="display:block;height:100%;width:{{ b.pct }}%;border-radius:99px;background:{{ b.bar }};transform-origin:left"></span></span><span style="font-family:'Geist Mono',monospace;font-size:12.5px;text-align:right"><strong style="color:#0a1c24">{{ b.left }}</strong> / {{ b.total }} j</span></div></sc-for>
+        </div>
+        <div style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <div data-reveal="up" data-delay="80" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:9px"><span data-icon="scale" data-size="17" style="display:inline-flex;width:17px;height:17px;color:#16a06b"></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Politique de congés</span></div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px;font-size:13.5px;color:#33474f">
+              <div style="display:flex;justify-content:space-between"><span>Acquisition</span><strong>1,5 j / mois</strong></div>
+              <div style="display:flex;justify-content:space-between"><span>Ancienneté</span><strong>+1,5 j / 5 ans</strong></div>
+              <div style="display:flex;justify-content:space-between"><span>Plafond</span><strong>30 jours ouvrables</strong></div>
+              <div style="display:flex;justify-content:space-between"><span>Jours fériés</span><strong>Maroc 2026</strong></div>
+            </div>
+          </div>
+          <div data-reveal="up" data-delay="140" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Prochains jours fériés</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+              <div style="display:flex;align-items:center;gap:12px"><span style="width:44px;text-align:center;padding:6px 0;border-radius:10px;background:#fbefda;color:#8a5207;font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;line-height:1.2">06<br>NOV</span><span style="font-size:13.5px">Anniversaire de la Marche Verte</span></div>
+              <div style="display:flex;align-items:center;gap:12px"><span style="width:44px;text-align:center;padding:6px 0;border-radius:10px;background:#fbefda;color:#8a5207;font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;line-height:1.2">18<br>NOV</span><span style="font-size:13.5px">Fête de l'Indépendance</span></div>
+              <div style="display:flex;align-items:center;gap:12px"><span style="width:44px;text-align:center;padding:6px 0;border-radius:10px;background:#f3f6f7;color:#52646d;font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;line-height:1.2">01<br>JAN</span><span style="font-size:13.5px">Nouvel An</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const TYPE = { a: ['#16b6c8', 'rgba(22,182,200,.8)', 'Annuel'], e: ['#6d5ad6', 'rgba(109,90,214,.8)', 'Exceptionnel'], m: ['#df5740', 'rgba(223,87,64,.8)', 'Maladie'] };
+const ROWS = [
+  ['Youssef Amrani', [[2, 6, 'a']]], ['Omar Alaoui', [[4, 6, 'a']]], ['Hind Tazi', [[10, 11, 'a']]], ['Sara El Fassi', [[16, 19, 'e']]],
+  ['Khadija Zerouali', [[1, 3, 'm'], [23, 27, 'a']]], ['Imane Kettani', [[12, 13, 'a']]], ['Karim Bennani', [[25, 30, 'a']]], ['Nadia Berrada', [[19, 20, 'm']]], ['Mehdi Rami', []],
+];
+const DOW = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const HOL = [6, 18];
+
+class Component extends DCLogic {
+  state = { toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const days = Array.from({ length: 30 }, (_, i) => {
+      const n = i + 1, dow = n % 7, we = dow === 0 || dow === 6, hol = HOL.includes(n);
+      return { n: String(n), dow: DOW[dow], color: we || hol ? '#a3b1b7' : '#52646d', bg: n === 1 ? '#0a1c24' : 'transparent', col: hol ? 'repeating-linear-gradient(45deg,#f5e3c3 0 3px,#fbf3e4 3px 6px)' : we ? '#f6f8f9' : 'transparent' };
+    });
+    days[0].color = '#ffffff';
+    const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+    return {
+      rootRef: this.rootRef, days,
+      rows: ROWS.map(([name, bars], i) => ({ name, ini: ini(name), av: AV[i % AV.length], bars: bars.map(([a, b, t], k) => ({ left: ((a - 1) / 30 * 100).toFixed(3), width: ((b - a + 1) / 30 * 100).toFixed(3), bg: TYPE[t][0], shadow: TYPE[t][1], label: `${TYPE[t][2]} · ${b - a + 1} j`, title: `${name} — ${TYPE[t][2]} du ${a} au ${b} nov.`, delay: String(200 + i * 60 + k * 40) })) })),
+      balances: [['Youssef Amrani', 22, 30], ['Nadia Berrada', 17, 24], ['Yasmine Benali', 14.5, 18], ['Sara El Fassi', 12, 21], ['Karim Bennani', 11, 18], ['Omar Alaoui', 9, 25.5], ['Hind Tazi', 6.5, 13.5], ['Mehdi Rami', 1.5, 1.5]].map(([name, left, total]) => ({ name, left: String(left).replace('.', ','), total: String(total).replace('.', ','), pct: String(Math.round(left / total * 100)), bar: left / total < 0.35 ? '#df9326' : 'linear-gradient(90deg,#0e6f84,#16b6c8)' })),
+      addToast: () => this.toast('Formulaire de congé ouvert'),
+      showToast: !!this.state.toast, toastText: this.state.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Analytics — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="analytics" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Insights" title="Analytics" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Analytics</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Les indicateurs RH clés de Tython, mis à jour en temps réel.</p>
+        </div>
+        <div data-reveal="up" data-delay="100" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;padding:4px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb">
+            <sc-for list="{{ periods }}" as="p" hint-placeholder-count="3"><button type="button" onClick="{{ p.go }}" style="position:relative;height:34px;padding:0 13px;border:none;border-radius:9px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:{{ p.color }}"><sc-if value="{{ p.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="position:absolute;inset:0;border-radius:9px;background:#0a1c24"></span></sc-if><span style="position:relative">{{ p.label }}</span></button></sc-for>
+          </div>
+          <button type="button" onClick="{{ exportPdf }}" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="border-color:#9fb4bb"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Exporter le rapport</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+          <div data-reveal="up" data-delay="{{ k.delay }}" style="position:relative;overflow:hidden;padding:16px 18px 14px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079"><span data-icon="{{ k.icon }}" data-size="14" style="display:inline-flex;width:14px;height:14px;color:{{ k.color }}"></span>{{ k.label }}</div>
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:30px;font-weight:800;letter-spacing:-.04em;margin-top:6px">{{ k.value }}</div>
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:2px">
+              <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:{{ k.deltaColor }}"><span data-icon="{{ k.deltaIcon }}" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>{{ k.delta }}</span>
+              <svg viewBox="0 0 100 30" style="width:84px;height:26px;overflow:visible"><path data-reveal="draw" d="{{ k.spark }}" style="fill:none;stroke:{{ k.color }};stroke-width:2px;stroke-linecap:round;stroke-linejoin:round"></path></svg>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:stretch">
+        <div data-reveal="up" data-delay="120" style="flex:2 1 560px;min-width:0;padding:20px 22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:17px">Évolution des effectifs</div><div style="font-size:13px;color:#52646d;margin-top:2px">12 derniers mois · la zone colorée correspond à la période choisie</div></div><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:#e1f5ec;color:#0f6f49"><span data-icon="trending-up" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>{{ hcDelta }}</span></div>
+          <div onMouseLeave="{{ unhover }}" style="position:relative;width:100%;aspect-ratio:700 / 220;margin-top:16px">
+            <svg viewBox="0 0 700 220" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+              <defs><linearGradient id="hcFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:#16b6c8;stop-opacity:.3"></stop><stop offset="1" style="stop-color:#16b6c8;stop-opacity:0"></stop></linearGradient></defs>
+              <rect x="{{ winX }}" y="10" width="{{ winW }}" height="186" rx="12" style="fill:#e4f2f4;opacity:.6;transition:x .6s cubic-bezier(.2,.8,.2,1),width .6s cubic-bezier(.2,.8,.2,1)"></rect>
+              <line x1="34" x2="686" y1="16" y2="16" style="stroke:#eef2f4;stroke-width:1px"></line>
+              <line x1="34" x2="686" y1="74.7" y2="74.7" style="stroke:#eef2f4;stroke-width:1px"></line>
+              <line x1="34" x2="686" y1="133.3" y2="133.3" style="stroke:#eef2f4;stroke-width:1px"></line>
+              <line x1="34" x2="686" y1="192" y2="192" style="stroke:#dfe6e9;stroke-width:1px"></line>
+              <text x="26" y="20" text-anchor="end" style="font-family:'Geist Mono',monospace;font-size:10px;fill:#8a9ba3">130</text>
+              <text x="26" y="78.7" text-anchor="end" style="font-family:'Geist Mono',monospace;font-size:10px;fill:#8a9ba3">120</text>
+              <text x="26" y="137.3" text-anchor="end" style="font-family:'Geist Mono',monospace;font-size:10px;fill:#8a9ba3">110</text>
+              <text x="26" y="196" text-anchor="end" style="font-family:'Geist Mono',monospace;font-size:10px;fill:#8a9ba3">100</text>
+              <path data-reveal="fade" data-delay="400" d="{{ area }}" style="fill:url(#hcFill)"></path>
+              <path data-reveal="draw" data-dur="1600" d="{{ line }}" style="fill:none;stroke:#0e6f84;stroke-width:2.6px;stroke-linecap:round;stroke-linejoin:round"></path>
+              <line x1="{{ hv.x }}" x2="{{ hv.x }}" y1="16" y2="192" style="stroke:#0a1c24;stroke-width:1px;stroke-dasharray:3 4;opacity:{{ hv.op }};transition:opacity .15s"></line>
+              <circle cx="{{ hv.x }}" cy="{{ hv.y }}" r="5.5" style="fill:#ffffff;stroke:#0e6f84;stroke-width:3px;opacity:{{ hv.op }};transition:opacity .15s"></circle>
+              <circle cx="686" cy="{{ lastY }}" r="5" style="fill:#0e6f84;stroke:#ffffff;stroke-width:2px"></circle>
+            </svg>
+            <sc-for list="{{ cols }}" as="c" hint-placeholder-count="12"><span onMouseEnter="{{ c.enter }}" style="position:absolute;top:0;bottom:0;left:{{ c.left }}%;width:{{ c.w }}%;cursor:crosshair"></span></sc-for>
+            <div style="position:absolute;left:{{ hv.left }}%;top:{{ hv.top }}%;transform:translate(-50%,calc(-100% - 14px));opacity:{{ hv.op }};pointer-events:none;transition:opacity .15s;padding:8px 11px;border-radius:10px;background:#0a1c24;color:#ffffff;font-size:12px;white-space:nowrap;box-shadow:0 12px 24px -10px rgba(10,28,36,.6)"><div style="font-weight:700">{{ hv.month }} · {{ hv.value }} personnes</div><div style="color:#9fb4bb;margin-top:2px">+{{ hv.hires }} arrivées · −{{ hv.deps }} départs</div></div>
+          </div>
+          <div style="position:relative;height:16px;margin-top:6px"><sc-for list="{{ months }}" as="m" hint-placeholder-count="12"><span style="position:absolute;left:{{ m.left }}%;transform:translateX(-50%);font-family:'Geist Mono',monospace;font-size:10.5px;color:{{ m.color }};font-weight:{{ m.weight }}">{{ m.t }}</span></sc-for></div>
+        </div>
+
+        <div data-reveal="up" data-delay="160" style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:20px;background:linear-gradient(160deg,#06141a,#0d2a33);color:#e8eff1">
+          <div style="display:flex;align-items:center;gap:10px"><img src="assets/wedy-avatar.png" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;background:#0f262e;border:2px solid rgba(95,227,240,.5)"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Ce que Wedy remarque</div></div>
+          <sc-for list="{{ insights }}" as="n" hint-placeholder-count="3">
+            <div data-reveal="up" data-delay="{{ n.delay }}" style="display:flex;gap:11px;align-items:flex-start;padding:12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)"><span style="width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:{{ n.bg }};color:{{ n.color }};flex-shrink:0"><span data-icon="{{ n.icon }}" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span><div><div style="font-size:13.5px;font-weight:600;color:#ffffff">{{ n.title }}</div><div style="font-size:12.5px;line-height:1.5;color:#b9cbd0;margin-top:2px">{{ n.text }}</div></div></div>
+          </sc-for>
+          <a href="Wedy Copilot.dc.html" style="margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:40px;border-radius:11px;background:#effbfc;color:#06141a;font-size:13.5px;font-weight:600" style-hover="color:#06141a;box-shadow:0 0 0 4px rgba(39,192,212,.25)"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Approfondir avec Wedy</a>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px">
+        <div data-reveal="up" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Arrivées et départs</span><span style="display:flex;gap:10px;font-size:11.5px;color:#33474f"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:#16b6c8"></span>Arrivées</span><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:#ef6b54"></span>Départs</span></span></div>
+          <div style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;height:150px;margin-top:16px">
+            <sc-for list="{{ flows }}" as="f" hint-placeholder-count="12">
+              <div title="{{ f.title }}" style="display:grid;grid-template-rows:1fr 1fr;opacity:{{ f.op }};transition:opacity .4s">
+                <div style="display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #dfe6e9"><span data-reveal="growy" data-delay="{{ f.delay }}" style="display:block;width:70%;max-width:16px;height:{{ f.up }}%;border-radius:5px 5px 2px 2px;background:#16b6c8;transform-origin:bottom"></span></div>
+                <div style="display:flex;align-items:flex-start;justify-content:center"><span data-reveal="growy" data-delay="{{ f.delay }}" style="display:block;width:70%;max-width:16px;height:{{ f.down }}%;border-radius:2px 2px 5px 5px;background:#ef6b54;transform-origin:top"></span></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid #eef2f4;font-size:13px"><span style="color:#52646d">Sur la période</span><span><strong style="color:#0b5f72">+{{ sumHires }}</strong> · <strong style="color:#b8402c">−{{ sumDeps }}</strong> · solde <strong>+{{ net }}</strong></span></div>
+        </div>
+
+        <div data-reveal="up" data-delay="60" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Effectif par service</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px">
+            <sc-for list="{{ depts }}" as="d" hint-placeholder-count="7"><div style="display:grid;grid-template-columns:104px minmax(0,1fr) 30px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">{{ d.name }}</span><span style="height:10px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="{{ d.delay }}" style="display:block;height:100%;width:{{ d.w }}%;border-radius:99px;background:{{ d.color }};transform-origin:left"></span></span><span style="font-family:'Geist Mono',monospace;font-weight:600;text-align:right">{{ d.n }}</span></div></sc-for>
+          </div>
+        </div>
+
+        <div data-reveal="up" data-delay="120" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Composition</div>
+          <div style="display:flex;align-items:center;gap:18px;margin-top:14px;flex-wrap:wrap">
+            <div style="position:relative;width:118px;height:118px;flex-shrink:0">
+              <svg viewBox="0 0 100 100" style="display:block;width:118px;height:118px;transform:rotate(-90deg)">
+                <circle cx="50" cy="50" r="40" style="fill:none;stroke:#eef2f4;stroke-width:13px"></circle>
+                <circle data-reveal="fade" cx="50" cy="50" r="40" style="fill:none;stroke:#0e6f84;stroke-width:13px;stroke-dasharray:{{ d0.dash }};stroke-dashoffset:{{ d0.off }}"></circle>
+                <circle data-reveal="fade" data-delay="150" cx="50" cy="50" r="40" style="fill:none;stroke:#6d5ad6;stroke-width:13px;stroke-dasharray:{{ d1.dash }};stroke-dashoffset:{{ d1.off }}"></circle>
+                <circle data-reveal="fade" data-delay="250" cx="50" cy="50" r="40" style="fill:none;stroke:#df9326;stroke-width:13px;stroke-dasharray:{{ d2.dash }};stroke-dashoffset:{{ d2.off }}"></circle>
+                <circle data-reveal="fade" data-delay="350" cx="50" cy="50" r="40" style="fill:none;stroke:#16a06b;stroke-width:13px;stroke-dasharray:{{ d3.dash }};stroke-dashoffset:{{ d3.off }}"></circle>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:22px;font-weight:800">72 %</span><span style="font-size:10.5px;color:#5f7079">en CDI</span></div>
+            </div>
+            <div style="flex:1;min-width:130px;display:flex;flex-direction:column;gap:7px;font-size:13px">
+              <span style="display:flex;justify-content:space-between"><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:3px;background:#0e6f84"></span>CDI</span><strong>91</strong></span>
+              <span style="display:flex;justify-content:space-between"><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:3px;background:#6d5ad6"></span>CDD</span><strong>23</strong></span>
+              <span style="display:flex;justify-content:space-between"><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:3px;background:#df9326"></span>Stage</span><strong>8</strong></span>
+              <span style="display:flex;justify-content:space-between"><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:3px;background:#16a06b"></span>Freelance</span><strong>4</strong></span>
+            </div>
+          </div>
+          <div style="margin-top:18px;padding-top:14px;border-top:1px solid #eef2f4">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#52646d"><span>Femmes · 46 %</span><span>Hommes · 54 %</span></div>
+            <div style="display:flex;height:10px;border-radius:99px;overflow:hidden;gap:3px;margin-top:7px"><span data-reveal="growx" style="width:46%;background:#9a8bf0;border-radius:99px;transform-origin:left"></span><span data-reveal="growx" data-delay="150" style="width:54%;background:#16b6c8;border-radius:99px;transform-origin:left"></span></div>
+            <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;align-items:end;height:70px;margin-top:16px">
+              <sc-for list="{{ ages }}" as="a" hint-placeholder-count="5"><div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%"><span data-reveal="growy" data-delay="{{ a.delay }}" style="display:block;width:100%;height:{{ a.h }}%;border-radius:6px 6px 3px 3px;background:{{ a.bg }};transform-origin:bottom"></span><span style="font-family:'Geist Mono',monospace;font-size:10px;color:#5f7079">{{ a.t }}</span></div></sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const MONTHS = ['Nov.', 'Déc.', 'Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.'];
+const HC = [104, 106, 107, 109, 110, 111, 112, 114, 113, 117, 122, 126];
+const HIRES = [3, 4, 2, 3, 2, 2, 3, 4, 1, 5, 6, 5];
+const DEPS = [1, 2, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1];
+const ABS = [2.6, 2.8, 3.0, 2.7, 2.9, 3.1, 2.8, 3.3, 3.0, 3.2, 3.5, 3.4];
+const TTH = [31, 30, 29, 28, 27, 27, 26, 25, 24, 23, 22, 21];
+const TEN = [3.5, 3.5, 3.6, 3.6, 3.6, 3.7, 3.7, 3.7, 3.8, 3.8, 3.8, 3.8];
+const W = 700, PL = 34, PR = 14, PT = 16, PB = 28, H = 220, YMIN = 100, YMAX = 130;
+const X = i => PL + i * (W - PL - PR) / 11;
+const Y = v => PT + (YMAX - v) / (YMAX - YMIN) * (H - PT - PB);
+const smooth = pts => pts.map((p, i) => {
+  if (!i) return `M${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+  const p0 = pts[i - 2] || pts[i - 1], p1 = pts[i - 1], p3 = pts[i + 1] || p;
+  return `C${(p1[0] + (p[0] - p0[0]) / 6).toFixed(1)},${(p1[1] + (p[1] - p0[1]) / 6).toFixed(1)} ${(p[0] - (p3[0] - p1[0]) / 6).toFixed(1)},${(p[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+}).join(' ');
+const spark = arr => { const mn = Math.min(...arr), mx = Math.max(...arr), r = mx - mn || 1; return smooth(arr.map((v, i) => [i * (100 / (arr.length - 1)), 28 - (v - mn) / r * 26])); };
+const dec = (v, d = 1) => v.toFixed(d).replace('.', ',');
+const C = 2 * Math.PI * 40;
+
+class Component extends DCLogic {
+  state = { n: 6, hover: -1, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state, n = s.n, from = 12 - n;
+    const pts = HC.map((v, i) => [X(i), Y(v)]);
+    const line = smooth(pts);
+    const slice = a => a.slice(from);
+    const avgHc = slice(HC).reduce((a, b) => a + b, 0) / n;
+    const deps = slice(DEPS).reduce((a, b) => a + b, 0), hires = slice(HIRES).reduce((a, b) => a + b, 0);
+    const turnover = deps / avgHc * (12 / n) * 100;
+    const base = HC[from - 1] != null ? HC[from - 1] : HC[0];
+    const hcGrowth = (HC[11] - base) / base * 100;
+    const absAvg = slice(ABS).reduce((a, b) => a + b, 0) / n, tth = slice(TTH).reduce((a, b) => a + b, 0) / n;
+    const hv = s.hover >= 0 ? { x: X(s.hover).toFixed(1), y: Y(HC[s.hover]).toFixed(1), left: (X(s.hover) / W * 100).toFixed(2), top: (Y(HC[s.hover]) / H * 100).toFixed(2), month: MONTHS[s.hover], value: HC[s.hover], hires: HIRES[s.hover], deps: DEPS[s.hover], op: '1' } : { x: '0', y: '0', left: '0', top: '0', month: '', value: '', hires: '', deps: '', op: '0' };
+    const step = (W - PL - PR) / 11;
+    const contracts = [91, 23, 8, 4], tot = 126; let acc = 0;
+    const donut = contracts.map(v => { const len = v / tot * C; const r = { dash: `${(len - 1.2).toFixed(2)} ${C.toFixed(2)}`, off: (-acc).toFixed(2) }; acc += len; return r; });
+    return {
+      rootRef: this.rootRef,
+      periods: [[3, '3 mois'], [6, '6 mois'], [12, '12 mois']].map(([k, label]) => ({ label, on: n === k, color: n === k ? '#ffffff' : '#52646d', go: () => this.setState({ n: k }) })),
+      kpis: [
+        { label: 'Effectif', icon: 'users', color: '#0e6f84', value: '126', delta: `+${dec(hcGrowth)} % sur ${n} mois`, deltaColor: '#0f6f49', deltaIcon: 'trending-up', spark: spark(slice(HC).length > 2 ? slice(HC) : HC.slice(-4)) },
+        { label: 'Turnover annualisé', icon: 'repeat', color: '#df5740', value: `${dec(turnover)} %`, delta: `${deps} départ${deps > 1 ? 's' : ''}`, deltaColor: '#52646d', deltaIcon: 'log-out', spark: spark(slice(DEPS).length > 2 ? slice(DEPS) : DEPS.slice(-4)) },
+        { label: 'Absentéisme', icon: 'user-x', color: '#df9326', value: `${dec(absAvg)} %`, delta: 'Opérations à 6,2 %', deltaColor: '#8a5207', deltaIcon: 'triangle-alert|alert-triangle', spark: spark(slice(ABS).length > 2 ? slice(ABS) : ABS.slice(-4)) },
+        { label: 'Délai de recrutement', icon: 'timer', color: '#6d5ad6', value: `${Math.round(tth)} j`, delta: '−10 j en un an', deltaColor: '#0f6f49', deltaIcon: 'trending-down', spark: spark(slice(TTH).length > 2 ? slice(TTH) : TTH.slice(-4)) },
+        { label: 'Ancienneté moyenne', icon: 'hourglass', color: '#16a06b', value: '3,8 ans', delta: 'Stable', deltaColor: '#52646d', deltaIcon: 'minus', spark: spark(slice(TEN).length > 2 ? slice(TEN) : TEN.slice(-4)) },
+      ].map((k, i) => ({ ...k, delay: String(i * 60) })),
+      hcDelta: `+${HC[11] - base} personnes sur ${n} mois`,
+      line, area: `${line} L${X(11).toFixed(1)},192 L${X(0).toFixed(1)},192 Z`, lastY: Y(HC[11]).toFixed(1),
+      winX: (X(from) - 24).toFixed(1), winW: (X(11) - X(from) + 38).toFixed(1),
+      hv, unhover: () => this.setState({ hover: -1 }),
+      cols: HC.map((_, i) => ({ left: ((X(i) - step / 2) / W * 100).toFixed(2), w: (step / W * 100).toFixed(2), enter: () => this.setState({ hover: i }) })),
+      months: MONTHS.map((t, i) => ({ t, left: (X(i) / W * 100).toFixed(2), color: i >= from ? '#0b5f72' : '#8a9ba3', weight: i >= from ? '600' : '400' })),
+      insights: [
+        { icon: 'repeat', bg: 'rgba(239,107,84,.16)', color: '#ef8b78', title: 'Départs concentrés aux Opérations', text: '5 des 9 départs des 6 derniers mois. Les heures supplémentaires y ont augmenté de 22 %.' },
+        { icon: 'file-clock|clock', bg: 'rgba(230,169,72,.16)', color: '#f0bd6a', title: '3 CDD arrivent à échéance en novembre', text: 'Yasmine Benali, Karim Bennani et Hind Tazi. Décidez des renouvellements avant le 8/11.' },
+        { icon: 'trending-up', bg: 'rgba(43,189,134,.16)', color: '#4fd3a0', title: 'Recrutement plus rapide', text: 'Le délai moyen est passé de 31 à 21 jours, grâce à la présélection par IA.' },
+      ].map((x, i) => ({ ...x, delay: String(200 + i * 100) })),
+      flows: HIRES.map((h, i) => ({ up: String(h / 6 * 92), down: String(DEPS[i] / 6 * 92), op: i >= from ? '1' : '.3', delay: String(i * 40), title: `${MONTHS[i]} : +${h} / −${DEPS[i]}` })),
+      sumHires: hires, sumDeps: deps, net: hires - deps,
+      depts: [['Opérations', 38, '#df9326'], ['Commercial', 24, '#16a06b'], ['Tech', 22, '#6d5ad6'], ['Service client', 15, '#0e6f84'], ['Marketing', 11, '#df5740'], ['Finance', 9, '#4a69d8'], ['RH', 6, '#16b6c8']].map(([name, v, color], i) => ({ name, n: v, color, w: String(v / 38 * 100), delay: String(i * 60) })),
+      d0: donut[0], d1: donut[1], d2: donut[2], d3: donut[3],
+      ages: [['< 25', 9], ['25–34', 52], ['35–44', 41], ['45–54', 18], ['55 +', 6]].map(([t, v], i) => ({ t, h: String(v / 52 * 100), bg: v === 52 ? 'linear-gradient(180deg,#16b6c8,#0e6f84)' : '#cfe7ec', delay: String(i * 70) })),
+      exportPdf: () => this.toast(`Rapport RH (${n} mois) exporté en PDF`),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

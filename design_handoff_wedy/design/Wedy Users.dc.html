@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Utilisateurs et rôles — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="users" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Espace de travail" title="Utilisateurs et rôles" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Utilisateurs et rôles</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Qui peut voir et faire quoi dans Wedy.</p>
+        </div>
+        <button type="button" onClick="{{ openInvite }}" data-reveal="up" data-delay="100" style="display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)"><span data-icon="user-plus" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Inviter un utilisateur</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="4">
+          <button type="button" onClick="{{ r.pick }}" data-reveal="up" data-delay="{{ r.delay }}" style="display:flex;flex-direction:column;gap:10px;padding:16px 18px;border-radius:18px;border:1px solid {{ r.border }};background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;box-shadow:{{ r.shadow }};transition:border-color .2s,box-shadow .2s">
+            <span style="display:flex;align-items:center;gap:10px;width:100%"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{ r.tint }};color:{{ r.color }}"><span data-icon="{{ r.icon }}" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><span style="font-size:15px;font-weight:700;color:#0a1c24">{{ r.label }}</span><span style="margin-left:auto;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:22px;font-weight:800;color:#0a1c24">{{ r.n }}</span></span>
+            <span style="font-size:12.5px;line-height:1.5;color:#52646d">{{ r.desc }}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div data-reveal="up" data-delay="120" style="flex:1.5 1 560px;min-width:0;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;flex-wrap:wrap"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Comptes avec accès étendu</span><span style="font-size:12.5px;color:#5f7079">{{ userCount }}</span><div style="position:relative;margin-left:auto;width:220px"><span data-icon="search" data-size="14" style="position:absolute;left:11px;top:50%;margin-top:-7px;display:inline-flex;width:14px;height:14px;color:#7d8f97;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Rechercher…" style="width:100%;height:36px;padding:0 10px 0 32px;border-radius:10px;border:1px solid #d6dfe3;font-family:inherit;font-size:13px;outline:none" style-focus="border-color:#16b6c8"></div></div>
+          <div style="overflow-x:auto">
+            <div style="min-width:760px">
+              <div style="display:grid;grid-template-columns:minmax(220px,2fr) 150px 90px 130px 110px 44px;align-items:center;padding:10px 18px;background:#f8fafb;border-top:1px solid #eef2f4;border-bottom:1px solid #eef2f4;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079"><span>Utilisateur</span><span>Rôle</span><span>2FA</span><span>Activité</span><span>Statut</span><span></span></div>
+              <sc-for list="{{ users }}" as="u" hint-placeholder-count="8">
+                <div data-reveal="up" data-delay="{{ u.delay }}" style="display:grid;grid-template-columns:minmax(220px,2fr) 150px 90px 130px 110px 44px;align-items:center;padding:10px 18px;border-bottom:1px solid #eef2f4;background:{{ u.bg }};transition:background .3s">
+                  <span style="display:flex;align-items:center;gap:10px;min-width:0"><span style="position:relative;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ u.av }};color:#ffffff;font-size:12px;font-weight:700;flex-shrink:0">{{ u.ini }}<sc-if value="{{ u.online }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;background:#16a06b;border:2px solid #ffffff"></span></sc-if></span><span style="min-width:0"><span style="display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.name }}</span><span style="display:block;font-size:12px;color:#5f7079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.email }}</span></span></span>
+                  <span><select value="{{ u.role }}" onChange="{{ u.setRole }}" style="height:32px;padding:0 8px;border-radius:9px;border:1px solid {{ u.roleBorder }};background:{{ u.roleBg }};color:{{ u.roleColor }};font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;outline:none"><option value="admin">Administrateur</option><option value="hr">RH</option><option value="manager">Manager</option><option value="employee">Employé</option></select></span>
+                  <span><sc-if value="{{ u.tfa }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#0f6f49"><span data-icon="shield-check" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Activée</span></sc-if><sc-if value="{{ u.noTfa }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#8a5207"><span data-icon="shield-off" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Non</span></sc-if></span>
+                  <span style="font-size:12.5px;color:#52646d">{{ u.last }}</span>
+                  <span><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ u.stBg }};color:{{ u.stColor }};white-space:nowrap">{{ u.status }}</span></span>
+                  <button type="button" onClick="{{ u.remove }}" aria-label="Retirer l'accès" style="width:32px;height:32px;border:none;border-radius:8px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#fbe9e6;color:#df5740"><span data-icon="user-minus" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div data-reveal="up" data-delay="160" style="flex:1 1 380px;min-width:0;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="padding:14px 18px"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Permissions</div><div style="font-size:12.5px;color:#5f7079;margin-top:2px">Cliquez une case pour changer le niveau d'accès.</div></div>
+          <div style="overflow-x:auto"><div style="min-width:380px;padding:0 18px 16px">
+            <div style="display:grid;grid-template-columns:minmax(110px,1fr) repeat(4,64px);gap:6px;align-items:end;padding-bottom:6px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#5f7079"><span></span><span style="text-align:center">Admin</span><span style="text-align:center">RH</span><span style="text-align:center">Manager</span><span style="text-align:center">Employé</span></div>
+            <sc-for list="{{ perms }}" as="p" hint-placeholder-count="8">
+              <div style="display:grid;grid-template-columns:minmax(110px,1fr) repeat(4,64px);gap:6px;align-items:center;margin-top:5px">
+                <span style="font-size:13px;color:#33474f">{{ p.label }}</span>
+                <sc-for list="{{ p.cells }}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{ c.cycle }}" disabled="{{ c.locked }}" title="{{ c.title }}" style="height:32px;border:none;border-radius:8px;background:{{ c.bg }};color:{{ c.color }};cursor:{{ c.cursor }};display:flex;align-items:center;justify-content:center;transition:background .2s"><span data-icon="{{ c.icon }}" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></button></sc-for>
+              </div>
+            </sc-for>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:11.5px;color:#33474f"><span style="display:inline-flex;align-items:center;gap:5px"><span data-icon="pencil" data-size="12" style="display:inline-flex;width:12px;height:12px;color:#0e6f84"></span>Modifier</span><span style="display:inline-flex;align-items:center;gap:5px"><span data-icon="eye" data-size="12" style="display:inline-flex;width:12px;height:12px;color:#5444b8"></span>Lecture</span><span style="display:inline-flex;align-items:center;gap:5px"><span data-icon="minus" data-size="12" style="display:inline-flex;width:12px;height:12px;color:#a3b1b7"></span>Aucun accès</span></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{ invite }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeInvite }}" style="position:fixed;inset:0;z-index:100;background:rgba(6,20,26,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
+    <form onSubmit="{{ sendInvite }}" data-reveal="scale" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:101;width:min(440px,calc(100vw - 32px));display:flex;flex-direction:column;gap:14px;padding:22px;border-radius:22px;background:#ffffff;box-shadow:0 40px 100px -30px rgba(6,20,26,.6)">
+      <div style="display:flex;align-items:center;gap:12px"><span style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff"><span data-icon="mail-plus|mail" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div style="flex:1"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px">Inviter un utilisateur</div><div style="font-size:12.5px;color:#52646d">Un lien d'activation valable 7 jours sera envoyé.</div></div></div>
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Email professionnel<input type="email" value="{{ iEmail }}" onChange="{{ onIEmail }}" placeholder="prenom.nom@tython.ma" style="height:44px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></label>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Rôle
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><sc-for list="{{ iRoles }}" as="r" hint-placeholder-count="3"><button type="button" onClick="{{ r.go }}" style="height:40px;border-radius:10px;border:1px solid {{ r.border }};background:{{ r.bg }};color:{{ r.color }};font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ r.label }}</button></sc-for></div>
+      </div>
+      <sc-if value="{{ iErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#a33a28">Saisissez une adresse email valide.</div></sc-if>
+      <div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" onClick="{{ closeInvite }}" style="height:42px;padding:0 16px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;color:#33474f;cursor:pointer">Annuler</button><button type="submit" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 16px;border:none;border-radius:11px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer"><span data-icon="send" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Envoyer l'invitation</button></div>
+    </form>
+  </sc-if>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="user-check" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const ROLES = { admin: ['Administrateur', 'shield-check', '#fbe9e6', '#a33a28', 'Accès complet, y compris paramètres, sécurité et facturation.', 2], hr: ['RH', 'briefcase', '#e4f2f4', '#0b5f72', 'Gère employés, documents, congés, paie et recrutement.', 4], manager: ['Manager', 'users', '#ece9fb', '#5444b8', 'Voit son équipe, valide les congés et mène les entretiens.', 12], employee: ['Employé', 'user', '#eef2f4', '#33474f', 'Accède à son portail : congés, documents et formations.', 108] };
+const USERS = [
+  ['Salma Idrissi', 'salma@tython.ma', 'admin', true, 'En ligne', 'active', true], ['Hassan Bennis', 'h.bennis@tython.ma', 'admin', true, 'Il y a 2 h', 'active'],
+  ['Sara El Fassi', 'sara.elfassi@tython.ma', 'hr', true, 'Il y a 12 min', 'active', true], ['Nadia Berrada', 'nadia.berrada@tython.ma', 'hr', false, 'Hier', 'active'],
+  ['Youssef Amrani', 'youssef.amrani@tython.ma', 'manager', true, 'Il y a 3 h', 'active'], ['Adil Mernissi', 'a.mernissi@tython.ma', 'manager', false, 'Il y a 2 j', 'active'],
+  ['Driss Lahlou', 'd.lahlou@tython.ma', 'manager', true, 'Hier', 'active'], ['Hajar Benjelloun', 'h.benjelloun@tython.ma', 'manager', true, "Aujourd'hui", 'active'],
+].map(([name, email, role, tfa, last, status, online]) => ({ name, email, role, tfa, last, status, online: !!online }));
+const MODS = ['Employés', 'Documents', 'Congés', 'Paie', 'Recrutement', 'Analytics', 'Paramètres', 'Sécurité'];
+const P0 = { admin: [2, 2, 2, 2, 2, 2, 2, 2], hr: [2, 2, 2, 2, 2, 1, 0, 0], manager: [1, 1, 2, 0, 1, 1, 0, 0], employee: [0, 1, 1, 0, 0, 0, 0, 0] };
+const LV = [['minus', '#f3f6f7', '#a3b1b7', 'Aucun accès'], ['eye', '#ece9fb', '#5444b8', 'Lecture'], ['pencil', '#e4f2f4', '#0e6f84', 'Modifier']];
+const avOf = n => AV[(n.charCodeAt(0) + n.length) % AV.length];
+const ini = n => n.split(/[\s.@]/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+class Component extends DCLogic {
+  state = { users: USERS, perms: JSON.parse(JSON.stringify(P0)), q: '', roleF: null, invite: false, iEmail: '', iRole: 'hr', iErr: false, fresh: null, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state, q = s.q.trim().toLowerCase();
+    const list = s.users.filter(u => (!s.roleF || u.role === s.roleF) && (!q || `${u.name} ${u.email}`.toLowerCase().includes(q)));
+    return {
+      rootRef: this.rootRef,
+      roles: Object.keys(ROLES).map((k, i) => { const r = ROLES[k], on = s.roleF === k; return { label: r[0], icon: r[1], tint: r[2], color: r[3], desc: r[4], n: r[5] + s.users.filter(u => u.role === k && u.status === 'invited').length, delay: String(i * 60), border: on ? r[3] : '#e2e8eb', shadow: on ? `0 0 0 3px ${r[2]}` : 'none', pick: () => this.setState({ roleF: on ? null : k }) }; }),
+      q: s.q, onQ: e => this.setState({ q: e.target.value }), userCount: `${list.length} compte${list.length > 1 ? 's' : ''}${s.roleF ? ' · ' + ROLES[s.roleF][0] : ''}`,
+      users: list.map((u, i) => { const r = ROLES[u.role], inv = u.status === 'invited'; return { ...u, ini: ini(u.name), av: inv ? 'linear-gradient(135deg,#a3b1b7,#c3ced3)' : avOf(u.name), delay: String(i * 40), noTfa: !u.tfa, roleBg: r[2], roleColor: r[3], roleBorder: 'transparent', bg: u.email === s.fresh ? '#eef9fa' : '#ffffff',
+        status: inv ? 'Invitation envoyée' : 'Actif', stBg: inv ? '#fbefda' : '#e1f5ec', stColor: inv ? '#8a5207' : '#0f6f49',
+        setRole: e => { const v = e.target.value; this.setState(x => ({ users: x.users.map(y => y.email === u.email ? { ...y, role: v } : y) })); this.toast(`${u.name} est maintenant ${ROLES[v][0]}`); },
+        remove: () => { if (u.email === 'salma@tython.ma') { this.toast('Vous ne pouvez pas retirer votre propre accès'); return; } this.setState(x => ({ users: x.users.filter(y => y.email !== u.email) })); this.toast(`Accès de ${u.name} retiré`); } }; }),
+      perms: MODS.map((label, mi) => ({ label, cells: ['admin', 'hr', 'manager', 'employee'].map(rk => { const v = s.perms[rk][mi], locked = rk === 'admin'; return { icon: LV[v][0], bg: LV[v][1], color: LV[v][2], title: `${ROLES[rk][0]} · ${label} : ${LV[v][3]}${locked ? ' (verrouillé)' : ''}`, locked, cursor: locked ? 'not-allowed' : 'pointer',
+        cycle: () => { if (locked) return; this.setState(x => ({ perms: { ...x.perms, [rk]: x.perms[rk].map((w, j) => j === mi ? (w + 1) % 3 : w) } })); } }; }) })),
+      invite: s.invite, openInvite: () => this.setState({ invite: true, iEmail: '', iErr: false }), closeInvite: () => this.setState({ invite: false }),
+      iEmail: s.iEmail, onIEmail: e => this.setState({ iEmail: e.target.value, iErr: false }), iErr: s.iErr,
+      iRoles: ['hr', 'manager', 'admin'].map(k => ({ label: ROLES[k][0], go: () => this.setState({ iRole: k }), bg: s.iRole === k ? '#0a1c24' : '#ffffff', color: s.iRole === k ? '#ffffff' : '#33474f', border: s.iRole === k ? '#0a1c24' : '#d6dfe3' })),
+      sendInvite: e => { if (e && e.preventDefault) e.preventDefault(); const em = s.iEmail.trim().toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { this.setState({ iErr: true }); return; } const name = em.split('@')[0].split(/[._-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); this.setState(x => ({ invite: false, roleF: null, q: '', fresh: em, users: [{ name, email: em, role: x.iRole, tfa: false, last: '—', status: 'invited', online: false }, ...x.users] })); this.toast(`Invitation envoyée à ${em}`); },
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

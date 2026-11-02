@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Yasmine Benali — Dossier employé · Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="employees" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:14px 32px;background:rgba(243,246,247,.84);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid #e2e8eb">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#5f7079;white-space:nowrap;flex-shrink:0"><a href="Wedy Employees.dc.html" style="color:#5f7079" style-hover="color:#0a1c24">Employés</a><span data-icon="chevron-right" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#a3b1b7"></span><span style="font-weight:600;color:#0a1c24">Yasmine Benali</span></div>
+      <a href="Wedy Copilot.dc.html" style="margin-left:auto;display:flex;align-items:center;gap:9px;flex:0 1 320px;min-width:0;padding:9px 12px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;color:#7d8f97;font-size:13.5px;text-decoration:none" style-hover="color:#52646d;border-color:#b9dfe5"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#16b6c8"></span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Demander à Wedy…</span></a>
+    </header>
+
+    <div style="padding:26px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1240px;width:100%">
+      <a href="Wedy Employees.dc.html" data-reveal="up" style="display:inline-flex;align-self:flex-start;align-items:center;gap:7px;font-size:13.5px;color:#52646d" style-hover="color:#0a1c24"><span data-icon="arrow-left" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Retour aux employés</a>
+
+      <section data-reveal="up" data-delay="60" style="position:relative;overflow:hidden;border-radius:26px;background:#06141a;color:#e8eff1;padding:28px;isolation:isolate">
+        <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none">
+          <div data-loop="drift" style="position:absolute;left:-8%;top:-70%;width:560px;height:560px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.65),transparent)"></div>
+          <div data-loop="drift" data-dur="26000" data-delay="-9000" style="position:absolute;right:-6%;top:-50%;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.38),transparent)"></div>
+          <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 50%,transparent);mask-image:linear-gradient(90deg,transparent,#000 50%,transparent)"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:22px">
+          <div style="position:relative;width:92px;height:92px;flex-shrink:0">
+            <span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(95,227,240,.6)"></span>
+            <span style="position:relative;width:92px;height:92px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e6f84,#16b6c8);font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:32px;font-weight:700;color:#ffffff;border:3px solid rgba(255,255,255,.18);box-shadow:0 0 50px -10px rgba(39,192,212,.8)">YB</span>
+          </div>
+          <div style="flex:1;min-width:240px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h1 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(28px,3vw,38px);letter-spacing:-.045em;line-height:1.05;color:#f1f8f9">Yasmine Benali</h1><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:rgba(43,189,134,.16);color:#4fd3a0"><span style="width:6px;height:6px;border-radius:50%;background:#2bbd86"></span>Actif</span></div>
+            <div style="margin-top:6px;font-size:15px;color:#9fb4bb">Responsable Marketing · Marketing</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+              <span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:rgba(154,139,240,.18);color:#c9c0f8">CDD</span>
+              <span style="font-family:'Geist Mono',monospace;font-size:12px;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.06);color:#b9cbd0">EMP-0042</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.06);color:#b9cbd0"><span data-icon="calendar" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Depuis le 15/03/2022</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.06);color:#b9cbd0"><span data-icon="map-pin" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Casablanca</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;min-width:230px">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:rgba(223,87,64,.12);border:1px solid rgba(239,107,84,.3)"><span data-icon="file-clock|clock" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#ef8b78"></span><div style="flex:1"><div style="font-size:13.5px;font-weight:600;color:#ffd9d1">Contrat : fin dans 12 jours</div><div style="font-size:12px;color:#d9a79c">CDD jusqu'au 12/11/2026</div></div></div>
+            <div style="display:flex;gap:8px">
+              <button type="button" onClick="{{ renew }}" style="flex:1;position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:42px;padding:0 14px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><span data-icon="wand-sparkles|wand-2" data-size="15" style="position:relative;display:inline-flex;width:15px;height:15px"></span><span style="position:relative">Préparer l'avenant</span></button>
+              <a href="mailto:yasmine.benali@tython.ma" aria-label="Email" style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);color:#e8eff1" style-hover="color:#ffffff;background:rgba(255,255,255,.15)"><span data-icon="mail" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></a>
+              <button type="button" onClick="{{ editToast }}" aria-label="Modifier" style="width:42px;height:42px;border:none;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);color:#e8eff1;cursor:pointer" style-hover="background:rgba(255,255,255,.15)"><span data-icon="pencil" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <nav data-reveal="up" data-delay="100" style="display:flex;flex-wrap:wrap;gap:4px;padding:5px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
+          <button type="button" onClick="{{ t.go }}" style="position:relative;flex:1 1 auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 12px;border:none;border-radius:12px;background:transparent;font-family:inherit;font-size:14px;font-weight:600;color:#52646d;cursor:pointer;white-space:nowrap" style-hover="color:#0a1c24">
+            <sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="position:absolute;inset:0;border-radius:12px;background:#0a1c24"></span></sc-if>
+            <span data-icon="{{ t.icon }}" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px;color:{{ t.color }}"></span><span style="position:relative;color:{{ t.color }}">{{ t.label }}</span>
+          </button>
+        </sc-for>
+      </nav>
+
+      <sc-if value="{{ tProfil }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;align-items:start">
+          <div data-reveal="up" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:16px"><span data-icon="user" data-size="17" style="display:inline-flex;width:17px;height:17px;color:#0e6f84"></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Informations personnelles</span></div>
+            <sc-for list="{{ personal }}" as="f" hint-placeholder-count="7"><div style="display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid #f0f3f4;font-size:14px"><span style="color:#5f7079">{{ f.label }}</span><span style="font-weight:500;text-align:right;color:{{ f.color }}">{{ f.value }}</span></div></sc-for>
+          </div>
+          <div data-reveal="up" data-delay="80" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:16px"><span data-icon="briefcase" data-size="17" style="display:inline-flex;width:17px;height:17px;color:#6d5ad6"></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Contrat &amp; rémunération</span></div>
+            <sc-for list="{{ contractInfo }}" as="f" hint-placeholder-count="7"><div style="display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid #f0f3f4;font-size:14px"><span style="color:#5f7079">{{ f.label }}</span><span style="font-weight:500;text-align:right;color:{{ f.color }}">{{ f.value }}</span></div></sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div data-reveal="up" data-delay="160" style="display:flex;align-items:center;gap:18px;padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+              <div style="position:relative;width:84px;height:84px;flex-shrink:0"><svg viewBox="0 0 84 84" style="display:block;width:84px;height:84px;transform:rotate(-90deg)"><circle cx="42" cy="42" r="34" style="fill:none;stroke:#eef2f4;stroke-width:9px"></circle><circle cx="42" cy="42" r="34" style="fill:none;stroke:#16b6c8;stroke-width:9px;stroke-linecap:round;stroke-dasharray:{{ ringDash }};transition:stroke-dasharray .9s cubic-bezier(.2,.8,.2,1)"></circle></svg><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:20px">{{ completeness }}%</div></div>
+              <div><div style="font-weight:700;font-size:15px">Dossier complété</div><div style="font-size:13px;line-height:1.5;color:#52646d;margin-top:4px">{{ missingLabel }}</div><sc-if value="{{ hasMissing }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ goFiles }}" style="margin-top:8px;border:none;background:none;padding:0;font-family:inherit;font-size:13px;font-weight:600;color:#0e6f84;cursor:pointer;display:inline-flex;align-items:center;gap:5px">Compléter avec l'IA<span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></button></sc-if></div>
+            </div>
+            <div data-reveal="up" data-delay="220" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px"><span data-icon="sparkles" data-size="17" style="display:inline-flex;width:17px;height:17px;color:#16a06b"></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Compétences &amp; langues</span></div>
+              <div style="display:flex;flex-wrap:wrap;gap:7px"><span style="font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:#e4f2f4;color:#0b5f72">Marketing digital</span><span style="font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:#e4f2f4;color:#0b5f72">SEO / SEA</span><span style="font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:#e4f2f4;color:#0b5f72">Brand management</span><span style="font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:#e4f2f4;color:#0b5f72">Google Analytics</span></div>
+              <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:10px"><span style="font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:#ece9fb;color:#5444b8;font-family:'Noto Kufi Arabic',sans-serif">العربية</span><span style="font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:#ece9fb;color:#5444b8">Français</span><span style="font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:#ece9fb;color:#5444b8">English</span></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ tFiles }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div data-reveal="up" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+              <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Ajouter un fichier</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+                <sc-for list="{{ fileTypes }}" as="ft" hint-placeholder-count="5"><button type="button" onClick="{{ ft.pick }}" style="position:relative;height:32px;padding:0 12px;border-radius:99px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;color:#52646d;cursor:pointer"><sc-if value="{{ ft.on }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:-1px;border-radius:99px;background:#0a1c24"></span></sc-if><span style="position:relative;color:{{ ft.color }}">{{ ft.label }}</span></button></sc-for>
+              </div>
+              <button type="button" onClick="{{ upload }}" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center;gap:8px;padding:28px 16px;border-radius:16px;border:1.5px dashed #b9dfe5;background:linear-gradient(180deg,#f3fafb,#ffffff);font-family:inherit;cursor:pointer;transition:border-color .2s,background .2s" style-hover="border-color:#16b6c8;background:#eef8f9"><span data-loop="float" style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="cloud-upload|upload" data-size="22" style="display:inline-flex;width:22px;height:22px"></span></span><span style="font-size:14px;font-weight:600;color:#0a1c24">Déposez un fichier ou cliquez pour parcourir</span><span style="font-size:12.5px;color:#5f7079">PDF, DOCX, JPG — 10 Mo max.</span></button>
+            </div>
+            <div data-reveal="up" data-delay="80" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+              <div style="padding:16px 20px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Fichiers ({{ fileCount }})</div>
+              <sc-for list="{{ files }}" as="fl" hint-placeholder-count="4"><div data-reveal="up" style="display:flex;align-items:center;gap:12px;padding:11px 20px;border-top:1px solid #eef2f4"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:{{ fl.bg }};color:{{ fl.color }};flex-shrink:0"><span data-icon="file-text" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ fl.name }}</div><div style="font-size:12px;color:#5f7079">{{ fl.type }} · {{ fl.size }}</div></div><button type="button" onClick="{{ dlToast }}" aria-label="Télécharger" style="width:32px;height:32px;border:none;border-radius:9px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#eef3f5;color:#0a1c24"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button></div></sc-for>
+            </div>
+          </div>
+
+          <div data-reveal="up" data-delay="120" style="position:relative;overflow:hidden;padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:12px"><span style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6d5ad6,#16b6c8);color:#ffffff"><span data-icon="scan-text|sparkles" data-size="20" style="display:inline-flex;width:20px;height:20px"></span></span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:17px">Compléter le dossier avec l'IA</div><div style="font-size:13px;color:#52646d">Wedy lit les fichiers et propose les champs manquants.</div></div></div>
+            <sc-if value="{{ aiIdle }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:18px;padding:16px;border-radius:14px;background:#f8fafb;border:1px solid #eef2f4;font-size:13.5px;line-height:1.55;color:#52646d">Rien n'est jamais écrasé sans votre accord : seuls les champs vides sont pré-cochés, les conflits restent à valider.</div>
+              <button type="button" onClick="{{ analyze }}" style="margin-top:14px;width:100%;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border:none;border-radius:12px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#16323c"><span data-icon="sparkles" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Analyser les 4 fichiers</button>
+            </sc-if>
+            <sc-if value="{{ aiBusy }}" hint-placeholder-val="{{ false }}">
+              <div data-reveal="up" style="margin-top:18px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#33474f"><span data-loop="spin" style="width:16px;height:16px;border-radius:50%;border:2px solid #d6dfe3;border-top-color:#16b6c8"></span>Lecture des documents…</div>
+                <div style="height:8px;border-radius:99px;background:#eef2f4;overflow:hidden"><div data-loop="scan" style="height:100%;width:40%;border-radius:99px;background:linear-gradient(90deg,#16b6c8,#6d5ad6)"></div></div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ aiDone }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ extracted }}" as="x" hint-placeholder-count="4">
+                  <button type="button" onClick="{{ x.toggle }}" data-reveal="up" data-delay="{{ x.delay }}" style="display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer" style-hover="border-color:#b9dfe5">
+                    <span style="width:20px;height:20px;border-radius:6px;border:1.5px solid #c3ced3;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#ffffff"><sc-if value="{{ x.on }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;border-radius:6px;background:#0e6f84;display:flex;align-items:center;justify-content:center"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span></sc-if></span>
+                    <span style="flex:1;min-width:0"><span style="display:block;font-size:12px;color:#5f7079">{{ x.label }}</span><span style="display:block;font-size:14px;font-weight:600;color:#0a1c24">{{ x.value }}</span></span>
+                    <sc-if value="{{ x.conflict }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:#fbefda;color:#8a5207">Conflit · actuel {{ x.current }}</span></sc-if>
+                    <sc-if value="{{ x.empty }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:#e1f5ec;color:#0f6f49">Champ vide</span></sc-if>
+                  </button>
+                </sc-for>
+                <button type="button" onClick="{{ apply }}" disabled="{{ noneSel }}" style="margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)"><span data-icon="check" data-size="16" data-sw="2.4" style="display:inline-flex;width:16px;height:16px"></span>Appliquer {{ selCount }} champ(s)</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ aiApplied }}" hint-placeholder-val="{{ false }}">
+              <div data-reveal="up" style="margin-top:18px;display:flex;align-items:center;gap:12px;padding:16px;border-radius:14px;background:#e1f5ec;color:#0f6f49"><span data-icon="circle-check|check-circle" data-size="22" style="display:inline-flex;width:22px;height:22px"></span><div style="font-size:14px;line-height:1.5"><strong>Dossier mis à jour.</strong> Les champs validés ont été ajoutés au profil.</div></div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ tDocs }}" hint-placeholder-val="{{ false }}">
+        <div data-reveal="up" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;flex-wrap:wrap"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Documents générés</span><a href="Wedy Generate.dc.html" style="display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border-radius:11px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:13.5px;font-weight:600" style-hover="color:#ffffff"><span data-icon="wand-sparkles|wand-2" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Générer un document</a></div>
+          <sc-for list="{{ docs }}" as="d" hint-placeholder-count="4"><div data-reveal="up" data-delay="{{ d.delay }}" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef2f4;transition:background .15s" style-hover="background:#f8fbfb"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84;flex-shrink:0"><span data-icon="file-text" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><div style="flex:1;min-width:0"><div dir="{{ d.dir }}" style="font-size:14px;font-weight:600;text-align:left">{{ d.title }}</div><div style="font-size:12.5px;color:#5f7079">Généré par {{ d.by }}</div></div><span style="font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;background:#e4f2f4;color:#0e6f84">{{ d.lang }}</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#7d8f97;min-width:84px;text-align:right;white-space:nowrap">{{ d.date }}</span><button type="button" onClick="{{ dlToast }}" aria-label="Télécharger" style="width:34px;height:34px;border:none;border-radius:9px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#eef3f5;color:#0a1c24"><span data-icon="download" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button></div></sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ tLeaves }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+            <div data-reveal="up" style="padding:18px 20px;border-radius:18px;background:linear-gradient(135deg,#0b5f72,#0e7f96);color:#ffffff"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9">Solde disponible</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.04em;margin-top:6px">14,5 j</div><div style="font-size:12.5px;opacity:.9">1,5 j acquis par mois</div></div>
+            <div data-reveal="up" data-delay="60" style="padding:18px 20px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Pris en 2026</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.04em;margin-top:6px">8 j</div><div style="font-size:12.5px;color:#52646d">dont 1 j de maladie</div></div>
+            <div data-reveal="up" data-delay="120" style="padding:18px 20px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">En attente</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.04em;margin-top:6px">0</div><div style="font-size:12.5px;color:#52646d">Aucune demande</div></div>
+          </div>
+          <div data-reveal="up" data-delay="120" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+            <div style="padding:16px 20px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Historique des congés</div>
+            <sc-for list="{{ leaves }}" as="l" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef2f4"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6;flex-shrink:0"><span data-icon="calendar" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">{{ l.type }}</div><div style="font-size:12.5px;color:#5f7079">{{ l.dates }}</div></div><span style="font-family:'Geist Mono',monospace;font-size:12.5px;color:#33474f">{{ l.days }}</span><span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:{{ l.bg }};color:{{ l.color }}">{{ l.status }}</span></div></sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ tPay }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;align-items:start">
+          <div data-reveal="up" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Octobre 2026</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:14px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:40px;font-weight:800;letter-spacing:-.045em">13 942</span><span style="font-size:14px;color:#52646d">MAD net</span></div>
+            <div style="display:flex;height:12px;border-radius:99px;overflow:hidden;gap:3px;margin-top:16px"><span data-reveal="growx" style="width:75%;background:#0e6f84;border-radius:99px;transform-origin:left"></span><span data-reveal="growx" data-delay="200" style="width:6%;background:#16b6c8;border-radius:99px;transform-origin:left"></span><span data-reveal="growx" data-delay="300" style="width:19%;background:#6d5ad6;border-radius:99px;transform-origin:left"></span></div>
+            <div style="display:flex;flex-direction:column;gap:9px;margin-top:16px;font-size:13.5px">
+              <div style="display:flex;justify-content:space-between"><span style="display:inline-flex;align-items:center;gap:7px;color:#33474f"><span style="width:8px;height:8px;border-radius:50%;background:#0e6f84"></span>Salaire net</span><span style="font-weight:600">13 942 MAD</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="display:inline-flex;align-items:center;gap:7px;color:#33474f"><span style="width:8px;height:8px;border-radius:50%;background:#16b6c8"></span>CNSS &amp; AMO</span><span style="font-weight:600">1 111 MAD</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="display:inline-flex;align-items:center;gap:7px;color:#33474f"><span style="width:8px;height:8px;border-radius:50%;background:#6d5ad6"></span>IR</span><span style="font-weight:600">3 447 MAD</span></div>
+              <div style="display:flex;justify-content:space-between;padding-top:9px;border-top:1px solid #eef2f4"><span style="color:#5f7079">Salaire brut</span><span style="font-weight:700">18 500 MAD</span></div>
+            </div>
+          </div>
+          <div data-reveal="up" data-delay="80" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+            <div style="padding:16px 20px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Bulletins de paie</div>
+            <sc-for list="{{ slips }}" as="p" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef2f4"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="receipt|file-text" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><div style="flex:1"><div style="font-size:14px;font-weight:600">{{ p.month }}</div><div style="font-size:12.5px;color:#5f7079">{{ p.note }}</div></div><span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600">{{ p.net }}</span><button type="button" onClick="{{ dlToast }}" aria-label="Télécharger" style="width:34px;height:34px;border:none;border-radius:9px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#eef3f5;color:#0a1c24"><span data-icon="download" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button></div></sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ tPerf }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;align-items:start">
+          <div data-reveal="up" style="position:relative;overflow:hidden;padding:24px;border-radius:20px;background:linear-gradient(140deg,#5444b8,#6d5ad6 55%,#0e7f96);color:#ffffff">
+            <div style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;opacity:.85">ÉVALUATION ANNUELLE 2025</div>
+            <div style="display:flex;align-items:baseline;gap:6px;margin-top:12px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:56px;font-weight:800;letter-spacing:-.05em;line-height:1">4,3</span><span style="font-size:18px;opacity:.8">/ 5</span></div>
+            <div style="display:flex;gap:4px;margin-top:12px"><span data-icon="star" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#ffd36b"></span><span data-icon="star" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#ffd36b"></span><span data-icon="star" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#ffd36b"></span><span data-icon="star" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#ffd36b"></span><span data-icon="star-half|star" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#ffd36b"></span></div>
+            <div style="margin-top:12px;font-size:14.5px;font-weight:600">Dépasse les attentes</div>
+            <div style="margin-top:4px;font-size:13px;opacity:.85;line-height:1.5">Leadership remarqué sur la refonte de la marque.</div>
+          </div>
+          <div data-reveal="up" data-delay="80" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px;margin-bottom:6px">Objectifs 2026</div>
+            <sc-for list="{{ goals }}" as="g" hint-placeholder-count="4"><div style="padding:13px 0;border-top:1px solid #f0f3f4"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><span style="font-size:14px;font-weight:600">{{ g.title }}</span><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ g.bg }};color:{{ g.color }};white-space:nowrap">{{ g.status }}</span></div><div style="display:flex;align-items:center;gap:10px;margin-top:9px"><div style="flex:1;height:7px;border-radius:99px;background:#eef2f4;overflow:hidden"><div data-reveal="growx" style="height:100%;width:{{ g.pct }}%;border-radius:99px;background:{{ g.bar }};transform-origin:left"></div></div><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#52646d;width:36px;text-align:right">{{ g.pct }}%</span></div></div></sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+    <div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const EASE = 'cubic-bezier(.2,.8,.2,1)';
+const TABS = [['profil', 'Profil', 'user'], ['fichiers', 'Fichiers', 'folder-open|folder'], ['documents', 'Documents', 'file-text'], ['conges', 'Congés', 'calendar'], ['paie', 'Paie', 'wallet'], ['performance', 'Performance', 'trending-up']];
+const FILE_TYPES = [['cv', 'CV'], ['diplome', 'Diplôme'], ['certificat', 'Certificat'], ['contrat', 'Contrat'], ['autre', 'Autre']];
+const FT_STYLE = { CV: ['#e4f2f4', '#0e6f84'], 'Diplôme': ['#ece9fb', '#6d5ad6'], Certificat: ['#e1f5ec', '#16a06b'], Contrat: ['#fbefda', '#b06b0c'], Autre: ['#f3f6f7', '#52646d'] };
+const EXTRACT = [
+  { key: 'birth', label: 'Date de naissance', value: '22/08/1993' },
+  { key: 'nationality', label: 'Nationalité', value: 'Marocaine' },
+  { key: 'cnss', label: 'N° CNSS', value: '1 234 567 89' },
+  { key: 'phone', label: 'Téléphone', value: '+212 6 61 23 45 76' },
+];
+const LOOPS = {
+  drift: [[{ transform: 'translate(0,0) scale(1)' }, { transform: 'translate(7%,-6%) scale(1.12)' }, { transform: 'translate(0,0) scale(1)' }], 22000, 'ease-in-out'],
+  ping: [[{ transform: 'scale(1)', opacity: 0.6 }, { transform: 'scale(1.35)', opacity: 0 }], 2400, 'cubic-bezier(0,0,.2,1)'],
+  shine: [[{ transform: 'translateX(-150%) skewX(-20deg)', offset: 0 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 0.35 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 1 }], 4200, 'ease-in-out'],
+  float: [[{ transform: 'translateY(0px)' }, { transform: 'translateY(-6px)' }, { transform: 'translateY(0px)' }], 3200, 'ease-in-out'],
+  spin: [[{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], 800, 'linear'],
+  scan: [[{ transform: 'translateX(-100%)' }, { transform: 'translateX(260%)' }], 1300, 'ease-in-out'],
+};
+
+class Component extends DCLogic {
+  state = { tab: 'profil', emp: { phone: '+212 6 61 23 45 67', birth: '', nationality: '', cnss: '' }, ftype: 'cv', files: [['CV_Yasmine_Benali.pdf', 'CV', '412 Ko'], ['Master_Marketing_ISCAE.pdf', 'Diplôme', '1,2 Mo'], ['Certificat_Google_Ads.pdf', 'Certificat', '286 Ko'], ['Contrat_CDD_2025_signe.pdf', 'Contrat', '734 Ko']], ai: 'idle', pick: {}, toast: '' };
+  rootRef = React.createRef();
+
+  componentDidMount() {
+    this._alive = true; this._ws = {};
+    this._io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting && e.boundingClientRect.bottom >= 0) return; this._io.unobserve(e.target); const a = e.target.__reveal; if (a) { try { a.play(); } catch (_) {} } }), { threshold: 0.05 });
+    this.scan(); this.icons(0);
+    this._mo = new MutationObserver(() => { clearTimeout(this._st); this._st = setTimeout(() => this.scan(), 80); });
+    if (this.rootRef.current) this._mo.observe(this.rootRef.current, { childList: true, subtree: true });
+  }
+  componentDidUpdate() { this.scan(); }
+  componentWillUnmount() { this._alive = false; this._io.disconnect(); if (this._mo) this._mo.disconnect(); clearTimeout(this._it); clearTimeout(this._tt); clearTimeout(this._at); }
+
+  scan() {
+    const root = this.rootRef.current; if (!root) return;
+    this.fill(root);
+    const each = (sel, key, fn) => { const set = this._ws[key] || (this._ws[key] = new WeakSet()); root.querySelectorAll(sel).forEach(el => { if (!set.has(el)) { set.add(el); fn.call(this, el); } }); };
+    each('[data-reveal]', 'r', el => {
+      const k = el.dataset.reveal;
+      const K = k === 'growx' ? [{ scale: '0 1' }, { scale: '1 1' }] : k === 'pill' ? [{ opacity: 0, scale: '0.9' }, { opacity: 1, scale: '1' }] : [{ opacity: 0, translate: '0 14px' }, { opacity: 1, translate: '0 0' }];
+      let a; try { a = el.animate(K, { duration: k === 'growx' ? 1000 : k === 'pill' ? 300 : 600, delay: Math.min(+el.dataset.delay || 0, 700), easing: EASE, fill: 'both' }); } catch (_) { return; }
+      a.pause(); a.onfinish = () => { try { a.cancel(); } catch (_) {} }; el.__reveal = a; this._io.observe(el);
+    });
+    each('[data-loop]', 'l', el => { const d = LOOPS[el.dataset.loop]; if (d) try { el.animate(d[0], { duration: +el.dataset.dur || d[1], iterations: Infinity, easing: d[2], delay: +el.dataset.delay || 0 }); } catch (_) {} });
+  }
+  fill(root) {
+    const L = window.lucide; if (!L || !L.icons || !root) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    root.querySelectorAll('[data-icon]').forEach(el => {
+      if (el.firstChild && el.__icon === el.dataset.icon) return;
+      el.replaceChildren(); el.__icon = el.dataset.icon;
+      let node = null;
+      for (const n of el.dataset.icon.split('|')) { node = L.icons[n.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase())]; if (node) break; }
+      if (!node) return;
+      const s = el.dataset.size || 16, svg = document.createElementNS(NS, 'svg');
+      const a = { width: s, height: s, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': el.dataset.sw || 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+      Object.keys(a).forEach(k => svg.setAttribute(k, a[k])); svg.style.display = 'block';
+      ((node[0] === 'svg' ? node[2] : node) || []).forEach(c => { if (!Array.isArray(c)) return; const e = document.createElementNS(NS, c[0]); Object.keys(c[1] || {}).forEach(k => { if (k !== 'key') e.setAttribute(k, c[1][k]); }); svg.appendChild(e); });
+      el.appendChild(svg);
+    });
+  }
+  icons(n) { if (!this._alive) return; if (window.lucide && window.lucide.icons) { this.fill(this.rootRef.current); return; } if (n < 100) this._it = setTimeout(() => this.icons(n + 1), 120); }
+  toast(t) { clearTimeout(this._tt); this.setState({ toast: t }); this._tt = setTimeout(() => this._alive && this.setState({ toast: '' }), 2600); }
+
+  renderVals() {
+    const s = this.state, e = s.emp;
+    const val = v => v || '—', col = v => v ? '#0a1c24' : '#a3b1b7';
+    const personal = [['CIN', 'BK 284913'], ['Date de naissance', e.birth], ['Nationalité', e.nationality], ['Téléphone', e.phone], ['Email', 'yasmine.benali@tython.ma'], ['Ville', 'Casablanca'], ['Adresse', '27 rue Ibnou Mounir, Maârif']].map(([label, v]) => ({ label, value: val(v), color: col(v) }));
+    const contractInfo = [['Type de contrat', 'CDD'], ['Début du contrat', '13/11/2025'], ['Fin du contrat', '12/11/2026'], ['Salaire brut', '18 500 MAD'], ['Manager', 'Karim Lahlou'], ['N° CNSS', e.cnss], ['RIB', '•••• •••• •••• 4821']].map(([label, v]) => ({ label, value: val(v), color: label === 'Fin du contrat' ? '#b8402c' : col(v) }));
+    const all = [...personal, ...contractInfo], filled = all.filter(f => f.value !== '—').length + 6;
+    const total = all.length + 6, completeness = Math.round(filled / total * 100), missing = all.filter(f => f.value === '—').map(f => f.label.toLowerCase());
+    const C = 2 * Math.PI * 34;
+    const extracted = EXTRACT.map((x, i) => {
+      const current = e[x.key], empty = !current, conflict = !!current && current !== x.value;
+      const on = s.pick[x.key] ?? empty;
+      return { ...x, empty, conflict, current, on, delay: String(i * 90), toggle: () => this.setState(st => ({ pick: { ...st.pick, [x.key]: !on } })) };
+    }).filter(x => x.empty || x.conflict);
+    const selCount = extracted.filter(x => x.on).length;
+    return {
+      rootRef: this.rootRef,
+      tabs: TABS.map(([key, label, icon]) => ({ label, icon, on: s.tab === key, color: s.tab === key ? '#ffffff' : '#52646d', go: () => this.setState({ tab: key }) })),
+      tProfil: s.tab === 'profil', tFiles: s.tab === 'fichiers', tDocs: s.tab === 'documents', tLeaves: s.tab === 'conges', tPay: s.tab === 'paie', tPerf: s.tab === 'performance',
+      personal, contractInfo, completeness, ringDash: `${(C * completeness / 100).toFixed(1)}px ${C.toFixed(1)}px`,
+      hasMissing: missing.length > 0, missingLabel: missing.length ? `Manquant : ${missing.join(', ')}.` : 'Toutes les informations clés sont renseignées.',
+      goFiles: () => this.setState({ tab: 'fichiers' }),
+      fileTypes: FILE_TYPES.map(([k, label]) => ({ label, on: s.ftype === k, color: s.ftype === k ? '#ffffff' : '#52646d', pick: () => this.setState({ ftype: k }) })),
+      files: s.files.map(([name, type, size]) => ({ name, type, size, bg: FT_STYLE[type][0], color: FT_STYLE[type][1] })), fileCount: s.files.length,
+      upload: () => { const t = FILE_TYPES.find(f => f[0] === s.ftype)[1]; this.setState(st => ({ files: [[`${t}_Yasmine_Benali_${st.files.length + 1}.pdf`, t, '320 Ko'], ...st.files] })); this.toast(`Fichier ajouté · ${t}`); },
+      aiIdle: s.ai === 'idle', aiBusy: s.ai === 'busy', aiDone: s.ai === 'done', aiApplied: s.ai === 'applied',
+      analyze: () => { this.setState({ ai: 'busy', pick: {} }); this._at = setTimeout(() => this._alive && this.setState({ ai: 'done' }), 1800); },
+      extracted, selCount, noneSel: selCount === 0,
+      apply: () => { const upd = {}; extracted.filter(x => x.on).forEach(x => { upd[x.key] = x.value; }); this.setState(st => ({ emp: { ...st.emp, ...upd }, ai: 'applied' })); this.toast(`${Object.keys(upd).length} champ(s) appliqué(s) au dossier`); },
+      docs: [['Attestation de travail', 'FR', '31/10/2026', 'Wedy AI'], ['شهادة الأجر', 'AR', '02/09/2026', 'Salma Idrissi'], ['Contrat CDD', 'FR', '13/11/2025', 'Salma Idrissi'], ['Avenant au contrat', 'FR', '15/03/2024', 'Wedy AI']].map(([title, lang, date, by], i) => ({ title, lang, date, by, dir: lang === 'AR' ? 'rtl' : 'ltr', delay: String(i * 60) })),
+      leaves: [['Congé annuel', '18 → 22 août 2026', '5 j', 'Approuvé'], ['Congé annuel', '2 → 3 juin 2026', '2 j', 'Approuvé'], ['Congé maladie', '12 mars 2026', '1 j', 'Approuvé'], ['Congé sans solde', '6 → 10 janv. 2026', '5 j', 'Refusé']].map(([type, dates, days, status]) => ({ type, dates, days, status, bg: status === 'Approuvé' ? '#e1f5ec' : '#fbe9e6', color: status === 'Approuvé' ? '#0f6f49' : '#a33a28' })),
+      slips: [['Octobre 2026', 'Payé le 30/10', '13 942 MAD'], ['Septembre 2026', 'Payé le 30/09', '13 942 MAD'], ['Août 2026', 'Payé le 29/08', '13 942 MAD'], ['Juillet 2026', 'Prime de projet incluse', '15 418 MAD']].map(([month, note, net]) => ({ month, note, net })),
+      goals: [['Augmenter le trafic organique de 25 %', 72, 'En cours'], ['Refonte de la charte graphique', 100, 'Terminé'], ['Campagne Ramadan 2027', 40, 'En cours'], ['Former 2 stagiaires marketing', 50, 'En cours']].map(([title, pct, status]) => ({ title, pct: String(pct), status, bg: status === 'Terminé' ? '#e1f5ec' : '#e4f2f4', color: status === 'Terminé' ? '#0f6f49' : '#0b5f72', bar: status === 'Terminé' ? '#16a06b' : 'linear-gradient(90deg,#0e6f84,#16b6c8)' })),
+      renew: () => this.toast("Wedy prépare l'avenant de renouvellement…"), editToast: () => this.toast('Mode édition'), dlToast: () => this.toast('Téléchargement…'),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

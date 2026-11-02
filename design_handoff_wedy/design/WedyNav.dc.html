@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<aside ref="{{ rootRef }}" style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;background:#06141a;color:#e8eff1;border-right:1px solid rgba(255,255,255,.06);overflow:hidden;font-family:'Geist',system-ui,sans-serif">
+  <div aria-hidden="true" style="position:absolute;left:-120px;top:-140px;width:420px;height:420px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.45),transparent);pointer-events:none"></div>
+  <a href="Wedy Dashboard.dc.html" style="position:relative;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:20px 20px 16px;text-decoration:none">
+    <img src="assets/wedy-avatar.png" alt="Wedy" style="width:32px;height:32px;border-radius:50%;object-fit:cover;background:#0f262e;border:1.5px solid rgba(255,255,255,.2)">
+    <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:20px;letter-spacing:-.03em;color:#f1f8f9">Wedy</span>
+    <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.1em;padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.06);color:#8ea5ad">RH</span>
+  </a>
+  <a href="Wedy Copilot.dc.html" style="position:relative;flex-shrink:0;display:flex;align-items:center;gap:9px;margin:0 14px 12px;padding:9px 12px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#7f969e;font-size:13px;text-decoration:none;transition:border-color .2s,background .2s" style-hover="color:#cfdde1;border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span data-icon="sparkles" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#5fe3f0"></span><span style="flex:1">Demander à Wedy…</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;padding:1px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.1)">⌘K</span></a>
+  <nav style="position:relative;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:12px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.14) transparent">
+    <sc-for list="{{ sections }}" as="s" hint-placeholder-count="5">
+      <div style="padding:14px 22px 5px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:#5b737b">{{ s.heading }}</div>
+      <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="3">
+        <sc-if value="{{ it.isActive }}" hint-placeholder-val="{{ false }}">
+          <a href="{{ it.href }}" style="position:relative;display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;font-weight:600;color:#5fe3f0;background:rgba(39,192,212,.13);text-decoration:none"><span style="position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:#27c0d4;box-shadow:0 0 12px 1px rgba(39,192,212,.8)"></span><span data-icon="{{ it.icon }}" data-size="16" style="display:inline-flex;width:16px;height:16px"></span><span style="flex:1;white-space:nowrap">{{ it.label }}</span><sc-if value="{{ it.isCount }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:700;min-width:20px;text-align:center;padding:1px 6px;border-radius:99px;background:#27c0d4;color:#06141a">{{ it.badge }}</span></sc-if><sc-if value="{{ it.isNew }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:rgba(39,192,212,.14);color:#5fe3f0;border:1px solid rgba(39,192,212,.3)">New</span></sc-if><sc-if value="{{ it.isAi }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:rgba(154,139,240,.16);color:#b3a8f5;border:1px solid rgba(154,139,240,.3)">AI</span></sc-if></a>
+        </sc-if>
+        <sc-if value="{{ it.notActive }}" hint-placeholder-val="{{ true }}">
+          <a href="{{ it.href }}" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="{{ it.icon }}" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span><span style="flex:1;white-space:nowrap">{{ it.label }}</span><sc-if value="{{ it.isCount }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:700;min-width:20px;text-align:center;padding:1px 6px;border-radius:99px;background:#27c0d4;color:#06141a">{{ it.badge }}</span></sc-if><sc-if value="{{ it.isNew }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:rgba(39,192,212,.14);color:#5fe3f0;border:1px solid rgba(39,192,212,.3)">New</span></sc-if><sc-if value="{{ it.isAi }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:rgba(154,139,240,.16);color:#b3a8f5;border:1px solid rgba(154,139,240,.3)">AI</span></sc-if></a>
+        </sc-if>
+      </sc-for>
+    </sc-for>
+  </nav>
+  <div style="position:relative;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid rgba(255,255,255,.07)">
+    <span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6d5ad6,#16b6c8);color:#ffffff;font-size:12px;font-weight:700;flex-shrink:0">SI</span>
+    <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#e8eff1">Salma Idrissi</div><div style="font-size:11.5px;color:#7f969e">Admin RH</div></div>
+    <a href="Wedy Login.dc.html" aria-label="Se déconnecter" style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#7f969e;text-decoration:none" style-hover="background:rgba(255,255,255,.06);color:#ef6b54"><span data-icon="log-out" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></a>
+  </div>
+</aside>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:252,&quot;height&quot;:820},&quot;active&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dashboard&quot;,&quot;copilot&quot;,&quot;notifications&quot;,&quot;employees&quot;,&quot;interns&quot;,&quot;requests&quot;,&quot;recruitment&quot;,&quot;candidates&quot;,&quot;annonces&quot;,&quot;planning&quot;,&quot;performance&quot;,&quot;timeoff&quot;,&quot;absences&quot;,&quot;payroll&quot;,&quot;orgchart&quot;,&quot;meetings&quot;,&quot;onboarding&quot;,&quot;training&quot;,&quot;talents&quot;,&quot;tenders&quot;,&quot;generate&quot;,&quot;templates&quot;,&quot;history&quot;,&quot;analytics&quot;,&quot;audit&quot;,&quot;integrations&quot;,&quot;users&quot;,&quot;settings&quot;,&quot;security&quot;,&quot;help&quot;],&quot;default&quot;:&quot;dashboard&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;pending&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:6,&quot;tsType&quot;:&quot;number&quot;},&quot;notif&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3,&quot;tsType&quot;:&quot;number&quot;}}">
+const NAV = [
+  { heading: "VUE D'ENSEMBLE", items: [
+    ['dashboard', 'Tableau de bord', 'layout-dashboard', 'Wedy Dashboard.dc.html'],
+    ['copilot', 'Copilote IA', 'bot', 'Wedy Copilot.dc.html', 'new'],
+    ['notifications', 'Notifications', 'bell', 'Wedy Notifications.dc.html', 'notif'],
+  ] },
+  { heading: 'PERSONNES', items: [
+    ['employees', 'Employés', 'users', 'Wedy Employees.dc.html'],
+    ['interns', 'Stagiaires', 'graduation-cap', 'Wedy Interns.dc.html'],
+    ['requests', 'Demandes', 'inbox', 'Wedy Requests.dc.html', 'pending'],
+    ['recruitment', 'Recrutement', 'target', 'Wedy Recruitment.dc.html'],
+    ['candidates', 'Candidats', 'user-plus', 'Wedy Candidates.dc.html'],
+    ['annonces', 'Annonces', 'megaphone', 'Wedy Job Posts.dc.html', 'ai'],
+    ['planning', 'Planning RH', 'calendar', 'Wedy Planning.dc.html'],
+    ['performance', 'Performance', 'trending-up', 'Wedy Performance.dc.html'],
+    ['timeoff', 'Congés', 'clock', 'Wedy Time Off.dc.html'],
+    ['absences', 'Absences', 'user-x', 'Wedy Absences.dc.html'],
+    ['payroll', 'Paie', 'wallet', 'Wedy Payroll.dc.html'],
+    ['orgchart', 'Organigramme', 'network', 'Wedy Org Chart.dc.html'],
+    ['meetings', 'Réunions', 'video', 'Wedy Meetings.dc.html'],
+  ] },
+  { heading: 'DÉVELOPPEMENT RH', items: [
+    ['onboarding', 'Onboarding', 'user-check', 'Wedy Onboarding.dc.html'],
+    ['training', 'Formation', 'book-open', 'Wedy Training.dc.html'],
+    ['talents', 'Talents', 'star', 'Wedy Talents.dc.html'],
+    ['tenders', "Appels d'offres", 'briefcase', 'Wedy Tenders.dc.html', 'ai'],
+  ] },
+  { heading: 'DOCUMENTS', items: [
+    ['generate', 'Générer', 'wand-sparkles|wand-2', 'Wedy Generate.dc.html'],
+    ['templates', 'Modèles', 'file-text', 'Wedy Templates.dc.html'],
+    ['history', 'Historique', 'history', 'Wedy History.dc.html'],
+  ] },
+  { heading: 'INSIGHTS', items: [
+    ['analytics', 'Analytics', 'chart-column|bar-chart-3', 'Wedy Analytics.dc.html'],
+    ['audit', "Journal d'audit", 'clipboard-list', 'Wedy Audit.dc.html'],
+  ] },
+  { heading: 'ESPACE DE TRAVAIL', items: [
+    ['integrations', 'Intégrations', 'puzzle', 'Wedy Integrations.dc.html'],
+    ['users', 'Utilisateurs & rôles', 'user-cog', 'Wedy Users.dc.html'],
+    ['settings', 'Paramètres', 'settings', 'Wedy Settings.dc.html'],
+    ['security', 'Sécurité', 'shield-check', 'Wedy Security.dc.html'],
+    ['help', 'Aide', 'circle-help|help-circle', 'Wedy Help.dc.html'],
+  ] },
+];
+
+class Component extends DCLogic {
+  rootRef = React.createRef();
+  componentDidMount() { this._alive = true; this.tick(0); }
+  componentDidUpdate() { this.fill(); }
+  componentWillUnmount() { this._alive = false; clearTimeout(this._t); }
+  tick(n) { if (!this._alive) return; if (window.lucide && window.lucide.icons) return this.fill(); if (n < 120) this._t = setTimeout(() => this.tick(n + 1), 120); }
+  fill() {
+    const L = window.lucide, root = this.rootRef.current; if (!L || !L.icons || !root) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    root.querySelectorAll('[data-icon]').forEach(el => {
+      if (el.firstChild && el.__icon === el.dataset.icon) return;
+      el.replaceChildren(); el.__icon = el.dataset.icon;
+      let node = null;
+      for (const n of el.dataset.icon.split('|')) { node = L.icons[n.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase())]; if (node) break; }
+      if (!node) return;
+      const size = el.dataset.size || 16, svg = document.createElementNS(NS, 'svg');
+      const a = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+      Object.keys(a).forEach(k => svg.setAttribute(k, a[k])); svg.style.display = 'block';
+      ((node[0] === 'svg' ? node[2] : node) || []).forEach(c => { if (!Array.isArray(c)) return; const e = document.createElementNS(NS, c[0]); Object.keys(c[1] || {}).forEach(k => { if (k !== 'key') e.setAttribute(k, c[1][k]); }); svg.appendChild(e); });
+      el.appendChild(svg);
+    });
+  }
+  renderVals() {
+    const active = this.props.active ?? 'dashboard';
+    const pending = this.props.pending ?? 6, notif = this.props.notif ?? 3;
+    return {
+      rootRef: this.rootRef,
+      sections: NAV.map(s => ({
+        heading: s.heading,
+        items: s.items.map(([key, label, icon, href, badge]) => {
+          const count = badge === 'pending' ? pending : badge === 'notif' ? notif : 0;
+          return { key, label, icon, href, isActive: key === active, notActive: key !== active, isCount: count > 0, badge: String(count), isNew: badge === 'new', isAi: badge === 'ai' };
+        }),
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

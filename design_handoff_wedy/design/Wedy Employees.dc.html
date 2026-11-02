@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Employés — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="employees" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:14px 32px;background:rgba(243,246,247,.84);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid #e2e8eb">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#5f7079;white-space:nowrap;flex-shrink:0"><span>Personnes</span><span data-icon="chevron-right" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#a3b1b7"></span><span style="font-weight:600;color:#0a1c24">Employés</span></div>
+      <a href="Wedy Copilot.dc.html" style="margin-left:auto;display:flex;align-items:center;gap:9px;flex:0 1 320px;min-width:0;padding:9px 12px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;color:#7d8f97;font-size:13.5px;text-decoration:none" style-hover="color:#52646d;border-color:#b9dfe5"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#16b6c8"></span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Demander à Wedy…</span></a>
+      <a href="Wedy Notifications.dc.html" aria-label="Notifications" style="position:relative;flex-shrink:0;width:40px;height:40px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;color:#33474f;display:flex;align-items:center;justify-content:center"><span data-icon="bell" data-size="17" style="display:inline-flex;width:17px;height:17px"></span><span style="position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:#df5740;border:1.5px solid #ffffff"></span></a>
+    </header>
+
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <div data-reveal="up" style="display:flex;align-items:center;gap:12px"><h1 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Employés</h1><span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:500;padding:3px 10px;border-radius:99px;background:#e4f2f4;color:#0e6f84">{{ total }}</span></div>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Dossiers, contrats et documents de toute votre équipe.</p>
+        </div>
+        <div data-reveal="up" data-delay="100" style="position:relative;display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" onClick="{{ deptToast }}" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="border-color:#9fb4bb"><span data-icon="building-2" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Départements</button>
+          <button type="button" onClick="{{ toggleImport }}" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="border-color:#9fb4bb"><span data-icon="upload" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Importer<span data-icon="chevron-down" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></button>
+          <button type="button" onClick="{{ exportToast }}" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="border-color:#9fb4bb"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Exporter</button>
+          <button type="button" onClick="{{ openDrawer }}" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><span data-icon="plus" data-size="16" data-sw="2.2" style="position:relative;display:inline-flex;width:16px;height:16px"></span><span style="position:relative">Ajouter un employé</span></button>
+          <sc-if value="{{ importOpen }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="up" style="position:absolute;right:120px;top:50px;z-index:30;width:300px;padding:6px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 24px 50px -20px rgba(10,28,36,.35)">
+              <button type="button" onClick="{{ smartImport }}" style="width:100%;display:flex;gap:11px;align-items:flex-start;padding:10px;border:none;border-radius:11px;background:transparent;font-family:inherit;text-align:left;cursor:pointer" style-hover="background:#f3f6f7"><span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="file-spreadsheet" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><span><span style="display:block;font-size:14px;font-weight:600;color:#0a1c24">Import intelligent</span><span style="display:block;font-size:12.5px;color:#52646d;margin-top:2px">Excel ou CSV — colonnes détectées automatiquement</span></span></button>
+              <button type="button" onClick="{{ cvImport }}" style="width:100%;display:flex;gap:11px;align-items:flex-start;padding:10px;border:none;border-radius:11px;background:transparent;font-family:inherit;text-align:left;cursor:pointer" style-hover="background:#f3f6f7"><span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6;flex-shrink:0"><span data-icon="file-up" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><span><span style="display:block;font-size:14px;font-weight:600;color:#0a1c24">Importer un CV <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;background:#ece9fb;color:#5444b8">IA</span></span><span style="display:block;font-size:12.5px;color:#52646d;margin-top:2px">Wedy lit le CV et pré-remplit le dossier</span></span></button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+        <button type="button" onClick="{{ quickAll }}" data-reveal="up" data-delay="120" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s" style-hover="border-color:#b9dfe5;box-shadow:0 12px 26px -18px rgba(10,28,36,.35)"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="users" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><span><span style="display:block;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800;letter-spacing:-.03em;color:#0a1c24">{{ cActive }}</span><span style="display:block;font-size:12.5px;color:#52646d">Actifs</span></span></button>
+        <button type="button" onClick="{{ quickLeave }}" data-reveal="up" data-delay="170" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s" style-hover="border-color:#b9dfe5;box-shadow:0 12px 26px -18px rgba(10,28,36,.35)"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#b06b0c"><span data-icon="calendar" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><span><span style="display:block;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800;letter-spacing:-.03em;color:#0a1c24">{{ cLeave }}</span><span style="display:block;font-size:12.5px;color:#52646d">En congé</span></span></button>
+        <button type="button" onClick="{{ quickExpiring }}" data-reveal="up" data-delay="220" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s" style-hover="border-color:#b9dfe5;box-shadow:0 12px 26px -18px rgba(10,28,36,.35)"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#fbe9e6;color:#df5740"><span data-icon="file-clock|clock" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><span><span style="display:block;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800;letter-spacing:-.03em;color:#0a1c24">{{ cExpiring }}</span><span style="display:block;font-size:12.5px;color:#52646d">Contrats à échéance</span></span></button>
+        <button type="button" onClick="{{ quickInterns }}" data-reveal="up" data-delay="270" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s" style-hover="border-color:#b9dfe5;box-shadow:0 12px 26px -18px rgba(10,28,36,.35)"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6"><span data-icon="graduation-cap" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><span><span style="display:block;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800;letter-spacing:-.03em;color:#0a1c24">{{ cInterns }}</span><span style="display:block;font-size:12.5px;color:#52646d">Stagiaires</span></span></button>
+      </div>
+
+      <div data-reveal="up" data-delay="150" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+        <div style="position:relative;flex:1 1 260px;min-width:220px"><span data-icon="search" data-size="16" style="position:absolute;left:14px;top:50%;margin-top:-8px;display:inline-flex;width:16px;height:16px;color:#7d8f97;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Rechercher un nom, un poste, un email…" style="width:100%;height:44px;padding:0 14px 0 40px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;color:#0a1c24;outline:none;transition:border-color .2s,box-shadow .2s" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></div>
+        <select value="{{ dept }}" onChange="{{ onDept }}" style="height:44px;padding:0 34px 0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;font-weight:500;color:#33474f;cursor:pointer;outline:none"><option value="all">Tous les services</option><option value="Opérations">Opérations</option><option value="Commercial">Commercial</option><option value="Tech">Tech</option><option value="Finance">Finance</option><option value="Marketing">Marketing</option><option value="RH">RH</option><option value="Service client">Service client</option></select>
+        <select value="{{ status }}" onChange="{{ onStatus }}" style="height:44px;padding:0 34px 0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;font-weight:500;color:#33474f;cursor:pointer;outline:none"><option value="all">Tous les statuts</option><option value="active">Actif</option><option value="on-leave">En congé</option><option value="inactive">Inactif</option><option value="expiring">Contrat à échéance</option></select>
+        <select value="{{ contract }}" onChange="{{ onContract }}" style="height:44px;padding:0 34px 0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;font-weight:500;color:#33474f;cursor:pointer;outline:none"><option value="all">Tous les contrats</option><option value="CDI">CDI</option><option value="CDD">CDD</option><option value="Stage">Stage</option><option value="Freelance">Freelance</option></select>
+        <div style="display:flex;padding:4px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb">
+          <button type="button" onClick="{{ vList }}" aria-label="Liste" style="position:relative;width:36px;height:34px;border:none;border-radius:9px;background:transparent;color:#52646d;cursor:pointer;display:flex;align-items:center;justify-content:center"><sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;inset:0;border-radius:9px;background:#0a1c24"></span><span data-icon="list" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px;color:#ffffff"></span></sc-if><sc-if value="{{ notList }}" hint-placeholder-val="{{ false }}"><span data-icon="list" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></sc-if></button>
+          <button type="button" onClick="{{ vGrid }}" aria-label="Grille" style="position:relative;width:36px;height:34px;border:none;border-radius:9px;background:transparent;color:#52646d;cursor:pointer;display:flex;align-items:center;justify-content:center"><sc-if value="{{ isGrid }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;border-radius:9px;background:#0a1c24"></span><span data-icon="layout-grid" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px;color:#ffffff"></span></sc-if><sc-if value="{{ notGrid }}" hint-placeholder-val="{{ true }}"><span data-icon="layout-grid" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></sc-if></button>
+          <button type="button" onClick="{{ vKanban }}" aria-label="Kanban" style="position:relative;width:36px;height:34px;border:none;border-radius:9px;background:transparent;color:#52646d;cursor:pointer;display:flex;align-items:center;justify-content:center"><sc-if value="{{ isKanban }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;border-radius:9px;background:#0a1c24"></span><span data-icon="columns-3" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px;color:#ffffff"></span></sc-if><sc-if value="{{ notKanban }}" hint-placeholder-val="{{ true }}"><span data-icon="columns-3" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></sc-if></button>
+        </div>
+      </div>
+
+      <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+        <div data-reveal="up" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px 10px 16px;border-radius:14px;background:#0a1c24;color:#e8eff1">
+          <span style="font-size:14px;font-weight:600">{{ selCount }} sélectionné(s)</span>
+          <span style="flex:1"></span>
+          <button type="button" onClick="{{ bulkDoc }}" style="display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px;border:none;border-radius:10px;background:rgba(255,255,255,.1);color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,.18)"><span data-icon="wand-sparkles|wand-2" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Générer un document</button>
+          <button type="button" onClick="{{ exportToast }}" style="display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px;border:none;border-radius:10px;background:rgba(255,255,255,.1);color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,.18)"><span data-icon="download" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Exporter</button>
+          <button type="button" onClick="{{ clearSel }}" aria-label="Effacer la sélection" style="width:36px;height:36px;border:none;border-radius:10px;background:transparent;color:#9fb4bb;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="color:#ffffff"><span data-icon="x" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+        <div data-reveal="up" data-delay="200" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="overflow-x:auto">
+            <div style="min-width:1060px">
+              <div style="display:grid;grid-template-columns:44px minmax(230px,2.2fr) minmax(160px,1.5fr) 130px 100px 120px 110px 110px 116px;align-items:center;padding:11px 16px;background:#f8fafb;border-bottom:1px solid #eef2f4;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">
+                <button type="button" onClick="{{ toggleAll }}" aria-label="Tout sélectionner" style="width:20px;height:20px;border-radius:6px;border:1.5px solid #c3ced3;background:#ffffff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#ffffff"><sc-if value="{{ allSel }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;border-radius:6px;background:#0e6f84;display:flex;align-items:center;justify-content:center"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span></sc-if></button>
+                <span>Nom complet</span><span>Poste</span><span>Service</span><span>Contrat</span><span>Statut</span><span>Embauche</span><span>Fin contrat</span><span style="text-align:right">Actions</span>
+              </div>
+              <sc-for list="{{ rows }}" as="e" hint-placeholder-count="8">
+                <div data-reveal="up" data-delay="{{ e.delay }}" style="position:relative;display:grid;grid-template-columns:44px minmax(230px,2.2fr) minmax(160px,1.5fr) 130px 100px 120px 110px 110px 116px;align-items:center;padding:10px 16px;border-bottom:1px solid #eef2f4;transition:background .15s" style-hover="background:#f8fbfb">
+                  <sc-if value="{{ e.isNew }}" hint-placeholder-val="{{ false }}"><span data-reveal="fade" style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(22,182,200,.12),transparent 70%);pointer-events:none"></span></sc-if>
+                  <button type="button" onClick="{{ e.toggle }}" aria-label="Sélectionner" style="position:relative;width:20px;height:20px;border-radius:6px;border:1.5px solid #c3ced3;background:#ffffff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#ffffff"><sc-if value="{{ e.sel }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;border-radius:6px;background:#0e6f84;display:flex;align-items:center;justify-content:center"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span></sc-if></button>
+                  <a href="Wedy Employee.dc.html" style="position:relative;display:flex;align-items:center;gap:11px;min-width:0;text-decoration:none;color:#0a1c24"><span style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ e.av }};color:#ffffff;font-size:12.5px;font-weight:700;flex-shrink:0">{{ e.ini }}</span><span style="min-width:0"><span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;white-space:nowrap">{{ e.name }}<sc-if value="{{ e.isNew }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;background:#e4f2f4;color:#0e6f84">Nouveau</span></sc-if></span><span style="display:block;font-size:12.5px;color:#5f7079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.email }}</span></span></a>
+                  <span style="font-size:13.5px;color:#33474f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px">{{ e.position }}</span>
+                  <span style="font-size:13.5px;color:#33474f;white-space:nowrap">{{ e.dept }}</span>
+                  <span><sc-if value="{{ e.cCDI }}" hint-placeholder-val="{{ true }}"><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#e4f2f4;color:#0b5f72">CDI</span></sc-if><sc-if value="{{ e.cCDD }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#ece9fb;color:#5444b8">CDD</span></sc-if><sc-if value="{{ e.cStage }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#fbefda;color:#8a5207">Stage</span></sc-if><sc-if value="{{ e.cFree }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#eef2f4;color:#33474f">Freelance</span></sc-if></span>
+                  <span style="position:relative;display:inline-flex;justify-self:start">
+                    <sc-if value="{{ e.sActive }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 9px 4px 8px;border-radius:99px;background:#e1f5ec;color:#0f6f49"><span style="width:6px;height:6px;border-radius:50%;background:#16a06b"></span>Actif<span data-icon="chevron-down" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span></sc-if>
+                    <sc-if value="{{ e.sLeave }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 9px 4px 8px;border-radius:99px;background:#fbefda;color:#8a5207"><span style="width:6px;height:6px;border-radius:50%;background:#df9326"></span>En congé<span data-icon="chevron-down" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span></sc-if>
+                    <sc-if value="{{ e.sInactive }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 9px 4px 8px;border-radius:99px;background:#fbe9e6;color:#a33a28"><span style="width:6px;height:6px;border-radius:50%;background:#df5740"></span>Inactif<span data-icon="chevron-down" data-size="12" style="display:inline-flex;width:12px;height:12px"></span></span></sc-if>
+                    <select value="{{ e.status }}" onChange="{{ e.setStatus }}" title="Changer le statut" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%"><option value="active">Actif</option><option value="on-leave">En congé</option><option value="inactive">Inactif</option></select>
+                  </span>
+                  <span style="font-family:'Geist Mono',monospace;font-size:12.5px;color:#52646d">{{ e.hire }}</span>
+                  <span><sc-if value="{{ e.soon }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:99px;background:#fbe9e6;color:#a33a28"><span data-icon="clock" data-size="12" style="display:inline-flex;width:12px;height:12px"></span>{{ e.endLabel }}</span></sc-if><sc-if value="{{ e.notSoon }}" hint-placeholder-val="{{ true }}"><span style="font-family:'Geist Mono',monospace;font-size:12.5px;color:#52646d">{{ e.endLabel }}</span></sc-if></span>
+                  <span style="display:flex;justify-content:flex-end;gap:4px">
+                    <a href="Wedy Employee.dc.html" aria-label="Voir le dossier" style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#7d8f97" style-hover="background:#eef3f5;color:#0a1c24"><span data-icon="eye" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></a>
+                    <button type="button" onClick="{{ e.doc }}" aria-label="Générer un document" style="width:32px;height:32px;border:none;border-radius:9px;background:transparent;display:flex;align-items:center;justify-content:center;color:#7d8f97;cursor:pointer" style-hover="background:#e4f2f4;color:#0e6f84"><span data-icon="wand-sparkles|wand-2" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button>
+                    <button type="button" onClick="{{ e.remove }}" aria-label="Supprimer" style="width:32px;height:32px;border:none;border-radius:9px;background:transparent;display:flex;align-items:center;justify-content:center;color:#7d8f97;cursor:pointer" style-hover="background:#fbe9e6;color:#df5740"><span data-icon="trash-2" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;font-size:13px;color:#52646d;flex-wrap:wrap"><span>{{ showing }}</span><span style="font-family:'Geist Mono',monospace;font-size:12px">Page 1 sur 1</span></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isGrid }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px">
+          <sc-for list="{{ rows }}" as="e" hint-placeholder-count="6">
+            <div data-reveal="up" data-delay="{{ e.delay }}" style="position:relative;display:flex;flex-direction:column;padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;transition:border-color .2s,box-shadow .2s,transform .2s" style-hover="border-color:#b9dfe5;box-shadow:0 20px 40px -26px rgba(10,28,36,.4);transform:translateY(-3px)">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <span style="width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ e.av }};color:#ffffff;font-size:17px;font-weight:700">{{ e.ini }}</span>
+                <sc-if value="{{ e.sActive }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#e1f5ec;color:#0f6f49"><span style="width:6px;height:6px;border-radius:50%;background:#16a06b"></span>Actif</span></sc-if>
+                <sc-if value="{{ e.sLeave }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#fbefda;color:#8a5207"><span style="width:6px;height:6px;border-radius:50%;background:#df9326"></span>En congé</span></sc-if>
+                <sc-if value="{{ e.sInactive }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#fbe9e6;color:#a33a28"><span style="width:6px;height:6px;border-radius:50%;background:#df5740"></span>Inactif</span></sc-if>
+              </div>
+              <div style="margin-top:14px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:18px;letter-spacing:-.02em">{{ e.name }}</div>
+              <div style="font-size:13.5px;color:#52646d;margin-top:2px">{{ e.position }}</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px"><span style="font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;background:#f3f6f7;color:#33474f">{{ e.dept }}</span><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#e4f2f4;color:#0b5f72">{{ e.contract }}</span><sc-if value="{{ e.soon }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#fbe9e6;color:#a33a28">{{ e.endLabel }}</span></sc-if></div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:16px;padding-top:14px;border-top:1px solid #eef2f4">
+                <a href="mailto:{{ e.email }}" aria-label="Email" style="width:34px;height:34px;border-radius:10px;border:1px solid #e2e8eb;display:flex;align-items:center;justify-content:center;color:#52646d" style-hover="border-color:#b9dfe5;color:#0e6f84"><span data-icon="mail" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></a>
+                <button type="button" onClick="{{ e.doc }}" aria-label="Générer un document" style="width:34px;height:34px;border-radius:10px;border:1px solid #e2e8eb;background:#ffffff;display:flex;align-items:center;justify-content:center;color:#52646d;cursor:pointer" style-hover="border-color:#b9dfe5;color:#0e6f84"><span data-icon="wand-sparkles|wand-2" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button>
+                <a href="Wedy Employee.dc.html" style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#0e6f84" style-hover="color:#16b6c8">Dossier<span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></a>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isKanban }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;align-items:start">
+          <div onDragOver="{{ allowDrop }}" onDrop="{{ dropActive }}" data-reveal="up" style="padding:12px;border-radius:20px;background:#eaf0f2;border:1px solid #e2e8eb;min-height:220px">
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 6px 12px"><span style="width:8px;height:8px;border-radius:50%;background:#16a06b"></span><span style="font-weight:700;font-size:14px">Actif</span><span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:12px;color:#52646d">{{ kActiveN }}</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ kActive }}" as="e" hint-placeholder-count="3"><div draggable="true" onDragStart="{{ e.drag }}" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;background:#ffffff;border:1px solid #e2e8eb;cursor:grab;box-shadow:0 2px 6px -4px rgba(10,28,36,.3)"><span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ e.av }};color:#ffffff;font-size:12px;font-weight:700;flex-shrink:0">{{ e.ini }}</span><span style="min-width:0"><span style="display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</span><span style="display:block;font-size:12px;color:#52646d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.position }}</span></span></div></sc-for>
+            </div>
+          </div>
+          <div onDragOver="{{ allowDrop }}" onDrop="{{ dropLeave }}" data-reveal="up" data-delay="80" style="padding:12px;border-radius:20px;background:#f6f0e4;border:1px solid #efe3cc;min-height:220px">
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 6px 12px"><span style="width:8px;height:8px;border-radius:50%;background:#df9326"></span><span style="font-weight:700;font-size:14px">En congé</span><span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:12px;color:#52646d">{{ kLeaveN }}</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ kLeave }}" as="e" hint-placeholder-count="1"><div draggable="true" onDragStart="{{ e.drag }}" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;background:#ffffff;border:1px solid #e2e8eb;cursor:grab;box-shadow:0 2px 6px -4px rgba(10,28,36,.3)"><span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ e.av }};color:#ffffff;font-size:12px;font-weight:700;flex-shrink:0">{{ e.ini }}</span><span style="min-width:0"><span style="display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</span><span style="display:block;font-size:12px;color:#52646d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.position }}</span></span></div></sc-for>
+            </div>
+          </div>
+          <div onDragOver="{{ allowDrop }}" onDrop="{{ dropInactive }}" data-reveal="up" data-delay="160" style="padding:12px;border-radius:20px;background:#f6ecea;border:1px solid #efd9d4;min-height:220px">
+            <div style="display:flex;align-items:center;gap:8px;padding:4px 6px 12px"><span style="width:8px;height:8px;border-radius:50%;background:#df5740"></span><span style="font-weight:700;font-size:14px">Inactif</span><span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:12px;color:#52646d">{{ kInactiveN }}</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ kInactive }}" as="e" hint-placeholder-count="1"><div draggable="true" onDragStart="{{ e.drag }}" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;background:#ffffff;border:1px solid #e2e8eb;cursor:grab;box-shadow:0 2px 6px -4px rgba(10,28,36,.3)"><span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ e.av }};color:#ffffff;font-size:12px;font-weight:700;flex-shrink:0">{{ e.ini }}</span><span style="min-width:0"><span style="display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</span><span style="display:block;font-size:12px;color:#52646d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.position }}</span></span></div></sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+        <div data-reveal="up" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:56px 20px;border-radius:20px;background:#ffffff;border:1px dashed #d0dadf;text-align:center"><span style="width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:#f3f6f7;color:#7d8f97"><span data-icon="search-x|search" data-size="24" style="display:inline-flex;width:24px;height:24px"></span></span><div style="font-weight:700;font-size:16px">Aucun employé ne correspond</div><div style="font-size:14px;color:#52646d">Essayez d'autres filtres ou un autre terme de recherche.</div><button type="button" onClick="{{ resetFilters }}" style="margin-top:6px;height:38px;padding:0 14px;border-radius:10px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;color:#0a1c24;cursor:pointer">Réinitialiser les filtres</button></div>
+      </sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{ drawer }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;z-index:100;background:rgba(6,20,26,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
+    <form onSubmit="{{ save }}" noValidate="" data-reveal="left" style="position:fixed;top:0;right:0;bottom:0;z-index:101;width:min(540px,100vw);display:flex;flex-direction:column;background:#ffffff;box-shadow:-30px 0 80px -30px rgba(6,20,26,.5)">
+      <div style="display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid #eef2f4"><span style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff"><span data-icon="user-plus" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div style="flex:1"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:20px;letter-spacing:-.03em">Ajouter un employé</div><div style="font-size:13px;color:#52646d">Les champs marqués * sont obligatoires.</div></div><button type="button" onClick="{{ closeDrawer }}" aria-label="Fermer" style="width:38px;height:38px;border:none;border-radius:10px;background:#f3f6f7;color:#52646d;cursor:pointer;display:flex;align-items:center;justify-content:center"><span data-icon="x" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></button></div>
+      <div style="flex:1;overflow-y:auto;padding:22px 24px;display:flex;flex-direction:column;gap:16px">
+        <div style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;color:#5f7079">INFORMATIONS ESSENTIELLES</div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Nom complet *<input value="{{ fName }}" onChange="{{ onFName }}" placeholder="Mohammed Alami" style="height:44px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">CIN *<input value="{{ fCin }}" onChange="{{ onFCin }}" placeholder="A123456" style="height:44px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Email<input value="{{ fEmail }}" onChange="{{ onFEmail }}" placeholder="m.alami@tython.ma" style="height:44px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Téléphone<input placeholder="+212 6 00 00 00 00" style="height:44px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Poste<input value="{{ fPos }}" onChange="{{ onFPos }}" placeholder="Responsable RH" style="height:44px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Service<select value="{{ fDept }}" onChange="{{ onFDept }}" style="height:44px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none"><option value="Opérations">Opérations</option><option value="Commercial">Commercial</option><option value="Tech">Tech</option><option value="Finance">Finance</option><option value="Marketing">Marketing</option><option value="RH">RH</option><option value="Service client">Service client</option></select></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Type de contrat<select value="{{ fContract }}" onChange="{{ onFContract }}" style="height:44px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none"><option value="CDI">CDI</option><option value="CDD">CDD</option><option value="Stage">Stage</option><option value="Freelance">Freelance</option></select></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Date d'embauche<input type="date" value="{{ fHire }}" onChange="{{ onFHire }}" style="height:44px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none"></label>
+        </div>
+        <button type="button" onClick="{{ toggleExtra }}" style="display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border-radius:11px;border:1.5px dashed #d0dadf;background:transparent;font-family:inherit;font-size:13px;font-weight:500;color:#52646d;cursor:pointer" style-hover="border-color:#9fb4bb;color:#0a1c24"><span data-icon="chevrons-up-down|chevron-down" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>{{ extraLabel }}</button>
+        <sc-if value="{{ extra }}" hint-placeholder-val="{{ false }}">
+          <div data-reveal="up" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px;border-radius:14px;background:#f8fafb;border:1px solid #eef2f4">
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Matricule<input placeholder="EMP-001" style="height:42px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;outline:none"></label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Fin de contrat<input type="date" style="height:42px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;outline:none"></label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Salaire (MAD)<input type="number" placeholder="8000" style="height:42px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;outline:none"></label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Ville<input placeholder="Casablanca" style="height:42px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;outline:none"></label>
+            <label style="grid-column:1 / -1;display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Manager<input placeholder="Nom du responsable" style="height:42px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;outline:none"></label>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasFormErr }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="display:flex;gap:9px;align-items:center;padding:11px 13px;border-radius:11px;background:#fbe9e6;border:1px solid rgba(223,87,64,.3);color:#a33a28;font-size:13.5px"><span data-icon="circle-alert|alert-circle" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>{{ formErr }}</div></sc-if>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid #eef2f4;background:#f8fafb"><button type="button" onClick="{{ closeDrawer }}" style="height:44px;padding:0 18px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;font-weight:600;color:#33474f;cursor:pointer">Annuler</button><button type="submit" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 20px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)"><span data-icon="check" data-size="16" data-sw="2.4" style="display:inline-flex;width:16px;height:16px"></span>Enregistrer</button></div>
+    </form>
+  </sc-if>
+
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+    <div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const EASE = 'cubic-bezier(.2,.8,.2,1)';
+const TODAY = new Date('2026-10-31');
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const SEED = [
+  ['Yasmine Benali', 'yasmine.benali@tython.ma', 'Responsable Marketing', 'Marketing', 'CDD', 'active', '2022-03-15', '2026-11-12'],
+  ['Omar Alaoui', 'omar.alaoui@tython.ma', "Chef d'équipe logistique", 'Opérations', 'CDI', 'on-leave', '2019-06-01', ''],
+  ['Karim Bennani', 'karim.bennani@tython.ma', 'Développeur senior', 'Tech', 'CDD', 'active', '2023-01-09', '2026-11-19'],
+  ['Hind Tazi', 'hind.tazi@tython.ma', 'Chargée de clientèle', 'Service client', 'CDD', 'active', '2024-02-01', '2026-11-27'],
+  ['Nadia Berrada', 'nadia.berrada@tython.ma', 'Comptable', 'Finance', 'CDI', 'active', '2020-09-14', ''],
+  ['Mehdi Rami', 'mehdi.rami@tython.ma', 'Commercial', 'Commercial', 'CDI', 'active', '2026-10-01', ''],
+  ['Sara El Fassi', 'sara.elfassi@tython.ma', 'Chargée RH', 'RH', 'CDI', 'active', '2021-04-19', ''],
+  ['Lina Chraibi', 'lina.chraibi@tython.ma', 'Stagiaire marketing', 'Marketing', 'Stage', 'active', '2026-09-01', '2027-02-28'],
+  ['Youssef Amrani', 'youssef.amrani@tython.ma', 'Directeur des opérations', 'Opérations', 'CDI', 'active', '2017-05-03', ''],
+  ['Imane Kettani', 'imane.kettani@tython.ma', 'Product designer', 'Tech', 'CDI', 'active', '2022-07-12', ''],
+  ['Rachid Ouazzani', 'rachid.ouazzani@tython.ma', 'Magasinier', 'Opérations', 'CDI', 'inactive', '2018-11-20', ''],
+  ['Salma Idrissi', 'salma.idrissi@tython.ma', 'Responsable RH', 'RH', 'CDI', 'active', '2020-01-07', ''],
+  ['Anas Belhaj', 'anas.belhaj@tython.ma', 'Data analyst', 'Tech', 'Freelance', 'active', '2025-04-15', '2027-04-15'],
+  ['Khadija Zerouali', 'khadija.zerouali@tython.ma', 'Assistante commerciale', 'Commercial', 'CDD', 'on-leave', '2025-03-02', '2027-03-01'],
+].map((r, i) => ({ id: 'e' + i, name: r[0], email: r[1], position: r[2], dept: r[3], contract: r[4], status: r[5], hire: r[6], end: r[7] }));
+const fmt = d => d ? d.split('-').reverse().join('/') : '—';
+const daysLeft = d => d ? Math.round((new Date(d) - TODAY) / 86400000) : null;
+const LOOPS = { shine: [[{ transform: 'translateX(-150%) skewX(-20deg)', offset: 0 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 0.35 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 1 }], 4200, 'ease-in-out'] };
+
+class Component extends DCLogic {
+  state = { emps: SEED, q: '', dept: 'all', status: 'all', contract: 'all', view: 'list', sel: [], drawer: false, extra: false, importOpen: false, f: {}, formErr: '', toast: '', newId: null };
+  rootRef = React.createRef();
+
+  componentDidMount() {
+    this._alive = true; this._ws = {};
+    this._io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting && e.boundingClientRect.bottom >= 0) return; this._io.unobserve(e.target); const a = e.target.__reveal; if (a) { try { a.play(); } catch (_) {} } }), { threshold: 0.05 });
+    this.scan(); this.icons(0);
+    this._mo = new MutationObserver(() => { clearTimeout(this._st); this._st = setTimeout(() => this.scan(), 80); });
+    if (this.rootRef.current) this._mo.observe(this.rootRef.current, { childList: true, subtree: true });
+    window.addEventListener('keydown', this.onEsc);
+  }
+  componentDidUpdate() { this.scan(); }
+  componentWillUnmount() { this._alive = false; this._io.disconnect(); if (this._mo) this._mo.disconnect(); clearTimeout(this._it); clearTimeout(this._tt); window.removeEventListener('keydown', this.onEsc); }
+  onEsc = e => { if (e.key === 'Escape') this.setState({ drawer: false, importOpen: false }); };
+
+  scan() {
+    const root = this.rootRef.current; if (!root) return;
+    this.fill(root);
+    const each = (sel, key, fn) => { const set = this._ws[key] || (this._ws[key] = new WeakSet()); root.querySelectorAll(sel).forEach(el => { if (!set.has(el)) { set.add(el); fn.call(this, el); } }); };
+    each('[data-reveal]', 'r', el => {
+      const k = el.dataset.reveal;
+      const K = k === 'fade' ? [{ opacity: 0 }, { opacity: 1 }] : k === 'left' ? [{ opacity: 0, translate: '40px 0' }, { opacity: 1, translate: '0 0' }] : [{ opacity: 0, translate: '0 14px' }, { opacity: 1, translate: '0 0' }];
+      let a; try { a = el.animate(K, { duration: k === 'left' ? 450 : 600, delay: Math.min(+el.dataset.delay || 0, 700), easing: EASE, fill: 'both' }); } catch (_) { return; }
+      a.pause(); a.onfinish = () => { try { a.cancel(); } catch (_) {} }; el.__reveal = a; this._io.observe(el);
+    });
+    each('[data-loop]', 'l', el => { const d = LOOPS[el.dataset.loop]; if (d) try { el.animate(d[0], { duration: d[1], iterations: Infinity, easing: d[2] }); } catch (_) {} });
+  }
+  fill(root) {
+    const L = window.lucide; if (!L || !L.icons) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    root.querySelectorAll('[data-icon]').forEach(el => {
+      if (el.firstChild && el.__icon === el.dataset.icon) return;
+      el.replaceChildren(); el.__icon = el.dataset.icon;
+      let node = null;
+      for (const n of el.dataset.icon.split('|')) { node = L.icons[n.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase())]; if (node) break; }
+      if (!node) return;
+      const s = el.dataset.size || 16, svg = document.createElementNS(NS, 'svg');
+      const a = { width: s, height: s, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': el.dataset.sw || 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+      Object.keys(a).forEach(k => svg.setAttribute(k, a[k])); svg.style.display = 'block';
+      ((node[0] === 'svg' ? node[2] : node) || []).forEach(c => { if (!Array.isArray(c)) return; const e = document.createElementNS(NS, c[0]); Object.keys(c[1] || {}).forEach(k => { if (k !== 'key') e.setAttribute(k, c[1][k]); }); svg.appendChild(e); });
+      el.appendChild(svg);
+    });
+  }
+  icons(n) { if (!this._alive) return; if (window.lucide && window.lucide.icons) { this.fill(this.rootRef.current); return; } if (n < 100) this._it = setTimeout(() => this.icons(n + 1), 120); }
+  toast(t) { clearTimeout(this._tt); this.setState({ toast: t }); this._tt = setTimeout(() => this._alive && this.setState({ toast: '' }), 2600); }
+
+  filtered() {
+    const { emps, q, dept, status, contract } = this.state;
+    const qq = q.trim().toLowerCase();
+    return emps.filter(e => (!qq || [e.name, e.email, e.position, e.dept].some(v => v.toLowerCase().includes(qq)))
+      && (dept === 'all' || e.dept === dept) && (contract === 'all' || e.contract === contract)
+      && (status === 'all' || (status === 'expiring' ? (daysLeft(e.end) !== null && daysLeft(e.end) >= 0 && daysLeft(e.end) <= 30) : e.status === status)));
+  }
+  setStatus(id, st) { this.setState(s => ({ emps: s.emps.map(e => e.id === id ? { ...e, status: st } : e) })); const e = this.state.emps.find(x => x.id === id); if (e) this.toast(`Statut mis à jour · ${e.name}`); }
+  save = (ev) => {
+    if (ev && ev.preventDefault) ev.preventDefault();
+    const f = this.state.f;
+    if (!(f.name || '').trim() || !(f.cin || '').trim()) { this.setState({ formErr: 'Le nom complet et le CIN sont obligatoires.' }); return; }
+    const id = 'n' + Date.now();
+    const emp = { id, name: f.name.trim(), email: (f.email || '').trim() || '—', position: (f.pos || '').trim() || '—', dept: f.dept || 'Opérations', contract: f.contract || 'CDI', status: 'active', hire: f.hire || '2026-10-31', end: '' };
+    this.setState(s => ({ emps: [emp, ...s.emps], drawer: false, f: {}, formErr: '', newId: id, view: 'list', q: '', dept: 'all', status: 'all', contract: 'all' }));
+    this.toast(`Employé ajouté · ${emp.name}`);
+  };
+
+  renderVals() {
+    const s = this.state, list = this.filtered();
+    const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    const row = (e, i) => {
+      const dl = daysLeft(e.end), soon = dl !== null && dl >= 0 && dl <= 30;
+      return {
+        id: e.id, name: e.name, email: e.email, position: e.position, dept: e.dept, contract: e.contract, status: e.status,
+        ini: ini(e.name), av: AV[(e.name.charCodeAt(0) + e.name.length) % AV.length], delay: String(i * 40),
+        hire: fmt(e.hire), endLabel: soon ? `${dl} j` : fmt(e.end), soon, notSoon: !soon,
+        cCDI: e.contract === 'CDI', cCDD: e.contract === 'CDD', cStage: e.contract === 'Stage', cFree: e.contract === 'Freelance',
+        sActive: e.status === 'active', sLeave: e.status === 'on-leave', sInactive: e.status === 'inactive',
+        sel: s.sel.includes(e.id), isNew: e.id === s.newId,
+        toggle: () => this.setState(x => ({ sel: x.sel.includes(e.id) ? x.sel.filter(y => y !== e.id) : [...x.sel, e.id] })),
+        setStatus: ev => this.setStatus(e.id, ev.target.value),
+        doc: () => this.toast(`Génération d'un document pour ${e.name}…`),
+        remove: () => { this.setState(x => ({ emps: x.emps.filter(y => y.id !== e.id), sel: x.sel.filter(y => y !== e.id) })); this.toast(`${e.name} supprimé(e)`); },
+        drag: ev => { try { ev.dataTransfer.setData('text/plain', e.id); } catch (_) {} },
+      };
+    };
+    const rows = list.map(row);
+    const drop = st => ev => { ev.preventDefault(); let id = ''; try { id = ev.dataTransfer.getData('text/plain'); } catch (_) {} if (id) this.setStatus(id, st); };
+    const allSel = list.length > 0 && list.every(e => s.sel.includes(e.id));
+    const exp = s.emps.filter(e => { const d = daysLeft(e.end); return d !== null && d >= 0 && d <= 30; }).length;
+    const set = k => ev => this.setState({ [k]: ev.target.value });
+    const setF = k => ev => { const v = ev.target.value; this.setState(x => ({ f: { ...x.f, [k]: v }, formErr: '' })); };
+    return {
+      rootRef: this.rootRef, total: s.emps.length,
+      cActive: s.emps.filter(e => e.status === 'active').length, cLeave: s.emps.filter(e => e.status === 'on-leave').length, cExpiring: exp, cInterns: s.emps.filter(e => e.contract === 'Stage').length,
+      q: s.q, onQ: set('q'), dept: s.dept, onDept: set('dept'), status: s.status, onStatus: set('status'), contract: s.contract, onContract: set('contract'),
+      isList: s.view === 'list', notList: s.view !== 'list', isGrid: s.view === 'grid', notGrid: s.view !== 'grid', isKanban: s.view === 'kanban', notKanban: s.view !== 'kanban',
+      vList: () => this.setState({ view: 'list' }), vGrid: () => this.setState({ view: 'grid' }), vKanban: () => this.setState({ view: 'kanban' }),
+      rows: s.view === 'kanban' ? [] : rows, noRows: list.length === 0,
+      showing: `${list.length} employé${list.length > 1 ? 's' : ''} affiché${list.length > 1 ? 's' : ''} sur ${s.emps.length}`,
+      kActive: rows.filter(r => r.status === 'active'), kLeave: rows.filter(r => r.status === 'on-leave'), kInactive: rows.filter(r => r.status === 'inactive'),
+      kActiveN: rows.filter(r => r.status === 'active').length, kLeaveN: rows.filter(r => r.status === 'on-leave').length, kInactiveN: rows.filter(r => r.status === 'inactive').length,
+      allowDrop: ev => ev.preventDefault(), dropActive: drop('active'), dropLeave: drop('on-leave'), dropInactive: drop('inactive'),
+      allSel, toggleAll: () => this.setState({ sel: allSel ? [] : list.map(e => e.id) }),
+      hasSel: s.sel.length > 0, selCount: s.sel.length, clearSel: () => this.setState({ sel: [] }),
+      bulkDoc: () => this.toast(`Génération de ${s.sel.length} document(s)…`),
+      quickAll: () => this.setState({ status: 'active', dept: 'all', contract: 'all', q: '' }), quickLeave: () => this.setState({ status: 'on-leave', contract: 'all' }),
+      quickExpiring: () => this.setState({ status: 'expiring', contract: 'all' }), quickInterns: () => this.setState({ contract: 'Stage', status: 'all' }),
+      resetFilters: () => this.setState({ q: '', dept: 'all', status: 'all', contract: 'all' }),
+      importOpen: s.importOpen, toggleImport: () => this.setState(x => ({ importOpen: !x.importOpen })),
+      smartImport: () => { this.setState({ importOpen: false }); this.toast('Import intelligent : déposez un fichier Excel ou CSV'); },
+      cvImport: () => { this.setState({ importOpen: false }); this.toast('Import CV : Wedy analysera le document'); },
+      exportToast: () => this.toast('Export Excel en préparation…'), deptToast: () => this.toast('Gestion des départements'),
+      drawer: s.drawer, openDrawer: () => this.setState({ drawer: true, f: { dept: 'Opérations', contract: 'CDI', hire: '2026-10-31' }, formErr: '', extra: false, importOpen: false }), closeDrawer: () => this.setState({ drawer: false }),
+      extra: s.extra, toggleExtra: () => this.setState(x => ({ extra: !x.extra })), extraLabel: s.extra ? 'Masquer les champs supplémentaires' : 'Ajouter des informations supplémentaires (optionnel)',
+      fName: s.f.name || '', onFName: setF('name'), fCin: s.f.cin || '', onFCin: setF('cin'), fEmail: s.f.email || '', onFEmail: setF('email'), fPos: s.f.pos || '', onFPos: setF('pos'),
+      fDept: s.f.dept || 'Opérations', onFDept: setF('dept'), fContract: s.f.contract || 'CDI', onFContract: setF('contract'), fHire: s.f.hire || '2026-10-31', onFHire: setF('hire'),
+      hasFormErr: !!s.formErr, formErr: s.formErr, save: this.save,
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

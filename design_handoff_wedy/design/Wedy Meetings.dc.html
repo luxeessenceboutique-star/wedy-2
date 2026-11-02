@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Réunions — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder, textarea::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="meetings" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Personnes" title="Réunions" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Réunions</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Préparez l'ordre du jour avec Wedy, qui rédige aussi le compte rendu.</p>
+        </div>
+        <button type="button" onClick="{{ plan }}" data-reveal="up" data-delay="100" style="display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)"><span data-icon="calendar-plus|calendar" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Planifier une réunion</button>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div data-reveal="up" data-delay="120" style="flex:1 1 360px;min-width:0;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="display:flex;gap:4px;padding:5px;margin:12px;border-radius:13px;background:#f3f6f7">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2"><button type="button" onClick="{{ t.go }}" style="position:relative;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;border:none;border-radius:10px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:{{ t.color }}"><sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="position:absolute;inset:0;border-radius:10px;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.14)"></span></sc-if><span style="position:relative">{{ t.label }}</span><span style="position:relative;font-family:'Geist Mono',monospace;font-size:11px;color:#5f7079">{{ t.n }}</span></button></sc-for>
+          </div>
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+            <div style="padding:12px 16px 6px;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#5f7079">{{ g.label }}</div>
+            <sc-for list="{{ g.items }}" as="m" hint-placeholder-count="2">
+              <button type="button" onClick="{{ m.pick }}" data-reveal="up" data-delay="{{ m.delay }}" style="position:relative;width:100%;display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border:none;border-top:1px solid #eef2f4;background:{{ m.bg }};font-family:inherit;text-align:left;cursor:pointer" style-hover="background:#f6fafb">
+                <sc-if value="{{ m.on }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:#16b6c8"></span></sc-if>
+                <span style="width:60px;flex-shrink:0;padding:7px 0;border-radius:11px;background:{{ m.kBg }};text-align:center"><span style="display:block;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:{{ m.kColor }}">{{ m.time }}</span><span style="display:block;font-size:10.5px;color:#52646d">{{ m.dur }}</span></span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:#0a1c24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.title }}</span><sc-if value="{{ m.next }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:#e1f5ec;color:#0f6f49"><span data-loop="pulse" style="width:6px;height:6px;border-radius:50%;background:#16a06b"></span>Prochaine</span></sc-if></span>
+                  <span style="display:flex;align-items:center;gap:8px;margin-top:7px">
+                    <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#52646d;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span data-icon="{{ m.placeIcon }}" data-size="13" style="display:inline-flex;width:13px;height:13px;flex-shrink:0"></span>{{ m.place }}</span>
+                    <span style="margin-left:auto;display:flex;align-items:center;padding-left:6px;flex-shrink:0"><sc-for list="{{ m.faces }}" as="f" hint-placeholder-count="3"><span title="{{ f.name }}" style="width:24px;height:24px;margin-left:-6px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ f.av }};color:#ffffff;font-size:9px;font-weight:700;border:2px solid #ffffff">{{ f.ini }}</span></sc-for><sc-if value="{{ m.hasExtra }}" hint-placeholder-val="{{ false }}"><span style="margin-left:4px;font-family:'Geist Mono',monospace;font-size:11px;color:#5f7079">{{ m.extra }}</span></sc-if></span>
+                  </span>
+                </span>
+              </button>
+            </sc-for>
+          </sc-for>
+        </div>
+
+        <div data-reveal="left" data-delay="160" style="flex:1.6 1 520px;min-width:0;position:sticky;top:90px;border-radius:22px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="position:relative;overflow:hidden;padding:22px 24px;background:#06141a;color:#e8eff1;isolation:isolate">
+            <div aria-hidden="true" data-loop="drift" style="position:absolute;right:-80px;top:-130px;width:360px;height:360px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent);z-index:-1"></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+              <div style="flex:1;min-width:240px">
+                <span style="display:inline-flex;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.08);color:#b9cbd0">{{ cur.kind }}</span>
+                <div style="margin-top:10px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:24px;letter-spacing:-.03em;line-height:1.15">{{ cur.title }}</div>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#b9cbd0"><span style="display:inline-flex;align-items:center;gap:6px"><span data-icon="clock" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>{{ cur.when }}</span><span style="display:inline-flex;align-items:center;gap:6px"><span data-icon="{{ cur.placeIcon }}" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>{{ cur.place }}</span></div>
+              </div>
+              <button type="button" onClick="{{ cur.action }}" style="display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 14px;border:none;border-radius:11px;background:#effbfc;color:#06141a;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap"><span data-icon="{{ cur.actionIcon }}" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>{{ cur.actionLabel }}</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)">
+              <span style="display:flex;padding-left:6px"><sc-for list="{{ cur.faces }}" as="f" hint-placeholder-count="3"><span title="{{ f.name }}" style="width:30px;height:30px;margin-left:-6px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ f.av }};color:#ffffff;font-size:10.5px;font-weight:700;border:2px solid #06141a">{{ f.ini }}</span></sc-for></span>
+              <span style="font-size:13px;color:#b9cbd0">{{ cur.peopleLabel }}</span>
+            </div>
+          </div>
+
+          <sc-if value="{{ cur.upcoming }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Ordre du jour</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#5f7079">{{ agendaDone }}</span></div>
+              <sc-for list="{{ agenda }}" as="a" hint-placeholder-count="4">
+                <button type="button" onClick="{{ a.toggle }}" data-reveal="up" style="display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border-radius:12px;border:1px solid #e2e8eb;background:{{ a.bg }};font-family:inherit;text-align:left;cursor:pointer" style-hover="border-color:#b9dfe5">
+                  <span style="width:20px;height:20px;border-radius:6px;border:1.5px solid #c3ced3;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#ffffff;background:#ffffff"><sc-if value="{{ a.done }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;border-radius:6px;background:#0e6f84;display:flex;align-items:center;justify-content:center"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span></sc-if></span>
+                  <span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7d8f97;width:18px;flex-shrink:0">{{ a.n }}</span>
+                  <span style="flex:1;font-size:14px;color:{{ a.color }};text-decoration:{{ a.deco }}">{{ a.t }}</span>
+                  <sc-if value="{{ a.ai }}" hint-placeholder-val="{{ false }}"><span style="flex-shrink:0;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:#ece9fb;color:#5444b8">IA</span></sc-if>
+                </button>
+              </sc-for>
+              <form onSubmit="{{ addItem }}" style="display:flex;gap:8px">
+                <input value="{{ newItem }}" onChange="{{ onNewItem }}" placeholder="Ajouter un point à l'ordre du jour…" style="flex:1;min-width:0;height:42px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)">
+                <button type="submit" style="height:42px;padding:0 14px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;color:#0a1c24;cursor:pointer" style-hover="border-color:#9fb4bb">Ajouter</button>
+              </form>
+              <button type="button" onClick="{{ suggest }}" disabled="{{ busy }}" style="position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,#5444b8,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 14px 30px -14px rgba(109,90,214,.8)"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><span data-loop="spin" style="position:relative;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#ffffff"></span><span style="position:relative">Wedy prépare des points…</span></sc-if><sc-if value="{{ idle }}" hint-placeholder-val="{{ true }}"><span data-icon="sparkles" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px"></span><span style="position:relative">Compléter l'ordre du jour avec Wedy</span></sc-if></button>
+              <label style="display:flex;flex-direction:column;gap:6px;margin-top:4px;font-size:12.5px;font-weight:600;color:#33474f">Notes de préparation<textarea rows="3" placeholder="Points à aborder, documents à apporter…" style="resize:vertical;padding:10px 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></textarea></label>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ cur.past }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+              <div data-reveal="up" style="display:flex;gap:11px;align-items:flex-start;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(22,182,200,.08),rgba(109,90,214,.08));border:1px solid rgba(109,90,214,.18)"><img src="assets/wedy-avatar.png" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#e4f2f4"><div><div style="font-size:12px;font-weight:700;color:#5444b8">Compte rendu rédigé par Wedy</div><div style="margin-top:4px;font-size:14px;line-height:1.6;color:#1d3540">{{ cur.summary }}</div></div></div>
+              <div>
+                <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:15px">Décisions</div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px"><sc-for list="{{ cur.decisions }}" as="d" hint-placeholder-count="3"><div data-reveal="up" data-delay="{{ d.delay }}" style="display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#1d3540"><span data-icon="circle-check|check-circle" data-size="17" style="display:inline-flex;width:17px;height:17px;color:#16a06b;flex-shrink:0;margin-top:1px"></span>{{ d.t }}</div></sc-for></div>
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:15px">Actions</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#5f7079">{{ actionsDone }}</span></div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+                  <sc-for list="{{ cur.actions }}" as="x" hint-placeholder-count="3">
+                    <button type="button" onClick="{{ x.toggle }}" data-reveal="up" data-delay="{{ x.delay }}" style="display:flex;align-items:center;gap:11px;flex-wrap:wrap;width:100%;padding:10px 12px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer" style-hover="border-color:#b9dfe5">
+                      <span style="width:20px;height:20px;border-radius:6px;border:1.5px solid #c3ced3;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#ffffff"><sc-if value="{{ x.done }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;border-radius:6px;background:#16a06b;display:flex;align-items:center;justify-content:center"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span></sc-if></span>
+                      <span style="flex:1 1 200px;font-size:14px;color:{{ x.color }};text-decoration:{{ x.deco }}">{{ x.t }}</span>
+                      <span style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:#33474f"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ x.av }};color:#ffffff;font-size:9px;font-weight:700">{{ x.ini }}</span>{{ x.owner }}</span>
+                      <span style="font-family:'Geist Mono',monospace;font-size:12px;padding:2px 8px;border-radius:7px;background:#f3f6f7;color:#33474f">{{ x.due }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button type="button" onClick="{{ sendReport }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:44px;padding:0 14px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap"><span data-icon="send" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Envoyer aux participants</button>
+                <button type="button" onClick="{{ pdf }}" style="display:inline-flex;align-items:center;justify-content:center;gap:7px;height:44px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="border-color:#9fb4bb"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>PDF</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const KIND = { onb: ['Onboarding', '#e4f2f4', '#0b5f72'], int: ['Entretien', '#ece9fb', '#5444b8'], meet: ['Réunion', '#e1f5ec', '#0f6f49'], train: ['Formation', '#fbefda', '#8a5207'], review: ['Revue', '#eef2f4', '#33474f'] };
+const UP = [
+  { id: 'm1', group: 'Lundi 2 novembre', time: '09:00', dur: '1 h', kind: 'onb', title: 'Bilan 30 jours · Mehdi Rami', place: 'Salle Ourika', visio: false, people: ['Mehdi Rami', 'Salma Idrissi', 'Adil Mernissi'], agenda: ['Retour sur le premier mois', 'Prise en main du CRM et des outils', 'Premiers résultats commerciaux', 'Objectifs des 60 prochains jours'] },
+  { id: 'm2', group: 'Lundi 2 novembre', time: '10:30', dur: '1 h', kind: 'int', title: 'Entretien · Zineb Haddad', place: 'Google Meet', visio: true, people: ['Zineb Haddad', 'Imane Kettani', 'Driss Lahlou'], agenda: ['Présentation du parcours', "Cas pratique : conception d'une API", 'Questions de la candidate', 'Prochaines étapes'] },
+  { id: 'm3', group: 'Mardi 3 novembre', time: '09:30', dur: '1 h 30', kind: 'meet', title: 'Réunion RH hebdomadaire', place: 'Salle Ourika', visio: false, people: ['Salma Idrissi', 'Sara El Fassi', 'Nadia Berrada'], agenda: ['Recrutements en cours : 4 postes', 'Demandes de congés de novembre', 'Préparation de la paie'] },
+  { id: 'm4', group: 'Mardi 3 novembre', time: '15:00', dur: '2 h', kind: 'train', title: 'Formation · Code du travail', place: 'Salle Toubkal', visio: false, people: ['Sara El Fassi', 'Youssef Amrani', 'Adil Mernissi', 'Driss Lahlou', 'Hajar Benjelloun', 'Karim Lahlou'], agenda: ['Durée du travail et heures supplémentaires', 'Congés et absences', 'Rupture du contrat et préavis'] },
+  { id: 'm5', group: 'Jeudi 5 novembre', time: '16:00', dur: '1 h', kind: 'meet', title: 'Comité de direction', place: 'Salle du conseil', visio: false, people: ['Hassan Bennis', 'Salma Idrissi', 'Fatima Zahra Alami', 'Youssef Amrani'], agenda: ['Résultats du T3', 'Budget 2027 : masse salariale', 'Plan de recrutement du T1'] },
+];
+const PAST = [
+  { id: 'p1', group: 'Jeudi 29 octobre', time: '14:00', dur: '1 h', kind: 'review', title: 'Revue des effectifs T4', place: 'Salle du conseil', visio: false, people: ['Salma Idrissi', 'Hassan Bennis', 'Fatima Zahra Alami'],
+    summary: "Le plan d'embauche du T4 est validé : 4 postes ouverts, pour une masse salariale en hausse de 1,5 %. L'absentéisme aux Opérations reste le principal point d'attention.",
+    decisions: ['Ouvrir le poste de Comptable senior à Rabat', 'Renouveler 2 des 3 CDD arrivant à échéance en novembre', "Lancer un plan d'action sur l'absentéisme avec les Opérations"],
+    actions: [["Publier l'annonce Comptable senior", 'Salma Idrissi', '05/11'], ['Préparer les avenants de renouvellement', 'Sara El Fassi', '08/11'], ['Analyser les absences du lundi', 'Youssef Amrani', '15/11']] },
+  { id: 'p2', group: 'Lundi 26 octobre', time: '10:00', dur: '30 min', kind: 'meet', title: "Point paie d'octobre", place: 'Google Meet', visio: true, people: ['Nadia Berrada', 'Salma Idrissi'],
+    summary: "La paie d'octobre est validée sans écart. Deux primes de projet ont été intégrées, et l'export vers Sage Paie est désormais automatique.",
+    decisions: ["Valider la paie d'octobre", "Automatiser l'export Sage Paie chaque mois"],
+    actions: [['Envoyer les bulletins aux employés', 'Nadia Berrada', '28/10'], ['Documenter la procédure de clôture', 'Salma Idrissi', '06/11']] },
+  { id: 'p3', group: 'Mercredi 9 septembre', time: '11:00', dur: '45 min', kind: 'int', title: 'Entretien final · Mehdi Rami', place: 'Salle Rif', visio: false, people: ['Mehdi Rami', 'Adil Mernissi', 'Salma Idrissi'],
+    summary: "Très bon entretien : excellente connaissance du marché PME casablancais et forte motivation. Prétentions salariales alignées sur la grille.",
+    decisions: ['Faire une offre en CDI', 'Démarrage le 1er octobre'],
+    actions: [["Envoyer la promesse d'embauche", 'Salma Idrissi', '10/09'], ["Préparer l'onboarding", 'Sara El Fassi', '30/09']] },
+];
+const ALL = [...UP, ...PAST];
+const FALLBACK = ['Points bloquants et risques', 'Décisions attendues', 'Prochaines étapes et responsables'];
+const avOf = n => AV[(n.charCodeAt(0) + n.length) % AV.length];
+const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+const ask = async p => { const c = window.claude; if (!c || !c.complete) throw new Error('no claude'); try { return await c.complete({ messages: [{ role: 'user', content: p }], max_tokens: 300 }); } catch (e) { return await c.complete(p); } };
+
+class Component extends DCLogic {
+  state = { tab: 'up', cur: 'm1', agenda: Object.fromEntries(UP.map(m => [m.id, m.agenda.map(t => ({ t, done: false, ai: false }))])), newItem: '', busy: false, acts: {}, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2800); }
+  async suggest() {
+    const s = this.state, m = UP.find(x => x.id === s.cur); if (!m || s.busy) return;
+    this.setState({ busy: true });
+    const items = (s.agenda[m.id] || []).map(a => a.t);
+    const prompt = `Tu es Wedy, assistant RH d'une entreprise marocaine. Propose exactement 3 nouveaux points pour l'ordre du jour de la réunion « ${m.title} » (${m.dur}, participants : ${m.people.join(', ')}).
+Points déjà prévus : ${items.join(' ; ')}.
+Réponds uniquement par 3 lignes en français, 8 mots maximum chacune, sans numérotation, sans puces et sans autre texte.`;
+    let lines = [];
+    try { const out = await ask(prompt); lines = String(out || '').split('\n').map(l => l.replace(/^[\s\-–•*\d.)]+/, '').replace(/\*\*/g, '').trim()).filter(l => l && l.length < 90).slice(0, 3); } catch (_) {}
+    if (!lines.length) lines = FALLBACK;
+    if (!this._a) return;
+    this.setState(x => ({ busy: false, agenda: { ...x.agenda, [m.id]: [...(x.agenda[m.id] || []), ...lines.map(t => ({ t, done: false, ai: true }))] } }));
+    this.toast(`${lines.length} points ajoutés par Wedy`);
+  }
+  renderVals() {
+    const s = this.state, src = s.tab === 'up' ? UP : PAST;
+    const faces = (p, n) => p.slice(0, n).map(name => ({ name, ini: ini(name), av: avOf(name) }));
+    const groups = [];
+    src.forEach((m, i) => {
+      let g = groups.find(x => x.label === m.group); if (!g) { g = { label: m.group, items: [] }; groups.push(g); }
+      g.items.push({ ...m, on: m.id === s.cur, bg: m.id === s.cur ? '#f3fafb' : '#ffffff', kBg: KIND[m.kind][1], kColor: KIND[m.kind][2], next: s.tab === 'up' && i === 0, placeIcon: m.visio ? 'video' : 'map-pin', faces: faces(m.people, 3), hasExtra: m.people.length > 3, extra: `+${m.people.length - 3}`, delay: String(i * 50), pick: () => this.setState({ cur: m.id, newItem: '' }) });
+    });
+    const m = ALL.find(x => x.id === s.cur) || UP[0], past = m.id[0] === 'p';
+    const people = m.people.length <= 3 ? m.people.join(', ') : `${m.people.slice(0, 2).join(', ')} et ${m.people.length - 2} autres`;
+    const ag = s.agenda[m.id] || [];
+    const acts = (m.actions || []).map(([t, owner, due], i) => { const k = `${m.id}-${i}`, done = !!s.acts[k]; return { t, owner, due, ini: ini(owner), av: avOf(owner), done, color: done ? '#7d8f97' : '#1d3540', deco: done ? 'line-through' : 'none', delay: String(i * 70), toggle: () => this.setState(x => ({ acts: { ...x.acts, [k]: !x.acts[k] } })) }; });
+    return {
+      rootRef: this.rootRef,
+      tabs: [['up', 'À venir', UP.length], ['past', 'Passées', PAST.length]].map(([k, label, n]) => ({ label, n, on: s.tab === k, color: s.tab === k ? '#0a1c24' : '#52646d', go: () => this.setState({ tab: k, cur: (k === 'up' ? UP : PAST)[0].id }) })),
+      groups,
+      cur: {
+        kind: KIND[m.kind][0], title: m.title, when: `${m.group} · ${m.time} · ${m.dur}`, place: m.place, placeIcon: m.visio ? 'video' : 'map-pin',
+        faces: faces(m.people, 5), peopleLabel: people, upcoming: !past, past, summary: m.summary || '',
+        decisions: (m.decisions || []).map((t, i) => ({ t, delay: String(i * 70) })), actions: acts,
+        actionLabel: past ? 'Partager' : m.visio ? 'Rejoindre la visio' : 'Ajouter à mon agenda',
+        actionIcon: past ? 'share-2' : m.visio ? 'video' : 'calendar-plus|calendar',
+        action: () => this.toast(past ? 'Lien du compte rendu copié' : m.visio ? 'Ouverture de Google Meet…' : 'Ajouté à votre agenda Google'),
+      },
+      agenda: ag.map((a, i) => ({ ...a, n: String(i + 1).padStart(2, '0'), bg: a.done ? '#f8fafb' : '#ffffff', color: a.done ? '#7d8f97' : '#1d3540', deco: a.done ? 'line-through' : 'none', toggle: () => this.setState(x => ({ agenda: { ...x.agenda, [m.id]: x.agenda[m.id].map((y, k) => k === i ? { ...y, done: !y.done } : y) } })) })),
+      agendaDone: `${ag.filter(a => a.done).length}/${ag.length} traités`,
+      actionsDone: `${acts.filter(a => a.done).length}/${acts.length} terminées`,
+      newItem: s.newItem, onNewItem: e => this.setState({ newItem: e.target.value }),
+      addItem: e => { if (e && e.preventDefault) e.preventDefault(); const t = s.newItem.trim(); if (!t || past) return; this.setState(x => ({ newItem: '', agenda: { ...x.agenda, [m.id]: [...(x.agenda[m.id] || []), { t, done: false, ai: false }] } })); },
+      busy: s.busy, idle: !s.busy, suggest: () => this.suggest(),
+      sendReport: () => this.toast(`Compte rendu envoyé à ${m.people.length} participants`), pdf: () => this.toast('Compte rendu exporté en PDF'),
+      plan: () => this.toast('Nouvelle réunion — Wedy propose mardi 14:00, le créneau le plus libre'),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

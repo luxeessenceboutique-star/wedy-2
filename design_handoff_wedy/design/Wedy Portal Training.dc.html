@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Formation — Espace collaborateur Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyPortalNav" active="training" hint-size="100%,63px"></dc-import>
+  <div style="max-width:1180px;margin:0 auto;padding:26px 24px 56px;display:flex;flex-direction:column;gap:18px">
+    <div>
+      <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(28px,3vw,38px);letter-spacing:-.045em;line-height:1.05">Formation</h1>
+      <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Vos parcours en cours, vos certificats et les formations que Wedy vous recommande.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+      <div data-reveal="up" data-delay="60" style="padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#5444b8,#6d5ad6);color:#ffffff"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9">En cours</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ nOn }}</div></div>
+      <div data-reveal="up" data-delay="110" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Certificats obtenus</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ nDone }}</div></div>
+      <div data-reveal="up" data-delay="160" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Heures en 2026</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ hours }} h</div></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div data-reveal="up" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px">En cours</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px">
+        <sc-for list="{{ current }}" as="c" hint-placeholder-count="2">
+          <div data-reveal="up" data-delay="{{ c.delay }}" style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:flex-start;gap:12px"><span style="width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:{{ c.tint }};color:{{ c.color }};flex-shrink:0"><span data-icon="{{ c.icon }}" data-size="20" style="display:inline-flex;width:20px;height:20px"></span></span><div style="flex:1;min-width:0"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:17px;line-height:1.25">{{ c.title }}</div><div style="font-size:12.5px;color:#5f7079;margin-top:2px">{{ c.provider }} · {{ c.hours }} h</div></div><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:20px;color:{{ c.color }}">{{ c.pct }}%</span></div>
+            <div style="height:8px;border-radius:99px;background:#eef2f4;overflow:hidden"><div style="height:100%;width:{{ c.pct }}%;border-radius:99px;background:{{ c.bar }};transition:width .8s cubic-bezier(.2,.8,.2,1)"></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#33474f"><span data-icon="play-circle|play" data-size="15" style="display:inline-flex;width:15px;height:15px;color:{{ c.color }}"></span>{{ c.next }}</span><button type="button" onClick="{{ c.go }}" style="display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border:none;border-radius:11px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#16323c">Continuer<span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></button></div>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ noCurrent }}" hint-placeholder-val="{{ false }}"><div style="padding:26px;border-radius:18px;border:1px dashed #d0dadf;text-align:center;font-size:14px;color:#52646d">Aucune formation en cours. Choisissez une recommandation ci-dessous.</div></sc-if>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+      <div data-reveal="up" data-delay="80" style="flex:1.3 1 420px;min-width:0;padding:20px;border-radius:20px;background:#06141a;color:#e8eff1">
+        <div style="display:flex;align-items:center;gap:10px"><img src="assets/wedy-avatar.png" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;background:#0f262e;border:2px solid rgba(95,227,240,.5)"><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Recommandé pour vous</div><div style="font-size:12.5px;color:#9fb4bb">Selon vos objectifs et votre évolution visée</div></div></div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+          <sc-for list="{{ recos }}" as="r" hint-placeholder-count="3">
+            <div data-reveal="up" data-delay="{{ r.delay }}" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);flex-wrap:wrap">
+              <div style="flex:1;min-width:200px"><div style="font-size:14px;font-weight:600;color:#ffffff">{{ r.title }}</div><div style="font-size:12.5px;color:#b9cbd0;margin-top:2px">{{ r.why }}</div></div>
+              <span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#9fb4bb">{{ r.hours }} h</span>
+              <sc-if value="{{ r.open }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ r.ask }}" style="height:34px;padding:0 12px;border:none;border-radius:10px;background:#effbfc;color:#06141a;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">Demander</button></sc-if>
+              <sc-if value="{{ r.sent }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:#4fd3a0"><span data-icon="send" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Envoyée à Karim</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div data-reveal="up" data-delay="120" style="flex:1 1 320px;min-width:0;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+        <div style="padding:16px 20px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Mes certificats</div>
+        <sc-for list="{{ done }}" as="d" hint-placeholder-count="3">
+          <div data-reveal="up" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef2f4;background:{{ d.bg }};transition:background 1s">
+            <span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#b06b0c;flex-shrink:0"><span data-icon="award" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">{{ d.title }}</div><div style="font-size:12.5px;color:#5f7079">{{ d.sub }}</div></div>
+            <button type="button" onClick="{{ d.dl }}" aria-label="Télécharger le certificat" style="width:34px;height:34px;border:none;border-radius:9px;background:#f3f6f7;color:#33474f;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#e4f2f4;color:#0e6f84"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(230,169,72,.22);color:#f0bd6a"><span data-icon="award" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const NEXT = { c1: ['Session 4 · Storytelling', 'Session 5 · Gérer le trac', 'Session 6 · Pitch final'], c2: ['Module 2 · Explorations', 'Module 3 · Audiences', 'Module 4 · Attribution', 'Module 5 · Tableaux de bord'] };
+class Component extends DCLogic {
+  state = { current: [{ id: 'c1', title: 'Leadership et prise de parole', provider: 'ManagerLab', hours: 10, pct: 60, icon: 'mic', tint: '#ece9fb', color: '#5444b8', bar: 'linear-gradient(90deg,#5444b8,#9a8bf0)', step: 0 }, { id: 'c2', title: 'Google Analytics 4 avancé', provider: 'OpenClassrooms', hours: 12, pct: 20, icon: 'chart-column|bar-chart-3', tint: '#e4f2f4', color: '#0b5f72', bar: 'linear-gradient(90deg,#0e6f84,#16b6c8)', step: 0 }], done: [{ id: 'd1', title: 'Marketing digital avancé', sub: 'Juin 2026 · score 91/100', h: 21 }, { id: 'd2', title: "Code du travail marocain : l'essentiel", sub: 'Mars 2026 · score 85/100', h: 7 }, { id: 'd3', title: 'Conférence UX Casablanca', sub: 'Octobre 2026 · participation', h: 8 }], asked: {}, fresh: null, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); clearTimeout(this._m); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 3000); }
+  renderVals() {
+    const s = this.state;
+    return {
+      rootRef: this.rootRef, nOn: s.current.length, nDone: s.done.length, hours: 14 + s.done.reduce((t, d) => t + d.h, 0),
+      current: s.current.map((c, i) => ({ ...c, delay: String(i * 80), next: c.pct >= 100 ? 'Terminé' : (NEXT[c.id] || [])[c.step] || 'Évaluation finale',
+        go: () => {
+          const pct = Math.min(100, c.pct + 20);
+          this.setState(x => ({ current: x.current.map(y => y.id === c.id ? { ...y, pct, step: y.step + 1 } : y) }));
+          if (pct >= 100) { this._m = setTimeout(() => { if (!this._a) return; this.setState(x => ({ current: x.current.filter(y => y.id !== c.id), done: [{ id: c.id, title: c.title, sub: 'Novembre 2026 · nouveau certificat', h: c.hours }, ...x.done], fresh: c.id })); this.toast(`Bravo Yasmine ! Certificat « ${c.title} » obtenu`); }, 900); }
+          else this.toast(`Session suivante : ${(NEXT[c.id] || [])[c.step] || 'évaluation finale'}`);
+        } })),
+      noCurrent: s.current.length === 0,
+      recos: [['Manager une équipe à distance', 'Pour préparer votre évolution vers Directrice marketing', 14], ['Négociation commerciale B2B', 'Utile pour vos échanges avec les agences et partenaires', 14], ['Excel avancé et tableaux croisés', 'Pour gagner du temps sur vos reportings mensuels', 12]].map(([title, why, hours], i) => ({ title, why, hours, delay: String(i * 80), open: !s.asked[title], sent: !!s.asked[title], ask: () => { this.setState(x => ({ asked: { ...x.asked, [title]: true } })); this.toast(`Demande d'inscription envoyée à Karim Lahlou`); } })),
+      done: s.done.map(d => ({ ...d, bg: d.id === s.fresh ? '#fff8ec' : '#ffffff', dl: () => this.toast(`Certificat « ${d.title} » téléchargé`) })),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

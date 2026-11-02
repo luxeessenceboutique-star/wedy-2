@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Paie — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="payroll" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Personnes" title="Paie" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Paie</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Préparez, contrôlez et clôturez la paie. Wedy vérifie chaque bulletin avant validation.</p>
+        </div>
+        <div data-reveal="up" data-delay="100" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" onClick="{{ exportSage }}" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="border-color:#9fb4bb"><span data-icon="file-spreadsheet" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Exporter vers Sage Paie</button>
+          <button type="button" onClick="{{ validate }}" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><span data-icon="{{ valIcon }}" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px"></span><span style="position:relative">{{ valLabel }}</span></button>
+        </div>
+      </div>
+
+      <section data-reveal="up" data-delay="80" style="position:relative;overflow:hidden;border-radius:24px;background:#06141a;color:#e8eff1;padding:24px 26px;isolation:isolate">
+        <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none">
+          <div data-loop="drift" style="position:absolute;left:-6%;top:-90%;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent)"></div>
+          <div data-loop="drift" data-dur="26000" data-delay="-8000" style="position:absolute;right:-4%;top:-70%;width:480px;height:480px;border-radius:50%;background:radial-gradient(closest-side,rgba(43,189,134,.28),transparent)"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:28px">
+          <div style="min-width:210px">
+            <div style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#5fe3f0">CYCLE DE PAIE</div>
+            <div style="margin-top:6px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:28px;letter-spacing:-.04em">Novembre 2026</div>
+            <div style="margin-top:4px;font-size:13.5px;color:#9fb4bb">126 bulletins · virement le 28/11</div>
+          </div>
+          <div style="flex:1;min-width:440px;position:relative">
+            <div style="position:absolute;left:10%;right:10%;top:17px;height:3px;border-radius:3px;background:rgba(255,255,255,.1)"></div>
+            <div style="position:absolute;left:10%;top:17px;height:3px;border-radius:3px;width:{{ progW }};background:linear-gradient(90deg,#16b6c8,#2bbd86);box-shadow:0 0 12px rgba(39,192,212,.6);transition:width .9s cubic-bezier(.2,.8,.2,1)"></div>
+            <div style="position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))">
+              <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:0 4px">
+                  <sc-if value="{{ s.done }}" hint-placeholder-val="{{ false }}"><span style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;box-shadow:0 0 0 4px #06141a"><span data-icon="check" data-size="17" data-sw="2.6" style="display:inline-flex;width:17px;height:17px"></span></span></sc-if>
+                  <sc-if value="{{ s.current }}" hint-placeholder-val="{{ false }}"><span style="position:relative;width:36px;height:36px"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:2px solid #5fe3f0"></span><span style="position:relative;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#06141a;border:2px solid #5fe3f0;color:#5fe3f0;box-shadow:0 0 0 4px #06141a"><sc-if value="{{ s.busy }}" hint-placeholder-val="{{ false }}"><span data-loop="spin" style="width:15px;height:15px;border-radius:50%;border:2px solid rgba(95,227,240,.3);border-top-color:#5fe3f0"></span></sc-if><sc-if value="{{ s.idle }}" hint-placeholder-val="{{ true }}"><span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600">{{ s.n }}</span></sc-if></span></span></sc-if>
+                  <sc-if value="{{ s.todo }}" hint-placeholder-val="{{ true }}"><span style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#0d2229;border:1px solid rgba(255,255,255,.14);color:#7f969e;font-family:'Geist Mono',monospace;font-size:13px;box-shadow:0 0 0 4px #06141a">{{ s.n }}</span></sc-if>
+                  <span style="font-size:13px;font-weight:600;color:{{ s.color }}">{{ s.label }}</span>
+                  <span style="font-size:11.5px;color:#8ea5ad">{{ s.sub }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">
+        <div data-reveal="up" data-delay="100" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079"><span data-icon="wallet" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#0e6f84"></span>Masse salariale brute</div>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px"><span data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:30px;font-weight:800;letter-spacing:-.04em">1 482 300</span><span style="font-size:13px;color:#52646d">MAD</span></div>
+          <div style="display:inline-flex;align-items:center;gap:5px;margin-top:4px;font-size:12px;font-weight:600;color:#0f6f49"><span data-icon="trending-up" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>+1,5 % vs octobre</div>
+        </div>
+        <div data-reveal="up" data-delay="150" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079"><span data-icon="banknote" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#16a06b"></span>Net à payer</div>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px"><span data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:30px;font-weight:800;letter-spacing:-.04em">1 196 940</span><span style="font-size:13px;color:#52646d">MAD</span></div>
+          <div style="margin-top:4px;font-size:12px;color:#52646d">126 virements</div>
+        </div>
+        <div data-reveal="up" data-delay="200" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079"><span data-icon="building-2" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#b06b0c"></span>Charges patronales</div>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px"><span data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:30px;font-weight:800;letter-spacing:-.04em">312 150</span><span style="font-size:13px;color:#52646d">MAD</span></div>
+          <div style="margin-top:4px;font-size:12px;color:#52646d">CNSS, AMO, formation pro.</div>
+        </div>
+        <div data-reveal="up" data-delay="250" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079"><span data-icon="landmark" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#6d5ad6"></span>IR retenu à la source</div>
+          <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px"><span data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:30px;font-weight:800;letter-spacing:-.04em">198 420</span><span style="font-size:13px;color:#52646d">MAD</span></div>
+          <div style="margin-top:4px;font-size:12px;color:#52646d">À verser à la DGI</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div style="flex:2 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <div data-reveal="up" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;flex-wrap:wrap">
+              <img src="assets/wedy-avatar.png" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;background:#e4f2f4">
+              <div style="flex:1;min-width:200px"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Contrôle IA des bulletins</div><div style="font-size:13px;color:#52646d">{{ alertSummary }}</div></div>
+              <span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:{{ alertChipBg }};color:{{ alertChipColor }}">{{ alertChip }}</span>
+            </div>
+            <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="3">
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 20px;border-top:1px solid #eef2f4;opacity:{{ a.op }};transition:opacity .4s">
+                <span style="width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{ a.bg }};color:{{ a.color }};flex-shrink:0"><span data-icon="{{ a.icon }}" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span>
+                <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">{{ a.title }} · <span style="color:#0e6f84">{{ a.emp }}</span></div><div style="font-size:13px;line-height:1.5;color:#52646d;margin-top:2px">{{ a.text }}</div></div>
+                <sc-if value="{{ a.open }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ a.check }}" style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:10px;border:1px solid #d6dfe3;background:#ffffff;color:#0a1c24;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="border-color:#16b6c8;color:#0e6f84"><span data-icon="check" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Marquer vérifié</button></sc-if>
+                <sc-if value="{{ a.done }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:10px;background:#e1f5ec;color:#0f6f49;font-size:12.5px;font-weight:600"><span data-icon="circle-check|check-circle" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Vérifié</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <div data-reveal="up" data-delay="80" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;flex-wrap:wrap"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Bulletins</span><span style="font-size:13px;color:#52646d">9 sur 126 affichés</span><a href="Wedy Employees.dc.html" style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600">Tout voir<span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></a></div>
+            <div style="overflow-x:auto">
+              <div style="min-width:840px">
+                <div style="display:grid;grid-template-columns:minmax(200px,2fr) 130px repeat(4,108px) 140px;align-items:center;padding:10px 20px;background:#f8fafb;border-top:1px solid #eef2f4;border-bottom:1px solid #eef2f4;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079"><span>Employé</span><span>Service</span><span style="text-align:right">Brut</span><span style="text-align:right">Cotisations</span><span style="text-align:right">IR</span><span style="text-align:right">Net</span><span style="text-align:right">Statut</span></div>
+                <sc-for list="{{ rows }}" as="r" hint-placeholder-count="9">
+                  <div data-reveal="up" data-delay="{{ r.delay }}" style="display:grid;grid-template-columns:minmax(200px,2fr) 130px repeat(4,108px) 140px;align-items:center;padding:10px 20px;border-bottom:1px solid #eef2f4;transition:background .15s" style-hover="background:#f8fbfb">
+                    <span style="display:flex;align-items:center;gap:10px;min-width:0"><span style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ r.av }};color:#ffffff;font-size:11.5px;font-weight:700;flex-shrink:0">{{ r.ini }}</span><span style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span></span>
+                    <span style="font-size:13px;color:#33474f">{{ r.dept }}</span>
+                    <span style="text-align:right;font-family:'Geist Mono',monospace;font-size:12.5px">{{ r.brut }}</span>
+                    <span style="text-align:right;font-family:'Geist Mono',monospace;font-size:12.5px;color:#52646d">{{ r.cot }}</span>
+                    <span style="text-align:right;font-family:'Geist Mono',monospace;font-size:12.5px;color:#52646d">{{ r.ir }}</span>
+                    <span style="text-align:right;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600">{{ r.net }}</span>
+                    <span style="display:flex;justify-content:flex-end"><span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ r.stBg }};color:{{ r.stColor }};white-space:nowrap"><span style="width:6px;height:6px;border-radius:50%;background:{{ r.stDot }}"></span>{{ r.st }}</span></span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <div data-reveal="up" data-delay="120" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Coût employeur</div>
+            <div style="display:flex;align-items:baseline;gap:6px;margin-top:10px"><span data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.045em">1 794 450</span><span style="font-size:13px;color:#52646d">MAD</span></div>
+            <div style="display:flex;height:12px;border-radius:99px;overflow:hidden;gap:3px;margin-top:14px">
+              <span data-reveal="growx" style="width:66.7%;background:#0e6f84;border-radius:99px;transform-origin:left"></span>
+              <span data-reveal="growx" data-delay="150" style="width:4.8%;background:#16b6c8;border-radius:99px;transform-origin:left"></span>
+              <span data-reveal="growx" data-delay="250" style="width:11.1%;background:#6d5ad6;border-radius:99px;transform-origin:left"></span>
+              <span data-reveal="growx" data-delay="350" style="width:17.4%;background:#df9326;border-radius:99px;transform-origin:left"></span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px;margin-top:14px;font-size:13px">
+              <div style="display:flex;justify-content:space-between;gap:10px"><span style="display:inline-flex;align-items:center;gap:7px;color:#33474f"><span style="width:8px;height:8px;border-radius:50%;background:#0e6f84"></span>Salaires nets</span><span style="font-family:'Geist Mono',monospace;font-weight:600">1 196 940</span></div>
+              <div style="display:flex;justify-content:space-between;gap:10px"><span style="display:inline-flex;align-items:center;gap:7px;color:#33474f"><span style="width:8px;height:8px;border-radius:50%;background:#16b6c8"></span>Cotisations salariales</span><span style="font-family:'Geist Mono',monospace;font-weight:600">86 940</span></div>
+              <div style="display:flex;justify-content:space-between;gap:10px"><span style="display:inline-flex;align-items:center;gap:7px;color:#33474f"><span style="width:8px;height:8px;border-radius:50%;background:#6d5ad6"></span>IR retenu</span><span style="font-family:'Geist Mono',monospace;font-weight:600">198 420</span></div>
+              <div style="display:flex;justify-content:space-between;gap:10px"><span style="display:inline-flex;align-items:center;gap:7px;color:#33474f"><span style="width:8px;height:8px;border-radius:50%;background:#df9326"></span>Charges patronales</span><span style="font-family:'Geist Mono',monospace;font-weight:600">312 150</span></div>
+            </div>
+          </div>
+          <div data-reveal="up" data-delay="180" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Masse salariale · 6 mois</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#5f7079">M MAD</span></div>
+            <div style="display:flex;align-items:stretch;gap:10px;height:160px;margin-top:16px">
+              <sc-for list="{{ hist }}" as="h" hint-placeholder-count="6"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#52646d">{{ h.v }}</span><div style="flex:1;width:100%;display:flex;align-items:flex-end"><span data-reveal="growy" data-delay="{{ h.delay }}" style="display:block;width:100%;height:{{ h.pct }}%;border-radius:8px 8px 4px 4px;background:{{ h.bg }};transform-origin:bottom"></span></div><span style="font-size:11.5px;color:#5f7079">{{ h.m }}</span></div></sc-for>
+            </div>
+          </div>
+          <div data-reveal="up" data-delay="220" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Échéances</div>
+            <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+              <div style="display:flex;align-items:center;gap:12px"><span style="width:46px;text-align:center;padding:6px 0;border-radius:10px;background:#e4f2f4;color:#0b5f72;font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;line-height:1.2">28<br>NOV</span><div><div style="font-size:13.5px;font-weight:600">Virement des salaires</div><div style="font-size:12px;color:#5f7079">126 ordres de virement</div></div></div>
+              <div style="display:flex;align-items:center;gap:12px"><span style="width:46px;text-align:center;padding:6px 0;border-radius:10px;background:#fbefda;color:#8a5207;font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;line-height:1.2">10<br>DÉC</span><div><div style="font-size:13.5px;font-weight:600">Déclaration CNSS · Damancom</div><div style="font-size:12px;color:#5f7079">Bordereau de novembre</div></div></div>
+              <div style="display:flex;align-items:center;gap:12px"><span style="width:46px;text-align:center;padding:6px 0;border-radius:10px;background:#ece9fb;color:#5444b8;font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;line-height:1.2">31<br>DÉC</span><div><div style="font-size:13.5px;font-weight:600">Versement de l'IR à la DGI</div><div style="font-size:12px;color:#5f7079">Retenues de novembre</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const ROWS = [
+  ['Youssef Amrani', 'Opérations', 32000, 1630, 8540], ['Karim Bennani', 'Tech', 21000, 1220, 4310], ['Imane Kettani', 'Tech', 19800, 1180, 3790],
+  ['Yasmine Benali', 'Marketing', 18500, 1111, 3447], ['Nadia Berrada', 'Finance', 14200, 790, 2010], ['Omar Alaoui', 'Opérations', 12400, 692, 1530],
+  ['Sara El Fassi', 'RH', 11500, 650, 1290], ['Mehdi Rami', 'Commercial', 9500, 520, 760], ['Hind Tazi', 'Service client', 7800, 445, 420],
+];
+const ALERTS = [
+  { id: 'ot', emp: 'Omar Alaoui', icon: 'clock', bg: '#fbefda', color: '#b06b0c', title: 'Heures supplémentaires inhabituelles', text: '22 h déclarées ce mois, contre 6 h en moyenne. Vérifiez la validation du manager.' },
+  { id: 'bonus', emp: 'Karim Bennani', icon: 'banknote', bg: '#fbe9e6', color: '#df5740', title: 'Prime sans justificatif', text: 'Prime exceptionnelle de 5 000 MAD saisie le 24/10, sans document associé.' },
+  { id: 'cdd', emp: 'Yasmine Benali', icon: 'file-clock|clock', bg: '#ece9fb', color: '#6d5ad6', title: 'Fin de CDD le 12/11', text: 'Indemnité de fin de contrat et solde de tout compte à intégrer au bulletin.' },
+];
+const STEPS = ['Variables', 'Contrôle IA', 'Validation', 'Virements', 'Clôture'];
+const fmt = n => n.toLocaleString('fr-FR').replace(/[\u202f\u00a0\s]/g, '\u00a0');
+
+class Component extends DCLogic {
+  state = { done: {}, step: 2, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); clearTimeout(this._v); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2800); }
+  renderVals() {
+    const s = this.state;
+    const open = ALERTS.filter(a => !s.done[a.id]).length;
+    const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+    const sub = i => {
+      if (i === 0) return 'Collectées le 25/11';
+      if (i === 1) return open ? `${open} alerte${open > 1 ? 's' : ''} à vérifier` : 'Tout est vérifié';
+      if (i === 2) return s.step === 2 ? 'En attente' : 'Validée';
+      if (i === 3) return s.step === 3 ? 'En cours…' : s.step > 3 ? 'Exécutés' : 'Prévus le 28/11';
+      return s.step > 4 ? 'Bulletins envoyés' : 'Envoi des bulletins';
+    };
+    return {
+      rootRef: this.rootRef,
+      steps: STEPS.map((label, i) => { const busy = i === 3 && s.step === 3; return { label, sub: sub(i), n: String(i + 1), done: i < s.step, current: i === s.step, todo: i > s.step, busy, idle: !busy, color: i < s.step ? '#cfe9ee' : i === s.step ? '#ffffff' : '#8ea5ad' }; }),
+      progW: `${(Math.min(s.step, 4) / 4 * 80).toFixed(1)}%`,
+      alerts: ALERTS.map(a => ({ ...a, open: !s.done[a.id], done: !!s.done[a.id], op: s.done[a.id] ? '.62' : '1', check: () => { this.setState(x => ({ done: { ...x.done, [a.id]: true } })); this.toast(`Point vérifié · ${a.emp}`); } })),
+      alertSummary: open ? `${open} point${open > 1 ? 's' : ''} à vérifier avant validation · 123 bulletins sans anomalie.` : 'Tous les points sont vérifiés. La paie peut être validée.',
+      alertChip: open ? `${open} à vérifier` : 'Prêt', alertChipBg: open ? '#fbefda' : '#e1f5ec', alertChipColor: open ? '#8a5207' : '#0f6f49',
+      rows: ROWS.map(([name, dept, b, c, ir], i) => {
+        const al = ALERTS.find(a => a.emp === name && !s.done[a.id]);
+        const st = al ? (al.id === 'cdd' ? ['Solde à prévoir', '#ece9fb', '#5444b8', '#6d5ad6'] : ['À vérifier', '#fbefda', '#8a5207', '#df9326']) : ['Prêt', '#e1f5ec', '#0f6f49', '#16a06b'];
+        return { name, dept, ini: ini(name), av: AV[i % AV.length], brut: fmt(b), cot: fmt(c), ir: fmt(ir), net: fmt(b - c - ir), st: st[0], stBg: st[1], stColor: st[2], stDot: st[3], delay: String(i * 40) };
+      }),
+      hist: [['Juin', 1.38], ['Juil.', 1.41], ['Août', 1.40], ['Sept.', 1.44], ['Oct.', 1.46], ['Nov.', 1.48]].map(([m, v], i, arr) => ({ m, v: v.toFixed(2).replace('.', ','), pct: String(Math.round(35 + (v - 1.38) / 0.10 * 60)), bg: i === arr.length - 1 ? 'linear-gradient(180deg,#16b6c8,#0e6f84)' : '#d7e6ea', delay: String(i * 70) })),
+      valLabel: s.step > 4 ? 'Paie clôturée' : s.step === 3 ? 'Virements en cours…' : 'Valider la paie',
+      valIcon: s.step > 4 ? 'circle-check|check-circle' : 'badge-check',
+      validate: () => {
+        if (s.step >= 3) { this.toast(s.step > 4 ? 'La paie de novembre est déjà clôturée.' : 'Virements en cours…'); return; }
+        if (open) { this.toast(`Il reste ${open} point${open > 1 ? 's' : ''} à vérifier avant de valider.`); return; }
+        this.setState({ step: 3 });
+        this._v = setTimeout(() => { if (!this._a) return; this.setState({ step: 5 }); this.toast('Paie de novembre clôturée · 126 bulletins envoyés'); }, 1800);
+      },
+      exportSage: () => this.toast('Export Sage Paie généré · 126 lignes'),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

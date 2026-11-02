@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Connexion — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+    ::selection { background: rgba(39,192,212,.3); }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="min-height:100vh;display:flex;flex-flow:row-reverse wrap;background:#f3f6f7;font-family:'Geist',system-ui,sans-serif;color:#0a1c24;overflow-x:clip">
+
+  <main style="flex:1 1 460px;min-height:100vh;position:relative;display:flex;flex-direction:column;background-color:#f3f6f7;background-image:radial-gradient(#dde5e8 1px,transparent 1px);background-size:22px 22px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:24px 32px">
+      <a href="Wedy Landing.dc.html" data-reveal="down" style="display:inline-flex;align-items:center;gap:8px;padding:8px 15px 8px 11px;border-radius:999px;background:#ffffff;border:1px solid #e2e8eb;font-size:13.5px;font-weight:500;color:#33474f;text-decoration:none;transition:border-color .2s,box-shadow .2s" style-hover="color:#0a1c24;border-color:#b9dfe5;box-shadow:0 8px 20px -12px rgba(10,28,36,.3)"><span data-icon="arrow-left" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Retour au site</a>
+      <a href="#" data-reveal="down" data-delay="80" style="display:inline-flex;align-items:center;gap:7px;font-size:13.5px;color:#52646d;text-decoration:none" style-hover="color:#0a1c24"><span data-icon="life-buoy|circle-help" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Besoin d'aide ?</a>
+    </div>
+
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:8px 24px 48px">
+      <div ref="{{ cardRef }}" data-reveal="up" data-delay="120" style="position:relative;width:100%;max-width:440px">
+        <div aria-hidden="true" style="position:absolute;inset:-50px -40px;background:radial-gradient(50% 45% at 80% 15%,rgba(22,182,200,.2),transparent),radial-gradient(45% 40% at 15% 90%,rgba(109,90,214,.16),transparent);pointer-events:none"></div>
+        <div style="position:relative;border-radius:28px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 40px 90px -40px rgba(10,28,36,.38),0 0 0 6px rgba(255,255,255,.6);padding:40px 38px 34px">
+
+          <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+            <form onSubmit="{{ onSubmit }}" noValidate="" style="display:flex;flex-direction:column">
+              <div data-reveal="up" data-delay="200" style="display:inline-flex;align-self:flex-start;align-items:center;gap:7px;padding:5px 11px 5px 9px;border-radius:999px;background:#e4f2f4;color:#0e6f84;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.08em"><span data-icon="lock" data-size="12" style="display:inline-flex;width:12px;height:12px"></span>CONNEXION SÉCURISÉE</div>
+              <h1 data-reveal="up" data-delay="260" style="margin:18px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:40px;line-height:1;letter-spacing:-.045em;color:#0a1c24">Bon retour.</h1>
+              <p data-reveal="up" data-delay="320" style="margin:10px 0 0;font-size:15px;line-height:1.55;color:#52646d">Connectez-vous avec votre compte Tybot.</p>
+
+              <label data-reveal="up" data-delay="380" style="display:flex;flex-direction:column;gap:8px;margin-top:30px">
+                <span style="font-size:13px;font-weight:600;color:#33474f">Email</span>
+                <span style="position:relative;display:block">
+                  <span data-icon="mail" data-size="17" style="position:absolute;left:16px;top:50%;margin-top:-8.5px;display:inline-flex;width:17px;height:17px;color:#7d8f97;pointer-events:none"></span>
+                  <input type="text" inputMode="email" autoComplete="email" placeholder="vous@entreprise.com" value="{{ email }}" onChange="{{ onEmail }}" style="width:100%;height:52px;padding:0 16px 0 46px;border-radius:14px;border:1px solid #d6dfe3;background:#fbfcfc;font-family:inherit;font-size:15px;color:#0a1c24;outline:none;transition:border-color .2s,box-shadow .2s,background .2s" style-focus="border-color:#16b6c8;background:#ffffff;box-shadow:0 0 0 4px rgba(22,182,200,.16)">
+                </span>
+              </label>
+
+              <div data-reveal="up" data-delay="440" style="display:flex;flex-direction:column;gap:8px;margin-top:18px">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><label for="wedy-pw" style="font-size:13px;font-weight:600;color:#33474f">Mot de passe</label><a href="#" style="font-size:13px;font-weight:500;color:#0e6f84;text-decoration:none" style-hover="color:#16b6c8">Mot de passe oublié ?</a></div>
+                <span style="position:relative;display:block">
+                  <span data-icon="key-round|key" data-size="17" style="position:absolute;left:16px;top:50%;margin-top:-8.5px;display:inline-flex;width:17px;height:17px;color:#7d8f97;pointer-events:none"></span>
+                  <input id="wedy-pw" type="{{ pwType }}" autoComplete="current-password" placeholder="••••••••" value="{{ pw }}" onChange="{{ onPw }}" onKeyDown="{{ onPwKey }}" onKeyUp="{{ onPwKey }}" style="width:100%;height:52px;padding:0 54px 0 46px;border-radius:14px;border:1px solid #d6dfe3;background:#fbfcfc;font-family:inherit;font-size:15px;color:#0a1c24;outline:none;transition:border-color .2s,box-shadow .2s,background .2s" style-focus="border-color:#16b6c8;background:#ffffff;box-shadow:0 0 0 4px rgba(22,182,200,.16)">
+                  <button type="button" onClick="{{ togglePw }}" aria-label="Afficher ou masquer le mot de passe" style="position:absolute;right:6px;top:6px;width:40px;height:40px;border:none;border-radius:10px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s" style-hover="background:#eef3f5;color:#0a1c24">
+                    <sc-if value="{{ showPw }}" hint-placeholder-val="{{ false }}"><span data-icon="eye-off" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></sc-if>
+                    <sc-if value="{{ hidePw }}" hint-placeholder-val="{{ true }}"><span data-icon="eye" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></sc-if>
+                  </button>
+                </span>
+                <sc-if value="{{ caps }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;color:#9a5c08"><span data-icon="arrow-big-up" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Verr. Maj est activé</div></sc-if>
+              </div>
+
+              <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}">
+                <div data-reveal="up" style="display:flex;align-items:flex-start;gap:10px;margin-top:18px;padding:12px 14px;border-radius:12px;background:#fbe9e6;border:1px solid rgba(223,87,64,.3);color:#a33a28;font-size:13.5px;line-height:1.45"><span data-icon="circle-alert|alert-circle" data-size="17" style="display:inline-flex;width:17px;height:17px;margin-top:1px;flex-shrink:0"></span><span>{{ error }}</span></div>
+              </sc-if>
+
+              <button type="submit" data-reveal="up" data-delay="500" data-magnet="" disabled="{{ loading }}" style="position:relative;overflow:hidden;margin-top:26px;height:54px;border:none;border-radius:14px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:inset 0 0 0 1px rgba(95,227,240,.35),0 16px 36px -14px rgba(22,182,200,.85);transform:translate(var(--tx,0px),var(--ty,0px));transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .3s,filter .2s" style-hover="filter:brightness(1.06);box-shadow:inset 0 0 0 1px rgba(95,227,240,.6),0 22px 44px -14px rgba(22,182,200,.95)">
+                <span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span>
+                <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}"><span data-loop="spin" data-dur="800" style="position:relative;width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#ffffff"></span><span style="position:relative">Connexion…</span></sc-if>
+                <sc-if value="{{ notLoading }}" hint-placeholder-val="{{ true }}"><span style="position:relative">Se connecter</span><span data-icon="arrow-right" data-size="18" style="position:relative;display:inline-flex;width:18px;height:18px"></span></sc-if>
+              </button>
+
+              <p data-reveal="fade" data-delay="600" style="margin:22px 0 0;font-size:12.5px;line-height:1.6;color:#5f7079;text-align:center;text-wrap:pretty">En continuant, vous acceptez les <a href="#" style="color:#0e6f84;font-weight:500">Conditions d'utilisation</a> &amp; la <a href="#" style="color:#0e6f84;font-weight:500">Politique de confidentialité</a>.</p>
+            </form>
+          </sc-if>
+
+          <sc-if value="{{ is2fa }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column">
+              <div data-reveal="scale" style="position:relative;width:64px;height:64px">
+                <span data-loop="ping" style="position:absolute;inset:0;border-radius:20px;border:1.5px solid rgba(22,182,200,.55)"></span>
+                <span style="position:relative;width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;box-shadow:0 14px 30px -12px rgba(22,182,200,.8)"><span data-icon="shield-check" data-size="28" style="display:inline-flex;width:28px;height:28px"></span></span>
+              </div>
+              <h1 data-reveal="up" data-delay="80" style="margin:24px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:32px;line-height:1.05;letter-spacing:-.04em;color:#0a1c24">Vérification en deux étapes</h1>
+              <p data-reveal="up" data-delay="140" style="margin:10px 0 0;font-size:15px;line-height:1.55;color:#52646d">Saisissez le code à 6 chiffres envoyé à <strong style="color:#0a1c24;font-weight:600">{{ maskedEmail }}</strong>.</p>
+              <div data-reveal="up" data-delay="200" onPaste="{{ onOtpPaste }}" style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin-top:28px">
+                <input ref="{{ otpRef0 }}" inputMode="numeric" autoComplete="one-time-code" aria-label="Chiffre 1" value="{{ d0 }}" onChange="{{ otpChange0 }}" onKeyDown="{{ otpKey0 }}" style="width:100%;height:62px;border-radius:14px;border:1px solid #d6dfe3;background:#fbfcfc;text-align:center;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:27px;font-weight:700;color:#0a1c24;outline:none;transition:border-color .2s,box-shadow .2s,background .2s" style-focus="border-color:#16b6c8;background:#ffffff;box-shadow:0 0 0 4px rgba(22,182,200,.16)">
+                <input ref="{{ otpRef1 }}" inputMode="numeric" aria-label="Chiffre 2" value="{{ d1 }}" onChange="{{ otpChange1 }}" onKeyDown="{{ otpKey1 }}" style="width:100%;height:62px;border-radius:14px;border:1px solid #d6dfe3;background:#fbfcfc;text-align:center;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:27px;font-weight:700;color:#0a1c24;outline:none;transition:border-color .2s,box-shadow .2s,background .2s" style-focus="border-color:#16b6c8;background:#ffffff;box-shadow:0 0 0 4px rgba(22,182,200,.16)">
+                <input ref="{{ otpRef2 }}" inputMode="numeric" aria-label="Chiffre 3" value="{{ d2 }}" onChange="{{ otpChange2 }}" onKeyDown="{{ otpKey2 }}" style="width:100%;height:62px;border-radius:14px;border:1px solid #d6dfe3;background:#fbfcfc;text-align:center;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:27px;font-weight:700;color:#0a1c24;outline:none;transition:border-color .2s,box-shadow .2s,background .2s" style-focus="border-color:#16b6c8;background:#ffffff;box-shadow:0 0 0 4px rgba(22,182,200,.16)">
+                <input ref="{{ otpRef3 }}" inputMode="numeric" aria-label="Chiffre 4" value="{{ d3 }}" onChange="{{ otpChange3 }}" onKeyDown="{{ otpKey3 }}" style="width:100%;height:62px;border-radius:14px;border:1px solid #d6dfe3;background:#fbfcfc;text-align:center;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:27px;font-weight:700;color:#0a1c24;outline:none;transition:border-color .2s,box-shadow .2s,background .2s" style-focus="border-color:#16b6c8;background:#ffffff;box-shadow:0 0 0 4px rgba(22,182,200,.16)">
+                <input ref="{{ otpRef4 }}" inputMode="numeric" aria-label="Chiffre 5" value="{{ d4 }}" onChange="{{ otpChange4 }}" onKeyDown="{{ otpKey4 }}" style="width:100%;height:62px;border-radius:14px;border:1px solid #d6dfe3;background:#fbfcfc;text-align:center;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:27px;font-weight:700;color:#0a1c24;outline:none;transition:border-color .2s,box-shadow .2s,background .2s" style-focus="border-color:#16b6c8;background:#ffffff;box-shadow:0 0 0 4px rgba(22,182,200,.16)">
+                <input ref="{{ otpRef5 }}" inputMode="numeric" aria-label="Chiffre 6" value="{{ d5 }}" onChange="{{ otpChange5 }}" onKeyDown="{{ otpKey5 }}" style="width:100%;height:62px;border-radius:14px;border:1px solid #d6dfe3;background:#fbfcfc;text-align:center;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:27px;font-weight:700;color:#0a1c24;outline:none;transition:border-color .2s,box-shadow .2s,background .2s" style-focus="border-color:#16b6c8;background:#ffffff;box-shadow:0 0 0 4px rgba(22,182,200,.16)">
+              </div>
+              <sc-if value="{{ hasError }}" hint-placeholder-val="{{ false }}">
+                <div data-reveal="up" style="display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding:12px 14px;border-radius:12px;background:#fbe9e6;border:1px solid rgba(223,87,64,.3);color:#a33a28;font-size:13.5px;line-height:1.45"><span data-icon="circle-alert|alert-circle" data-size="17" style="display:inline-flex;width:17px;height:17px;margin-top:1px;flex-shrink:0"></span><span>{{ error }}</span></div>
+              </sc-if>
+              <button type="button" onClick="{{ verify }}" data-reveal="up" data-delay="260" disabled="{{ loading }}" style="position:relative;overflow:hidden;margin-top:24px;height:54px;border:none;border-radius:14px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s" style-hover="background:#16323c">
+                <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}"><span data-loop="spin" data-dur="800" style="width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.3);border-top-color:#ffffff"></span><span>Vérification…</span></sc-if>
+                <sc-if value="{{ notLoading }}" hint-placeholder-val="{{ true }}"><span>Vérifier</span><span data-icon="arrow-right" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></sc-if>
+              </button>
+              <div data-reveal="fade" data-delay="320" style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:18px;font-size:13.5px">
+                <button type="button" onClick="{{ back }}" style="border:none;background:none;padding:0;color:#52646d;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:13.5px" style-hover="color:#0a1c24"><span data-icon="arrow-left" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Autre compte</button>
+                <sc-if value="{{ canResend }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ resend }}" style="border:none;background:none;padding:0;color:#0e6f84;font-weight:600;cursor:pointer;font-family:inherit;font-size:13.5px" style-hover="color:#16b6c8">Renvoyer le code</button></sc-if>
+                <sc-if value="{{ waitResend }}" hint-placeholder-val="{{ true }}"><span style="color:#5f7079;font-family:'Geist Mono',monospace;font-size:12.5px">Renvoyer dans {{ resendLabel }}</span></sc-if>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isSuccess }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 0 2px">
+              <div data-reveal="scale" style="position:relative;width:100px;height:100px">
+                <span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;background:rgba(22,160,107,.22)"></span>
+                <svg viewBox="0 0 100 100" style="position:relative;display:block;width:100px;height:100px">
+                  <circle cx="50" cy="50" r="46" style="fill:#e1f5ec"></circle>
+                  <circle data-reveal="draw" data-dur="900" cx="50" cy="50" r="46" style="fill:none;stroke:#16a06b;stroke-width:4px;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50px 50px"></circle>
+                  <path data-reveal="draw" data-delay="450" data-dur="650" d="M31 51 L44 64 L70 37" style="fill:none;stroke:#16a06b;stroke-width:6px;stroke-linecap:round;stroke-linejoin:round"></path>
+                </svg>
+              </div>
+              <h1 data-reveal="up" data-delay="300" style="margin:26px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:36px;line-height:1.05;letter-spacing:-.045em;color:#0a1c24">Bon retour, {{ firstName }}.</h1>
+              <p data-reveal="up" data-delay="380" style="margin:10px 0 0;font-size:15px;line-height:1.55;color:#52646d">Redirection vers votre espace RH…</p>
+              <div data-reveal="fade" data-delay="440" style="width:100%;height:6px;border-radius:99px;background:#eef2f4;margin-top:28px;overflow:hidden"><div data-success-bar="" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#0e6f84,#16b6c8,#6d5ad6);transform-origin:left"></div></div>
+              <div data-reveal="fade" data-delay="520" style="display:flex;align-items:center;gap:8px;margin-top:14px;font-family:'Geist Mono',monospace;font-size:12px;color:#5f7079"><span data-icon="layout-dashboard" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>app.wedy.ai/app</div>
+              <button type="button" onClick="{{ replay }}" data-reveal="fade" data-delay="900" style="margin-top:26px;border:1px solid #d6dfe3;background:#ffffff;border-radius:12px;padding:10px 16px;color:#33474f;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-size:13.5px;font-weight:600;transition:border-color .2s,background .2s" style-hover="background:#f3f6f7;border-color:#b3c1c7"><span data-icon="rotate-ccw" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Rejouer la démo</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside data-mouse="" style="flex:1.25 1 560px;min-height:100vh;position:relative;overflow:hidden;isolation:isolate;background:#06141a;color:#e8eff1;display:flex;flex-direction:column;padding:34px 48px 30px">
+    <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none">
+      <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(ellipse 75% 60% at 50% 38%,#000 25%,transparent 78%);mask-image:radial-gradient(ellipse 75% 60% at 50% 38%,#000 25%,transparent 78%)"></div>
+      <div data-loop="drift" style="position:absolute;left:-20%;top:-18%;width:720px;height:720px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent)"></div>
+      <div data-loop="drift" data-dur="27000" data-delay="-9000" style="position:absolute;right:-25%;top:5%;width:760px;height:760px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.32),transparent)"></div>
+      <div data-loop="drift" data-dur="31000" data-delay="-15000" style="position:absolute;left:10%;bottom:-25%;width:680px;height:560px;border-radius:50%;background:radial-gradient(closest-side,rgba(22,182,200,.22),transparent)"></div>
+      <div style="position:absolute;inset:0;background:radial-gradient(460px circle at var(--cx,50%) var(--cy,40%),rgba(95,227,240,.10),transparent 65%)"></div>
+    </div>
+
+    <a href="Wedy Landing.dc.html" data-reveal="down" style="display:inline-flex;align-self:flex-start;align-items:center;gap:10px;color:#f1f8f9;text-decoration:none" style-hover="color:#ffffff">
+      <img src="assets/wedy-avatar.png" alt="Wedy" style="width:38px;height:38px;border-radius:50%;object-fit:cover;background:#0f262e;border:1.5px solid rgba(255,255,255,.2)">
+      <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:23px;letter-spacing:-.03em">Wedy</span>
+    </a>
+
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:24px 0;min-height:440px">
+      <div data-reveal="fade" data-dur="1200" style="position:relative;width:100%;max-width:540px;aspect-ratio:1/0.84">
+        <div style="position:absolute;left:50%;top:50%;width:80%;aspect-ratio:1/1;transform:translate(-50%,-50%);border-radius:50%;border:1px dashed rgba(255,255,255,.12)">
+          <div data-loop="spin" data-dur="10000" style="position:absolute;inset:-1px;border-radius:50%;background:conic-gradient(from 0deg,rgba(95,227,240,0) 0deg,rgba(95,227,240,0) 270deg,rgba(95,227,240,.95) 356deg,rgba(95,227,240,0) 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px))"></div>
+          <div data-loop="spin" data-dur="22000" style="position:absolute;inset:0"><span style="position:absolute;left:50%;top:-5px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#5fe3f0;box-shadow:0 0 14px 3px rgba(95,227,240,.7)"></span></div>
+        </div>
+        <div style="position:absolute;left:50%;top:50%;width:64%;aspect-ratio:1/1;transform:translate(-50%,-50%);border-radius:50%;border:1px dashed rgba(255,255,255,.1)">
+          <div data-loop="spin-rev" data-dur="15000" style="position:absolute;inset:-1px;border-radius:50%;background:conic-gradient(from 0deg,rgba(154,139,240,0) 0deg,rgba(154,139,240,0) 280deg,rgba(154,139,240,.9) 356deg,rgba(154,139,240,0) 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 1.5px))"></div>
+          <div data-loop="spin-rev" data-dur="18000" style="position:absolute;inset:0"><span style="position:absolute;left:50%;bottom:-4px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#b3a8f5;box-shadow:0 0 12px 3px rgba(154,139,240,.7)"></span></div>
+        </div>
+        <div style="position:absolute;left:50%;top:50%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;background:radial-gradient(closest-side,rgba(39,192,212,.32),transparent)"></div>
+        <div data-bigmosaic="" aria-hidden="true" style="position:absolute;left:50%;top:50%;width:270px;height:270px;margin:-135px 0 0 -135px"></div>
+
+        <div data-reveal="right" data-delay="900" style="position:absolute;left:0;top:4%;z-index:3">
+          <div style="transform:translate3d(calc(var(--mx,0) * -14px),calc(var(--my,0) * -10px),0);transition:transform .5s cubic-bezier(.2,.8,.2,1)">
+            <div data-loop="float" style="display:flex;align-items:center;gap:11px;padding:11px 16px 11px 11px;border-radius:16px;background:rgba(13,34,42,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);box-shadow:0 26px 50px -20px rgba(0,0,0,.75)">
+              <span style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6d5ad6,#9a8bf0);color:#ffffff;flex-shrink:0"><span data-icon="sparkles" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span>
+              <div><div style="font-size:13px;font-weight:600;color:#eef5f7">Attestation de travail</div><div style="font-size:11.5px;color:#8ea5ad">Générée · FR · AR · EN</div></div>
+            </div>
+          </div>
+        </div>
+        <div data-reveal="left" data-delay="1150" style="position:absolute;right:0;top:40%;z-index:3">
+          <div style="transform:translate3d(calc(var(--mx,0) * 18px),calc(var(--my,0) * 12px),0);transition:transform .6s cubic-bezier(.2,.8,.2,1)">
+            <div data-loop="float2" style="display:flex;align-items:center;gap:11px;padding:11px 16px 11px 11px;border-radius:16px;background:rgba(240,250,251,.96);color:#0a1c24;box-shadow:0 26px 50px -20px rgba(0,0,0,.8)">
+              <span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="calendar-check" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span>
+              <div><div style="font-size:13px;font-weight:700">Congé approuvé</div><div style="font-size:11.5px;color:#52646d">Omar Alaoui · 3 jours</div></div>
+            </div>
+          </div>
+        </div>
+        <div data-reveal="up" data-delay="1400" style="position:absolute;left:6%;bottom:2%;z-index:3">
+          <div style="transform:translate3d(calc(var(--mx,0) * -10px),calc(var(--my,0) * 12px),0);transition:transform .5s cubic-bezier(.2,.8,.2,1)">
+            <div data-loop="float" data-delay="-3000" style="display:flex;align-items:center;gap:11px;padding:11px 16px 11px 11px;border-radius:16px;background:rgba(13,34,42,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);box-shadow:0 26px 50px -20px rgba(0,0,0,.75)">
+              <span style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.16);color:#5fe3f0;flex-shrink:0"><span data-icon="bot" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span>
+              <div><div style="font-size:13px;font-weight:600;color:#eef5f7">Copilote IA</div><div style="font-size:11.5px;color:#8ea5ad">2 contrats à renouveler ce mois</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width:580px">
+      <h2 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(38px,3.8vw,56px);line-height:1;letter-spacing:-.045em;color:#f1f8f9"><span style="display:block"><span data-reveal="word" data-delay="300" style="display:inline-block;margin-right:.24em">RH</span><span data-reveal="word" data-delay="370" style="display:inline-block">moderne,</span></span><span style="display:block"><span data-reveal="word" data-delay="440" style="display:inline-block;margin-right:.24em">pilotée</span><span data-reveal="word" data-delay="510" style="display:inline-block;margin-right:.24em">par</span><span data-reveal="word" data-delay="580" data-loop="shimmer" style="display:inline-block;padding-bottom:.06em;background:linear-gradient(90deg,#5fe3f0,#27c0d4 30%,#9a8bf0 60%,#5fe3f0);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent">l'IA.</span></span></h2>
+      <p data-reveal="up" data-delay="680" style="margin:20px 0 0;max-width:520px;font-size:16px;line-height:1.65;color:#9fb4bb;text-wrap:pretty">Générez, traduisez et classez chaque document RH en quelques secondes — alimenté par Claude AI et vos données d'entreprise.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:26px">
+        <span data-reveal="up" data-delay="760" style="display:inline-flex;align-items:center;gap:9px;padding:7px 14px 7px 7px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);font-size:13.5px;color:#cfdde1"><span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.15);color:#5fe3f0"><span data-icon="zap" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span>Documents IA en secondes</span>
+        <span data-reveal="up" data-delay="830" style="display:inline-flex;align-items:center;gap:9px;padding:7px 14px 7px 7px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);font-size:13.5px;color:#cfdde1"><span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(154,139,240,.17);color:#b3a8f5"><span data-icon="globe" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span>Français · <span style="font-family:'Noto Kufi Arabic',sans-serif">العربية</span> · English</span>
+        <span data-reveal="up" data-delay="900" style="display:inline-flex;align-items:center;gap:9px;padding:7px 14px 7px 7px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);font-size:13.5px;color:#cfdde1"><span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.15);color:#4fd3a0"><span data-icon="shield-check" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span>Conforme au droit du travail marocain</span>
+      </div>
+    </div>
+
+    <div data-reveal="fade" data-delay="1000" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-top:34px;padding-top:22px;border-top:1px solid rgba(255,255,255,.08);font-size:12.5px;color:#7f969e">
+      <span>© 2026 Wedy · Propulsé par Tybotflow</span>
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.08em">Cliquez sur l'avatar ✦</span>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;motion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Full&quot;,&quot;Subtle&quot;,&quot;Off&quot;],&quot;default&quot;:&quot;Full&quot;,&quot;tsType&quot;:&quot;'Full'|'Subtle'|'Off'&quot;,&quot;section&quot;:&quot;Animation&quot;},&quot;twoFactor&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Flow&quot;},&quot;demoPrefill&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Flow&quot;}}">
+const EASE = 'cubic-bezier(.2,.8,.2,1)';
+const DEMO = { email: 'salma.idrissi@tython.ma', pw: 'wedy2026' };
+const EMPTY = ['', '', '', '', '', ''];
+const LOOPS = {
+  float: [[{ transform: 'translateY(0px)' }, { transform: 'translateY(-10px)' }, { transform: 'translateY(0px)' }], 6000, 'ease-in-out'],
+  float2: [[{ transform: 'translateY(0px)' }, { transform: 'translateY(-15px)' }, { transform: 'translateY(0px)' }], 7800, 'ease-in-out'],
+  drift: [[{ transform: 'translate(0,0) scale(1)' }, { transform: 'translate(7%,-6%) scale(1.12)' }, { transform: 'translate(-5%,5%) scale(.94)' }, { transform: 'translate(0,0) scale(1)' }], 22000, 'ease-in-out'],
+  spin: [[{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], 60000, 'linear'],
+  'spin-rev': [[{ transform: 'rotate(0deg)' }, { transform: 'rotate(-360deg)' }], 60000, 'linear'],
+  pulse: [[{ opacity: 1 }, { opacity: 0.3 }, { opacity: 1 }], 2000, 'ease-in-out'],
+  ping: [[{ transform: 'scale(1)', opacity: 0.6 }, { transform: 'scale(1.6)', opacity: 0 }], 2200, 'cubic-bezier(0,0,.2,1)'],
+  shimmer: [[{ backgroundPosition: '0% 50%' }, { backgroundPosition: '200% 50%' }], 7000, 'linear'],
+  shine: [[{ transform: 'translateX(-150%) skewX(-20deg)', offset: 0 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 0.35 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 1 }], 4200, 'ease-in-out'],
+};
+
+class Component extends DCLogic {
+  state = { step: 'login', loading: false, error: '', email: '', pw: '', showPw: false, caps: false, otp: EMPTY, resendIn: 30 };
+  rootRef = React.createRef();
+  cardRef = React.createRef();
+  otpRefs = [0, 1, 2, 3, 4, 5].map(() => React.createRef());
+
+  mode() {
+    const m = this.props.motion ?? 'Full';
+    if (m !== 'Off' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'Off';
+    return m;
+  }
+
+  componentDidMount() {
+    this._alive = true; this._timers = [];
+    if (this.props.demoPrefill !== false) this.setState({ email: DEMO.email, pw: DEMO.pw });
+    this.init();
+    window.addEventListener('pointermove', this.onPointer, { passive: true });
+    window.addEventListener('pointerdown', this.onDown, { passive: true });
+    window.addEventListener('pointerout', this.onOut, { passive: true });
+    this.loadIcons(0);
+  }
+
+  componentDidUpdate(prev, prevState) {
+    if (prev && prev.motion !== this.props.motion) { this.teardown(); this.init(); return; }
+    if (prev && prev.demoPrefill !== this.props.demoPrefill && this.state.step === 'login') this.setState(this.props.demoPrefill !== false ? { email: DEMO.email, pw: DEMO.pw } : { email: '', pw: '' });
+    this.scan();
+    if (prevState && prevState.step !== this.state.step) this.onStep();
+  }
+
+  componentWillUnmount() {
+    this._alive = false;
+    this.teardown();
+    (this._timers || []).forEach(clearTimeout); clearInterval(this._cd); clearTimeout(this._iconT);
+    window.removeEventListener('pointermove', this.onPointer);
+    window.removeEventListener('pointerdown', this.onDown);
+    window.removeEventListener('pointerout', this.onOut);
+  }
+
+  later(ms, fn) { this._timers.push(setTimeout(() => { if (this._alive) fn(); }, ms)); }
+
+  init() {
+    this._ws = {};
+    this._io = new IntersectionObserver(es => es.forEach(this.onSeen), { threshold: 0.1 });
+    const root = this.rootRef.current;
+    if (root) {
+      this._mo = new MutationObserver(ms => {
+        if (ms.every(x => x.target.closest && (x.target.closest('[data-icon]') || x.target.closest('[data-bigmosaic]')))) return;
+        clearTimeout(this._scanT); this._scanT = setTimeout(this.scan, 60);
+      });
+      this._mo.observe(root, { childList: true, subtree: true });
+    }
+    this.scan();
+  }
+
+  teardown() {
+    ['_io', '_mo', '_vis'].forEach(k => { if (this[k]) { this[k].disconnect(); this[k] = null; } });
+    clearTimeout(this._scanT);
+    if (this._raf) { cancelAnimationFrame(this._raf); this._raf = 0; }
+    const root = this.rootRef.current;
+    if (root) {
+      try { root.getAnimations({ subtree: true }).forEach(a => a.cancel()); } catch (_) {}
+      root.querySelectorAll('[data-magnet]').forEach(g => { g.style.setProperty('--tx', '0px'); g.style.setProperty('--ty', '0px'); });
+    }
+    if (this._big) { this._big.el.replaceChildren(); this._big = null; }
+  }
+
+  scan = () => {
+    const root = this.rootRef.current, W = this._ws;
+    if (!root || !W || !this._alive) return;
+    const m = this.mode();
+    this.fillIcons(root);
+    const each = (sel, key, fn) => { const set = W[key] || (W[key] = new WeakSet()); root.querySelectorAll(sel).forEach(el => { if (!set.has(el)) { set.add(el); fn.call(this, el, m); } }); };
+    each('[data-reveal]', 'reveal', this.setupReveal);
+    each('[data-loop]', 'loop', this.setupLoop);
+    each('[data-bigmosaic]', 'big', this.setupBig);
+    this._aside = root.querySelector('[data-mouse]');
+  };
+
+  setupReveal(el, m) {
+    if (m === 'Off') return;
+    const kind = el.dataset.reveal || 'up', sub = m === 'Subtle', d = sub ? 10 : 26;
+    let K;
+    switch (kind) {
+      case 'down': K = [{ opacity: 0, translate: `0 ${-d}px` }, { opacity: 1, translate: '0 0' }]; break;
+      case 'left': K = [{ opacity: 0, translate: `${d}px 0` }, { opacity: 1, translate: '0 0' }]; break;
+      case 'right': K = [{ opacity: 0, translate: `${-d}px 0` }, { opacity: 1, translate: '0 0' }]; break;
+      case 'fade': K = [{ opacity: 0 }, { opacity: 1 }]; break;
+      case 'scale': K = [{ opacity: 0, scale: '0.85' }, { opacity: 1, scale: '1' }]; break;
+      case 'word': K = sub ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, filter: 'blur(10px)', translate: '0 40%' }, { opacity: 1, filter: 'blur(0px)', translate: '0 0' }]; break;
+      case 'draw': {
+        let L = 0; try { L = el.getTotalLength(); } catch (_) {}
+        if (!L) return;
+        el.style.strokeDasharray = `${L.toFixed(2)}px ${L.toFixed(2)}px`;
+        K = [{ strokeDashoffset: `${L.toFixed(2)}px` }, { strokeDashoffset: '0px' }]; break;
+      }
+      default: K = [{ opacity: 0, translate: `0 ${d}px` }, { opacity: 1, translate: '0 0' }];
+    }
+    const base = kind === 'draw' ? 900 : kind === 'scale' ? 700 : 800;
+    let a;
+    try { a = el.animate(K, { duration: (+el.dataset.dur || base) * (sub ? 0.7 : 1), delay: (+el.dataset.delay || 0) * (sub ? 0.5 : 1), easing: kind === 'scale' ? 'cubic-bezier(.3,1.4,.5,1)' : EASE, fill: 'both' }); } catch (_) { return; }
+    a.pause();
+    a.onfinish = () => { try { a.cancel(); } catch (_) {} };
+    el.__reveal = a;
+    this._io.observe(el);
+  }
+
+  onSeen = (e) => {
+    if (!e.isIntersecting && e.boundingClientRect.bottom >= 0) return;
+    if (this._io) this._io.unobserve(e.target);
+    const a = e.target.__reveal;
+    if (a) { try { e.isIntersecting ? a.play() : a.finish(); } catch (_) {} }
+  };
+
+  setupLoop(el, m) {
+    if (m === 'Off') return;
+    const kind = el.dataset.loop;
+    if (m === 'Subtle' && /^(float|float2|drift)$/.test(kind)) return;
+    const def = LOOPS[kind]; if (!def) return;
+    try { el.animate(def[0], { duration: +el.dataset.dur || def[1], iterations: Infinity, easing: def[2], delay: +el.dataset.delay || 0 }); } catch (_) {}
+  }
+
+  setupBig(el, m) {
+    el.replaceChildren();
+    const N = 18, T = 13, G = 2, C = T + G, S = N * C, R = S / 2, now = performance.now();
+    const tiles = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const cx = c * C + T / 2 - R, cy = r * C + T / 2 - R, dist = Math.hypot(cx, cy);
+      if (dist > R - 3) continue;
+      const d = document.createElement('div');
+      d.style.cssText = `position:absolute;left:0;top:0;width:${T}px;height:${T}px;border-radius:3px;background-color:rgba(15,38,46,.8);background-image:url(assets/wedy-avatar.png);background-size:${S}px ${S}px;background-position:${-c * C}px ${-r * C}px;box-shadow:0 0 0 .5px rgba(95,227,240,.22);will-change:transform`;
+      el.appendChild(d);
+      const n = dist / R, a = Math.random() * 6.283, rad = 260 + Math.random() * 320;
+      const t = { el: d, hx: c * C, hy: r * C, n, k: 0.085 + Math.random() * 0.035, ph: Math.random() * 6.283, vx: 0, vy: 0, x: c * C, y: r * C, o: 1, start: 0 };
+      if (m !== 'Off') { t.x = t.hx + Math.cos(a) * rad; t.y = t.hy + Math.sin(a) * rad; t.o = 0; t.start = now + 250 + n * 900 + Math.random() * 450; }
+      d.style.opacity = String(t.o);
+      d.style.transform = `translate3d(${t.x}px,${t.y}px,0)`;
+      tiles.push(t);
+    }
+    this._big = { el, tiles, S, T };
+    if (m === 'Off') return;
+    this._vis = new IntersectionObserver(([e]) => { this._bigVis = !!(e && e.isIntersecting); if (this._bigVis) this.kick(); });
+    this._vis.observe(el);
+    this._bigVis = true;
+    this.kick();
+  }
+
+  kick() { if (!this._raf && this._big && this._alive) this._raf = requestAnimationFrame(this.tick); }
+
+  tick = (now) => {
+    this._raf = 0;
+    const B = this._big; if (!B || !this._alive) return;
+    const m = this.mode(), full = m === 'Full';
+    const rect = B.el.getBoundingClientRect();
+    const sc = rect.width / B.S || 1;
+    const mx = this._px != null ? (this._px - rect.left) / sc : -9999, my = this._py != null ? (this._py - rect.top) / sc : -9999;
+    const repel = full && this._pIn, h = B.T / 2;
+    B.tiles.forEach(t => {
+      if (now < t.start) return;
+      let tx = t.hx, ty = t.hy;
+      if (full) ty += Math.sin(now / 760 - t.n * 6) * 1.4;
+      if (repel) {
+        const dx = t.hx + h - mx, dy = t.hy + h - my, d = Math.hypot(dx, dy) || 1;
+        if (d < 120) { const f = Math.pow(1 - d / 120, 2) * 52; tx += (dx / d) * f; ty += (dy / d) * f; }
+      }
+      t.vx = (t.vx + (tx - t.x) * t.k) * 0.8;
+      t.vy = (t.vy + (ty - t.y) * t.k) * 0.8;
+      t.x += t.vx; t.y += t.vy;
+      const sp = Math.hypot(t.vx, t.vy);
+      const rot = Math.max(-60, Math.min(60, t.vx * 2.6));
+      const off = Math.hypot(tx - t.hx, ty - t.hy);
+      const s = (1 + Math.min(0.4, sp * 0.02)) * (1 - Math.min(0.35, off * 0.006));
+      t.el.style.transform = `translate3d(${t.x.toFixed(1)}px,${t.y.toFixed(1)}px,0) rotate(${rot.toFixed(1)}deg) scale(${s.toFixed(3)})`;
+      if (t.o < 1) { t.o = Math.min(1, t.o + 0.045); t.el.style.opacity = t.o.toFixed(3); }
+    });
+    if (this._bigVis) this._raf = requestAnimationFrame(this.tick);
+  };
+
+  burstBig(power) {
+    const B = this._big; if (!B || this.mode() === 'Off') return;
+    const c = B.S / 2;
+    B.tiles.forEach(t => {
+      const a = Math.atan2(t.hy - c, t.hx - c) + (Math.random() - 0.5) * 0.9, f = (12 + t.n * 26 + Math.random() * 12) * (power || 1);
+      t.vx += Math.cos(a) * f; t.vy += Math.sin(a) * f;
+    });
+    this.kick();
+  }
+
+  onPointer = (e) => {
+    if (e.pointerType === 'touch') return;
+    this._px = e.clientX; this._py = e.clientY;
+    const a = this._aside, full = this.mode() === 'Full';
+    if (a) {
+      const r = a.getBoundingClientRect();
+      this._pIn = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      if (full && this._pIn) {
+        a.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 2 - 1).toFixed(3));
+        a.style.setProperty('--my', ((e.clientY - r.top) / r.height * 2 - 1).toFixed(3));
+        a.style.setProperty('--cx', (e.clientX - r.left).toFixed(0) + 'px');
+        a.style.setProperty('--cy', (e.clientY - r.top).toFixed(0) + 'px');
+      }
+    }
+    const g = full && e.target && e.target.closest ? e.target.closest('[data-magnet]') : null;
+    if (g !== this._magEl) { if (this._magEl) { this._magEl.style.setProperty('--tx', '0px'); this._magEl.style.setProperty('--ty', '0px'); } this._magEl = g; }
+    if (g) { const r = g.getBoundingClientRect(); g.style.setProperty('--tx', ((e.clientX - r.left - r.width / 2) * 0.12).toFixed(1) + 'px'); g.style.setProperty('--ty', ((e.clientY - r.top - r.height / 2) * 0.3).toFixed(1) + 'px'); }
+  };
+
+  onDown = (e) => {
+    const B = this._big; if (!B) return;
+    const r = B.el.getBoundingClientRect();
+    if (Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)) < r.width / 2 + 10) this.burstBig(1);
+  };
+
+  onOut = (e) => { if (!e.relatedTarget) this._pIn = false; };
+
+  fillIcons(root) {
+    const L = window.lucide; if (!L || !L.icons) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    root.querySelectorAll('[data-icon]').forEach(el => {
+      if (el.firstChild) return;
+      let node = null;
+      for (const n of el.dataset.icon.split('|')) { node = L.icons[n.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase())]; if (node) break; }
+      if (!node) return;
+      const size = el.dataset.size || 18;
+      const svg = document.createElementNS(NS, 'svg');
+      const attrs = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': el.dataset.sw || 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+      Object.keys(attrs).forEach(k => svg.setAttribute(k, attrs[k]));
+      svg.style.display = 'block'; svg.style.flexShrink = '0';
+      const kids = node[0] === 'svg' ? node[2] : node;
+      (kids || []).forEach(c => { if (!Array.isArray(c)) return; const n = document.createElementNS(NS, c[0]); Object.keys(c[1] || {}).forEach(k => { if (k !== 'key') n.setAttribute(k, c[1][k]); }); svg.appendChild(n); });
+      el.appendChild(svg);
+    });
+  }
+
+  loadIcons(n) {
+    if (!this._alive) return;
+    if (window.lucide && window.lucide.icons) { const r = this.rootRef.current; if (r) this.fillIcons(r); return; }
+    if (n === 20 && !document.querySelector('script[data-lucide-fallback]')) {
+      const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js'; s.setAttribute('data-lucide-fallback', '1'); document.head.appendChild(s);
+    }
+    if (n < 100) this._iconT = setTimeout(() => this.loadIcons(n + 1), 120);
+  }
+
+  shake() {
+    const c = this.cardRef.current; if (!c || this.mode() === 'Off') return;
+    try { c.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-11px)' }, { transform: 'translateX(9px)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }], { duration: 440, easing: 'ease-in-out' }); } catch (_) {}
+  }
+
+  pop(i, delay) {
+    const r = this.otpRefs[i] && this.otpRefs[i].current; if (!r || this.mode() === 'Off') return;
+    try { r.animate([{ scale: '0.82' }, { scale: '1.08', offset: 0.6 }, { scale: '1' }], { duration: 320, delay: delay || 0, easing: EASE }); } catch (_) {}
+  }
+
+  focusOtp(i) { const r = this.otpRefs[i] && this.otpRefs[i].current; if (r) { r.focus(); if (r.select) r.select(); } }
+
+  onStep() {
+    const s = this.state.step;
+    clearInterval(this._cd);
+    if (s === '2fa') {
+      setTimeout(() => this.focusOtp(0), 60);
+      this._cd = setInterval(() => { if (!this._alive || this.state.step !== '2fa') return clearInterval(this._cd); if (this.state.resendIn > 0) this.setState(x => ({ resendIn: x.resendIn - 1 })); }, 1000);
+    }
+    if (s === 'success') {
+      this.burstBig(1.3);
+      const root = this.rootRef.current, bar = root && root.querySelector('[data-success-bar]');
+      if (bar && this.mode() !== 'Off') { try { bar.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 2600, delay: 400, easing: EASE, fill: 'both' }); } catch (_) {} }
+    }
+  }
+
+  submit = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (this.state.loading) return;
+    const email = this.state.email.trim(), pw = this.state.pw;
+    let err = '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) err = 'Saisissez une adresse email valide.';
+    else if (pw.length < 6) err = 'Le mot de passe doit contenir au moins 6 caractères.';
+    if (err) { this.setState({ error: err }); this.shake(); return; }
+    this.setState({ error: '', loading: true });
+    this.later(1200, () => this.setState({ loading: false, step: this.props.twoFactor !== false ? '2fa' : 'success', otp: EMPTY, resendIn: 30 }));
+  };
+
+  setDigit(i, v) {
+    const dgt = String(v || '').replace(/\D/g, '').slice(-1);
+    const otp = this.state.otp.slice(); otp[i] = dgt;
+    this.setState({ otp, error: '' }, () => {
+      if (dgt) { this.pop(i); if (i < 5) this.focusOtp(i + 1); }
+      if (otp.every(x => x)) this.verify();
+    });
+  }
+
+  otpKey(i, e) {
+    if (e.key === 'Backspace' && !this.state.otp[i] && i > 0) { e.preventDefault(); const otp = this.state.otp.slice(); otp[i - 1] = ''; this.setState({ otp }); this.focusOtp(i - 1); }
+    else if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); this.focusOtp(i - 1); }
+    else if (e.key === 'ArrowRight' && i < 5) { e.preventDefault(); this.focusOtp(i + 1); }
+    else if (e.key === 'Enter') this.verify();
+  }
+
+  onOtpPaste = (e) => {
+    const t = ((e.clipboardData && e.clipboardData.getData('text')) || '').replace(/\D/g, '').slice(0, 6);
+    if (!t) return;
+    e.preventDefault();
+    const otp = EMPTY.map((_, k) => t[k] || '');
+    this.setState({ otp, error: '' }, () => { otp.forEach((d, k) => { if (d) this.pop(k, k * 50); }); this.focusOtp(Math.min(t.length, 5)); if (t.length === 6) this.verify(); });
+  };
+
+  verify = () => {
+    if (this.state.loading || this.state.step !== '2fa') return;
+    if (!this.state.otp.every(x => x)) { this.setState({ error: 'Saisissez les 6 chiffres du code.' }); this.shake(); return; }
+    this.setState({ loading: true, error: '' });
+    this.later(1000, () => this.setState({ loading: false, step: 'success' }));
+  };
+
+  resend = () => { this.setState({ resendIn: 30, otp: EMPTY, error: '' }, () => this.focusOtp(0)); this.onStep(); };
+  back = () => this.setState({ step: 'login', error: '', loading: false, otp: EMPTY });
+  replay = () => this.setState({ step: 'login', error: '', loading: false, otp: EMPTY, showPw: false });
+
+  renderVals() {
+    const s = this.state;
+    const [u, dom] = s.email.trim().split('@');
+    const first = (u || '').split(/[._-]/)[0];
+    const vals = {
+      rootRef: this.rootRef, cardRef: this.cardRef,
+      isLogin: s.step === 'login', is2fa: s.step === '2fa', isSuccess: s.step === 'success',
+      email: s.email, pw: s.pw, pwType: s.showPw ? 'text' : 'password', showPw: s.showPw, hidePw: !s.showPw, caps: s.caps,
+      loading: s.loading, notLoading: !s.loading, hasError: !!s.error, error: s.error,
+      maskedEmail: u && dom ? `${u[0]}•••@${dom}` : s.email,
+      firstName: first ? first[0].toUpperCase() + first.slice(1) : 'Salma',
+      canResend: s.resendIn <= 0, waitResend: s.resendIn > 0, resendLabel: `0:${String(Math.max(0, s.resendIn)).padStart(2, '0')}`,
+      onEmail: e => this.setState({ email: e.target.value, error: '' }),
+      onPw: e => this.setState({ pw: e.target.value, error: '' }),
+      onPwKey: e => { const c = !!(e.getModifierState && e.getModifierState('CapsLock')); if (c !== this.state.caps) this.setState({ caps: c }); },
+      togglePw: () => this.setState(x => ({ showPw: !x.showPw })),
+      onSubmit: this.submit, verify: this.verify, back: this.back, replay: this.replay, resend: this.resend, onOtpPaste: this.onOtpPaste,
+    };
+    for (let i = 0; i < 6; i++) {
+      vals['d' + i] = s.otp[i];
+      vals['otpRef' + i] = this.otpRefs[i];
+      vals['otpChange' + i] = e => this.setDigit(i, e.target.value);
+      vals['otpKey' + i] = e => this.otpKey(i, e);
+    }
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Performance — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="performance" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Personnes" title="Performance" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Performance</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Entretiens annuels, matrice des talents et objectifs de l'entreprise.</p>
+        </div>
+        <button type="button" onClick="{{ newCampaign }}" data-reveal="up" data-delay="100" style="display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)"><span data-icon="plus" data-size="16" data-sw="2.2" style="display:inline-flex;width:16px;height:16px"></span>Nouvelle campagne</button>
+      </div>
+
+      <section data-reveal="up" data-delay="80" style="position:relative;overflow:hidden;border-radius:24px;background:#06141a;color:#e8eff1;padding:24px 26px;isolation:isolate">
+        <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none">
+          <div data-loop="drift" style="position:absolute;left:-8%;top:-80%;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.5),transparent)"></div>
+          <div data-loop="drift" data-dur="27000" data-delay="-9000" style="position:absolute;right:-6%;top:-60%;width:500px;height:500px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.55),transparent)"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:28px">
+          <div style="position:relative;width:124px;height:124px;flex-shrink:0">
+            <svg viewBox="0 0 124 124" style="display:block;width:124px;height:124px;transform:rotate(-90deg)"><defs><linearGradient id="perfRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:#5fe3f0"></stop><stop offset="1" style="stop-color:#9a8bf0"></stop></linearGradient></defs><circle cx="62" cy="62" r="52" style="fill:none;stroke:rgba(255,255,255,.08);stroke-width:11px"></circle><circle data-reveal="draw" data-frac="0.643" data-delay="250" cx="62" cy="62" r="52" style="fill:none;stroke:url(#perfRing);stroke-width:11px;stroke-linecap:round;stroke-dasharray:210px 326.7px"></circle></svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:30px;font-weight:800;letter-spacing:-.04em">64 %</span><span style="font-size:11px;color:#9fb4bb">réalisés</span></div>
+          </div>
+          <div style="flex:1;min-width:260px">
+            <div style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#5fe3f0">CAMPAGNE ANNUELLE 2026</div>
+            <div style="margin-top:6px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:26px;letter-spacing:-.035em">81 entretiens sur 126 réalisés</div>
+            <div style="margin-top:4px;font-size:13.5px;color:#9fb4bb">Clôture le 15 décembre · 44 jours restants</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+              <span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:13px;color:#cfdde1"><strong style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:17px;color:#ffffff">102</strong>auto-évaluations</span>
+              <span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:13px;color:#cfdde1"><strong style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:17px;color:#ffffff">23</strong>entretiens planifiés</span>
+              <span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;background:rgba(239,107,84,.12);border:1px solid rgba(239,107,84,.3);font-size:13px;color:#ffd9d1"><strong style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:17px;color:#ffb3a5">9</strong>en retard</span>
+            </div>
+          </div>
+          <button type="button" onClick="{{ remindAll }}" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;border:none;border-radius:12px;background:#effbfc;color:#06141a;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="box-shadow:0 0 0 4px rgba(39,192,212,.25)"><span data-icon="{{ remIcon }}" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>{{ remLabel }}</button>
+        </div>
+      </section>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div data-reveal="up" data-delay="100" style="flex:1.3 1 500px;min-width:0;padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:17px">Matrice des talents</div><div style="font-size:13px;color:#52646d;margin-top:2px">Performance × potentiel · cliquez une case pour filtrer les entretiens</div></div>
+            <sc-if value="{{ hasCell }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ clearCell }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border-radius:99px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;color:#33474f;cursor:pointer">{{ cellName }}<span data-icon="x" data-size="13" style="display:inline-flex;width:13px;height:13px"></span></button></sc-if>
+          </div>
+          <div style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;margin-top:16px">
+            <div style="display:flex;align-items:center;justify-content:center"><span style="transform:rotate(-90deg);white-space:nowrap;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#5f7079">POTENTIEL →</span></div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+              <sc-for list="{{ box }}" as="b" hint-placeholder-count="9">
+                <button type="button" onClick="{{ b.pick }}" data-reveal="scale" data-delay="{{ b.delay }}" style="min-height:112px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;padding:12px;border-radius:14px;border:none;background:{{ b.bg }};font-family:inherit;text-align:left;cursor:pointer;box-shadow:{{ b.ring }};opacity:{{ b.op }};transition:box-shadow .2s,opacity .25s,transform .2s" style-hover="transform:translateY(-2px)">
+                  <span style="font-size:12px;font-weight:700;color:{{ b.color }}">{{ b.name }}</span>
+                  <span style="display:flex;align-items:flex-end;justify-content:space-between;gap:6px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:28px;font-weight:800;letter-spacing:-.04em;color:#0a1c24;line-height:1">{{ b.count }}</span><span style="display:flex;padding-left:7px"><sc-for list="{{ b.faces }}" as="f" hint-placeholder-count="2"><span title="{{ f.name }}" style="width:24px;height:24px;margin-left:-7px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ f.av }};color:#ffffff;font-size:9px;font-weight:700;border:2px solid #ffffff">{{ f.ini }}</span></sc-for></span></span>
+                </button>
+              </sc-for>
+            </div>
+            <span></span>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#5f7079"><span>FAIBLE</span><span>PERFORMANCE →</span><span>ÉLEVÉE</span></div>
+          </div>
+        </div>
+
+        <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <div data-reveal="up" data-delay="140" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px;margin-bottom:6px">Objectifs d'entreprise 2026</div>
+            <sc-for list="{{ goals }}" as="g" hint-placeholder-count="4"><div style="padding:12px 0;border-top:1px solid #f0f3f4"><div style="display:flex;justify-content:space-between;gap:10px;font-size:13.5px"><span style="font-weight:500">{{ g.title }}</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#52646d">{{ g.pct }}%</span></div><div style="height:7px;border-radius:99px;background:#eef2f4;overflow:hidden;margin-top:8px"><div data-reveal="growx" data-delay="{{ g.delay }}" style="height:100%;width:{{ g.pct }}%;border-radius:99px;background:{{ g.bar }};transform-origin:left"></div></div></div></sc-for>
+          </div>
+          <div data-reveal="up" data-delay="200" style="padding:20px;border-radius:20px;background:linear-gradient(140deg,#5444b8,#6d5ad6 55%,#0e7f96);color:#ffffff">
+            <div style="display:flex;align-items:center;gap:10px"><img src="assets/wedy-avatar.png" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;background:#e4f2f4;border:2px solid rgba(255,255,255,.4)"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Ce que disent les entretiens</div></div>
+            <div style="margin-top:10px;font-size:13.5px;line-height:1.55">Wedy a analysé 81 comptes rendus. La formation au management revient chez 12 collaborateurs, surtout aux Opérations et au Commercial.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:14px"><sc-for list="{{ themes }}" as="t" hint-placeholder-count="5"><span style="display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:99px;background:rgba(255,255,255,.15);font-size:12.5px;font-weight:600">{{ t.label }}<span style="font-family:'Geist Mono',monospace;font-size:11px;padding:1px 6px;border-radius:99px;background:rgba(255,255,255,.22)">{{ t.n }}</span></span></sc-for></div>
+          </div>
+        </div>
+      </div>
+
+      <div data-reveal="up" data-delay="120" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid #eef2f4">
+          <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Entretiens</span>
+          <span style="font-size:13px;color:#52646d">{{ listLabel }}</span>
+          <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5"><button type="button" onClick="{{ t.go }}" style="height:32px;padding:0 12px;border-radius:99px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ t.label }}</button></sc-for></div>
+        </div>
+        <sc-for list="{{ reviews }}" as="r" hint-placeholder-count="6">
+          <div data-reveal="up" data-delay="{{ r.delay }}" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid #eef2f4">
+            <span style="flex:1 1 220px;display:flex;align-items:center;gap:11px;min-width:0"><span style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ r.av }};color:#ffffff;font-size:12px;font-weight:700;flex-shrink:0">{{ r.ini }}</span><span style="min-width:0"><span style="display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span><span style="display:block;font-size:12.5px;color:#5f7079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.role }}</span></span></span>
+            <span style="flex:0 1 200px;min-width:0;font-size:13px;color:#52646d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Manager · <span style="color:#33474f;font-weight:500">{{ r.manager }}</span></span>
+            <span style="width:130px"><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ r.stBg }};color:{{ r.stColor }};white-space:nowrap">{{ r.status }}</span></span>
+            <span style="width:64px;display:inline-flex;align-items:center;gap:5px;font-size:13.5px;font-weight:700"><sc-if value="{{ r.hasNote }}" hint-placeholder-val="{{ false }}"><span data-icon="star" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#df9326"></span>{{ r.note }}</sc-if><sc-if value="{{ r.noNote }}" hint-placeholder-val="{{ true }}"><span style="color:#a3b1b7;font-weight:500">—</span></sc-if></span>
+            <span style="width:120px;display:flex;justify-content:flex-end">
+              <sc-if value="{{ r.canRemind }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ r.remind }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border-radius:9px;border:1px solid #f0c9c0;background:#ffffff;color:#a33a28;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#fbe9e6"><span data-icon="bell-ring|bell" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Relancer</button></sc-if>
+              <sc-if value="{{ r.reminded }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:#8a5207"><span data-icon="send" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Relancé</span></sc-if>
+              <sc-if value="{{ r.isDone }}" hint-placeholder-val="{{ true }}"><a href="Wedy Employee.dc.html" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600">Voir<span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></a></sc-if>
+              <sc-if value="{{ r.isPlanned }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#0b5f72">{{ r.date }}</span></sc-if>
+              <sc-if value="{{ r.isSelf }}" hint-placeholder-val="{{ false }}"><span style="font-size:12.5px;color:#5444b8;font-weight:600">En cours</span></sc-if>
+            </span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ noReviews }}" hint-placeholder-val="{{ false }}"><div style="padding:36px 20px;text-align:center;font-size:14px;color:#52646d">Aucun entretien dans cette vue.</div></sc-if>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const BOX = [
+  [2, 0, 'Énigme', 3, '#fbefda', '#8a5207'], [2, 1, 'Talent émergent', 8, '#e4f2f4', '#0b5f72'], [2, 2, 'Étoile', 9, '#d4f0e2', '#0f6f49'],
+  [1, 0, 'Dilemme', 6, '#fbe9e6', '#a33a28'], [1, 1, 'Pilier', 24, '#eef2f4', '#33474f'], [1, 2, 'Haut performeur', 12, '#e1f5ec', '#0f6f49'],
+  [0, 0, 'Sous-performance', 3, '#f8dcd6', '#a33a28'], [0, 1, 'Contributeur efficace', 10, '#f3f6f7', '#33474f'], [0, 2, 'Expert de confiance', 6, '#e4f2f4', '#0b5f72'],
+];
+const PEOPLE = [
+  ['Imane Kettani', 'Product designer', 2, 2, 'Terminé', 4.6, 'Driss Lahlou'], ['Yasmine Benali', 'Responsable Marketing', 2, 2, 'Terminé', 4.3, 'Karim Lahlou'],
+  ['Salma Idrissi', 'Responsable RH', 2, 2, 'Terminé', 4.4, 'Hassan Bennis'], ['Karim Bennani', 'Développeur senior', 1, 2, 'Terminé', 4.1, 'Driss Lahlou'],
+  ['Youssef Amrani', 'Directeur des opérations', 1, 2, 'Planifié', 0, 'Hassan Bennis', 'Mer. 4 nov.'], ['Sara El Fassi', 'Chargée RH', 2, 1, 'Auto-évaluation', 0, 'Salma Idrissi'],
+  ['Mehdi Rami', 'Commercial', 2, 1, 'Planifié', 0, 'Adil Mernissi', 'Ven. 13 nov.'], ['Nadia Berrada', 'Comptable', 1, 1, 'Terminé', 3.6, 'Fatima Zahra Alami'],
+  ['Omar Alaoui', "Chef d'équipe logistique", 1, 1, 'En retard', 0, 'Youssef Amrani'], ['Hind Tazi', 'Chargée de clientèle', 0, 1, 'Terminé', 3.4, 'Hajar Benjelloun'],
+  ['Anas Belhaj', 'Data analyst', 0, 2, 'Terminé', 4.0, 'Driss Lahlou'], ['Khadija Zerouali', 'Assistante commerciale', 1, 0, 'En retard', 0, 'Adil Mernissi'],
+  ['Lina Chraibi', 'Stagiaire marketing', 2, 0, 'Auto-évaluation', 0, 'Karim Lahlou'], ['Rachid Ouazzani', 'Magasinier', 0, 0, 'En retard', 0, 'Youssef Amrani'],
+];
+const STC = { 'Terminé': ['#e1f5ec', '#0f6f49'], 'Planifié': ['#e4f2f4', '#0b5f72'], 'Auto-évaluation': ['#ece9fb', '#5444b8'], 'En retard': ['#fbe9e6', '#a33a28'] };
+
+class Component extends DCLogic {
+  state = { cell: null, tab: 'Tous', reminded: {}, remAll: false, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2800); }
+  renderVals() {
+    const s = this.state, ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+    const avOf = n => AV[(n.charCodeAt(0) + n.length) % AV.length];
+    const key = (p, q) => `${p}-${q}`;
+    const cellBox = s.cell ? BOX.find(b => key(b[0], b[1]) === s.cell) : null;
+    const list = PEOPLE.filter(p => (!s.cell || key(p[2], p[3]) === s.cell) && (s.tab === 'Tous' || p[4] === s.tab));
+    return {
+      rootRef: this.rootRef,
+      box: BOX.map((b, i) => {
+        const k = key(b[0], b[1]), on = s.cell === k;
+        return { name: b[2], count: b[3], bg: b[4], color: b[5], delay: String(i * 50), ring: on ? '0 0 0 2px #0a1c24' : 'none', op: s.cell && !on ? '.42' : '1',
+          faces: PEOPLE.filter(p => key(p[2], p[3]) === k).slice(0, 3).map(p => ({ name: p[0], ini: ini(p[0]), av: avOf(p[0]) })),
+          pick: () => this.setState({ cell: on ? null : k }) };
+      }),
+      hasCell: !!cellBox, cellName: cellBox ? cellBox[2] : '', clearCell: () => this.setState({ cell: null }),
+      goals: [['Turnover sous 8 %', 62, '#16a06b'], ['100 % des managers formés', 45, 'linear-gradient(90deg,#5444b8,#9a8bf0)'], ['Recrutement en moins de 25 jours', 84, 'linear-gradient(90deg,#0e6f84,#16b6c8)'], ['Satisfaction collaborateurs ≥ 4/5', 71, 'linear-gradient(90deg,#0e6f84,#16b6c8)']].map(([title, pct, bar], i) => ({ title, pct: String(pct), bar, delay: String(i * 90) })),
+      themes: [['Évolution de carrière', 15], ['Formation management', 12], ['Charge de travail', 9], ['Télétravail', 7], ['Reconnaissance', 6]].map(([label, n]) => ({ label, n })),
+      tabs: ['Tous', 'Terminé', 'Planifié', 'Auto-évaluation', 'En retard'].map(t => ({ label: t === 'Tous' ? 'Tous' : t === 'Terminé' ? 'Terminés' : t === 'Planifié' ? 'Planifiés' : t, go: () => this.setState({ tab: t }), bg: s.tab === t ? '#0a1c24' : '#ffffff', color: s.tab === t ? '#ffffff' : '#33474f', border: s.tab === t ? '#0a1c24' : '#e2e8eb' })),
+      listLabel: cellBox ? `${list.length} dans « ${cellBox[2]} »` : `${list.length} collaborateurs`,
+      reviews: list.map((p, i) => {
+        const late = p[4] === 'En retard', rem = late && (s.reminded[p[0]] || s.remAll);
+        return { name: p[0], role: p[1], manager: p[6], status: p[4], stBg: STC[p[4]][0], stColor: STC[p[4]][1], ini: ini(p[0]), av: avOf(p[0]), delay: String(i * 40),
+          hasNote: p[5] > 0, noNote: !(p[5] > 0), note: String(p[5]).replace('.', ','), date: p[7] || '',
+          canRemind: late && !rem, reminded: rem, isDone: p[4] === 'Terminé', isPlanned: p[4] === 'Planifié', isSelf: p[4] === 'Auto-évaluation',
+          remind: () => { this.setState(x => ({ reminded: { ...x.reminded, [p[0]]: true } })); this.toast(`Relance envoyée à ${p[0]} et à ${p[6]}`); } };
+      }),
+      noReviews: list.length === 0,
+      remLabel: s.remAll ? 'Relances envoyées' : 'Relancer les retardataires', remIcon: s.remAll ? 'circle-check|check-circle' : 'bell-ring|bell',
+      remindAll: () => { if (s.remAll) return; this.setState({ remAll: true }); this.toast('9 relances envoyées aux collaborateurs et à leurs managers'); },
+      newCampaign: () => this.toast('Nouvelle campagne : Wedy propose un calendrier et des trames d\'entretien'),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

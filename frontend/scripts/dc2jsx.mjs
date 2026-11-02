@@ -96,9 +96,11 @@ const hasExpr = s => typeof s === 'string' && s.includes('{{');
 const EXPR = /\{\{\s*([\w.]+)\s*\}\}/g;
 
 const loopVars = [];
+// loop variables named like the i18n function / the data object get a trailing underscore
+const jsLoopName = n => (n === 't' || n === 'v' ? n + '_' : n);
 const exprJs = e => {
-  const first = e.split('.')[0];
-  return loopVars.includes(first) ? e : 'v.' + e;
+  const [first, ...rest] = e.split('.');
+  return loopVars.includes(first) ? [jsLoopName(first), ...rest].join('.') : 'v.' + e;
 };
 /** Attribute / style value that may contain {{ }}: returns a JS expression. */
 const valueJs = s => {
@@ -292,7 +294,8 @@ function renderNode(n, depth) {
     loopVars.push(as);
     const kids = renderChildren(n.children, depth + 2, 'sc-for').join('\n');
     loopVars.pop();
-    return `${pad(depth)}{${list}.map((${as}, ${as}Index) => (\n${pad(depth + 1)}<Fragment key={${as}Index}>\n${kids}\n${pad(depth + 1)}</Fragment>\n${pad(depth)}))}`;
+    const js = jsLoopName(as);
+    return `${pad(depth)}{${list}.map((${js}, ${js}Index) => (\n${pad(depth + 1)}<Fragment key={${js}Index}>\n${kids}\n${pad(depth + 1)}</Fragment>\n${pad(depth)}))}`;
   }
   if (n.tag === 'dc-import') return '';
 

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Copilote IA — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    textarea::placeholder { color: #8a9ba3; }
+    ::selection { background: rgba(39,192,212,.3); }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif;overflow:hidden">
+
+  <aside style="position:relative;width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:22px;padding:20px 18px;background:#06141a;color:#e8eff1;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.14) transparent">
+    <div aria-hidden="true" data-loop="drift" style="position:absolute;left:-140px;top:-160px;width:440px;height:440px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.5),transparent);pointer-events:none"></div>
+    <div style="position:relative;display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <img src="assets/wedy-avatar.png" alt="Wedy" style="width:32px;height:32px;border-radius:50%;object-fit:cover;background:#0f262e;border:1.5px solid rgba(255,255,255,.2)">
+      <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:20px;letter-spacing:-.03em;color:#f1f8f9">Wedy</span>
+    </div>
+    <a href="Wedy Dashboard.dc.html" style="position:relative;flex-shrink:0;display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#cfdde1;font-size:13.5px;text-decoration:none;transition:background .2s" style-hover="color:#ffffff;background:rgba(255,255,255,.08)"><span data-icon="arrow-left" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Tableau de bord</a>
+    <button type="button" onClick="{{ reset }}" style="position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 12px 28px -12px rgba(22,182,200,.8);overflow:hidden"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><span data-icon="square-pen|plus" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px"></span><span style="position:relative">Nouvelle conversation</span></button>
+
+    <div style="position:relative;flex-shrink:0">
+      <div style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#6b838c;margin-bottom:10px">COMMANDES RAPIDES</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button type="button" onClick="{{ cmdDoc }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:none;border-radius:10px;background:transparent;color:#cfdde1;font-family:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="background:rgba(255,255,255,.05)"><span style="font-family:'Geist Mono',monospace;font-size:12px;padding:2px 7px;border-radius:6px;background:rgba(39,192,212,.14);color:#5fe3f0">/doc</span>Générer un document</button>
+        <button type="button" onClick="{{ cmdEmp }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:none;border-radius:10px;background:transparent;color:#cfdde1;font-family:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="background:rgba(255,255,255,.05)"><span style="font-family:'Geist Mono',monospace;font-size:12px;padding:2px 7px;border-radius:6px;background:rgba(39,192,212,.14);color:#5fe3f0">/emp</span>Fiche employé</button>
+        <button type="button" onClick="{{ cmdConge }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:none;border-radius:10px;background:transparent;color:#cfdde1;font-family:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="background:rgba(255,255,255,.05)"><span style="font-family:'Geist Mono',monospace;font-size:12px;padding:2px 7px;border-radius:6px;background:rgba(39,192,212,.14);color:#5fe3f0">/congé</span>Solde de congés</button>
+        <button type="button" onClick="{{ cmdAide }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:none;border-radius:10px;background:transparent;color:#cfdde1;font-family:inherit;font-size:13px;text-align:left;cursor:pointer" style-hover="background:rgba(255,255,255,.05)"><span style="font-family:'Geist Mono',monospace;font-size:12px;padding:2px 7px;border-radius:6px;background:rgba(39,192,212,.14);color:#5fe3f0">/aide</span>Toutes les commandes</button>
+      </div>
+    </div>
+
+    <div style="position:relative;flex-shrink:0">
+      <div style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#6b838c;margin-bottom:10px">ACCÈS AUX DONNÉES</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#b9cbd0">
+        <div style="display:flex;align-items:center;gap:9px"><span data-icon="users" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#5fe3f0"></span>Dossiers employés</div>
+        <div style="display:flex;align-items:center;gap:9px"><span data-icon="chart-column|bar-chart-3" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#b3a8f5"></span>Statistiques d'équipe</div>
+        <div style="display:flex;align-items:center;gap:9px"><span data-icon="scale" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#4fd3a0"></span>Code du travail marocain</div>
+      </div>
+    </div>
+
+    <div style="position:relative;flex-shrink:0;margin-top:auto;display:flex;gap:10px;padding:12px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);font-size:12px;line-height:1.5;color:#8ea5ad"><span data-icon="lock" data-size="14" style="display:inline-flex;width:14px;height:14px;margin-top:2px;flex-shrink:0;color:#7f969e"></span>Les conversations ne sont pas conservées au-delà de la session en cours.</div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;background-color:#f3f6f7;background-image:radial-gradient(#dde5e8 1px,transparent 1px);background-size:22px 22px">
+    <header style="display:flex;align-items:center;gap:12px;padding:14px 28px;background:rgba(255,255,255,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid #e2e8eb">
+      <span style="position:relative;flex-shrink:0"><img src="assets/wedy-avatar.png" alt="" style="display:block;width:40px;height:40px;border-radius:50%;object-fit:cover;background:#e4f2f4"><span style="position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;background:#16a06b;border:2px solid #ffffff"></span></span>
+      <div style="min-width:0"><div style="font-weight:700;font-size:15px;white-space:nowrap">Wedy Copilot</div><div style="font-size:12.5px;color:#52646d;white-space:nowrap">Claude · connaît votre équipe</div></div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <span style="font-size:12.5px;color:#5f7079;white-space:nowrap">Répondre en</span>
+        <div style="display:flex;padding:3px;border-radius:11px;background:#f3f6f7;border:1px solid #e2e8eb">
+          <button type="button" onClick="{{ setFr }}" style="position:relative;border:none;background:transparent;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:600;color:#52646d;cursor:pointer"><sc-if value="{{ isFr }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;inset:0;border-radius:8px;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.12)"></span></sc-if><span style="position:relative">FR</span></button>
+          <button type="button" onClick="{{ setAr }}" style="position:relative;border:none;background:transparent;padding:5px 11px;border-radius:8px;font-family:'Noto Kufi Arabic',sans-serif;font-size:12.5px;font-weight:600;color:#52646d;cursor:pointer"><sc-if value="{{ isAr }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;border-radius:8px;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.12)"></span></sc-if><span style="position:relative">ع</span></button>
+          <button type="button" onClick="{{ setEn }}" style="position:relative;border:none;background:transparent;padding:5px 11px;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:600;color:#52646d;cursor:pointer"><sc-if value="{{ isEn }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;border-radius:8px;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.12)"></span></sc-if><span style="position:relative">EN</span></button>
+        </div>
+      </div>
+    </header>
+
+    <div ref="{{ scrollRef }}" style="flex:1;min-height:0;overflow-y:auto">
+      <div style="max-width:820px;margin:0 auto;padding:28px 24px 32px;display:flex;flex-direction:column;gap:18px;min-height:100%">
+        <sc-if value="{{ empty }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px 0">
+            <div data-reveal="scale" style="position:relative;width:120px;height:120px">
+              <div data-loop="spin" data-dur="8000" style="position:absolute;inset:-14px;border-radius:50%;background:conic-gradient(from 0deg,rgba(22,182,200,0) 0deg,rgba(22,182,200,0) 250deg,rgba(22,182,200,.9) 330deg,rgba(109,90,214,.9) 358deg,rgba(109,90,214,0) 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2px))"></div>
+              <span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(22,182,200,.5)"></span>
+              <img src="assets/wedy-avatar.png" alt="Wedy" style="position:relative;display:block;width:120px;height:120px;border-radius:50%;object-fit:cover;background:#e4f2f4;border:3px solid #ffffff;box-shadow:0 20px 50px -18px rgba(14,111,132,.6)">
+            </div>
+            <h1 data-reveal="up" data-delay="120" style="margin:30px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3.6vw,44px);line-height:1.05;letter-spacing:-.045em;text-wrap:balance">Bonjour Salma, comment puis-je <span data-loop="shimmer" style="background:linear-gradient(90deg,#0e6f84,#16b6c8 30%,#6d5ad6 60%,#0e6f84);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent">vous aider ?</span></h1>
+            <p data-reveal="up" data-delay="200" style="margin:12px 0 0;font-size:16px;line-height:1.55;color:#52646d;max-width:520px">Je rédige vos documents, réponds à vos questions de droit du travail et consulte les données de votre équipe.</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;width:100%;margin-top:34px;text-align:left">
+              <button type="button" onClick="{{ sug0 }}" data-reveal="up" data-delay="260" style="display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:16px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s" style-hover="border-color:#b9dfe5;box-shadow:0 16px 30px -18px rgba(10,28,36,.35);transform:translateY(-2px)"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84;flex-shrink:0"><span data-icon="file-text" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14.5px;font-weight:600;color:#0a1c24">Rédiger une attestation</span><span style="font-size:13px;line-height:1.45;color:#52646d">Attestation de travail pour Yasmine Benali</span></span></button>
+              <button type="button" onClick="{{ sug1 }}" data-reveal="up" data-delay="320" style="display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:16px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s" style-hover="border-color:#b9dfe5;box-shadow:0 16px 30px -18px rgba(10,28,36,.35);transform:translateY(-2px)"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6;flex-shrink:0"><span data-icon="scale" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14.5px;font-weight:600;color:#0a1c24">Droit du travail</span><span style="font-size:13px;line-height:1.45;color:#52646d">Quel est le préavis légal pour un CDI ?</span></span></button>
+              <button type="button" onClick="{{ sug2 }}" data-reveal="up" data-delay="380" style="display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:16px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s" style-hover="border-color:#b9dfe5;box-shadow:0 16px 30px -18px rgba(10,28,36,.35);transform:translateY(-2px)"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="chart-column|bar-chart-3" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14.5px;font-weight:600;color:#0a1c24">Analyser l'absentéisme</span><span style="font-size:13px;line-height:1.45;color:#52646d">Quels services ont le plus d'absences ce trimestre ?</span></span></button>
+              <button type="button" onClick="{{ sug3 }}" data-reveal="up" data-delay="440" style="display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:16px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s" style-hover="border-color:#b9dfe5;box-shadow:0 16px 30px -18px rgba(10,28,36,.35);transform:translateY(-2px)"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#b06b0c;flex-shrink:0"><span data-icon="calendar-clock|calendar" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><span style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14.5px;font-weight:600;color:#0a1c24">Contrats à renouveler</span><span style="font-size:13px;line-height:1.45;color:#52646d">Quels CDD arrivent à échéance ce mois-ci ?</span></span></button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-for list="{{ msgs }}" as="m" hint-placeholder-count="0">
+          <sc-if value="{{ m.isUser }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="up" style="align-self:flex-end;max-width:78%;padding:12px 16px;border-radius:18px 18px 4px 18px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:15px;line-height:1.55;white-space:pre-wrap;box-shadow:0 10px 24px -14px rgba(14,111,132,.7)">{{ m.text }}</div>
+          </sc-if>
+          <sc-if value="{{ m.isBot }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="up" style="display:flex;gap:12px;align-items:flex-start;max-width:92%">
+              <img src="assets/wedy-avatar.png" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#e4f2f4;border:2px solid #ffffff;box-shadow:0 4px 10px -4px rgba(10,28,36,.3)">
+              <div style="display:flex;flex-direction:column;gap:10px;min-width:0;flex:1">
+                <sc-if value="{{ m.hasTools }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:6px"><span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:#e4f2f4;color:#0e6f84;font-family:'Geist Mono',monospace;font-size:11px"><span data-icon="database|layers" data-size="12" style="display:inline-flex;width:12px;height:12px"></span>{{ m.tools }}</span></div></sc-if>
+                <sc-if value="{{ m.hasBefore }}" hint-placeholder-val="{{ false }}"><div dir="{{ m.dir }}" style="padding:13px 16px;border-radius:4px 18px 18px 18px;background:#ffffff;border:1px solid #e5ebee;font-size:15px;line-height:1.6;color:#1d3540;white-space:pre-wrap;text-wrap:pretty">{{ m.before }}</div></sc-if>
+                <sc-if value="{{ m.hasDoc }}" hint-placeholder-val="{{ false }}">
+                  <div data-reveal="scale" style="border-radius:16px;background:#ffffff;border:1px solid #dfe7ea;box-shadow:0 20px 44px -26px rgba(10,28,36,.4);overflow:hidden">
+                    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #eef2f4;background:#f8fafb">
+                      <span style="width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84;flex-shrink:0"><span data-icon="file-text" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>
+                      <span style="flex:1;min-width:0;font-family:'Geist Mono',monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:#0e6f84;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.docTitle }}</span>
+                      <span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:#e4f2f4;color:#0e6f84">{{ m.docLang }}</span>
+                      <button type="button" onClick="{{ m.copy }}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;border:1px solid #dfe7ea;background:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;color:#33474f;cursor:pointer" style-hover="border-color:#b9dfe5;color:#0a1c24"><span data-icon="copy" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Copier</button>
+                    </div>
+                    <div dir="{{ m.docDir }}" style="padding:22px 26px;font-family:Georgia,'Times New Roman',serif;font-size:14.5px;line-height:1.75;color:#1d3540;white-space:pre-wrap">{{ m.docText }}</div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ m.hasAfter }}" hint-placeholder-val="{{ false }}"><div dir="{{ m.dir }}" style="padding:13px 16px;border-radius:18px;background:#ffffff;border:1px solid #e5ebee;font-size:15px;line-height:1.6;color:#1d3540;white-space:pre-wrap">{{ m.after }}</div></sc-if>
+              </div>
+            </div>
+          </sc-if>
+        </sc-for>
+
+        <sc-if value="{{ thinking }}" hint-placeholder-val="{{ false }}">
+          <div data-reveal="up" style="display:flex;gap:12px;align-items:center">
+            <span style="position:relative;width:34px;height:34px;flex-shrink:0"><span data-loop="spin" data-dur="1400" style="position:absolute;inset:-4px;border-radius:50%;background:conic-gradient(from 0deg,rgba(22,182,200,0),#16b6c8,#6d5ad6,rgba(109,90,214,0));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2.5px),#000 calc(100% - 2px))"></span><img src="assets/wedy-avatar.png" alt="" style="position:relative;display:block;width:34px;height:34px;border-radius:50%;object-fit:cover;background:#e4f2f4"></span>
+            <div style="display:flex;align-items:center;gap:10px;padding:11px 15px;border-radius:4px 18px 18px 18px;background:#ffffff;border:1px solid #e5ebee">
+              <span style="display:flex;gap:4px"><span data-loop="dot" style="width:6px;height:6px;border-radius:50%;background:#16b6c8"></span><span data-loop="dot" data-delay="150" style="width:6px;height:6px;border-radius:50%;background:#16b6c8"></span><span data-loop="dot" data-delay="300" style="width:6px;height:6px;border-radius:50%;background:#16b6c8"></span></span>
+              <span style="font-size:13.5px;color:#52646d">{{ thinkingLabel }}</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="padding:0 24px 18px">
+      <div style="position:relative;max-width:820px;margin:0 auto">
+        <sc-if value="{{ showCmds }}" hint-placeholder-val="{{ false }}">
+          <div data-reveal="up" style="position:absolute;left:0;right:0;bottom:calc(100% + 8px);padding:6px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 24px 50px -20px rgba(10,28,36,.35);z-index:5">
+            <sc-for list="{{ cmdList }}" as="c" hint-placeholder-count="0">
+              <button type="button" onClick="{{ c.pick }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:10px 12px;border:none;border-radius:11px;background:transparent;font-family:inherit;font-size:14px;color:#0a1c24;text-align:left;cursor:pointer" style-hover="background:#eef6f7"><span style="font-family:'Geist Mono',monospace;font-size:12.5px;padding:2px 8px;border-radius:6px;background:#e4f2f4;color:#0e6f84">{{ c.cmd }}</span><span style="color:#52646d">{{ c.label }}</span></button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="display:flex;align-items:flex-end;gap:10px;padding:10px 10px 10px 16px;border-radius:20px;background:#ffffff;border:1px solid #d6dfe3;box-shadow:0 20px 44px -26px rgba(10,28,36,.4)">
+          <textarea ref="{{ inputRef }}" rows="1" value="{{ input }}" onChange="{{ onInput }}" onKeyDown="{{ onKey }}" placeholder="Écrivez à Wedy… ( / pour les commandes)" style="flex:1;min-width:0;resize:none;border:none;outline:none;background:transparent;font-family:inherit;font-size:15px;line-height:1.5;color:#0a1c24;padding:9px 0;max-height:180px;overflow-y:hidden"></textarea>
+          <button type="button" onClick="{{ send }}" disabled="{{ cantSend }}" aria-label="Envoyer" style="width:44px;height:44px;border:none;border-radius:13px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;cursor:pointer;flex-shrink:0;box-shadow:0 8px 20px -8px rgba(22,182,200,.8);transition:filter .2s,opacity .2s" style-hover="filter:brightness(1.08)"><span data-icon="arrow-up" data-size="19" data-sw="2.2" style="display:inline-flex;width:19px;height:19px"></span></button>
+        </div>
+        <div style="margin-top:8px;text-align:center;font-size:12px;color:#5f7079">Les réponses juridiques sont indicatives et ne remplacent pas l'avis d'un avocat spécialisé.</div>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+    <div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:90;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.2);color:#4fd3a0"><span data-icon="check" data-size="15" data-sw="2.6" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;model&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Haiku&quot;,&quot;Sonnet&quot;],&quot;default&quot;:&quot;Haiku&quot;,&quot;tsType&quot;:&quot;'Haiku'|'Sonnet'&quot;,&quot;section&quot;:&quot;Copilote&quot;}}">
+const EASE = 'cubic-bezier(.2,.8,.2,1)';
+const EMP = [
+  { nom: 'Yasmine Benali', poste: 'Responsable Marketing', service: 'Marketing', contrat: 'CDD', embauche: '2022-03-15', fin_contrat: '2026-11-12', solde_conges_jours: 14.5 },
+  { nom: 'Omar Alaoui', poste: "Chef d'équipe logistique", service: 'Opérations', contrat: 'CDI', embauche: '2019-06-01', solde_conges_jours: 9, note: 'Congé annuel demandé du 4 au 6 nov. (en attente)' },
+  { nom: 'Karim Bennani', poste: 'Développeur senior', service: 'Tech', contrat: 'CDD', embauche: '2023-01-09', fin_contrat: '2026-11-19', solde_conges_jours: 11 },
+  { nom: 'Hind Tazi', poste: 'Chargée de clientèle', service: 'Service client', contrat: 'CDD', embauche: '2024-02-01', fin_contrat: '2026-11-27', solde_conges_jours: 6.5 },
+  { nom: 'Nadia Berrada', poste: 'Comptable', service: 'Finance', contrat: 'CDI', embauche: '2020-09-14', solde_conges_jours: 17 },
+  { nom: 'Mehdi Rami', poste: 'Commercial', service: 'Commercial', contrat: 'CDI', embauche: '2026-10-01', solde_conges_jours: 1.5 },
+  { nom: 'Sara El Fassi', poste: 'Chargée RH', service: 'RH', contrat: 'CDI', embauche: '2021-04-19', solde_conges_jours: 12 },
+  { nom: 'Lina Chraibi', poste: 'Stagiaire marketing', service: 'Marketing', contrat: 'Stage', embauche: '2026-09-01', fin_contrat: '2027-02-28', solde_conges_jours: 0 },
+];
+const STATS = {
+  date_du_jour: '2026-10-31', entreprise: 'Tython SARL, Casablanca',
+  effectif_total: 128, effectif_actif: 126, stagiaires: 9, presents_aujourdhui: 117, en_conge_aujourdhui: 5, absents_aujourdhui: 4,
+  par_service: { 'Opérations': 36, 'Commercial': 28, 'Tech': 24, 'Finance': 15, 'Marketing': 13, 'RH': 10 },
+  par_contrat: { CDI: 84, CDD: 27, Stage: 9, Freelance: 6 },
+  taux_absenteisme_trimestre: { 'Opérations (logistique)': '6,2 %', 'Service client': '4,8 %', 'Commercial': '3,1 %', 'Finance': '1,4 %', moyenne_entreprise: '3,4 %' },
+  taux_presence_30j: '96 %', demandes_en_attente: 6,
+  contrats_echeance_30j: [{ nom: 'Yasmine Benali', contrat: 'CDD', fin: '2026-11-12' }, { nom: 'Karim Bennani', contrat: 'CDD', fin: '2026-11-19' }, { nom: 'Hind Tazi', contrat: 'CDD', fin: '2026-11-27' }],
+};
+const LANGS = { fr: 'français', ar: 'arabe (العربية)', en: 'anglais' };
+const SUGGEST = [
+  'Rédige une attestation de travail pour Yasmine Benali.',
+  "Quel est le délai de préavis légal pour un CDI au Maroc ?",
+  "Quels services ont le plus fort taux d'absentéisme ce trimestre ?",
+  'Quels CDD arrivent à échéance ce mois-ci ?',
+];
+const CMDS = [
+  { cmd: '/doc', label: 'Générer un document', text: 'Rédige une attestation de travail pour ' },
+  { cmd: '/emp', label: "Afficher la fiche d'un employé", text: 'Affiche la fiche de ' },
+  { cmd: '/congé', label: 'Solde de congés', text: 'Quel est le solde de congés de ' },
+  { cmd: '/aide', label: 'Toutes les commandes', text: 'Que peux-tu faire pour moi ?' },
+];
+const LOOPS = {
+  drift: [[{ transform: 'translate(0,0) scale(1)' }, { transform: 'translate(7%,-6%) scale(1.12)' }, { transform: 'translate(0,0) scale(1)' }], 22000, 'ease-in-out'],
+  spin: [[{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], 6000, 'linear'],
+  ping: [[{ transform: 'scale(1)', opacity: 0.6 }, { transform: 'scale(1.5)', opacity: 0 }], 2400, 'cubic-bezier(0,0,.2,1)'],
+  shimmer: [[{ backgroundPosition: '0% 50%' }, { backgroundPosition: '200% 50%' }], 7000, 'linear'],
+  shine: [[{ transform: 'translateX(-150%) skewX(-20deg)', offset: 0 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 0.35 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 1 }], 4200, 'ease-in-out'],
+  dot: [[{ transform: 'translateY(0px)', opacity: 0.35 }, { transform: 'translateY(-4px)', opacity: 1 }, { transform: 'translateY(0px)', opacity: 0.35 }], 1000, 'ease-in-out'],
+};
+
+function parseReply(text) {
+  const m = text.match(/<document([^>]*)>([\s\S]*?)<\/document>/i);
+  if (!m) return { before: text.trim() };
+  const attr = (k) => { const r = m[1].match(new RegExp(k + '\\s*=\\s*"([^"]*)"', 'i')); return r ? r[1] : ''; };
+  return { before: text.slice(0, m.index).trim(), after: text.slice(m.index + m[0].length).trim(), docTitle: attr('titre') || attr('title') || 'Document', docLang: (attr('langue') || attr('lang') || 'fr').toLowerCase(), docText: m[2].trim() };
+}
+
+class Component extends DCLogic {
+  state = { msgs: [], input: '', thinking: false, tool: '', lang: 'fr', toast: '' };
+  rootRef = React.createRef(); scrollRef = React.createRef(); inputRef = React.createRef();
+
+  componentDidMount() {
+    this._alive = true; this._ws = {};
+    this._io = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting && e.boundingClientRect.bottom >= 0) return;
+      this._io.unobserve(e.target); const a = e.target.__reveal; if (a) { try { a.play(); } catch (_) {} }
+    }), { threshold: 0.05 });
+    this.scan(); this.loadIcons(0);
+  }
+  componentDidUpdate(prev, ps) {
+    this.scan();
+    const s = this.state;
+    if (ps && (ps.msgs.length !== s.msgs.length || ps.thinking !== s.thinking)) {
+      const el = this.scrollRef.current; if (el) requestAnimationFrame(() => el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }));
+    }
+  }
+  componentWillUnmount() { this._alive = false; if (this._io) this._io.disconnect(); clearTimeout(this._iconT); clearTimeout(this._toastT); }
+
+  scan() {
+    const root = this.rootRef.current; if (!root) return;
+    this.fillIcons(root);
+    const each = (sel, key, fn) => { const set = this._ws[key] || (this._ws[key] = new WeakSet()); root.querySelectorAll(sel).forEach(el => { if (!set.has(el)) { set.add(el); fn.call(this, el); } }); };
+    each('[data-reveal]', 'reveal', this.setupReveal);
+    each('[data-loop]', 'loop', this.setupLoop);
+  }
+  setupReveal(el) {
+    const k = el.dataset.reveal;
+    const K = k === 'scale' ? [{ opacity: 0, scale: '0.94' }, { opacity: 1, scale: '1' }] : [{ opacity: 0, translate: '0 16px' }, { opacity: 1, translate: '0 0' }];
+    let a; try { a = el.animate(K, { duration: 650, delay: +el.dataset.delay || 0, easing: EASE, fill: 'both' }); } catch (_) { return; }
+    a.pause(); a.onfinish = () => { try { a.cancel(); } catch (_) {} };
+    el.__reveal = a; this._io.observe(el);
+  }
+  setupLoop(el) {
+    const d = LOOPS[el.dataset.loop]; if (!d) return;
+    try { el.animate(d[0], { duration: +el.dataset.dur || d[1], iterations: Infinity, easing: d[2], delay: +el.dataset.delay || 0 }); } catch (_) {}
+  }
+  fillIcons(root) {
+    const L = window.lucide; if (!L || !L.icons) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    root.querySelectorAll('[data-icon]').forEach(el => {
+      if (el.firstChild && el.__icon === el.dataset.icon) return;
+      el.replaceChildren(); el.__icon = el.dataset.icon;
+      let node = null;
+      for (const n of el.dataset.icon.split('|')) { node = L.icons[n.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase())]; if (node) break; }
+      if (!node) return;
+      const size = el.dataset.size || 18, svg = document.createElementNS(NS, 'svg');
+      const attrs = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': el.dataset.sw || 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+      Object.keys(attrs).forEach(k => svg.setAttribute(k, attrs[k]));
+      svg.style.display = 'block';
+      const kids = node[0] === 'svg' ? node[2] : node;
+      (kids || []).forEach(c => { if (!Array.isArray(c)) return; const n = document.createElementNS(NS, c[0]); Object.keys(c[1] || {}).forEach(k => { if (k !== 'key') n.setAttribute(k, c[1][k]); }); svg.appendChild(n); });
+      el.appendChild(svg);
+    });
+  }
+  loadIcons(n) {
+    if (!this._alive) return;
+    if (window.lucide && window.lucide.icons) { const r = this.rootRef.current; if (r) this.fillIcons(r); return; }
+    if (n === 20 && !document.querySelector('script[data-lucide-fallback]')) { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js'; s.setAttribute('data-lucide-fallback', '1'); document.head.appendChild(s); }
+    if (n < 100) this._iconT = setTimeout(() => this.loadIcons(n + 1), 120);
+  }
+
+  toast(t) { clearTimeout(this._toastT); this.setState({ toast: t }); this._toastT = setTimeout(() => this._alive && this.setState({ toast: '' }), 2400); }
+  setInput(v, focus) {
+    this.setState({ input: v }, () => {
+      const t = this.inputRef.current; if (!t) return;
+      t.style.height = 'auto'; t.style.height = Math.min(180, t.scrollHeight) + 'px'; t.style.overflowY = t.scrollHeight > 180 ? 'auto' : 'hidden';
+      if (focus) { t.focus(); t.setSelectionRange(v.length, v.length); }
+    });
+  }
+
+  system() {
+    return `Tu es Wedy, le copilote RH intégré à la plateforme Wedy RH, au service de Salma Idrissi (Admin RH) chez Tython SARL (Casablanca, Maroc). Nous sommes le 31 octobre 2026.
+Langue de réponse obligatoire : ${LANGS[this.state.lang]}.
+Style : concis, professionnel, chaleureux. Texte brut uniquement, sans Markdown (pas de **, #, tableaux). Pour une liste, une ligne par élément commençant par « • ».
+Données : utilise toujours les outils pour toute question sur les employés, contrats, congés ou statistiques. N'invente jamais de données ; si une info manque, dis-le.
+Droit du travail marocain (Code du travail, loi 65-99) : préavis de démission ou licenciement en CDI (décret 2-04-469) — cadres et assimilés : moins d'1 an 1 mois, 1 à 5 ans 2 mois, plus de 5 ans 3 mois ; employés et ouvriers : moins d'1 an 8 jours, 1 à 5 ans 1 mois, plus de 5 ans 2 mois. Congé annuel : 1,5 jour ouvrable par mois de service effectif (art. 231), majoré de 1,5 jour par période de 5 ans d'ancienneté, dans la limite de 30 jours ouvrables. Pour les questions juridiques, précise en une phrase que la réponse est indicative.
+Documents : si on te demande de rédiger un document RH (attestation, contrat, lettre…), écris une courte phrase d'introduction, puis le document complet entre <document titre="Titre du document" langue="fr|ar|en"> et </document>. Utilise les vraies données des outils (nom, poste, dates). L'employeur est Tython SARL, Casablanca. Termine par « Fait à Casablanca, le 31 octobre 2026 » et une ligne de signature pour la Direction des Ressources Humaines.`;
+  }
+
+  tools() {
+    const mark = (label) => { if (this._alive) this.setState({ tool: label }); this._used.add(label); };
+    return [
+      { name: 'rechercher_employes', description: "Recherche des employés par nom, poste, service ou type de contrat. Renvoie leur dossier (poste, service, contrat, date d'embauche, fin de contrat, solde de congés). Requête vide = tous les employés suivis.", input_schema: { type: 'object', properties: { requete: { type: 'string', description: 'Nom, poste, service ou contrat' } } },
+        run: async (inp) => { mark('Dossiers employés consultés'); const q = ((inp && inp.requete) || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); const r = EMP.filter(e => !q || q.split(/\s+/).some(w => w.length > 2 && Object.values(e).some(v => norm(v).includes(w)))); return JSON.stringify(r.length ? r : { resultat: 'Aucun employé trouvé', employes_disponibles: EMP.map(e => e.nom) }); } },
+      { name: 'statistiques_equipe', description: "Statistiques RH de l'entreprise : effectifs, répartition par service et contrat, absentéisme du trimestre par service, présence, demandes en attente, contrats arrivant à échéance sous 30 jours.", input_schema: { type: 'object', properties: {} },
+        run: async () => { mark("Statistiques d'équipe consultées"); return JSON.stringify(STATS); } },
+    ];
+  }
+
+  async ask(text) {
+    const t = (text || '').trim();
+    if (!t || this.state.thinking) return;
+    const msgs = [...this.state.msgs, { role: 'user', text: t }];
+    this._used = new Set();
+    this.setState({ msgs, thinking: true, tool: '' });
+    this.setInput('');
+    const history = msgs.slice(-12).map(m => ({ role: m.role, content: m.role === 'user' ? m.text : (m.raw || m.text) }));
+    let reply = '';
+    try {
+      if (!window.claude || !window.claude.complete) throw new Error('unavailable');
+      const body = { system: this.system(), messages: history, max_tokens: 1800, tools: this.tools() };
+      const model = this.props.model === 'Sonnet' ? 'claude-sonnet-4-5' : null;
+      try { reply = await window.claude.complete(model ? { ...body, model } : body); }
+      catch (e) { if (!model) throw e; reply = await window.claude.complete(body); }
+    } catch (e) {
+      reply = "Désolé, je n'ai pas pu répondre pour le moment. Réessayez dans un instant.";
+    }
+    if (!this._alive) return;
+    this.setState(s => ({ msgs: [...s.msgs, { role: 'assistant', raw: reply, tools: [...this._used].join(' · ') }], thinking: false, tool: '' }));
+  }
+
+  copy(text) {
+    try { navigator.clipboard.writeText(text).then(() => this.toast('Document copié'), () => this.toast('Copie impossible')); } catch (_) { this.toast('Copie impossible'); }
+  }
+
+  renderVals() {
+    const s = this.state;
+    const slash = s.input.startsWith('/') && !s.input.includes(' ');
+    const cmdList = slash ? CMDS.filter(c => c.cmd.startsWith(s.input.toLowerCase()) || s.input === '/') : [];
+    return {
+      rootRef: this.rootRef, scrollRef: this.scrollRef, inputRef: this.inputRef,
+      empty: s.msgs.length === 0 && !s.thinking,
+      msgs: s.msgs.map((m, i) => {
+        if (m.role === 'user') return { isUser: true, isBot: false, text: m.text, k: i };
+        const p = parseReply(m.raw || '');
+        const rtl = s.lang === 'ar' || /[\u0600-\u06FF]/.test((p.before || '').slice(0, 40));
+        const docRtl = p.docLang === 'ar' || /[\u0600-\u06FF]/.test((p.docText || '').slice(0, 60));
+        return {
+          isUser: false, isBot: true, k: i,
+          before: p.before || '', hasBefore: !!p.before, after: p.after || '', hasAfter: !!p.after,
+          hasDoc: !!p.docText, docTitle: p.docTitle || '', docLang: (p.docLang || 'fr').toUpperCase(), docText: p.docText || '', docDir: docRtl ? 'rtl' : 'ltr',
+          dir: rtl ? 'rtl' : 'ltr', hasTools: !!m.tools, tools: m.tools || '',
+          copy: () => this.copy(`${p.docTitle || ''}\n\n${p.docText || ''}`),
+        };
+      }),
+      thinking: s.thinking, thinkingLabel: s.tool ? s.tool.replace('consultés', 'en cours…').replace('consultées', 'en cours…') : 'Wedy réfléchit…',
+      input: s.input, cantSend: !s.input.trim() || s.thinking,
+      onInput: e => this.setInput(e.target.value),
+      onKey: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (cmdList.length && slash) this.setInput(cmdList[0].text, true); else this.ask(this.state.input); } },
+      send: () => this.ask(this.state.input),
+      showCmds: cmdList.length > 0,
+      cmdList: cmdList.map(c => ({ cmd: c.cmd, label: c.label, pick: () => c.cmd === '/aide' ? this.ask(c.text) : this.setInput(c.text, true) })),
+      cmdDoc: () => this.setInput(CMDS[0].text, true), cmdEmp: () => this.setInput(CMDS[1].text, true), cmdConge: () => this.setInput(CMDS[2].text, true), cmdAide: () => this.ask(CMDS[3].text),
+      sug0: () => this.ask(SUGGEST[0]), sug1: () => this.ask(SUGGEST[1]), sug2: () => this.ask(SUGGEST[2]), sug3: () => this.ask(SUGGEST[3]),
+      reset: () => { if (!this.state.thinking) this.setState({ msgs: [], input: '' }); },
+      isFr: s.lang === 'fr', isAr: s.lang === 'ar', isEn: s.lang === 'en',
+      setFr: () => this.setState({ lang: 'fr' }), setAr: () => this.setState({ lang: 'ar' }), setEn: () => this.setState({ lang: 'en' }),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

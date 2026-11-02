@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Générer un document — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder, textarea::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="generate" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Documents" title="Générer" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1180px;width:100%;margin:0 auto">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Générer un document</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Quatre étapes, trois langues, zéro copier-coller. Wedy remplit tout depuis le dossier.</p>
+        </div>
+        <a href="Wedy History.dc.html" data-reveal="up" data-delay="100" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-size:13.5px;font-weight:600;white-space:nowrap" style-hover="color:#0a1c24;border-color:#9fb4bb"><span data-icon="history" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Historique</a>
+      </div>
+
+      <div data-reveal="up" data-delay="100" style="position:relative;padding:18px 22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+        <div style="position:absolute;left:calc(22px + 12.5% - 11px);right:calc(22px + 12.5% - 11px);top:36px;height:3px;border-radius:3px;background:#eef2f4"></div>
+        <div style="position:absolute;left:calc(22px + 12.5% - 11px);top:36px;height:3px;border-radius:3px;width:calc((100% - 44px - 25% + 22px) * {{ progF }});background:linear-gradient(90deg,#0e6f84,#16b6c8);transition:width .7s cubic-bezier(.2,.8,.2,1)"></div>
+        <div style="position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))">
+          <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+            <button type="button" onClick="{{ s.go }}" disabled="{{ s.locked }}" style="display:flex;flex-direction:column;align-items:center;gap:7px;border:none;background:transparent;font-family:inherit;cursor:{{ s.cursor }};padding:0">
+              <sc-if value="{{ s.done }}" hint-placeholder-val="{{ false }}"><span style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;box-shadow:0 0 0 5px #ffffff"><span data-icon="check" data-size="17" data-sw="2.6" style="display:inline-flex;width:17px;height:17px"></span></span></sc-if>
+              <sc-if value="{{ s.current }}" hint-placeholder-val="{{ false }}"><span style="position:relative;width:38px;height:38px;box-shadow:0 0 0 5px #ffffff;border-radius:50%"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:2px solid #16b6c8"></span><span style="position:relative;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#0a1c24;color:#ffffff;font-family:'Geist Mono',monospace;font-size:13px;font-weight:600">{{ s.n }}</span></span></sc-if>
+              <sc-if value="{{ s.todo }}" hint-placeholder-val="{{ true }}"><span style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f3f6f7;border:1px solid #e2e8eb;color:#7d8f97;font-family:'Geist Mono',monospace;font-size:13px;box-shadow:0 0 0 5px #ffffff">{{ s.n }}</span></sc-if>
+              <span style="font-size:13px;font-weight:600;color:{{ s.color }}">{{ s.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ s0 }}" hint-placeholder-val="{{ true }}">
+        <div data-reveal="up" style="padding:22px;border-radius:22px;background:#ffffff;border:1px solid #e2e8eb;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:19px;letter-spacing:-.02em">Pour qui est ce document ?</div><div style="font-size:13.5px;color:#52646d;margin-top:3px">Les informations du dossier seront reprises automatiquement.</div></div>
+            <div style="display:flex;padding:4px;border-radius:12px;background:#f3f6f7">
+              <sc-for list="{{ kinds }}" as="k" hint-placeholder-count="2"><button type="button" onClick="{{ k.go }}" style="position:relative;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border:none;border-radius:9px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:{{ k.color }}"><sc-if value="{{ k.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="position:absolute;inset:0;border-radius:9px;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.14)"></span></sc-if><span data-icon="{{ k.icon }}" data-size="15" style="position:relative;display:inline-flex;width:15px;height:15px"></span><span style="position:relative">{{ k.label }}</span></button></sc-for>
+            </div>
+          </div>
+          <div style="position:relative;max-width:420px"><span data-icon="search" data-size="15" style="position:absolute;left:12px;top:50%;margin-top:-7.5px;display:inline-flex;width:15px;height:15px;color:#7d8f97;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Rechercher par nom ou par poste…" style="width:100%;height:42px;padding:0 12px 0 36px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px">
+            <sc-for list="{{ people }}" as="p" hint-placeholder-count="6">
+              <button type="button" onClick="{{ p.pick }}" data-reveal="up" data-delay="{{ p.delay }}" style="position:relative;display:flex;align-items:center;gap:11px;padding:12px;border-radius:14px;border:1px solid {{ p.border }};background:{{ p.bg }};font-family:inherit;text-align:left;cursor:pointer;box-shadow:{{ p.shadow }};transition:border-color .2s,box-shadow .2s,background .2s" style-hover="border-color:#b9dfe5">
+                <span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ p.av }};color:#ffffff;font-size:13px;font-weight:700;flex-shrink:0">{{ p.ini }}</span>
+                <span style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:600;color:#0a1c24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span><span style="display:block;font-size:12.5px;color:#5f7079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.sub }}</span></span>
+                <sc-if value="{{ p.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#0e6f84;color:#ffffff;flex-shrink:0"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span></sc-if>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:flex-end"><button type="button" onClick="{{ next0 }}" disabled="{{ no0 }}" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;opacity:{{ op0 }};transition:opacity .2s">Choisir le modèle<span data-icon="arrow-right" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ s1 }}" hint-placeholder-val="{{ false }}">
+        <div data-reveal="up" style="padding:22px;border-radius:22px;background:#ffffff;border:1px solid #e2e8eb;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:19px;letter-spacing:-.02em">Quel document ?</div><div style="font-size:13.5px;color:#52646d;margin-top:3px">{{ tplCount }} modèles disponibles pour {{ personFirst }}.</div></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ cats }}" as="c" hint-placeholder-count="5"><button type="button" onClick="{{ c.go }}" style="height:34px;padding:0 12px;border-radius:99px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">{{ c.label }}</button></sc-for></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
+            <sc-for list="{{ tpls }}" as="t" hint-placeholder-count="4">
+              <button type="button" onClick="{{ t.pick }}" data-reveal="up" data-delay="{{ t.delay }}" style="position:relative;display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:16px;border:1px solid {{ t.border }};background:{{ t.bg }};font-family:inherit;text-align:left;cursor:pointer;box-shadow:{{ t.shadow }};transition:border-color .2s,box-shadow .2s,transform .2s" style-hover="transform:translateY(-2px)">
+                <span style="display:flex;align-items:center;justify-content:space-between;width:100%"><span style="width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{ t.tint }};color:{{ t.color }}"><span data-icon="file-text" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#0e6f84;color:#ffffff"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span></sc-if></span>
+                <span><span style="display:block;font-size:14.5px;font-weight:600;color:#0a1c24;line-height:1.3">{{ t.fr }}</span><span style="display:block;font-size:12.5px;color:#5f7079;margin-top:2px">{{ t.en }}</span></span>
+                <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:{{ t.tint }};color:{{ t.color }}">{{ t.cat }}</span><sc-for list="{{ t.langs }}" as="l" hint-placeholder-count="2"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;padding:2px 6px;border-radius:6px;background:#f3f6f7;color:#33474f">{{ l.t }}</span></sc-for><span style="margin-left:auto;font-size:11.5px;color:#7d8f97">{{ t.nvars }} variables</span></span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:10px"><button type="button" onClick="{{ back }}" style="display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 16px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;font-weight:600;color:#33474f;cursor:pointer"><span data-icon="arrow-left" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Retour</button><button type="button" onClick="{{ next1 }}" disabled="{{ no1 }}" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;opacity:{{ op1 }}">Vérifier les variables<span data-icon="arrow-right" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ s2 }}" hint-placeholder-val="{{ false }}">
+        <div data-reveal="up" style="position:relative;overflow:hidden;padding:22px;border-radius:22px;background:#ffffff;border:1px solid #e2e8eb;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:14px;background:#f3f6f7">
+            <span style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#52646d"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ sum.av }};color:#ffffff;font-size:10.5px;font-weight:700">{{ sum.ini }}</span><strong style="color:#0a1c24">{{ sum.name }}</strong></span>
+            <span style="color:#a3b1b7">·</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#52646d"><span data-icon="file-text" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#0e6f84"></span><strong style="color:#0a1c24">{{ sum.tpl }}</strong></span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start">
+            <div style="flex:1.4 1 380px;min-width:0;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Variables ({{ nVars }})</span><span style="font-size:12.5px;color:{{ missColor }};font-weight:600">{{ missLabel }}</span></div>
+              <sc-for list="{{ vars }}" as="v" hint-placeholder-count="6">
+                <div data-reveal="up" data-delay="{{ v.delay }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid {{ v.border }};background:{{ v.bg }};flex-wrap:wrap">
+                  <code style="font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:600;padding:3px 7px;border-radius:7px;background:#e4f2f4;color:#0b5f72;white-space:nowrap">{{ v.code }}</code>
+                  <span style="width:150px;font-size:12.5px;color:#52646d">{{ v.label }}</span>
+                  <input value="{{ v.value }}" onChange="{{ v.set }}" placeholder="À compléter…" style="flex:1;min-width:160px;height:36px;padding:0 10px;border-radius:9px;border:1px solid {{ v.inBorder }};background:#ffffff;font-family:inherit;font-size:13.5px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 3px rgba(22,182,200,.14)">
+                  <sc-if value="{{ v.auto }}" hint-placeholder-val="{{ true }}"><span title="Rempli depuis le dossier" style="display:inline-flex;color:#16a06b"><span data-icon="circle-check|check-circle" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span></sc-if>
+                  <sc-if value="{{ v.missing }}" hint-placeholder-val="{{ false }}"><span title="À compléter" style="display:inline-flex;color:#df9326"><span data-icon="circle-alert|alert-circle" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:14px">
+              <div style="padding:16px;border-radius:16px;border:1px solid #e2e8eb">
+                <div style="font-size:13px;font-weight:700;color:#33474f">Langue du document</div>
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px">
+                  <sc-for list="{{ langs }}" as="l" hint-placeholder-count="3"><button type="button" onClick="{{ l.go }}" disabled="{{ l.off }}" title="{{ l.title }}" style="height:44px;border-radius:11px;border:1px solid {{ l.border }};background:{{ l.bg }};color:{{ l.color }};font-family:{{ l.font }};font-size:13.5px;font-weight:600;cursor:pointer;opacity:{{ l.op }};transition:background .2s,border-color .2s">{{ l.label }}</button></sc-for>
+                </div>
+              </div>
+              <button type="button" onClick="{{ toggleAi }}" style="display:flex;align-items:flex-start;gap:12px;padding:16px;border-radius:16px;border:1px solid {{ aiBorder }};background:{{ aiBg }};font-family:inherit;text-align:left;cursor:pointer;transition:background .2s,border-color .2s">
+                <span style="position:relative;width:40px;height:24px;border-radius:99px;background:{{ aiTrack }};flex-shrink:0;transition:background .2s;margin-top:1px"><span style="position:absolute;top:3px;left:{{ aiKnob }};width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.3);transition:left .25s cubic-bezier(.2,.8,.2,1)"></span></span>
+                <span><span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:#0a1c24"><span data-icon="sparkles" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#6d5ad6"></span>Rédaction IA</span><span style="display:block;margin-top:3px;font-size:12.5px;line-height:1.45;color:#52646d">Wedy affine la formulation et traduit le modèle dans n'importe quelle langue.</span></span>
+              </button>
+              <button type="button" onClick="{{ generate }}" disabled="{{ busy }}" style="position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border:none;border-radius:14px;background:linear-gradient(135deg,#5444b8,#16b6c8);color:#ffffff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 16px 34px -14px rgba(109,90,214,.8)"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><span data-icon="wand-sparkles|wand-2" data-size="17" style="position:relative;display:inline-flex;width:17px;height:17px"></span><span style="position:relative">Générer le document</span></button>
+              <button type="button" onClick="{{ back }}" style="display:inline-flex;align-items:center;justify-content:center;gap:7px;height:40px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;color:#33474f;cursor:pointer"><span data-icon="arrow-left" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Changer de modèle</button>
+            </div>
+          </div>
+          <sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="fade" style="position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(255,255,255,.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">
+              <span style="position:relative;width:76px;height:76px"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(22,182,200,.6)"></span><span data-loop="spin" style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(109,90,214,0),rgba(109,90,214,.7),rgba(22,182,200,.9),rgba(22,182,200,0))"></span><img src="assets/wedy-avatar.png" alt="" style="position:absolute;inset:5px;width:66px;height:66px;border-radius:50%;object-fit:cover;background:#e4f2f4;border:3px solid #ffffff"></span>
+              <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px">Wedy rédige votre document…</div>
+              <div style="display:flex;flex-direction:column;gap:7px;width:260px"><span data-loop="scan" style="display:block;height:7px;width:100%;border-radius:4px;background:linear-gradient(90deg,#eef2f4,#d9eef1,#eef2f4)"></span><span style="display:block;height:7px;width:82%;border-radius:4px;background:#eef2f4"></span><span style="display:block;height:7px;width:64%;border-radius:4px;background:#eef2f4"></span></div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ s3 }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div data-reveal="up" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 18px;border-radius:18px;background:#e1f5ec;border:1px solid rgba(22,160,107,.25)">
+            <span data-reveal="pill" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#16a06b;color:#ffffff;flex-shrink:0"><span data-icon="check" data-size="18" data-sw="2.6" style="display:inline-flex;width:18px;height:18px"></span></span>
+            <div style="flex:1;min-width:220px"><div style="font-size:15px;font-weight:700;color:#0a1c24">Document prêt</div><div style="font-size:13px;color:#33474f">{{ doneSub }}</div></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" onClick="{{ dlPdf }}" style="display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 14px;border:none;border-radius:11px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="background:#16323c"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>PDF</button>
+              <button type="button" onClick="{{ dlDocx }}" style="display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 14px;border-radius:11px;border:1px solid #c9dcd3;background:#ffffff;color:#0a1c24;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer"><span data-icon="file-type-2|file" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>DOCX</button>
+              <button type="button" onClick="{{ send }}" style="display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 14px;border-radius:11px;border:1px solid #c9dcd3;background:#ffffff;color:#0a1c24;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer"><span data-icon="send" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Envoyer à {{ personFirst }}</button>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+            <div data-reveal="up" data-delay="80" style="flex:2 1 520px;min-width:0;padding:22px;border-radius:22px;background:#e9eef0">
+              <div dir="{{ doc.dir }}" style="position:relative;max-width:700px;margin:0 auto;background:#ffffff;border-radius:6px;box-shadow:0 30px 60px -30px rgba(10,28,36,.4),0 0 0 1px #e2e8eb;padding:44px 48px 30px;min-height:640px;display:flex;flex-direction:column;color:#1d2a30;font-family:{{ doc.font }}">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#06141a,#0e6f84);color:#ffffff;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:16px;letter-spacing:-.02em;flex-shrink:0">TY</span>
+                  <div style="flex:1;min-width:0"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px;color:#0a1c24">Tython SARL</div><div style="font-family:'Geist',system-ui,sans-serif;font-size:11.5px;color:#5f7079">112 boulevard d'Anfa, 20040 Casablanca · +212 5 22 00 00 00</div></div>
+                </div>
+                <div style="font-family:'Geist Mono',monospace;font-size:10px;color:#7d8f97;margin-top:10px;direction:ltr;text-align:{{ doc.align }}">RC 345 678 · ICE 001 234 567 000 089 · CNSS 1 234 567</div>
+                <div style="height:2px;background:linear-gradient(90deg,#0e6f84,#16b6c8);margin-top:14px"></div>
+                <div style="margin:34px 0 26px;text-align:center;font-family:{{ doc.titleFont }};font-weight:700;font-size:20px;letter-spacing:{{ doc.spacing }};color:#0a1c24">{{ doc.title }}</div>
+                <sc-if value="{{ notEditing }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;gap:14px">
+                    <sc-for list="{{ doc.paras }}" as="p" hint-placeholder-count="2"><p data-reveal="fade" data-delay="{{ p.delay }}" style="margin:0;font-size:14.5px;line-height:1.85;text-align:justify;white-space:pre-wrap">{{ p.t }}</p></sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+                  <textarea value="{{ body }}" onChange="{{ onBody }}" dir="{{ doc.dir }}" style="width:100%;min-height:300px;resize:vertical;padding:12px;border-radius:8px;border:1.5px dashed #9fd6df;background:#f8fdfd;font-family:inherit;font-size:14.5px;line-height:1.8;color:#1d2a30;outline:none"></textarea>
+                </sc-if>
+                <div style="margin-top:28px;font-size:14px;text-align:{{ doc.endAlign }}">{{ doc.place }}</div>
+                <div style="display:flex;justify-content:flex-end;margin-top:22px">
+                  <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:220px">
+                    <span style="font-family:'Geist',system-ui,sans-serif;font-size:12.5px;font-weight:600;color:#33474f">{{ doc.sign }}</span>
+                    <span style="font-family:'Brush Script MT','Segoe Script',cursive;font-size:26px;color:#0b3f52;transform:rotate(-4deg)">S. Idrissi</span>
+                    <span data-reveal="pill" data-delay="500" style="position:absolute;right:-6px;top:6px;width:88px;height:88px;border-radius:50%;border:2.5px solid rgba(14,111,132,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;color:rgba(14,111,132,.75);font-family:'Geist Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.08em;line-height:1.35;transform:rotate(-14deg);direction:ltr"><span>TYTHON</span><span style="font-size:7px">SARL</span><span>CASABLANCA</span></span>
+                  </div>
+                </div>
+                <div style="flex:1"></div>
+                <div style="margin-top:34px;padding-top:12px;border-top:1px solid #eef2f4;display:flex;justify-content:space-between;gap:10px;font-family:'Geist Mono',monospace;font-size:9.5px;color:#8a9ba3;direction:ltr"><span>Généré par Wedy · {{ doc.code }}</span><span>Vérification : wedy.ma/v/{{ doc.code }}</span></div>
+              </div>
+            </div>
+            <div data-reveal="left" data-delay="120" style="flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:12px">
+              <div style="padding:18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb;display:flex;flex-direction:column;gap:10px;font-size:13.5px">
+                <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#5f7079">Collaborateur</span><span style="font-weight:600;text-align:right">{{ sum.name }}</span></div>
+                <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#5f7079">Modèle</span><span style="font-weight:600;text-align:right">{{ sum.tpl }}</span></div>
+                <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#5f7079">Langue</span><span style="font-family:'Geist Mono',monospace;font-weight:600">{{ doc.langCode }}</span></div>
+                <div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><span style="color:#5f7079">Rédaction</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;background:{{ doc.byBg }};color:{{ doc.byColor }}">{{ doc.by }}</span></div>
+                <div style="display:flex;align-items:center;gap:7px;padding-top:10px;border-top:1px solid #eef2f4;font-size:12.5px;color:#0f6f49"><span data-icon="history" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Ajouté à l'historique du dossier</div>
+              </div>
+              <button type="button" onClick="{{ toggleEdit }}" style="display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;color:#0a1c24;cursor:pointer" style-hover="border-color:#16b6c8;color:#0e6f84"><span data-icon="{{ editIcon }}" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>{{ editLabel }}</button>
+              <sc-if value="{{ modified }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:600;color:#8a5207"><span data-icon="pencil" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Modifié manuellement</span></sc-if>
+              <button type="button" onClick="{{ restart }}" style="display:flex;align-items:center;justify-content:center;gap:7px;height:42px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer"><span data-icon="plus" data-size="15" data-sw="2.2" style="display:inline-flex;width:15px;height:15px"></span>Nouveau document</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const PEOPLE = [
+  { id: 'yb', name: 'Yasmine Benali', kind: 'employee', f: 1, position: 'Responsable Marketing', department: 'Marketing', cin: 'BK284913', hire_date: '15/03/2022', contract_type: 'CDD', contract_start: '13/11/2025', contract_end: '12/11/2026', salary: '18 500 MAD', address: '27 rue Ibnou Mounir, Maârif, Casablanca', manager: 'Karim Lahlou' },
+  { id: 'oa', name: 'Omar Alaoui', kind: 'employee', f: 0, position: "Chef d'équipe logistique", department: 'Opérations', cin: 'BE512876', hire_date: '01/06/2019', contract_type: 'CDI', contract_start: '01/06/2019', contract_end: '', salary: '12 400 MAD', address: '14 rue Al Massira, Aïn Sebaâ, Casablanca', manager: 'Youssef Amrani' },
+  { id: 'kb', name: 'Karim Bennani', kind: 'employee', f: 0, position: 'Développeur senior', department: 'Tech', cin: 'BJ330041', hire_date: '09/01/2023', contract_type: 'CDD', contract_start: '20/11/2025', contract_end: '19/11/2026', salary: '21 000 MAD', address: '8 avenue Hassan II, Rabat', manager: 'Driss Lahlou' },
+  { id: 'nb', name: 'Nadia Berrada', kind: 'employee', f: 1, position: 'Comptable', department: 'Finance', cin: 'BH778120', hire_date: '14/09/2020', contract_type: 'CDI', contract_start: '14/09/2020', contract_end: '', salary: '14 200 MAD', address: '', manager: 'Fatima Zahra Alami' },
+  { id: 'mr', name: 'Mehdi Rami', kind: 'employee', f: 0, position: 'Commercial', department: 'Commercial', cin: 'BK901233', hire_date: '01/10/2026', contract_type: 'CDI', contract_start: '01/10/2026', contract_end: '', salary: '9 500 MAD', address: '', manager: 'Adil Mernissi' },
+  { id: 'se', name: 'Sara El Fassi', kind: 'employee', f: 1, position: 'Chargée RH', department: 'RH', cin: 'BE220987', hire_date: '19/04/2021', contract_type: 'CDI', contract_start: '19/04/2021', contract_end: '', salary: '11 500 MAD', address: '3 rue Moulay Youssef, Casablanca', manager: 'Salma Idrissi' },
+  { id: 'ht', name: 'Hind Tazi', kind: 'employee', f: 1, position: 'Chargée de clientèle', department: 'Service client', cin: 'BL114562', hire_date: '01/02/2024', contract_type: 'CDD', contract_start: '28/11/2025', contract_end: '27/11/2026', salary: '7 800 MAD', address: '5 rue de Fès, Hay Hassani, Casablanca', manager: 'Hajar Benjelloun' },
+  { id: 'lc', name: 'Lina Chraibi', kind: 'intern', f: 1, position: 'Stagiaire marketing', department: 'Marketing', cin: 'BK662109', hire_date: '01/09/2026', contract_type: 'Stage', contract_start: '01/09/2026', contract_end: '28/02/2027', salary: '3 000 MAD', address: '', manager: 'Karim Lahlou' },
+  { id: 'ao', name: 'Amine Ouali', kind: 'intern', f: 0, position: 'Stagiaire développement', department: 'Tech', cin: 'BJ551203', hire_date: '15/09/2026', contract_type: 'Stage', contract_start: '15/09/2026', contract_end: '15/03/2027', salary: '3 000 MAD', address: '', manager: 'Driss Lahlou' },
+];
+const CAT = { attestation: ['Attestation', '#e1f5ec', '#0f6f49'], contrat: ['Contrat', '#e4f2f4', '#0b5f72'], lettre: ['Lettre', '#fbefda', '#8a5207'], avenant: ['Avenant', '#ece9fb', '#5444b8'] };
+const TPL = [
+  { id: 'att', fr: 'Attestation de travail', en: 'Work certificate', cat: 'attestation', target: 'employee', langs: ['fr', 'ar', 'en'], vars: ['full_name', 'cin', 'position', 'hire_date', 'contract_type', 'today'] },
+  { id: 'sal', fr: 'Attestation de salaire', en: 'Salary certificate', cat: 'attestation', target: 'employee', langs: ['fr', 'ar', 'en'], vars: ['full_name', 'cin', 'position', 'hire_date', 'salary', 'today'] },
+  { id: 'cdd', fr: 'Contrat à durée déterminée', en: 'Fixed-term contract', cat: 'contrat', target: 'employee', langs: ['fr'], vars: ['full_name', 'cin', 'address', 'position', 'contract_start', 'contract_end', 'salary', 'today'] },
+  { id: 'ave', fr: 'Avenant de renouvellement', en: 'Contract renewal amendment', cat: 'avenant', target: 'employee', langs: ['fr', 'en'], vars: ['full_name', 'position', 'contract_end', 'new_end', 'today'] },
+  { id: 'emb', fr: "Lettre d'embauche", en: 'Offer letter', cat: 'lettre', target: 'employee', langs: ['fr'], vars: ['full_name', 'position', 'hire_date', 'salary', 'manager', 'today'] },
+  { id: 'stg', fr: 'Attestation de stage', en: 'Internship certificate', cat: 'attestation', target: 'intern', langs: ['fr', 'en'], vars: ['full_name', 'cin', 'department', 'contract_start', 'contract_end', 'today'] },
+];
+const BODY = {
+  att: {
+    fr: "Nous soussignés, Tython SARL, sise au 112 boulevard d'Anfa à Casablanca, attestons que {{civ}} {{full_name}}, titulaire de la CIN n° {{cin}}, est {{employed}} au sein de notre société en qualité de {{position}} depuis le {{hire_date}}, dans le cadre d'un contrat {{contract_type}}.\n\nCette attestation est délivrée à l'intéressé{{e}}, sur sa demande, pour servir et valoir ce que de droit.",
+    ar: "نشهد نحن الموقعين أسفله، شركة أطلس ديجيتال ش.م.م، الكائن مقرها بـ 112 شارع أنفا بالدار البيضاء، أن {{civ_ar}} {{full_name}}، الحامل{{t_ar}} للبطاقة الوطنية رقم {{cin}}، {{works_ar}} لدى شركتنا بصفة {{position}} منذ {{hire_date}}.\n\nسلمت هذه الشهادة للمعني{{t_ar}} بالأمر بناءً على طلب{{h_ar}} للإدلاء بها عند الحاجة.",
+    en: "We, the undersigned, Tython SARL, located at 112 Boulevard d'Anfa, Casablanca, hereby certify that {{civ_en}} {{full_name}}, holder of national ID card no. {{cin}}, has been employed by our company as {{position}} since {{hire_date}} under a {{contract_type}} contract.\n\nThis certificate is issued at the employee's request for all legal purposes.",
+  },
+  sal: {
+    fr: "Nous soussignés, Tython SARL, sise au 112 boulevard d'Anfa à Casablanca, attestons que {{civ}} {{full_name}}, titulaire de la CIN n° {{cin}}, occupe le poste de {{position}} depuis le {{hire_date}} et perçoit un salaire brut mensuel de {{salary}}.\n\nCette attestation est délivrée à l'intéressé{{e}}, sur sa demande, pour servir et valoir ce que de droit.",
+    ar: "نشهد نحن الموقعين أسفله، شركة أطلس ديجيتال ش.م.م، أن {{civ_ar}} {{full_name}}، الحامل{{t_ar}} للبطاقة الوطنية رقم {{cin}}، {{works_ar}} لدى شركتنا بصفة {{position}} منذ {{hire_date}}، و{{gets_ar}} أجرًا شهريًا إجماليًا قدره {{salary}}.\n\nسلمت هذه الشهادة للمعني{{t_ar}} بالأمر بناءً على طلب{{h_ar}} للإدلاء بها عند الحاجة.",
+    en: "We, the undersigned, Tython SARL, hereby certify that {{civ_en}} {{full_name}}, holder of national ID card no. {{cin}}, has held the position of {{position}} since {{hire_date}} and receives a gross monthly salary of {{salary}}.\n\nThis certificate is issued at the employee's request for all legal purposes.",
+  },
+  cdd: { fr: "Entre les soussignés : Tython SARL, sise au 112 boulevard d'Anfa à Casablanca, ci-après « l'Employeur », et {{civ}} {{full_name}}, titulaire de la CIN n° {{cin}}, demeurant {{address}}, ci-après « le Salarié », il a été convenu ce qui suit.\n\nArticle 1 — Le Salarié est engagé en qualité de {{position}}, pour une durée déterminée allant du {{contract_start}} au {{contract_end}}, conformément à l'article 16 du Code du travail.\n\nArticle 2 — En contrepartie, le Salarié percevra un salaire brut mensuel de {{salary}}, soumis aux cotisations sociales et fiscales en vigueur." },
+  ave: {
+    fr: "Le présent avenant modifie le contrat de travail conclu entre Tython SARL et {{civ}} {{full_name}}, {{position}}, dont le terme était fixé au {{contract_end}}.\n\nD'un commun accord, les parties conviennent de renouveler ce contrat jusqu'au {{new_end}}. Toutes les autres clauses du contrat initial demeurent inchangées.",
+    en: "This amendment modifies the employment contract between Tython SARL and {{civ_en}} {{full_name}}, {{position}}, which was due to end on {{contract_end}}.\n\nBy mutual agreement, the parties renew the contract until {{new_end}}. All other terms of the original contract remain unchanged.",
+  },
+  emb: { fr: "{{civ}} {{full_name}},\n\nNous avons le plaisir de vous confirmer votre engagement au sein de Tython SARL en qualité de {{position}}, à compter du {{hire_date}}, pour une rémunération brute mensuelle de {{salary}}.\n\nVous serez rattaché{{e}} à {{manager}}, qui vous accompagnera dans votre prise de poste. Bienvenue dans l'équipe !" },
+  stg: {
+    fr: "Nous soussignés, Tython SARL, attestons que {{civ}} {{full_name}}, titulaire de la CIN n° {{cin}}, effectue un stage au sein de notre département {{department}} du {{contract_start}} au {{contract_end}}.\n\nCette attestation est délivrée à l'intéressé{{e}} pour servir et valoir ce que de droit.",
+    en: "We, the undersigned, Tython SARL, hereby certify that {{civ_en}} {{full_name}}, holder of national ID card no. {{cin}}, is completing an internship in our {{department}} department from {{contract_start}} to {{contract_end}}.\n\nThis certificate is issued for all legal purposes.",
+  },
+};
+const TITLE = {
+  att: { fr: 'ATTESTATION DE TRAVAIL', ar: 'شهادة العمل', en: 'WORK CERTIFICATE' }, sal: { fr: 'ATTESTATION DE SALAIRE', ar: 'شهادة الأجر', en: 'SALARY CERTIFICATE' },
+  cdd: { fr: 'CONTRAT DE TRAVAIL À DURÉE DÉTERMINÉE', ar: 'عقد عمل محدد المدة', en: 'FIXED-TERM EMPLOYMENT CONTRACT' }, ave: { fr: 'AVENANT AU CONTRAT DE TRAVAIL', ar: 'ملحق عقد العمل', en: 'EMPLOYMENT CONTRACT AMENDMENT' },
+  emb: { fr: "LETTRE D'EMBAUCHE", ar: 'رسالة التوظيف', en: 'OFFER LETTER' }, stg: { fr: 'ATTESTATION DE STAGE', ar: 'شهادة التدريب', en: 'INTERNSHIP CERTIFICATE' },
+};
+const VL = { full_name: 'Nom complet', cin: 'CIN', position: 'Poste', department: 'Département', hire_date: "Date d'embauche", contract_type: 'Type de contrat', contract_start: 'Début du contrat', contract_end: 'Fin du contrat', salary: 'Salaire brut mensuel', address: 'Adresse', manager: 'Manager', today: 'Date du jour', new_end: 'Nouvelle date de fin' };
+const LN = { fr: ['Français', 'français', 'FR'], ar: ['العربية', 'arabe', 'AR'], en: ['English', 'anglais', 'EN'] };
+const PLACE = { fr: 'Fait à Casablanca, le {{today}}', ar: 'حرر بالدار البيضاء في {{today}}', en: 'Done in Casablanca, on {{today}}' };
+const SIGN = { fr: 'La Direction des Ressources Humaines', ar: 'مديرية الموارد البشرية', en: 'Human Resources Department' };
+const avOf = n => AV[(n.charCodeAt(0) + n.length) % AV.length];
+const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+const derived = p => p.f ? { civ: 'Mme', employed: 'employée', e: 'e', civ_ar: 'السيدة', t_ar: 'ة', works_ar: 'تعمل', h_ar: 'ها', gets_ar: 'تتقاضى', civ_en: 'Ms.' } : { civ: 'M.', employed: 'employé', e: '', civ_ar: 'السيد', t_ar: '', works_ar: 'يعمل', h_ar: 'ه', gets_ar: 'يتقاضى', civ_en: 'Mr.' };
+const fill = (txt, vals, p) => { const d = derived(p); return txt.replace(/\{\{(\w+)\}\}/g, (_, k) => (vals[k] || '').trim() || d[k] || (k in d ? '' : '[à compléter]')); };
+const ask = async q => { const c = window.claude; if (!c || !c.complete) throw new Error('no claude'); try { return await c.complete({ messages: [{ role: 'user', content: q }], max_tokens: 700 }); } catch (e) { return await c.complete(q); } };
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+class Component extends DCLogic {
+  state = { step: 0, kind: 'employee', q: '', person: null, cat: 'all', tpl: null, vals: {}, lang: 'fr', ai: true, busy: false, body: '', docLang: 'fr', byAi: false, code: '', editing: false, modified: false, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 3000); }
+  toVars(tid, pid) {
+    const t = TPL.find(x => x.id === tid), p = PEOPLE.find(x => x.id === pid);
+    return Object.fromEntries(t.vars.map(v => [v, v === 'today' ? '01/11/2026' : v === 'full_name' ? p.name : (p[v] || '')]));
+  }
+  async generate() {
+    const s = this.state, t = TPL.find(x => x.id === s.tpl), p = PEOPLE.find(x => x.id === s.person);
+    if (!t || !p || s.busy) return;
+    this.setState({ busy: true });
+    const t0 = Date.now();
+    let body = '', lang = s.lang, byAi = false, note = '';
+    if (s.ai) {
+      const src = BODY[t.id][lang] || BODY[t.id].fr;
+      const info = t.vars.map(v => `${VL[v]} : ${(s.vals[v] || '').trim() || '[à compléter]'}`).join('\n');
+      const prompt = `Tu es Wedy, l'assistant RH de Tython SARL (Casablanca, Maroc). Rédige le corps du document « ${t.fr} » en ${LN[lang][1]}, dans un style administratif marocain clair et formel.
+Informations :
+${info}
+Collaborateur : ${p.f ? 'une femme' : 'un homme'}.
+Modèle de référence : """${fill(src, s.vals, p)}"""
+Contraintes : texte brut uniquement, 2 ou 3 paragraphes séparés par une ligne vide, sans titre, sans formule « Fait à », sans signature, sans Markdown. 130 mots maximum.`;
+      try { body = String(await ask(prompt) || '').replace(/\*\*/g, '').replace(/^#+\s.*$/gm, '').trim(); byAi = !!body; } catch (_) { body = ''; }
+    }
+    if (!body) {
+      if (BODY[t.id][lang]) body = fill(BODY[t.id][lang], s.vals, p);
+      else { body = fill(BODY[t.id].fr, s.vals, p); lang = 'fr'; note = 'Rédaction IA indisponible : document généré en français.'; }
+    }
+    const left = 1100 - (Date.now() - t0); if (left > 0) await wait(left);
+    if (!this._a) return;
+    const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+    this.setState({ busy: false, step: 3, body, docLang: lang, byAi, code, editing: false, modified: false });
+    this.toast(note || `${t.fr} pour ${p.name} généré${byAi ? ' par Wedy' : ''}`);
+  }
+  renderVals() {
+    const s = this.state, q = s.q.trim().toLowerCase();
+    const p = PEOPLE.find(x => x.id === s.person), t = TPL.find(x => x.id === s.tpl);
+    const avail = t ? TPL.filter(x => x.target === (p ? p.kind : s.kind)) : TPL.filter(x => x.target === s.kind);
+    const tlist = TPL.filter(x => x.target === (p ? p.kind : s.kind) && (s.cat === 'all' || x.cat === s.cat));
+    const vars = t ? t.vars.map((v, i) => { const val = s.vals[v] || '', miss = !val.trim(); const auto = !miss && p && (v === 'today' || v === 'full_name' || (p[v] || '') === val); return { code: `{{${v}}}`, label: VL[v], value: val, auto: !!auto, missing: miss, delay: String(i * 40), bg: miss ? '#fffaf1' : '#ffffff', border: miss ? 'rgba(230,169,72,.45)' : '#eef2f4', inBorder: miss ? 'rgba(230,169,72,.7)' : '#d6dfe3', set: e => { const x = e.target.value; this.setState(st => ({ vals: { ...st.vals, [v]: x } })); } }; }) : [];
+    const miss = vars.filter(v => v.missing).length;
+    const dl = s.docLang, paras = (s.body || '').split(/\n\s*\n/).map(x => x.trim()).filter(Boolean);
+    return {
+      rootRef: this.rootRef, progF: String(s.step / 3),
+      steps: ['Employé', 'Modèle', 'Variables', 'Résultat'].map((label, i) => { const reach = i === 0 || (i === 1 && p) || (i === 2 && p && t) || (i === 3 && s.body); return { label, n: String(i + 1), done: i < s.step, current: i === s.step, todo: i > s.step, color: i <= s.step ? '#0a1c24' : '#7d8f97', locked: !reach || s.busy, cursor: reach ? 'pointer' : 'default', go: () => { if (reach && !s.busy) this.setState({ step: i, editing: false }); } }; }),
+      s0: s.step === 0, s1: s.step === 1, s2: s.step === 2, s3: s.step === 3,
+      kinds: [['employee', 'Employé', 'users'], ['intern', 'Stagiaire', 'graduation-cap']].map(([k, label, icon]) => ({ label, icon, on: s.kind === k, color: s.kind === k ? '#0a1c24' : '#52646d', go: () => this.setState({ kind: k, person: p && p.kind === k ? s.person : null, tpl: null }) })),
+      q: s.q, onQ: e => this.setState({ q: e.target.value }),
+      people: PEOPLE.filter(x => x.kind === s.kind && (!q || `${x.name} ${x.position}`.toLowerCase().includes(q))).map((x, i) => { const on = x.id === s.person; return { name: x.name, sub: `${x.position} · ${x.contract_type}`, ini: ini(x.name), av: avOf(x.name), on, delay: String(i * 40), border: on ? '#16b6c8' : '#e2e8eb', bg: on ? '#f3fafb' : '#ffffff', shadow: on ? '0 0 0 3px rgba(22,182,200,.16)' : 'none', pick: () => this.setState({ person: x.id, tpl: s.tpl && TPL.find(y => y.id === s.tpl).target === x.kind ? s.tpl : null }) }; }),
+      no0: !p, op0: p ? '1' : '.45', next0: () => { if (p) this.setState({ step: 1 }); },
+      personFirst: p ? p.name.split(' ')[0] : '', tplCount: avail.length,
+      cats: [['all', 'Tous'], ...Object.keys(CAT).map(k => [k, CAT[k][0]])].map(([k, label]) => ({ label, go: () => this.setState({ cat: k }), bg: s.cat === k ? '#0a1c24' : '#ffffff', color: s.cat === k ? '#ffffff' : '#33474f', border: s.cat === k ? '#0a1c24' : '#e2e8eb' })),
+      tpls: tlist.map((x, i) => { const on = x.id === s.tpl; return { fr: x.fr, en: x.en, cat: CAT[x.cat][0], tint: CAT[x.cat][1], color: CAT[x.cat][2], langs: x.langs.map(l => ({ t: l.toUpperCase() })), nvars: x.vars.length, on, delay: String(i * 50), border: on ? '#16b6c8' : '#e2e8eb', bg: on ? '#f3fafb' : '#ffffff', shadow: on ? '0 0 0 3px rgba(22,182,200,.16)' : 'none', pick: () => this.setState({ tpl: x.id }) }; }),
+      back: () => this.setState({ step: Math.max(0, s.step - 1) }),
+      no1: !t, op1: t ? '1' : '.45', next1: () => { if (!t || !p) return; this.setState({ step: 2, vals: this.toVars(t.id, p.id), lang: t.langs.includes(s.lang) || s.ai ? s.lang : 'fr' }); },
+      sum: { name: p ? p.name : '', ini: p ? ini(p.name) : '', av: p ? avOf(p.name) : AV[0], tpl: t ? t.fr : '' },
+      vars, nVars: vars.length, missLabel: miss ? `${miss} à compléter` : 'Tout est rempli', missColor: miss ? '#8a5207' : '#0f6f49',
+      langs: Object.keys(LN).map(k => { const ok = !t || t.langs.includes(k) || s.ai, on = s.lang === k; return { label: LN[k][0], off: !ok, op: ok ? '1' : '.4', title: ok ? '' : 'Activez la rédaction IA pour traduire ce modèle', font: k === 'ar' ? "'Noto Kufi Arabic',sans-serif" : 'inherit', bg: on ? '#0a1c24' : '#ffffff', color: on ? '#ffffff' : '#33474f', border: on ? '#0a1c24' : '#d6dfe3', go: () => { if (ok) this.setState({ lang: k }); } }; }),
+      toggleAi: () => this.setState(x => { const ai = !x.ai; const tt = TPL.find(y => y.id === x.tpl); return { ai, lang: !ai && tt && !tt.langs.includes(x.lang) ? 'fr' : x.lang }; }),
+      aiBg: s.ai ? '#f4f2fd' : '#ffffff', aiBorder: s.ai ? 'rgba(109,90,214,.35)' : '#e2e8eb', aiTrack: s.ai ? '#6d5ad6' : '#c3ced3', aiKnob: s.ai ? '19px' : '3px',
+      busy: s.busy, generate: () => this.generate(),
+      doc: { dir: dl === 'ar' ? 'rtl' : 'ltr', font: dl === 'ar' ? "'Noto Kufi Arabic',sans-serif" : "Georgia,'Times New Roman',serif", titleFont: dl === 'ar' ? "'Noto Kufi Arabic',sans-serif" : "'Bricolage Grotesque',system-ui,sans-serif", spacing: dl === 'ar' ? '0' : '.12em',
+        title: t ? (TITLE[t.id][dl] || t.fr.toUpperCase()) : '', paras: paras.map((x, i) => ({ t: x, delay: String(i * 160) })), place: PLACE[dl].replace('{{today}}', (s.vals.today || '01/11/2026')), sign: SIGN[dl],
+        align: dl === 'ar' ? 'right' : 'left', endAlign: dl === 'ar' ? 'left' : 'right', code: s.code || 'W8F3K2', langCode: LN[dl][2], by: s.byAi ? 'Wedy IA' : 'Modèle', byBg: s.byAi ? '#ece9fb' : '#eef2f4', byColor: s.byAi ? '#5444b8' : '#33474f' },
+      doneSub: t && p ? `${t.fr} · ${p.name} · ${LN[dl][0]}` : '',
+      body: s.body, onBody: e => this.setState({ body: e.target.value, modified: true }),
+      editing: s.editing, notEditing: !s.editing, modified: s.modified,
+      editLabel: s.editing ? "Terminer l'édition" : 'Modifier le texte', editIcon: s.editing ? 'check' : 'pencil',
+      toggleEdit: () => this.setState(x => ({ editing: !x.editing })),
+      dlPdf: () => this.toast('PDF téléchargé'), dlDocx: () => this.toast('DOCX téléchargé'),
+      send: () => this.toast(p ? `Document envoyé à ${p.name} par email` : 'Document envoyé'),
+      restart: () => this.setState({ step: 0, tpl: null, body: '', vals: {}, editing: false, modified: false }),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Paramètres — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="settings" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Espace de travail" title="Paramètres" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 110px;display:flex;flex-direction:column;gap:20px;max-width:1200px;width:100%">
+      <div>
+        <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Paramètres</h1>
+        <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Les informations de votre entreprise et les règles appliquées partout dans Wedy.</p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+        <nav data-reveal="up" data-delay="100" style="flex:0 1 230px;min-width:200px;position:sticky;top:90px;display:flex;flex-direction:column;gap:3px;padding:8px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5"><button type="button" onClick="{{ t.go }}" style="position:relative;display:flex;align-items:center;gap:10px;height:42px;padding:0 12px;border:none;border-radius:11px;background:{{ t.bg }};font-family:inherit;font-size:13.5px;font-weight:600;color:{{ t.color }};cursor:pointer;text-align:left" style-hover="background:#f3f6f7"><span data-icon="{{ t.icon }}" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>{{ t.label }}</button></sc-for>
+        </nav>
+
+        <div style="flex:1 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <sc-if value="{{ tCompany }}" hint-placeholder-val="{{ true }}">
+            <div data-reveal="up" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+              <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid #eef2f4">
+                <span style="width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#06141a,#0e6f84);color:#ffffff;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:24px">TY</span>
+                <div style="flex:1;min-width:200px"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px">{{ c.name }}</div><div style="font-size:13px;color:#52646d">Logo utilisé sur tous les documents générés</div></div>
+                <button type="button" onClick="{{ changeLogo }}" style="display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 13px;border-radius:10px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13px;font-weight:600;color:#33474f;cursor:pointer"><span data-icon="upload" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Changer le logo</button>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px;margin-top:18px">
+                <sc-for list="{{ companyFields }}" as="f" hint-placeholder-count="10"><label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">{{ f.label }}<input value="{{ f.value }}" onChange="{{ f.set }}" style="height:42px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:{{ f.font }};font-size:14px;font-weight:400;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></label></sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ tPrefs }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="up" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;display:flex;flex-direction:column;gap:18px">
+              <div><div style="font-size:13px;font-weight:700;color:#33474f">Langue par défaut de l'interface</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px;max-width:460px"><sc-for list="{{ langs }}" as="l" hint-placeholder-count="3"><button type="button" onClick="{{ l.go }}" style="height:46px;border-radius:12px;border:1px solid {{ l.border }};background:{{ l.bg }};color:{{ l.color }};font-family:{{ l.font }};font-size:14px;font-weight:600;cursor:pointer">{{ l.label }}</button></sc-for></div></div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Fuseau horaire<select value="{{ p.tz }}" onChange="{{ setTz }}" style="height:42px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;font-weight:400;outline:none"><option value="Africa/Casablanca">Africa/Casablanca (GMT+1)</option><option value="Europe/Paris">Europe/Paris</option><option value="UTC">UTC</option></select></label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Format de date<select value="{{ p.date }}" onChange="{{ setDate }}" style="height:42px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;font-weight:400;outline:none"><option value="dmy">JJ/MM/AAAA · 01/11/2026</option><option value="iso">AAAA-MM-JJ · 2026-11-01</option></select></label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Devise<select value="{{ p.cur }}" onChange="{{ setCur }}" style="height:42px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;font-weight:400;outline:none"><option value="MAD">MAD · Dirham marocain</option><option value="EUR">EUR · Euro</option></select></label>
+              </div>
+              <div><div style="font-size:13px;font-weight:700;color:#33474f">Semaine de travail</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"><sc-for list="{{ days }}" as="d" hint-placeholder-count="7"><button type="button" onClick="{{ d.toggle }}" style="width:48px;height:44px;border-radius:11px;border:1px solid {{ d.border }};background:{{ d.bg }};color:{{ d.color }};font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ d.t }}</button></sc-for></div><div style="font-size:12.5px;color:#5f7079;margin-top:8px">{{ weekNote }}</div></div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ tLeave }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="up" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+              <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Règles d'acquisition</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px;margin-top:14px">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Jours acquis par mois<input type="number" step="0.5" value="{{ l.monthly }}" onChange="{{ setMonthly }}" style="height:42px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;outline:none"></label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Bonus par 5 ans d'ancienneté<input type="number" step="0.5" value="{{ l.bonus }}" onChange="{{ setBonus }}" style="height:42px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;outline:none"></label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Plafond annuel (jours)<input type="number" value="{{ l.cap }}" onChange="{{ setCap }}" style="height:42px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;outline:none"></label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Circuit de validation<select value="{{ l.flow }}" onChange="{{ setFlow }}" style="height:42px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;font-weight:400;outline:none"><option value="mgr-rh">Manager puis RH</option><option value="rh">RH uniquement</option><option value="mgr">Manager uniquement</option></select></label>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:12px 14px;border-radius:12px;background:#e1f5ec;color:#0f5a3c;font-size:13px;line-height:1.5"><span data-icon="scale" data-size="16" style="display:inline-flex;width:16px;height:16px;flex-shrink:0;margin-top:1px"></span>Valeurs par défaut conformes au Code du travail : 1,5 jour ouvrable par mois de service, +1,5 jour par période de 5 ans, dans la limite de 30 jours.</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:22px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Jours fériés 2026</span><span style="font-size:12.5px;color:#5f7079">{{ holCount }}</span></div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:6px;margin-top:10px">
+                <sc-for list="{{ hols }}" as="h" hint-placeholder-count="8"><button type="button" onClick="{{ h.toggle }}" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px;border:1px solid #eef2f4;background:{{ h.bg }};font-family:inherit;text-align:left;cursor:pointer;opacity:{{ h.op }}"><span style="width:58px;font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:600;color:{{ h.dateColor }}">{{ h.d }}</span><span style="flex:1;font-size:13px;color:#1d3540">{{ h.name }}</span><span style="position:relative;width:32px;height:18px;border-radius:99px;background:{{ h.track }};flex-shrink:0;transition:background .2s"><span style="position:absolute;top:2px;left:{{ h.knob }};width:14px;height:14px;border-radius:50%;background:#ffffff;transition:left .2s"></span></span></button></sc-for>
+              </div>
+              <div style="font-size:12px;color:#7d8f97;margin-top:10px">≈ Fêtes religieuses : dates lunaires ajustées automatiquement chaque année.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ tDocs }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="up" style="padding:22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;display:flex;flex-direction:column;gap:18px">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Préfixe de numérotation<input value="{{ d.prefix }}" onChange="{{ setPrefix }}" style="height:42px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:'Geist Mono',monospace;font-size:14px;font-weight:400;outline:none" style-focus="border-color:#16b6c8"><span style="font-size:12px;font-weight:400;color:#5f7079">Prochain document : <strong style="font-family:'Geist Mono',monospace;color:#0b5f72">{{ nextNo }}</strong></span></label>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Langue par défaut des documents<select value="{{ d.lang }}" onChange="{{ setDocLang }}" style="height:42px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;font-weight:400;outline:none"><option value="fr">Français</option><option value="ar">العربية</option><option value="en">English</option></select></label>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px">
+                <button type="button" onClick="{{ upSign }}" style="height:120px;border-radius:14px;border:1.5px dashed #b9dfe5;background:#f8fdfd;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#0b5f72"><span style="font-family:'Brush Script MT','Segoe Script',cursive;font-size:26px;color:#0b3f52">S. Idrissi</span><span style="font-size:12.5px;font-weight:600">Signature · remplacer</span></button>
+                <button type="button" onClick="{{ upStamp }}" style="height:120px;border-radius:14px;border:1.5px dashed #b9dfe5;background:#f8fdfd;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#0b5f72"><span style="width:56px;height:56px;border-radius:50%;border:2px solid rgba(14,111,132,.6);display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:7.5px;font-weight:700;line-height:1.3;text-align:center;transform:rotate(-12deg)">TYTHON<br>SARL</span><span style="font-size:12.5px;font-weight:600">Cachet · remplacer</span></button>
+              </div>
+              <button type="button" onClick="{{ toggleQr }}" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer"><span data-icon="qr-code" data-size="20" style="display:inline-flex;width:20px;height:20px;color:#0e6f84"></span><span style="flex:1"><span style="display:block;font-size:14px;font-weight:600;color:#0a1c24">Code de vérification en pied de page</span><span style="display:block;font-size:12.5px;color:#52646d;margin-top:2px">Les destinataires (banques, consulats…) vérifient l'authenticité du document en ligne.</span></span><span style="position:relative;width:40px;height:24px;border-radius:99px;background:{{ qrTrack }};flex-shrink:0;transition:background .2s"><span style="position:absolute;top:3px;left:{{ qrKnob }};width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.3);transition:left .25s"></span></span></button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ tBilling }}" hint-placeholder-val="{{ false }}">
+            <div data-reveal="up" style="position:relative;overflow:hidden;padding:22px;border-radius:20px;background:#06141a;color:#e8eff1">
+              <div aria-hidden="true" data-loop="drift" style="position:absolute;right:-80px;top:-120px;width:340px;height:340px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.45),transparent);pointer-events:none"></div>
+              <div style="position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap"><div><div style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#5fe3f0">VOTRE FORMULE</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:28px;letter-spacing:-.03em;margin-top:6px">Enterprise</div><div style="font-size:13.5px;color:#9fb4bb;margin-top:4px">Contrat annuel · renouvellement le 01/01/2027</div></div><button type="button" onClick="{{ contact }}" style="height:40px;padding:0 14px;border:none;border-radius:11px;background:#effbfc;color:#06141a;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer">Contacter mon conseiller</button></div>
+              <div style="position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:20px">
+                <sc-for list="{{ usage }}" as="u" hint-placeholder-count="3"><div style="padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)"><div style="font-size:12px;color:#9fb4bb">{{ u.label }}</div><div style="font-size:16px;font-weight:700;margin-top:4px">{{ u.value }}</div><div style="height:5px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:8px"><div data-reveal="growx" style="height:100%;width:{{ u.pct }}%;border-radius:99px;background:linear-gradient(90deg,#16b6c8,#9a8bf0);transform-origin:left"></div></div></div></sc-for>
+              </div>
+            </div>
+            <div data-reveal="up" data-delay="80" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+              <div style="padding:14px 20px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Factures</div>
+              <sc-for list="{{ invoices }}" as="i" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef2f4"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="receipt|file-text" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><div style="flex:1"><div style="font-size:14px;font-weight:600">{{ i.label }}</div><div style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7d8f97">{{ i.no }}</div></div><span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600">{{ i.amount }}</span><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#e1f5ec;color:#0f6f49">Payée</span><button type="button" onClick="{{ i.dl }}" aria-label="Télécharger" style="width:34px;height:34px;border:none;border-radius:9px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#eef3f5;color:#0a1c24"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button></div></sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+    <div data-reveal="up" style="position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:110;display:flex;align-items:center;gap:12px;padding:10px 10px 10px 18px;border-radius:16px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 32px)"><span style="width:8px;height:8px;border-radius:50%;background:#f0bd6a"></span><span style="white-space:nowrap">Modifications non enregistrées</span><button type="button" onClick="{{ cancel }}" style="height:36px;padding:0 13px;border:none;border-radius:10px;background:rgba(255,255,255,.1);color:#e8eff1;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Annuler</button><button type="button" onClick="{{ save }}" style="height:36px;padding:0 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Enregistrer</button></div>
+  </sc-if>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.2);color:#4fd3a0;flex-shrink:0"><span data-icon="check" data-size="15" data-sw="2.6" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TABS = [['company', 'Entreprise', 'building-2'], ['prefs', 'Préférences', 'sliders-horizontal|sliders'], ['leave', 'Congés et temps', 'calendar'], ['docs', 'Documents', 'file-text'], ['billing', 'Facturation', 'credit-card']];
+const CF = [['name', 'Raison sociale'], ['sector', "Secteur d'activité"], ['ice', 'ICE'], ['rc', 'Registre du commerce'], ['if', 'Identifiant fiscal'], ['cnss', 'N° CNSS employeur'], ['address', 'Adresse'], ['city', 'Ville'], ['phone', 'Téléphone'], ['email', 'Email RH']];
+const MONO = ['ice', 'rc', 'if', 'cnss', 'phone'];
+const HOLS = [['01/01', 'Nouvel An'], ['11/01', "Manifeste de l'Indépendance"], ['14/01', 'Nouvel An amazigh'], ['≈ 20/03', 'Aïd al-Fitr (2 jours)'], ['01/05', 'Fête du Travail'], ['≈ 27/05', 'Aïd al-Adha (2 jours)'], ['≈ 16/06', '1er Moharram'], ['30/07', 'Fête du Trône'], ['14/08', 'Allégeance Oued Ed-Dahab'], ['20/08', 'Révolution du Roi et du Peuple'], ['21/08', 'Fête de la Jeunesse'], ['≈ 25/08', 'Aïd al-Mawlid (2 jours)'], ['06/11', 'Marche Verte'], ['18/11', "Fête de l'Indépendance"]];
+const INIT = () => ({
+  c: { name: 'Tython SARL', sector: 'Agence digitale', ice: '001234567000089', rc: '345678 · Casablanca', if: '40123456', cnss: '1234567', address: "112 boulevard d'Anfa", city: 'Casablanca', phone: '+212 5 22 00 00 00', email: 'rh@tython.ma' },
+  p: { lang: 'fr', tz: 'Africa/Casablanca', date: 'dmy', cur: 'MAD', days: [1, 1, 1, 1, 1, 0, 0] },
+  l: { monthly: '1.5', bonus: '1.5', cap: '30', flow: 'mgr-rh', hols: HOLS.map(() => true) },
+  d: { prefix: 'ATT-2026-', lang: 'fr', qr: true },
+});
+
+class Component extends DCLogic {
+  state = { tab: 'company', ...INIT(), saved: INIT(), dirty: false, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  set(sec, k, v) { this.setState(s => ({ [sec]: { ...s[sec], [k]: v }, dirty: true })); }
+  renderVals() {
+    const s = this.state, ev = (sec, k) => e => this.set(sec, k, e.target.value);
+    const DN = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'], nDays = s.p.days.filter(Boolean).length;
+    return {
+      rootRef: this.rootRef,
+      tabs: TABS.map(([k, label, icon]) => ({ label, icon, bg: s.tab === k ? '#e4f2f4' : 'transparent', color: s.tab === k ? '#0b5f72' : '#33474f', go: () => this.setState({ tab: k }) })),
+      tCompany: s.tab === 'company', tPrefs: s.tab === 'prefs', tLeave: s.tab === 'leave', tDocs: s.tab === 'docs', tBilling: s.tab === 'billing',
+      c: s.c, companyFields: CF.map(([k, label]) => ({ label, value: s.c[k], font: MONO.includes(k) ? "'Geist Mono',monospace" : 'inherit', set: ev('c', k) })),
+      changeLogo: () => this.toast('Déposez une image PNG ou SVG (fond transparent conseillé)'),
+      p: s.p, setTz: ev('p', 'tz'), setDate: ev('p', 'date'), setCur: ev('p', 'cur'),
+      langs: [['fr', 'Français'], ['ar', 'العربية'], ['en', 'English']].map(([k, label]) => ({ label, font: k === 'ar' ? "'Noto Kufi Arabic',sans-serif" : 'inherit', go: () => this.set('p', 'lang', k), bg: s.p.lang === k ? '#0a1c24' : '#ffffff', color: s.p.lang === k ? '#ffffff' : '#33474f', border: s.p.lang === k ? '#0a1c24' : '#d6dfe3' })),
+      days: DN.map((t, i) => ({ t, bg: s.p.days[i] ? '#0e6f84' : '#ffffff', color: s.p.days[i] ? '#ffffff' : '#52646d', border: s.p.days[i] ? '#0e6f84' : '#d6dfe3', toggle: () => this.set('p', 'days', s.p.days.map((v, k) => k === i ? (v ? 0 : 1) : v)) })),
+      weekNote: `${nDays} jours travaillés · ${nDays === 5 ? '44 h réparties sur 5 jours' : nDays === 6 ? '44 h réparties sur 6 jours' : 'vérifiez la durée légale de 44 h'}`,
+      l: s.l, setMonthly: ev('l', 'monthly'), setBonus: ev('l', 'bonus'), setCap: ev('l', 'cap'), setFlow: ev('l', 'flow'),
+      holCount: `${s.l.hols.filter(Boolean).length} jours fériés actifs`,
+      hols: HOLS.map(([d, name], i) => { const on = s.l.hols[i]; return { d, name, op: on ? '1' : '.55', bg: on ? '#ffffff' : '#f8fafb', dateColor: d.startsWith('≈') ? '#5444b8' : '#0b5f72', track: on ? '#16a06b' : '#c3ced3', knob: on ? '16px' : '2px', toggle: () => this.set('l', 'hols', s.l.hols.map((v, k) => k === i ? !v : v)) }; }),
+      d: s.d, setPrefix: ev('d', 'prefix'), setDocLang: ev('d', 'lang'), nextNo: `${s.d.prefix}0143`,
+      upSign: () => this.toast('Déposez une signature scannée (PNG)'), upStamp: () => this.toast('Déposez le cachet de l\'entreprise (PNG)'),
+      toggleQr: () => this.set('d', 'qr', !s.d.qr), qrTrack: s.d.qr ? '#0e6f84' : '#c3ced3', qrKnob: s.d.qr ? '19px' : '3px',
+      usage: [['Collaborateurs', '126 / illimité', 63], ['Documents IA ce mois', '142 / illimité', 48], ['Stockage', '4,2 Go / 50 Go', 8]].map(([label, value, pct]) => ({ label, value, pct: String(pct) })),
+      invoices: [['Octobre 2026', 'FAC-2026-0010', '7 490 MAD'], ['Septembre 2026', 'FAC-2026-0009', '7 490 MAD'], ['Août 2026', 'FAC-2026-0008', '7 490 MAD']].map(([label, no, amount]) => ({ label, no, amount, dl: () => this.toast(`Facture ${no} téléchargée`) })),
+      contact: () => this.toast('Votre conseillère vous rappelle sous 24 h'),
+      dirty: s.dirty,
+      cancel: () => { const sv = s.saved; this.setState({ c: { ...sv.c }, p: { ...sv.p }, l: { ...sv.l }, d: { ...sv.d }, dirty: false }); },
+      save: () => { this.setState(x => ({ saved: { c: { ...x.c }, p: { ...x.p }, l: { ...x.l }, d: { ...x.d } }, dirty: false })); this.toast('Paramètres enregistrés'); },
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

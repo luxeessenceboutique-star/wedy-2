@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Notifications — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="notifications" notif="{{ unread }}" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Vue d'ensemble" title="Notifications" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1280px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Notifications</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">{{ subtitle }}</p>
+        </div>
+        <button type="button" onClick="{{ readAll }}" data-reveal="up" data-delay="100" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;opacity:{{ readAllOp }}" style-hover="border-color:#9fb4bb"><span data-icon="check-check|check" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Tout marquer comme lu</button>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div style="flex:2 1 520px;min-width:0;display:flex;flex-direction:column;gap:14px">
+          <div data-reveal="up" data-delay="120" style="display:flex;gap:4px;padding:5px;border-radius:14px;background:#ffffff;border:1px solid #e2e8eb;align-self:flex-start;flex-wrap:wrap">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button type="button" onClick="{{ t.go }}" style="position:relative;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border:none;border-radius:10px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ t.color }}"><sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="position:absolute;inset:0;border-radius:10px;background:#0a1c24"></span></sc-if><span style="position:relative">{{ t.label }}</span><span style="position:relative;font-family:'Geist Mono',monospace;font-size:11px;padding:1px 6px;border-radius:99px;background:{{ t.badgeBg }}">{{ t.n }}</span></button></sc-for>
+          </div>
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+            <div data-reveal="up" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+              <div style="padding:12px 18px;background:#f8fafb;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:14px">{{ g.label }}</div>
+              <sc-for list="{{ g.items }}" as="n" hint-placeholder-count="3">
+                <div onClick="{{ n.read }}" data-reveal="up" data-delay="{{ n.delay }}" style="position:relative;display:flex;gap:13px;align-items:flex-start;padding:15px 18px;border-top:1px solid #eef2f4;background:{{ n.bg }};cursor:pointer;transition:background .3s" style-hover="background:#f6fafb">
+                  <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:#16b6c8"></span></sc-if>
+                  <span style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:{{ n.tint }};color:{{ n.color }};flex-shrink:0"><span data-icon="{{ n.icon }}" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span>
+                  <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:14px;font-weight:{{ n.weight }};color:#0a1c24">{{ n.title }}</span><span style="margin-left:auto;font-size:12px;color:#7d8f97;white-space:nowrap">{{ n.time }}</span></div>
+                    <div style="font-size:13.5px;line-height:1.5;color:#52646d;margin-top:3px">{{ n.body }}</div>
+                    <sc-if value="{{ n.hasActions }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+                        <sc-for list="{{ n.actions }}" as="a" hint-placeholder-count="1">
+                          <sc-if value="{{ a.isBtn }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ a.run }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:none;border-radius:9px;background:linear-gradient(135deg,#0f6f49,#16a06b);color:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer"><span data-icon="check" data-size="13" data-sw="2.4" style="display:inline-flex;width:13px;height:13px"></span>{{ a.label }}</button></sc-if>
+                          <sc-if value="{{ a.isLink }}" hint-placeholder-val="{{ false }}"><a href="{{ a.href }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:9px;border:1px solid #d6dfe3;background:#ffffff;color:#0a1c24;font-size:12.5px;font-weight:600" style-hover="color:#0e6f84;border-color:#b9dfe5">{{ a.label }}<span data-icon="arrow-right" data-size="13" style="display:inline-flex;width:13px;height:13px"></span></a></sc-if>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ n.hasDone }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:12.5px;font-weight:700;color:#0f6f49"><span data-icon="circle-check|check-circle" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>{{ n.done }}</span></sc-if>
+                  </div>
+                  <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><span style="width:9px;height:9px;border-radius:50%;background:#16b6c8;flex-shrink:0;margin-top:6px;box-shadow:0 0 0 4px rgba(22,182,200,.15)"></span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+          <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:48px 20px;border-radius:20px;background:#ffffff;border:1px dashed #d0dadf;text-align:center"><span style="width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="bell-off" data-size="22" style="display:inline-flex;width:22px;height:22px"></span></span><div style="font-weight:700;font-size:16px">Tout est à jour</div><div style="font-size:14px;color:#52646d">Aucune notification dans cette vue.</div></div></sc-if>
+        </div>
+
+        <div data-reveal="left" data-delay="160" style="flex:1 1 300px;min-width:0;position:sticky;top:90px;display:flex;flex-direction:column;gap:14px">
+          <div style="padding:18px 20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Préférences</div>
+            <div style="font-size:12.5px;color:#5f7079;margin-top:2px">Choisissez où recevoir chaque type d'alerte.</div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) repeat(3,44px);gap:6px;align-items:center;margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#7d8f97"><span></span><span style="text-align:center">App</span><span style="text-align:center">Email</span><span style="text-align:center">Slack</span></div>
+            <sc-for list="{{ prefs }}" as="p" hint-placeholder-count="6">
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) repeat(3,44px);gap:6px;align-items:center;padding:9px 0;border-top:1px solid #f0f3f4">
+                <span style="display:flex;align-items:center;gap:8px;font-size:13px;color:#33474f;min-width:0"><span data-icon="{{ p.icon }}" data-size="14" style="display:inline-flex;width:14px;height:14px;color:{{ p.color }};flex-shrink:0"></span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.label }}</span></span>
+                <sc-for list="{{ p.ch }}" as="c" hint-placeholder-count="3"><button type="button" onClick="{{ c.toggle }}" aria-label="{{ c.aria }}" style="justify-self:center;position:relative;width:34px;height:20px;border:none;border-radius:99px;background:{{ c.track }};cursor:pointer;padding:0;transition:background .2s"><span style="position:absolute;top:2px;left:{{ c.knob }};width:16px;height:16px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.3);transition:left .2s cubic-bezier(.2,.8,.2,1)"></span></button></sc-for>
+              </div>
+            </sc-for>
+          </div>
+          <button type="button" onClick="{{ toggleDigest }}" style="display:flex;align-items:flex-start;gap:12px;padding:16px 18px;border-radius:18px;border:1px solid {{ dgBorder }};background:{{ dgBg }};font-family:inherit;text-align:left;cursor:pointer;transition:background .2s,border-color .2s">
+            <img src="assets/wedy-avatar.png" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;background:#e4f2f4;flex-shrink:0">
+            <span style="flex:1"><span style="display:block;font-size:14px;font-weight:600;color:#0a1c24">Résumé quotidien par Wedy</span><span style="display:block;font-size:12.5px;line-height:1.45;color:#52646d;margin-top:2px">Chaque matin à 08:30, l'essentiel de la veille en 5 lignes.</span></span>
+            <span style="position:relative;width:40px;height:24px;border-radius:99px;background:{{ dgTrack }};flex-shrink:0;transition:background .2s"><span style="position:absolute;top:3px;left:{{ dgKnob }};width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.3);transition:left .25s cubic-bezier(.2,.8,.2,1)"></span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.2);color:#4fd3a0;flex-shrink:0"><span data-icon="check" data-size="15" data-sw="2.6" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TY = { request: ['inbox', '#e4f2f4', '#0e6f84'], contract: ['file-clock|clock', '#fbe9e6', '#df5740'], ai: ['sparkles', '#ece9fb', '#6d5ad6'], recruit: ['user-plus', '#e1f5ec', '#16a06b'], security: ['shield-alert', '#fbe9e6', '#df5740'], payroll: ['wallet', '#fbefda', '#b06b0c'], onboarding: ['user-check', '#e4f2f4', '#0e6f84'], training: ['book-open', '#ece9fb', '#6d5ad6'] };
+const N0 = [
+  { id: 'n1', type: 'request', day: 0, unread: true, time: 'Il y a 12 min', title: 'Nouvelle demande de congé', body: 'Omar Alaoui demande 3 jours de congé annuel, du 4 au 6 novembre.', actions: [['Approuver', 'approve'], ['Voir la demande', 'Wedy Requests.dc.html']] },
+  { id: 'n2', type: 'contract', day: 0, unread: true, time: 'Il y a 1 h', title: 'Contrat bientôt échu', body: 'Le CDD de Yasmine Benali se termine dans 12 jours (12/11/2026).', actions: [["Préparer l'avenant", 'Wedy Generate.dc.html']] },
+  { id: 'n3', type: 'ai', day: 0, unread: true, time: 'Il y a 2 h', title: 'Wedy a généré 2 documents', body: "Attestation de travail pour Yasmine Benali et attestation de salaire en arabe pour Nadia Berrada, via le portail employé.", actions: [["Voir l'historique", 'Wedy History.dc.html']] },
+  { id: 'n4', type: 'security', day: 0, unread: false, time: '08:44', title: 'Connexion refusée', body: '3 tentatives échouées sur salma@tython.ma depuis une adresse IP inconnue.', actions: [["Journal d'audit", 'Wedy Audit.dc.html']] },
+  { id: 'n5', type: 'recruit', day: 1, unread: false, time: 'Hier, 18:20', title: 'Candidature très pertinente', body: 'Zineb Haddad (score 92) a postulé au poste de Développeur full-stack.', actions: [['Voir le profil', 'Wedy Candidates.dc.html']] },
+  { id: 'n6', type: 'payroll', day: 1, unread: false, time: 'Hier, 08:00', title: 'Paie de novembre à contrôler', body: 'Wedy a détecté 3 points à vérifier avant la validation.', actions: [['Ouvrir la paie', 'Wedy Payroll.dc.html']] },
+  { id: 'n7', type: 'onboarding', day: 2, unread: false, time: 'Jeu. 29 oct.', title: 'Pulse J+30 reçu', body: 'Mehdi Rami a évalué son intégration à 4/5.', actions: [] },
+  { id: 'n8', type: 'training', day: 2, unread: false, time: 'Mer. 28 oct.', title: 'Formation terminée', body: 'Karim Bennani a terminé « React & TypeScript avancé » avec 92/100.', actions: [] },
+  { id: 'n9', type: 'request', day: 2, unread: false, time: 'Mar. 27 oct.', title: 'Demande de document', body: 'Nadia Berrada demande une attestation de salaire pour sa banque.', actions: [['Générer', 'Wedy Generate.dc.html']] },
+];
+const DAYS = ["Aujourd'hui", 'Hier', 'Cette semaine'];
+const PREFS = [['request', 'Demandes', 'inbox', '#0e6f84', [1, 1, 1]], ['contract', 'Contrats et échéances', 'file-clock|clock', '#df5740', [1, 1, 0]], ['recruit', 'Recrutement', 'user-plus', '#16a06b', [1, 0, 1]], ['payroll', 'Paie', 'wallet', '#b06b0c', [1, 1, 0]], ['security', 'Sécurité', 'shield-alert', '#df5740', [1, 1, 1]], ['ai', 'Wedy IA', 'sparkles', '#6d5ad6', [1, 0, 0]]];
+
+class Component extends DCLogic {
+  state = { items: N0.map(n => ({ ...n })), tab: 'all', prefs: Object.fromEntries(PREFS.map(p => [p[0], [...p[4]]])), digest: true, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  upd(id, fn) { this.setState(s => ({ items: s.items.map(n => n.id === id ? fn(n) : n) })); }
+  renderVals() {
+    const s = this.state, unread = s.items.filter(n => n.unread).length;
+    const needs = n => n.actions.some(a => a[1] === 'approve') && !n.done;
+    const pass = n => s.tab === 'all' || (s.tab === 'unread' && n.unread) || (s.tab === 'action' && needs(n)) || (s.tab === 'security' && n.type === 'security');
+    const groups = DAYS.map((label, d) => ({ label, items: s.items.filter(n => n.day === d && pass(n)) })).filter(g => g.items.length);
+    return {
+      rootRef: this.rootRef, unread,
+      subtitle: unread ? `${unread} notification${unread > 1 ? 's' : ''} non lue${unread > 1 ? 's' : ''} · tout ce qui demande votre attention.` : 'Vous êtes à jour. Bravo !',
+      readAll: () => { if (!unread) return; this.setState(x => ({ items: x.items.map(n => ({ ...n, unread: false })) })); this.toast('Toutes les notifications sont marquées comme lues'); }, readAllOp: unread ? '1' : '.5',
+      tabs: [['all', 'Toutes', s.items.length], ['unread', 'Non lues', unread], ['action', 'À traiter', s.items.filter(needs).length], ['security', 'Sécurité', s.items.filter(n => n.type === 'security').length]].map(([k, label, n]) => ({ label, n, on: s.tab === k, color: s.tab === k ? '#ffffff' : '#52646d', badgeBg: s.tab === k ? 'rgba(255,255,255,.18)' : '#eef2f4', go: () => this.setState({ tab: k }) })),
+      groups: groups.map(g => ({ label: g.label, items: g.items.map((n, i) => {
+        const t = TY[n.type];
+        return { title: n.title, body: n.body, time: n.time, icon: t[0], tint: t[1], color: t[2], unread: n.unread, weight: n.unread ? '700' : '600', bg: n.unread ? '#f5fbfc' : '#ffffff', delay: String(i * 50),
+          read: () => { if (n.unread) this.upd(n.id, x => ({ ...x, unread: false })); },
+          hasActions: n.actions.length > 0 && !n.done, hasDone: !!n.done, done: n.done || '',
+          actions: n.actions.map(([label, target]) => ({ label, isBtn: target === 'approve', isLink: target !== 'approve', href: target === 'approve' ? '#' : target,
+            run: e => { if (e && e.stopPropagation) e.stopPropagation(); this.upd(n.id, x => ({ ...x, unread: false, done: 'Congé approuvé · Omar a été notifié' })); this.toast('Congé approuvé · Omar Alaoui'); } })) };
+      }) })),
+      empty: groups.length === 0,
+      prefs: PREFS.map(([k, label, icon, color]) => ({ label, icon, color, ch: ['App', 'Email', 'Slack'].map((c, j) => { const on = !!s.prefs[k][j]; return { aria: `${label} · ${c}`, track: on ? '#0e6f84' : '#c3ced3', knob: on ? '16px' : '2px', toggle: () => this.setState(x => ({ prefs: { ...x.prefs, [k]: x.prefs[k].map((v, m) => m === j ? (v ? 0 : 1) : v) } })) }; }) })),
+      toggleDigest: () => { this.setState(x => ({ digest: !x.digest })); this.toast(s.digest ? 'Résumé quotidien désactivé' : 'Résumé quotidien activé · 08:30'); },
+      dgBg: s.digest ? '#f3fafb' : '#ffffff', dgBorder: s.digest ? '#b9dfe5' : '#e2e8eb', dgTrack: s.digest ? '#0e6f84' : '#c3ced3', dgKnob: s.digest ? '19px' : '3px',
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

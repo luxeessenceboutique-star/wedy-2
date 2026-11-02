@@ -1,0 +1,101 @@
+- generic [ref=f2e2]:
+  - region "Notifications alt+T"
+  - complementary "Navigation principale" [ref=f2e4]:
+    - link "Wedy Wedy RH" [ref=f2e5] [cursor=pointer]:
+      - /url: /app
+      - img "Wedy" [ref=f2e6]
+      - generic [ref=f2e7]: Wedy
+      - generic [ref=f2e8]: RH
+    - link "Demander à Wedy… ⌘K" [ref=f2e9] [cursor=pointer]:
+      - /url: /app/copilot
+      - generic [ref=f2e14]: Demander à Wedy…
+      - generic [ref=f2e15]: ⌘K
+    - navigation [ref=f2e16]:
+      - generic [ref=f2e17]:
+        - generic [ref=f2e18]: Vue d'ensemble
+        - link "Tableau de bord" [ref=f2e19] [cursor=pointer]:
+          - /url: /app
+        - link "Copilote IA New" [ref=f2e28] [cursor=pointer]:
+          - /url: /app/copilot
+          - generic [ref=f2e33]: Copilote IA
+          - generic [ref=f2e34]: New
+        - link "Notifications 3" [ref=f2e35] [cursor=pointer]:
+          - /url: /app/notifications
+          - generic [ref=f2e40]: Notifications
+          - generic [ref=f2e41]: "3"
+      - generic [ref=f2e42]:
+        - generic [ref=f2e43]: Personnes
+        - link "Employés" [ref=f2e44] [cursor=pointer]:
+          - /url: /app/employees
+        - link "Stagiaires" [ref=f2e52] [cursor=pointer]:
+          - /url: /app/interns
+        - link "Demandes 6" [ref=f2e58] [cursor=pointer]:
+          - /url: /app/requests
+          - generic [ref=f2e63]: Demandes
+          - generic [ref=f2e64]: "6"
+        - link "Recrutement" [ref=f2e65] [cursor=pointer]:
+          - /url: /app/recruitment
+        - link "Candidats" [ref=f2e72] [cursor=pointer]:
+          - /url: /app/candidats
+        - link "Annonces AI" [ref=f2e78] [cursor=pointer]:
+          - /url: /app/annonces
+          - generic [ref=f2e83]: Annonces
+          - generic [ref=f2e84]: AI
+        - link "Planning RH" [ref=f2e85] [cursor=pointer]:
+          - /url: /app/planning-rh
+        - link "Performance" [ref=f2e90] [cursor=pointer]:
+          - /url: /app/performance
+        - link "Congés" [ref=f2e96] [cursor=pointer]:
+          - /url: /app/timeoff
+        - link "Absences" [ref=f2e102] [cursor=pointer]:
+          - /url: /app/absences
+        - link "Paie" [ref=f2e110] [cursor=pointer]:
+          - /url: /app/payroll
+        - link "Organigramme" [ref=f2e116] [cursor=pointer]:
+          - /url: /app/orgchart
+        - link "Réunions" [ref=f2e124] [cursor=pointer]:
+          - /url: /app/meetings
+      - generic [ref=f2e130]:
+        - generic [ref=f2e131]: Développement RH
+        - link "Onboarding" [ref=f2e132] [cursor=pointer]:
+          - /url: /app/onboarding
+        - link "Formation" [ref=f2e139] [cursor=pointer]:
+          - /url: /app/training
+        - link "Talents" [ref=f2e144] [cursor=pointer]:
+          - /url: /app/talents
+        - link "Appels d'offres AI" [ref=f2e149] [cursor=pointer]:
+          - /url: /app/tenders
+          - generic [ref=f2e154]: Appels d'offres
+          - generic [ref=f2e155]: AI
+      - generic [ref=f2e156]:
+        - generic [ref=f2e157]: Documents
+        - link "Générer" [ref=f2e158] [cursor=pointer]:
+          - /url: /app/generate
+        - link "Modèles" [ref=f2e164] [cursor=pointer]:
+          - /url: /app/templates
+        - link "Historique" [ref=f2e170] [cursor=pointer]:
+          - /url: /app/history
+      - generic [ref=f2e177]:
+        - generic [ref=f2e178]: Insights
+        - link "Analytics" [ref=f2e179] [cursor=pointer]:
+          - /url: /app/analytics
+        - link "Journal d'audit" [ref=f2e184] [cursor=pointer]:
+          - /url: /app/audit
+      - generic [ref=f2e190]:
+        - generic [ref=f2e191]: Espace de travail
+        - link "Intégrations" [ref=f2e192] [cursor=pointer]:
+          - /url: /app/integrations
+        - link "Utilisateurs & rôles" [ref=f2e197] [cursor=pointer]:
+          - /url: /app/users
+        - link "Paramètres" [ref=f2e212] [cursor=pointer]:
+          - /url: /app/settings
+        - link "Sécurité" [ref=f2e218] [cursor=pointer]:
+          - /url: /app/security
+        - link "Aide" [ref=f2e224] [cursor=pointer]:
+          - /url: /app/help
+    - generic [ref=f2e230]:
+      - generic [ref=f2e231]: SI
+      - generic [ref=f2e232]:
+        - generic [ref=f2e233]: Salma Idrissi
+        - generic [ref=f2e234]: Admin RH
+      - button "Déconnexion" [ref=f2e235] [cursor=pointer]

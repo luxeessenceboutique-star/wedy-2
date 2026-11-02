@@ -1,0 +1,30 @@
+- generic [ref=f8e2]:
+  - region "Notifications alt+T"
+  - banner [ref=f8e4]:
+    - generic [ref=f8e5]:
+      - link "Wedy Wedy Espace collaborateur" [ref=f8e6] [cursor=pointer]:
+        - /url: /employee
+        - img "Wedy" [ref=f8e7]
+        - generic [ref=f8e8]: Wedy
+        - generic [ref=f8e9]: Espace collaborateur
+      - navigation "Navigation principale" [ref=f8e10]:
+        - link "Accueil" [ref=f8e11] [cursor=pointer]:
+          - /url: /employee
+        - link "Mes congés" [ref=f8e15] [cursor=pointer]:
+          - /url: /employee/conges
+        - link "Mes documents" [ref=f8e18] [cursor=pointer]:
+          - /url: /employee/documents
+        - link "Formation" [ref=f8e22] [cursor=pointer]:
+          - /url: /employee/formation
+        - link "Organigramme" [ref=f8e26] [cursor=pointer]:
+          - /url: /employee/orgchart
+        - link "Réunions" [ref=f8e32] [cursor=pointer]:
+          - /url: /employee/meetings
+        - link "Mon profil" [ref=f8e36] [cursor=pointer]:
+          - /url: /employee/profil
+      - group "Langue" [ref=f8e41]:
+        - button "Français" [pressed] [ref=f8e42] [cursor=pointer]: FR
+        - button "العربية" [ref=f8e43] [cursor=pointer]: ع
+        - button "English" [ref=f8e44] [cursor=pointer]: EN
+      - generic "Salma Idrissi" [ref=f8e45]: SI
+      - button "Déconnexion" [ref=f8e47] [cursor=pointer]

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Organigramme — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="orgchart" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Personnes" title="Organigramme" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 40px;display:flex;flex-direction:column;gap:18px;width:100%;min-width:0">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Organigramme</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Tython SARL · 126 personnes dans 7 services.</p>
+        </div>
+        <div data-reveal="up" data-delay="100" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div style="position:relative;width:240px"><span data-icon="search" data-size="16" style="position:absolute;left:13px;top:50%;margin-top:-8px;display:inline-flex;width:16px;height:16px;color:#7d8f97;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Trouver une personne…" style="width:100%;height:42px;padding:0 12px 0 38px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></div>
+          <div style="display:flex;align-items:center;padding:3px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb">
+            <button type="button" onClick="{{ zoomOut }}" aria-label="Dézoomer" style="width:34px;height:34px;border:none;border-radius:9px;background:transparent;color:#33474f;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#f3f6f7"><span data-icon="minus" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button>
+            <span style="min-width:50px;text-align:center;font-family:'Geist Mono',monospace;font-size:12.5px;color:#33474f">{{ zoomLabel }}</span>
+            <button type="button" onClick="{{ zoomIn }}" aria-label="Zoomer" style="width:34px;height:34px;border:none;border-radius:9px;background:transparent;color:#33474f;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#f3f6f7"><span data-icon="plus" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button>
+            <button type="button" onClick="{{ zoomFit }}" aria-label="Ajuster à l'écran" style="width:34px;height:34px;border:none;border-radius:9px;background:transparent;color:#33474f;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#f3f6f7"><span data-icon="maximize-2|maximize" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button>
+          </div>
+          <button type="button" onClick="{{ toggleAll }}" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="border-color:#9fb4bb"><span data-icon="{{ allIcon }}" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>{{ allLabel }}</button>
+          <button type="button" onClick="{{ exportPdf }}" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:none;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#16323c"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Exporter</button>
+        </div>
+      </div>
+
+      <div ref="{{ vpRef }}" data-reveal="up" data-delay="140" style="position:relative;height:calc(100vh - 220px);min-height:520px;border-radius:22px;background-color:#ffffff;background-image:radial-gradient(#e1e8eb 1px,transparent 1px);background-size:22px 22px;border:1px solid #e2e8eb;overflow:auto">
+        <div style="zoom:{{ zoom }};width:1604px;margin:0 auto;padding:36px 40px 56px;display:flex;flex-direction:column;align-items:center">
+          <button type="button" onClick="{{ ceo.pick }}" data-reveal="scale" style="display:flex;align-items:center;gap:12px;padding:14px 20px 14px 14px;border:none;border-radius:18px;background:linear-gradient(135deg,#06141a,#0d2a33);color:#e8eff1;font-family:inherit;text-align:left;cursor:pointer;box-shadow:0 20px 40px -20px rgba(6,20,26,.7){{ ceo.ring }};opacity:{{ ceo.op }};transition:opacity .2s,box-shadow .2s">
+            <span style="position:relative;width:50px;height:50px;flex-shrink:0"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(95,227,240,.6)"></span><span style="position:relative;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0e6f84,#16b6c8);font-size:16px;font-weight:700;color:#ffffff">HB</span></span>
+            <span><span style="display:block;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em">Hassan Bennis</span><span style="display:block;font-size:12.5px;color:#9fb4bb">Directeur général · 126 personnes</span></span>
+          </button>
+          <span style="width:2px;height:28px;background:#c9d6db"></span>
+          <div style="display:flex;gap:16px;align-items:flex-start">
+            <sc-for list="{{ dirs }}" as="d" hint-placeholder-count="7">
+              <div style="position:relative;width:204px;padding-top:28px;display:flex;flex-direction:column">
+                <span style="position:absolute;top:0;height:2px;left:{{ d.hl }};right:{{ d.hr }};background:#c9d6db"></span>
+                <span style="position:absolute;top:0;left:101px;width:2px;height:28px;background:#c9d6db"></span>
+                <div data-reveal="up" data-delay="{{ d.delay }}" style="position:relative;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 10px 24px -18px rgba(10,28,36,.5){{ d.ring }};opacity:{{ d.op }};overflow:hidden;transition:opacity .2s,box-shadow .2s">
+                  <span style="position:absolute;left:0;right:0;top:0;height:3px;background:{{ d.color }}"></span>
+                  <button type="button" onClick="{{ d.pick }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:15px 12px 11px;border:none;background:transparent;font-family:inherit;text-align:left;cursor:pointer">
+                    <span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ d.color }};color:#ffffff;font-size:13px;font-weight:700;flex-shrink:0">{{ d.ini }}</span>
+                    <span style="min-width:0"><span style="display:block;font-size:13.5px;font-weight:700;color:#0a1c24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.name }}</span><span style="display:block;font-size:11.5px;color:#5f7079;line-height:1.35">{{ d.role }}</span></span>
+                  </button>
+                  <button type="button" onClick="{{ d.toggle }}" style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 12px;border:none;border-top:1px solid #eef2f4;background:#f8fafb;font-family:inherit;font-size:12px;font-weight:600;color:#33474f;cursor:pointer" style-hover="background:#eef5f7"><span style="width:8px;height:8px;border-radius:50%;background:{{ d.color }}"></span>{{ d.dept }}<span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:11px;color:#5f7079">{{ d.size }}</span><span data-icon="{{ d.chev }}" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#7d8f97"></span></button>
+                </div>
+                <sc-if value="{{ d.open }}" hint-placeholder-val="{{ true }}">
+                  <div style="position:relative;padding:12px 0 0 24px;display:flex;flex-direction:column;gap:8px">
+                    <span style="position:absolute;left:12px;top:0;bottom:49px;width:2px;background:#c9d6db"></span>
+                    <sc-for list="{{ d.team }}" as="m" hint-placeholder-count="3">
+                      <button type="button" onClick="{{ m.pick }}" data-reveal="right" data-delay="{{ m.delay }}" style="position:relative;display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;box-shadow:0 6px 16px -14px rgba(10,28,36,.5){{ m.ring }};opacity:{{ m.op }};transition:opacity .2s,box-shadow .2s,transform .2s" style-hover="transform:translateX(2px)">
+                        <span style="position:absolute;left:-12px;top:50%;width:12px;height:2px;background:#c9d6db"></span>
+                        <span style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ m.av }};color:#ffffff;font-size:10.5px;font-weight:700;flex-shrink:0">{{ m.ini }}</span>
+                        <span style="min-width:0"><span style="display:block;font-size:12.5px;font-weight:600;color:#0a1c24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.name }}</span><span style="display:block;font-size:11px;color:#5f7079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.role }}</span></span>
+                      </button>
+                    </sc-for>
+                    <span style="height:16px;padding-left:2px;font-size:11.5px;line-height:16px;color:#7d8f97">+ {{ d.more }} autres personnes</span>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+    <div data-reveal="up" style="position:fixed;right:24px;bottom:24px;z-index:90;width:320px;max-width:calc(100vw - 48px);border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 30px 70px -24px rgba(10,28,36,.5);overflow:hidden">
+      <div style="position:relative;padding:18px;background:#06141a;color:#e8eff1">
+        <button type="button" onClick="{{ closeSel }}" aria-label="Fermer" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border:none;border-radius:9px;background:rgba(255,255,255,.08);color:#e8eff1;cursor:pointer;display:flex;align-items:center;justify-content:center"><span data-icon="x" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button>
+        <div style="display:flex;align-items:center;gap:12px;padding-right:30px"><span style="width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ sel.color }};color:#ffffff;font-size:16px;font-weight:700;border:2px solid rgba(255,255,255,.2);flex-shrink:0">{{ sel.ini }}</span><div style="min-width:0"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em">{{ sel.name }}</div><div style="font-size:12.5px;color:#9fb4bb">{{ sel.role }}</div></div></div>
+      </div>
+      <div style="padding:14px 18px;display:flex;flex-direction:column;gap:9px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#5f7079">Service</span><span style="font-weight:600">{{ sel.dept }}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#5f7079">Responsable</span><span style="font-weight:600">{{ sel.manager }}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#5f7079">Équipe</span><span style="font-weight:600">{{ sel.team }}</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px"><span style="color:#5f7079">Email</span><span style="font-weight:500;color:#0e6f84;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ sel.email }}</span></div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <a href="Wedy Employee.dc.html" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;border-radius:10px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:13px;font-weight:600" style-hover="color:#ffffff"><span data-icon="folder-open|folder" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Voir le dossier</a>
+          <a href="mailto:{{ sel.email }}" aria-label="Envoyer un email" style="width:38px;height:38px;border-radius:10px;border:1px solid #d6dfe3;display:flex;align-items:center;justify-content:center;color:#33474f" style-hover="color:#0e6f84;border-color:#b9dfe5"><span data-icon="mail" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></a>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const DEPT = { 'Opérations': '#df9326', 'Commercial': '#16a06b', 'Tech': '#6d5ad6', 'Service client': '#0e6f84', 'Marketing': '#df5740', 'Finance': '#4a69d8', 'RH': '#16b6c8' };
+const DIRS = [
+  ['Youssef Amrani', 'Directeur des opérations', 'Opérations', 38, [["Omar Alaoui", "Chef d'équipe logistique"], ['Brahim Naciri', 'Responsable entrepôt'], ['Rachid Ouazzani', 'Magasinier']]],
+  ['Adil Mernissi', 'Directeur commercial', 'Commercial', 24, [['Mehdi Rami', 'Commercial'], ['Soufiane Berrada', 'Key account manager'], ['Khadija Zerouali', 'Assistante commerciale']]],
+  ['Driss Lahlou', 'Directeur technique', 'Tech', 22, [['Karim Bennani', 'Développeur senior'], ['Imane Kettani', 'Product designer'], ['Anas Belhaj', 'Data analyst']]],
+  ['Hajar Benjelloun', 'Responsable service client', 'Service client', 15, [['Hind Tazi', 'Chargée de clientèle'], ['Ayoub El Idrissi', 'Conseiller client']]],
+  ['Karim Lahlou', 'Directeur marketing', 'Marketing', 11, [['Yasmine Benali', 'Responsable Marketing'], ['Lina Chraibi', 'Stagiaire marketing']]],
+  ['Fatima Zahra Alami', 'Directrice financière', 'Finance', 9, [['Nadia Berrada', 'Comptable'], ['Leila Fassi', 'Contrôleuse de gestion']]],
+  ['Salma Idrissi', 'Responsable RH', 'RH', 6, [['Sara El Fassi', 'Chargée RH']]],
+];
+const NAT_W = 1604;
+const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+const email = n => { const p = norm(n).replace(/[^a-z ]/g, '').split(' '); return `${p[0]}.${p.slice(1).join('')}@tython.ma`; };
+
+class Component extends DCLogic {
+  state = { q: '', open: DIRS.map(() => true), zoom: 1, user: false, sel: null, toast: '' };
+  rootRef = React.createRef();
+  vpRef = React.createRef();
+  componentDidMount() {
+    this._a = true;
+    const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go();
+    this._ro = new ResizeObserver(() => this.fit()); if (this.vpRef.current) this._ro.observe(this.vpRef.current);
+    this.fit(); window.addEventListener('keydown', this.esc);
+  }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); if (this._ro) this._ro.disconnect(); clearTimeout(this._t); window.removeEventListener('keydown', this.esc); }
+  esc = e => { if (e.key === 'Escape') this.setState({ sel: null }); };
+  fit(force) {
+    if (!this._a || (this.state.user && !force)) return;
+    const vp = this.vpRef.current; if (!vp || !vp.clientWidth) return;
+    const z = +Math.max(0.45, Math.min(1, (vp.clientWidth - 8) / NAT_W)).toFixed(3);
+    if (force || Math.abs(z - this.state.zoom) > 0.004) this.setState({ zoom: z, user: false });
+  }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state, q = norm(s.q.trim());
+    const hit = (...f) => !!q && norm(f.join(' ')).includes(q);
+    const node = (id, n, extra) => {
+      const h = hit(n.name, n.role, n.dept), on = s.sel && s.sel.id === id;
+      return { ...n, ini: ini(n.name), h, ring: on ? ', 0 0 0 3px #16b6c8' : h ? ', 0 0 0 3px rgba(22,182,200,.5)' : '', op: q && !h && !(extra && extra.keep) ? '.32' : '1', pick: () => this.setState({ sel: { id, ...n } }) };
+    };
+    const last = DIRS.length - 1;
+    const dirs = DIRS.map(([name, role, dept, size, team], i) => {
+      const color = DEPT[dept];
+      const members = team.map(([mn, mr], k) => ({ ...node(`m${i}-${k}`, { name: mn, role: mr, dept, color, manager: name, team: '—' }), av: color, delay: String(k * 60) }));
+      const teamHit = members.some(m => m.h), open = s.open[i] || teamHit;
+      return { ...node(`d${i}`, { name, role, dept, color, manager: 'Hassan Bennis', team: `${size} personnes` }, { keep: teamHit }), size: `${size}`, team: members, more: size - 1 - team.length, open, chev: open ? 'chevron-up' : 'chevron-down',
+        hl: i === 0 ? '102px' : '-8px', hr: i === last ? '102px' : '-8px', delay: String(120 + i * 60),
+        toggle: () => this.setState(x => ({ open: x.open.map((v, k) => k === i ? !v : v) })) };
+    });
+    const allOpen = s.open.every(Boolean);
+    const sel = s.sel ? { ...s.sel, ini: ini(s.sel.name), email: email(s.sel.name) } : {};
+    const setZ = z => this.setState({ zoom: +Math.max(0.4, Math.min(1.5, z)).toFixed(2), user: true });
+    return {
+      rootRef: this.rootRef, vpRef: this.vpRef, q: s.q, onQ: e => this.setState({ q: e.target.value }),
+      ceo: node('ceo', { name: 'Hassan Bennis', role: 'Directeur général', dept: 'Direction', color: 'linear-gradient(135deg,#0e6f84,#16b6c8)', manager: '—', team: '126 personnes' }, { keep: !!q }),
+      dirs, zoom: String(s.zoom), zoomLabel: `${Math.round(s.zoom * 100)}%`,
+      zoomIn: () => setZ(s.zoom + 0.1), zoomOut: () => setZ(s.zoom - 0.1), zoomFit: () => this.fit(true),
+      allLabel: allOpen ? 'Tout replier' : 'Tout déplier', allIcon: allOpen ? 'chevrons-down-up|minimize-2' : 'chevrons-up-down|maximize-2',
+      toggleAll: () => this.setState({ open: DIRS.map(() => !allOpen) }),
+      exportPdf: () => this.toast('Organigramme exporté en PDF (A3 paysage)'),
+      hasSel: !!s.sel, sel, closeSel: () => this.setState({ sel: null }),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

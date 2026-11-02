@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Recrutement — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="recruitment" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Personnes" title="Recrutement" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Recrutement</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Suivez chaque candidat, de la candidature à l'embauche. Glissez les cartes pour changer d'étape.</p>
+        </div>
+        <div data-reveal="up" data-delay="100" style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="Wedy Candidates.dc.html" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-size:13.5px;font-weight:600;white-space:nowrap" style-hover="color:#0a1c24;border-color:#9fb4bb"><span data-icon="users" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Tous les candidats</a>
+          <a href="Wedy Job Posts.dc.html" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:14px;font-weight:600;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)" style-hover="color:#ffffff"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><span data-icon="megaphone" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px"></span><span style="position:relative">Publier une annonce</span></a>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+        <div data-reveal="up" data-delay="80" style="padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#0b5f72,#0e7f96);color:#ffffff"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9">Postes ouverts</div><div data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">4</div></div>
+        <div data-reveal="up" data-delay="130" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Candidats actifs</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ activeCount }}</div></div>
+        <div data-reveal="up" data-delay="180" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Entretiens prévus</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ interviewCount }}</div></div>
+        <div data-reveal="up" data-delay="230" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Délai moyen d'embauche</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">21 j</div></div>
+      </div>
+
+      <div data-reveal="up" data-delay="160" style="display:flex;gap:8px;flex-wrap:wrap">
+        <sc-for list="{{ jobs }}" as="j" hint-placeholder-count="5"><button type="button" onClick="{{ j.go }}" style="display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:99px;border:1px solid {{ j.border }};background:{{ j.bg }};color:{{ j.color }};font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">{{ j.label }}<span style="font-family:'Geist Mono',monospace;font-size:11px;opacity:.75">{{ j.n }}</span></button></sc-for>
+      </div>
+
+      <div style="overflow-x:auto;padding-bottom:8px">
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(240px,1fr));gap:12px;min-width:1240px;align-items:start">
+          <sc-for list="{{ cols }}" as="c" hint-placeholder-count="5">
+            <div onDragOver="{{ allow }}" onDrop="{{ c.drop }}" data-reveal="up" data-delay="{{ c.delay }}" style="padding:12px;border-radius:20px;background:{{ c.bg }};border:1px solid #e2e8eb;min-height:420px">
+              <div style="display:flex;align-items:center;gap:8px;padding:4px 6px 12px"><span style="width:8px;height:8px;border-radius:50%;background:{{ c.dot }}"></span><span style="font-weight:700;font-size:14px">{{ c.label }}</span><span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:12px;color:#52646d;padding:1px 8px;border-radius:99px;background:rgba(255,255,255,.7)">{{ c.n }}</span></div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ c.cards }}" as="k" hint-placeholder-count="2">
+                  <div draggable="true" onDragStart="{{ k.drag }}" data-reveal="up" style="padding:13px;border-radius:15px;background:#ffffff;border:1px solid #e2e8eb;cursor:grab;box-shadow:0 2px 8px -5px rgba(10,28,36,.35);transition:box-shadow .2s,transform .2s" style-hover="box-shadow:0 14px 28px -16px rgba(10,28,36,.45);transform:translateY(-2px)">
+                    <div style="display:flex;align-items:center;gap:10px">
+                      <span style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ k.av }};color:#ffffff;font-size:12px;font-weight:700;flex-shrink:0">{{ k.ini }}</span>
+                      <span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.name }}</span><span style="display:block;font-size:12px;color:#5f7079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.job }}</span></span>
+                      <span style="position:relative;width:38px;height:38px;flex-shrink:0"><svg viewBox="0 0 38 38" style="display:block;width:38px;height:38px;transform:rotate(-90deg)"><circle cx="19" cy="19" r="15" style="fill:none;stroke:#eef2f4;stroke-width:4px"></circle><circle cx="19" cy="19" r="15" style="fill:none;stroke:{{ k.scoreColor }};stroke-width:4px;stroke-linecap:round;stroke-dasharray:{{ k.dash }}"></circle></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700">{{ k.score }}</span></span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:11px;flex-wrap:wrap"><span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:#f3f6f7;color:#33474f">{{ k.source }}</span><span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#7d8f97"><span data-icon="clock" data-size="11" style="display:inline-flex;width:11px;height:11px"></span>{{ k.age }}</span><sc-if value="{{ k.hasNext }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#6d5ad6"><span data-icon="calendar-clock|calendar" data-size="11" style="display:inline-flex;width:11px;height:11px"></span>{{ k.next }}</span></sc-if></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const STAGES = [['new', 'Nouveau', '#7d8f97', '#eef2f4'], ['screen', 'Présélection', '#16b6c8', '#e7f4f6'], ['interview', 'Entretien', '#6d5ad6', '#efedfa'], ['offer', 'Offre', '#df9326', '#f8f0e1'], ['hired', 'Embauché', '#16a06b', '#e5f4ec']];
+const JOBS = ['Responsable commercial', 'Développeur full-stack', 'Chargé(e) RH', 'Comptable senior'];
+const SEED = [
+  ['Ayoub Mansouri', 0, 'LinkedIn', 'new', 74, '2 j'], ['Salma Bakkali', 1, 'Rekrute', 'new', 81, '1 j'], ['Hamza Tahiri', 3, 'Site carrière', 'new', 66, '3 j'],
+  ['Ilyas Chraibi', 1, 'LinkedIn', 'screen', 88, '4 j'], ['Meryem Ouali', 2, 'Cooptation', 'screen', 79, '5 j'], ['Reda Lazrak', 0, 'Rekrute', 'screen', 71, '6 j'],
+  ['Zineb Haddad', 1, 'Site carrière', 'interview', 92, '3 j', 'Lun. 10:00'], ['Othmane Fikri', 0, 'LinkedIn', 'interview', 85, '2 j', 'Mar. 14:30'], ['Houda Sabri', 2, 'LinkedIn', 'interview', 83, '1 j', 'Mer. 11:00'],
+  ['Nabil Rachidi', 3, 'Cooptation', 'offer', 90, '2 j'], ['Asmae Jabri', 0, 'Rekrute', 'offer', 87, '5 j'],
+  ['Mehdi Rami', 0, 'LinkedIn', 'hired', 89, '30 j'],
+].map((r, i) => ({ id: 'c' + i, name: r[0], job: r[1], source: r[2], stage: r[3], score: r[4], age: r[5], next: r[6] || '' }));
+
+class Component extends DCLogic {
+  state = { cands: SEED, job: -1, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  move(id, stage) {
+    const c = this.state.cands.find(x => x.id === id); if (!c || c.stage === stage) return;
+    this.setState(s => ({ cands: s.cands.map(x => x.id === id ? { ...x, stage, age: "aujourd'hui", next: stage === 'interview' ? 'À planifier' : '' } : x) }));
+    const label = STAGES.find(x => x[0] === stage)[1];
+    this.toast(stage === 'hired' ? `${c.name} embauché(e) ! Wedy prépare le contrat et l'onboarding.` : `${c.name} → ${label}`);
+  }
+  renderVals() {
+    const s = this.state, C = 2 * Math.PI * 15;
+    const pool = s.cands.filter(c => s.job < 0 || c.job === s.job);
+    const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+    return {
+      rootRef: this.rootRef, allow: e => e.preventDefault(),
+      activeCount: s.cands.filter(c => c.stage !== 'hired').length, interviewCount: s.cands.filter(c => c.stage === 'interview').length,
+      jobs: [[-1, 'Tous les postes'], ...JOBS.map((j, i) => [i, j])].map(([i, label]) => ({ label, n: s.cands.filter(c => (i < 0 || c.job === i) && c.stage !== 'hired').length, go: () => this.setState({ job: i }), bg: s.job === i ? '#0a1c24' : '#ffffff', color: s.job === i ? '#ffffff' : '#33474f', border: s.job === i ? '#0a1c24' : '#e2e8eb' })),
+      cols: STAGES.map(([key, label, dot, bg], ci) => {
+        const cards = pool.filter(c => c.stage === key).map((c, i) => ({
+          ...c, ini: ini(c.name), av: AV[(c.name.length + i) % AV.length], job: JOBS[c.job], hasNext: !!c.next,
+          scoreColor: c.score >= 85 ? '#16a06b' : c.score >= 75 ? '#16b6c8' : '#df9326', dash: `${(C * c.score / 100).toFixed(1)}px ${C.toFixed(1)}px`,
+          drag: e => { try { e.dataTransfer.setData('text/plain', c.id); } catch (_) {} },
+        }));
+        return { key, label, dot, bg, n: cards.length, cards, delay: String(ci * 70), drop: e => { e.preventDefault(); let id = ''; try { id = e.dataTransfer.getData('text/plain'); } catch (_) {} if (id) this.move(id, key); } };
+      }),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

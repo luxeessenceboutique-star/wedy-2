@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Historique — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="history" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Documents" title="Historique" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Historique</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Tous les documents générés, à retrouver, retélécharger ou renvoyer en un clic.</p>
+        </div>
+        <div data-reveal="up" data-delay="100" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" onClick="{{ exportReg }}" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="border-color:#9fb4bb"><span data-icon="file-spreadsheet" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Exporter le registre</button>
+          <a href="Wedy Generate.dc.html" style="display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:14px;font-weight:600;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)" style-hover="color:#ffffff"><span data-icon="wand-sparkles|wand-2" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Générer un document</a>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">
+        <div data-reveal="up" data-delay="60" style="padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#0b5f72,#0e7f96);color:#ffffff"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9">Documents en octobre</div><div data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">142</div><div style="font-size:12.5px;opacity:.9">+18 % par rapport à septembre</div></div>
+        <div data-reveal="up" data-delay="110" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Temps gagné estimé</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">47 h</div><div style="font-size:12.5px;color:#52646d">≈ 20 minutes par document</div></div>
+        <div data-reveal="up" data-delay="160" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Rédigés par Wedy IA</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">38 %</div><div style="height:6px;border-radius:99px;background:#eef2f4;overflow:hidden;margin-top:6px"><div data-reveal="growx" style="height:100%;width:38%;border-radius:99px;background:linear-gradient(90deg,#5444b8,#9a8bf0);transform-origin:left"></div></div></div>
+        <div data-reveal="up" data-delay="210" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Langues</div><div style="display:flex;height:12px;border-radius:99px;overflow:hidden;gap:3px;margin-top:14px"><span data-reveal="growx" style="width:68%;background:#0e6f84;border-radius:99px;transform-origin:left"></span><span data-reveal="growx" data-delay="150" style="width:21%;background:#6d5ad6;border-radius:99px;transform-origin:left"></span><span data-reveal="growx" data-delay="250" style="width:11%;background:#16a06b;border-radius:99px;transform-origin:left"></span></div><div style="display:flex;gap:12px;margin-top:10px;font-size:12px;color:#33474f"><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#0e6f84"></span>FR 68 %</span><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#6d5ad6"></span>AR 21 %</span><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#16a06b"></span>EN 11 %</span></div></div>
+      </div>
+
+      <div data-reveal="up" data-delay="120" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <div style="position:relative;flex:1 1 220px;min-width:200px;max-width:320px"><span data-icon="search" data-size="15" style="position:absolute;left:12px;top:50%;margin-top:-7.5px;display:inline-flex;width:15px;height:15px;color:#7d8f97;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Rechercher un document ou un collaborateur…" style="width:100%;height:40px;padding:0 12px 0 36px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></div>
+        <select value="{{ type }}" onChange="{{ onType }}" style="height:40px;padding:0 30px 0 12px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13px;font-weight:500;color:#33474f;cursor:pointer;outline:none"><option value="all">Tous les types</option><option value="attestation">Attestations</option><option value="contrat">Contrats</option><option value="lettre">Lettres</option><option value="avenant">Avenants</option><option value="autre">Autres</option></select>
+        <sc-for list="{{ langs }}" as="l" hint-placeholder-count="4"><button type="button" onClick="{{ l.go }}" style="height:34px;padding:0 12px;border-radius:99px;border:1px solid {{ l.border }};background:{{ l.bg }};color:{{ l.color }};font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;cursor:pointer">{{ l.label }}</button></sc-for>
+        <div style="margin-left:auto;display:flex;padding:4px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb">
+          <sc-for list="{{ authors }}" as="a" hint-placeholder-count="3"><button type="button" onClick="{{ a.go }}" style="position:relative;height:32px;padding:0 12px;border:none;border-radius:9px;background:transparent;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;color:{{ a.color }}"><sc-if value="{{ a.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="position:absolute;inset:0;border-radius:9px;background:#0a1c24"></span></sc-if><span style="position:relative">{{ a.label }}</span></button></sc-for>
+        </div>
+      </div>
+
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+        <div data-reveal="up" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:#f8fafb"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:14.5px">{{ g.label }}</span><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#5f7079">{{ g.n }}</span></div>
+          <sc-for list="{{ g.items }}" as="d" hint-placeholder-count="3">
+            <div data-reveal="up" data-delay="{{ d.delay }}" style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-top:1px solid #eef2f4;flex-wrap:wrap;background:{{ d.bg }};transition:background .15s" style-hover="background:#f6fafb">
+              <span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{ d.tint }};color:{{ d.color }};flex-shrink:0"><span data-icon="file-text" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span>
+              <div style="flex:1 1 200px;min-width:0"><div dir="{{ d.dir }}" style="font-size:14px;font-weight:600;text-align:left;font-family:{{ d.font }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.title }}</div><div style="font-size:12.5px;color:#5f7079">{{ d.cat }}{{ d.via }}</div></div>
+              <span style="flex:0 1 190px;display:flex;align-items:center;gap:8px;min-width:0"><span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ d.av }};color:#ffffff;font-size:9.5px;font-weight:700;flex-shrink:0">{{ d.ini }}</span><span style="font-size:13px;color:#33474f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.emp }}</span></span>
+              <span style="font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;padding:3px 8px;border-radius:7px;background:#eef5f7;color:#0b5f72">{{ d.lang }}</span>
+              <span style="width:120px;display:flex"><sc-if value="{{ d.ai }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#ece9fb;color:#5444b8"><span data-icon="sparkles" data-size="12" style="display:inline-flex;width:12px;height:12px"></span>Wedy IA</span></sc-if><sc-if value="{{ d.human }}" hint-placeholder-val="{{ true }}"><span style="font-size:12.5px;color:#52646d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.by }}</span></sc-if></span>
+              <span style="width:46px;font-family:'Geist Mono',monospace;font-size:12px;color:#7d8f97;text-align:right">{{ d.when }}</span>
+              <span style="display:flex;gap:2px">
+                <button type="button" onClick="{{ d.open }}" aria-label="Aperçu" style="width:34px;height:34px;border:none;border-radius:9px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#eef3f5;color:#0a1c24"><span data-icon="eye" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button>
+                <button type="button" onClick="{{ d.download }}" aria-label="Télécharger" style="width:34px;height:34px;border:none;border-radius:9px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#e4f2f4;color:#0e6f84"><span data-icon="download" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button>
+                <button type="button" onClick="{{ d.remove }}" aria-label="Supprimer" style="width:34px;height:34px;border:none;border-radius:9px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#fbe9e6;color:#df5740"><span data-icon="trash-2" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+      <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="padding:44px 20px;border-radius:20px;border:1px dashed #d0dadf;background:#ffffff;text-align:center;font-size:14px;color:#52646d">Aucun document ne correspond à ces filtres.</div></sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{ hasCur }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ close }}" style="position:fixed;inset:0;z-index:100;background:rgba(6,20,26,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
+    <div data-reveal="left" style="position:fixed;top:0;right:0;bottom:0;z-index:101;width:min(560px,100vw);display:flex;flex-direction:column;background:#eef2f4;box-shadow:-30px 0 80px -30px rgba(6,20,26,.5)">
+      <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;background:#ffffff;border-bottom:1px solid #e2e8eb"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{ cur.tint }};color:{{ cur.color }}"><span data-icon="file-text" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><div style="flex:1;min-width:0"><div dir="{{ cur.dir }}" style="font-weight:700;font-size:15px;text-align:left;font-family:{{ cur.font }}">{{ cur.title }}</div><div style="font-size:12.5px;color:#5f7079">{{ cur.emp }} · {{ cur.stamp }}</div></div><button type="button" onClick="{{ close }}" aria-label="Fermer" style="width:36px;height:36px;border:none;border-radius:10px;background:#f3f6f7;color:#52646d;cursor:pointer;display:flex;align-items:center;justify-content:center"><span data-icon="x" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button></div>
+      <div style="flex:1;overflow-y:auto;padding:20px">
+        <div dir="{{ cur.dir }}" style="background:#ffffff;border-radius:6px;box-shadow:0 24px 50px -28px rgba(10,28,36,.45);padding:34px 36px 24px;min-height:560px;display:flex;flex-direction:column;color:#1d2a30;font-family:{{ cur.paperFont }}">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#06141a,#0e6f84);color:#ffffff;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:13px;flex-shrink:0">TY</span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:14.5px;color:#0a1c24">Tython SARL</div><div style="font-family:'Geist',system-ui,sans-serif;font-size:11px;color:#7d8f97">112 boulevard d'Anfa, Casablanca</div></div></div>
+          <div style="height:2px;background:linear-gradient(90deg,#0e6f84,#16b6c8);margin-top:12px"></div>
+          <div style="margin:28px 0 20px;text-align:center;font-family:{{ cur.titleFont }};font-weight:700;font-size:17px;letter-spacing:{{ cur.spacing }};color:#0a1c24">{{ cur.upper }}</div>
+          <p data-reveal="fade" style="margin:0;font-size:14px;line-height:1.85;text-align:justify">{{ cur.body }}</p>
+          <div style="margin-top:24px;font-size:13.5px;text-align:{{ cur.endAlign }}">{{ cur.place }}</div>
+          <div style="flex:1"></div>
+          <div style="margin-top:28px;padding-top:10px;border-top:1px solid #eef2f4;display:flex;justify-content:space-between;gap:10px;font-family:'Geist Mono',monospace;font-size:9.5px;color:#8a9ba3;direction:ltr"><span>Généré par {{ cur.by }}</span><span>wedy.ma/v/{{ cur.code }}</span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;padding:14px 20px;background:#ffffff;border-top:1px solid #e2e8eb">
+        <button type="button" onClick="{{ cur.download }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:42px;border:none;border-radius:11px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#16323c"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Télécharger</button>
+        <button type="button" onClick="{{ cur.resend }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:42px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;color:#0a1c24;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap"><span data-icon="send" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Renvoyer à {{ cur.first }}</button>
+        <a href="Wedy Generate.dc.html" style="display:inline-flex;align-items:center;justify-content:center;gap:7px;height:42px;padding:0 14px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;font-size:13.5px;font-weight:600;white-space:nowrap" style-hover="color:#0a1c24"><span data-icon="refresh-cw" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Régénérer</a>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:9px 10px 9px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span><span style="padding-right:6px">{{ toastText }}</span><sc-if value="{{ hasUndo }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ undo }}" style="height:30px;padding:0 11px;border:none;border-radius:8px;background:rgba(255,255,255,.12);color:#5fe3f0;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">Annuler</button></sc-if></div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const CAT = { attestation: ['Attestation', '#e1f5ec', '#0f6f49'], contrat: ['Contrat', '#e4f2f4', '#0b5f72'], lettre: ['Lettre', '#fbefda', '#8a5207'], avenant: ['Avenant', '#ece9fb', '#5444b8'], autre: ['Autre', '#eef2f4', '#33474f'] };
+const DOCS = [
+  ['d1', 'Attestation de travail', 'attestation', 'Yasmine Benali', 'FR', 'ai', '2026-11-01', '09:12', 'Portail employé'],
+  ['d2', 'شهادة الأجر', 'attestation', 'Nadia Berrada', 'AR', 'ai', '2026-11-01', '08:40', 'Portail employé'],
+  ['d3', 'Avenant de renouvellement', 'avenant', 'Karim Bennani', 'FR', 'Salma Idrissi', '2026-10-30', '17:05'],
+  ['d4', 'Attestation de salaire', 'attestation', 'Nadia Berrada', 'FR', 'Salma Idrissi', '2026-10-30', '11:20'],
+  ['d5', "Lettre d'embauche", 'lettre', 'Soufiane Berrada', 'FR', 'Sara El Fassi', '2026-10-30', '10:02'],
+  ['d6', 'Work certificate', 'attestation', 'Karim Bennani', 'EN', 'ai', '2026-10-29', '16:45', 'Copilote'],
+  ['d7', 'Contrat CDD', 'contrat', 'Ayoub El Idrissi', 'FR', 'Sara El Fassi', '2026-10-29', '09:30'],
+  ['d8', 'اتفاقية التدريب', 'contrat', 'Amine Ouali', 'AR', 'ai', '2026-10-29', '09:05', 'Copilote'],
+  ['d9', 'Attestation de travail', 'attestation', 'Omar Alaoui', 'FR', 'ai', '2026-10-22', '14:18', 'Portail employé'],
+  ['d10', 'Certificat de travail', 'attestation', 'Rachid Ouazzani', 'FR', 'Salma Idrissi', '2026-10-20', '15:40'],
+  ['d11', 'Solde de tout compte', 'autre', 'Rachid Ouazzani', 'FR', 'Salma Idrissi', '2026-10-20', '15:32'],
+  ['d12', "Lettre d'avertissement", 'lettre', 'Khadija Zerouali', 'FR', 'Salma Idrissi', '2026-10-15', '11:05'],
+  ['d13', 'Contrat CDI', 'contrat', 'Mehdi Rami', 'FR', 'Salma Idrissi', '2026-09-24', '10:30'],
+].map(([id, title, cat, emp, lang, by, date, time, via]) => ({ id, title, cat, emp, lang, by, date, time, via: via || '' }));
+const BODY = {
+  attestation: { FR: "Nous soussignés, Tython SARL, sise au 112 boulevard d'Anfa à Casablanca, attestons que {emp} fait partie de notre personnel. Cette attestation est délivrée à l'intéressé(e), sur sa demande, pour servir et valoir ce que de droit.", AR: 'نشهد نحن الموقعين أسفله، شركة أطلس ديجيتال ش.م.م، أن {emp} يعمل لدى شركتنا. سلمت هذه الشهادة للمعني بالأمر بناءً على طلبه للإدلاء بها عند الحاجة.', EN: 'We, the undersigned, Tython SARL, hereby certify that {emp} is a member of our staff. This certificate is issued at the employee\'s request for all legal purposes.' },
+  contrat: { FR: "Entre Tython SARL et {emp}, il a été convenu ce qui suit. Le présent contrat précise le poste, la durée et la rémunération, conformément aux dispositions du Code du travail.", AR: 'بين شركة أطلس ديجيتال ش.م.م و{emp}، تم الاتفاق على ما يلي. تحدد هذه الاتفاقية مدة التدريب وشروطه وفقًا للقوانين الجاري بها العمل.' },
+  lettre: { FR: "{emp}, nous vous adressons la présente afin de vous communiquer les éléments relatifs à votre situation au sein de Tython SARL." },
+  avenant: { FR: "Le présent avenant modifie le contrat de travail de {emp}. D'un commun accord, le contrat est renouvelé ; toutes les autres clauses demeurent inchangées." },
+  autre: { FR: "Je soussigné(e) {emp} reconnais avoir reçu de Tython SARL les sommes dues au titre des salaires, accessoires et indemnités liés à la fin de mon contrat." },
+};
+const PLACE = { FR: 'Fait à Casablanca, le {d}', AR: 'حرر بالدار البيضاء في {d}', EN: 'Done in Casablanca, on {d}' };
+const avOf = n => AV[(n.charCodeAt(0) + n.length) % AV.length];
+const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+const dmy = d => d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4);
+const groupOf = d => {
+  if (d === '2026-11-01') return "Aujourd'hui";
+  if (d === '2026-10-31') return 'Hier';
+  if (d >= '2026-10-26') { const s = new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }); return s.charAt(0).toUpperCase() + s.slice(1); }
+  return 'Plus tôt';
+};
+
+class Component extends DCLogic {
+  state = { docs: DOCS, q: '', type: 'all', lang: 'all', author: 'all', cur: null, toast: '', undo: null };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); window.addEventListener('keydown', this.esc); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); window.removeEventListener('keydown', this.esc); }
+  esc = e => { if (e.key === 'Escape') this.setState({ cur: null }); };
+  toast(t, undo) { clearTimeout(this._t); this.setState({ toast: t, undo: undo || null }); this._t = setTimeout(() => this._a && this.setState({ toast: '', undo: null }), undo ? 5000 : 2600); }
+  renderVals() {
+    const s = this.state, q = s.q.trim().toLowerCase();
+    const list = s.docs.filter(d => (s.type === 'all' || d.cat === s.type) && (s.lang === 'all' || d.lang === s.lang) && (s.author === 'all' || (s.author === 'ai' ? d.by === 'ai' : d.by !== 'ai')) && (!q || `${d.title} ${d.emp}`.toLowerCase().includes(q)));
+    const groups = [];
+    list.forEach(d => { const label = groupOf(d.date); let g = groups.find(x => x.label === label); if (!g) { g = { label, items: [] }; groups.push(g); } g.items.push(d); });
+    const row = (d, i) => ({ title: d.title, cat: CAT[d.cat][0], tint: CAT[d.cat][1], color: CAT[d.cat][2], via: d.via ? ` · via ${d.via}` : '', emp: d.emp, ini: ini(d.emp), av: avOf(d.emp), lang: d.lang, ai: d.by === 'ai', human: d.by !== 'ai', by: d.by,
+      when: groupOf(d.date) === 'Plus tôt' ? d.date.slice(8, 10) + '/' + d.date.slice(5, 7) : d.time, dir: d.lang === 'AR' ? 'rtl' : 'ltr', font: d.lang === 'AR' ? "'Noto Kufi Arabic',sans-serif" : 'inherit',
+      bg: s.cur === d.id ? '#f3fafb' : '#ffffff', delay: String(i * 40),
+      open: () => this.setState({ cur: d.id }), download: () => this.toast(`${d.title} · ${d.emp} téléchargé`),
+      remove: () => { const idx = s.docs.findIndex(x => x.id === d.id); this.setState(x => ({ docs: x.docs.filter(y => y.id !== d.id), cur: x.cur === d.id ? null : x.cur })); this.toast('Document supprimé', { d, idx }); } });
+    const c = s.cur ? s.docs.find(d => d.id === s.cur) : null;
+    const ar = c && c.lang === 'AR';
+    return {
+      rootRef: this.rootRef,
+      q: s.q, onQ: e => this.setState({ q: e.target.value }), type: s.type, onType: e => this.setState({ type: e.target.value }),
+      langs: [['all', 'Toutes'], ['FR', 'FR'], ['AR', 'AR'], ['EN', 'EN']].map(([k, label]) => ({ label, go: () => this.setState({ lang: k }), bg: s.lang === k ? '#0a1c24' : '#ffffff', color: s.lang === k ? '#ffffff' : '#33474f', border: s.lang === k ? '#0a1c24' : '#e2e8eb' })),
+      authors: [['all', 'Tous'], ['ai', 'Wedy IA'], ['team', 'Équipe RH']].map(([k, label]) => ({ label, on: s.author === k, color: s.author === k ? '#ffffff' : '#52646d', go: () => this.setState({ author: k }) })),
+      groups: groups.map(g => ({ label: g.label, n: `${g.items.length} document${g.items.length > 1 ? 's' : ''}`, items: g.items.map(row) })),
+      empty: list.length === 0,
+      hasCur: !!c, close: () => this.setState({ cur: null }),
+      cur: c ? {
+        title: c.title, upper: ar ? c.title : c.title.toUpperCase(), emp: c.emp, first: c.emp.split(' ')[0], stamp: `${dmy(c.date)} à ${c.time}`, tint: CAT[c.cat][1], color: CAT[c.cat][2],
+        dir: ar ? 'rtl' : 'ltr', font: ar ? "'Noto Kufi Arabic',sans-serif" : 'inherit', paperFont: ar ? "'Noto Kufi Arabic',sans-serif" : "Georgia,'Times New Roman',serif", titleFont: ar ? "'Noto Kufi Arabic',sans-serif" : "'Bricolage Grotesque',system-ui,sans-serif", spacing: ar ? '0' : '.1em',
+        body: ((BODY[c.cat] || BODY.lettre)[c.lang] || (BODY[c.cat] || BODY.lettre).FR).replace('{emp}', c.emp), place: PLACE[c.lang].replace('{d}', dmy(c.date)), endAlign: ar ? 'left' : 'right',
+        by: c.by === 'ai' ? `Wedy IA${c.via ? ' · ' + c.via : ''}` : c.by, code: c.id.toUpperCase() + '7K',
+        download: () => this.toast(`${c.title} téléchargé`), resend: () => this.toast(`Document renvoyé à ${c.emp}`),
+      } : {},
+      exportReg: () => this.toast('Registre des documents exporté (Excel)'),
+      showToast: !!s.toast, toastText: s.toast, hasUndo: !!s.undo,
+      undo: () => { const u = s.undo; if (!u) return; this.setState(x => { const docs = [...x.docs]; docs.splice(Math.min(u.idx, docs.length), 0, u.d); return { docs, undo: null, toast: '' }; }); },
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Formation — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="training" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Développement RH" title="Formation" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Formation</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Catalogue, inscriptions et compétences de vos équipes.</p>
+        </div>
+        <button type="button" onClick="{{ addCourse }}" data-reveal="up" data-delay="100" style="display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)"><span data-icon="plus" data-size="16" data-sw="2.2" style="display:inline-flex;width:16px;height:16px"></span>Ajouter une formation</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        <div data-reveal="up" data-delay="60" style="padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#0b5f72,#0e7f96);color:#ffffff"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9">Inscriptions</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ kTotal }}</div><div style="font-size:12.5px;opacity:.9">dont {{ kOngoing }} en cours</div></div>
+        <div data-reveal="up" data-delay="110" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Taux de complétion</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ kRate }}%</div><div style="height:6px;border-radius:99px;background:#eef2f4;overflow:hidden;margin-top:6px"><div style="height:100%;width:{{ kRate }}%;border-radius:99px;background:linear-gradient(90deg,#0f6f49,#2bbd86);transition:width .6s"></div></div></div>
+        <div data-reveal="up" data-delay="160" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Budget formation 2026</div><div style="display:flex;align-items:baseline;gap:6px;margin-top:4px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:30px;font-weight:800;letter-spacing:-.04em">{{ kBudget }}</span><span style="font-size:13px;color:#52646d">/ 250 000 DH</span></div><div style="height:6px;border-radius:99px;background:#eef2f4;overflow:hidden;margin-top:8px"><div style="height:100%;width:{{ kBudgetPct }}%;border-radius:99px;background:{{ kBudgetBar }};transition:width .6s"></div></div></div>
+        <div data-reveal="up" data-delay="210" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Heures réalisées</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ kHours }} h</div><div style="font-size:12.5px;color:#52646d">soit 9,8 h par collaborateur</div></div>
+      </div>
+
+      <div data-reveal="up" data-delay="120" style="display:flex;gap:4px;padding:5px;border-radius:14px;background:#ffffff;border:1px solid #e2e8eb;align-self:flex-start">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3"><button type="button" onClick="{{ t.go }}" style="position:relative;display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border:none;border-radius:10px;background:transparent;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ t.color }}"><sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="position:absolute;inset:0;border-radius:10px;background:#0a1c24"></span></sc-if><span data-icon="{{ t.icon }}" data-size="15" style="position:relative;display:inline-flex;width:15px;height:15px"></span><span style="position:relative">{{ t.label }}</span></button></sc-for>
+      </div>
+
+      <sc-if value="{{ tCat }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div data-reveal="up" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <div style="position:relative;flex:1 1 220px;min-width:200px;max-width:320px"><span data-icon="search" data-size="15" style="position:absolute;left:12px;top:50%;margin-top:-7.5px;display:inline-flex;width:15px;height:15px;color:#7d8f97;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Rechercher une formation…" style="width:100%;height:40px;padding:0 12px 0 36px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></div>
+            <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6"><button type="button" onClick="{{ c.go }}" style="height:34px;padding:0 12px;border-radius:99px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ c.label }}</button></sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">
+            <sc-for list="{{ courses }}" as="c" hint-placeholder-count="8">
+              <div data-reveal="up" data-delay="{{ c.delay }}" style="display:flex;flex-direction:column;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden;transition:box-shadow .2s,transform .2s,border-color .2s" style-hover="border-color:#b9dfe5;box-shadow:0 20px 40px -26px rgba(10,28,36,.45);transform:translateY(-3px)">
+                <div style="position:relative;height:92px;padding:14px;background:linear-gradient(135deg,{{ c.bg }},#ffffff);display:flex;align-items:flex-start;justify-content:space-between;gap:8px;overflow:hidden">
+                  <span style="position:relative;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#ffffff;color:{{ c.color }}">{{ c.cat }}</span>
+                  <span style="position:relative;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.75);color:#33474f">{{ c.format }}</span>
+                  <span data-icon="{{ c.icon }}" data-size="58" style="position:absolute;right:14px;bottom:-12px;display:inline-flex;color:{{ c.color }};opacity:.2"></span>
+                </div>
+                <div style="padding:14px 16px 16px;display:flex;flex-direction:column;gap:5px;flex:1">
+                  <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:16px;letter-spacing:-.02em;line-height:1.25">{{ c.title }}</div>
+                  <div style="font-size:12.5px;color:#5f7079">{{ c.provider }}</div>
+                  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:auto;padding-top:10px;font-size:12.5px;color:#33474f">
+                    <span style="display:inline-flex;align-items:center;gap:5px"><span data-icon="clock" data-size="13" style="display:inline-flex;width:13px;height:13px;color:#7d8f97"></span>{{ c.hours }} h</span>
+                    <span style="display:inline-flex;align-items:center;gap:5px"><span data-icon="wallet" data-size="13" style="display:inline-flex;width:13px;height:13px;color:#7d8f97"></span>{{ c.cost }} DH</span>
+                    <span style="display:inline-flex;align-items:center;gap:5px"><span data-icon="users" data-size="13" style="display:inline-flex;width:13px;height:13px;color:#7d8f97"></span>{{ c.enrolled }} inscrits</span>
+                  </div>
+                  <button type="button" onClick="{{ c.assign }}" style="margin-top:10px;display:flex;align-items:center;justify-content:center;gap:7px;height:38px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13px;font-weight:600;color:#0a1c24;cursor:pointer" style-hover="border-color:#16b6c8;color:#0e6f84"><span data-icon="user-plus" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Inscrire des collaborateurs</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ noCourses }}" hint-placeholder-val="{{ false }}"><div style="padding:40px 20px;border-radius:18px;border:1px dashed #d0dadf;text-align:center;font-size:14px;color:#52646d">Aucune formation ne correspond.</div></sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ tAssign }}" hint-placeholder-val="{{ false }}">
+        <div data-reveal="up" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="overflow-x:auto">
+            <div style="min-width:900px">
+              <div style="display:grid;grid-template-columns:minmax(190px,1.3fr) minmax(220px,1.8fr) 110px 170px 80px 150px;align-items:center;padding:11px 20px;background:#f8fafb;border-bottom:1px solid #eef2f4;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079"><span>Collaborateur</span><span>Formation</span><span>Statut</span><span>Progression</span><span>Date</span><span style="text-align:right">Résultat</span></div>
+              <sc-for list="{{ assigns }}" as="a" hint-placeholder-count="8">
+                <div data-reveal="up" data-delay="{{ a.delay }}" style="display:grid;grid-template-columns:minmax(190px,1.3fr) minmax(220px,1.8fr) 110px 170px 80px 150px;align-items:center;padding:11px 20px;border-bottom:1px solid #eef2f4;transition:background .15s" style-hover="background:#f8fbfb">
+                  <span style="display:flex;align-items:center;gap:10px;min-width:0"><span style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ a.av }};color:#ffffff;font-size:11.5px;font-weight:700;flex-shrink:0">{{ a.ini }}</span><span style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.name }}</span></span>
+                  <span style="font-size:13.5px;color:#33474f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px">{{ a.course }}</span>
+                  <span><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ a.stBg }};color:{{ a.stColor }};white-space:nowrap">{{ a.status }}</span></span>
+                  <span style="display:flex;align-items:center;gap:8px;padding-right:16px"><span style="flex:1;height:7px;border-radius:99px;background:#eef2f4;overflow:hidden"><span style="display:block;height:100%;width:{{ a.pct }}%;border-radius:99px;background:{{ a.bar }};transition:width .6s cubic-bezier(.2,.8,.2,1)"></span></span><span style="width:34px;font-family:'Geist Mono',monospace;font-size:11.5px;color:#52646d;text-align:right">{{ a.pct }}%</span></span>
+                  <span style="font-family:'Geist Mono',monospace;font-size:12.5px;color:#52646d">{{ a.date }}</span>
+                  <span style="display:flex;justify-content:flex-end">
+                    <sc-if value="{{ a.canDone }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ a.complete }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border-radius:9px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;color:#0a1c24;cursor:pointer;white-space:nowrap" style-hover="border-color:#16a06b;color:#0f6f49"><span data-icon="check" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Marquer terminé</button></sc-if>
+                    <sc-if value="{{ a.hasScore }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;color:#0f6f49"><span data-icon="award" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>{{ a.score }}/100</span></sc-if>
+                    <sc-if value="{{ a.doneNoScore }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:#0f6f49"><span data-icon="circle-check|check-circle" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Attestation prête</span></sc-if>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ tSkills }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+          <div data-reveal="up" style="flex:2 1 560px;min-width:0;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:16px 20px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Matrice des compétences</span><span style="font-size:12.5px;color:#52646d">Cliquez une case pour changer le niveau</span></div>
+            <div style="overflow-x:auto">
+              <div style="min-width:740px;padding:0 20px 18px">
+                <div style="display:grid;grid-template-columns:180px repeat(6,minmax(86px,1fr));gap:6px;align-items:end;padding-bottom:4px"><span></span><sc-for list="{{ skills }}" as="k" hint-placeholder-count="6"><span style="font-size:11.5px;font-weight:700;color:#33474f;text-align:center">{{ k.name }}</span></sc-for></div>
+                <sc-for list="{{ matrix }}" as="r" hint-placeholder-count="8">
+                  <div data-reveal="up" data-delay="{{ r.delay }}" style="display:grid;grid-template-columns:180px repeat(6,minmax(86px,1fr));gap:6px;align-items:center;margin-top:6px">
+                    <span style="display:flex;align-items:center;gap:9px;min-width:0"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ r.av }};color:#ffffff;font-size:10.5px;font-weight:700;flex-shrink:0">{{ r.ini }}</span><span style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span></span>
+                    <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6"><button type="button" onClick="{{ c.cycle }}" title="{{ c.title }}" style="height:38px;border:none;border-radius:9px;background:{{ c.bg }};color:{{ c.color }};font-family:inherit;font-size:11.5px;font-weight:600;cursor:pointer;transition:background .25s,color .25s,transform .15s" style-hover="transform:scale(1.05)">{{ c.label }}</button></sc-for>
+                  </div>
+                </sc-for>
+                <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:#33474f">
+                  <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:4px;background:#f3f6f7;border:1px solid #e2e8eb"></span>Non évalué</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:4px;background:#e4f2f4"></span>Débutant</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:4px;background:#9fd6df"></span>Intermédiaire</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:4px;background:#0e6f84"></span>Expert</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div data-reveal="up" data-delay="100" style="flex:1 1 300px;min-width:0;padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:10px"><img src="assets/wedy-avatar.png" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;background:#e4f2f4"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Écarts détectés par Wedy</span></div>
+            <sc-for list="{{ gaps }}" as="g" hint-placeholder-count="2">
+              <div style="margin-top:14px;padding:14px;border-radius:14px;background:{{ g.bg }};border:1px solid {{ g.border }}">
+                <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:{{ g.color }}"><span data-icon="{{ g.icon }}" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>{{ g.title }}</div>
+                <div style="margin-top:4px;font-size:13px;line-height:1.5;color:#33474f">{{ g.text }}</div>
+                <sc-if value="{{ g.can }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ g.go }}" style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border:none;border-radius:10px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#16323c"><span data-icon="user-plus" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>{{ g.cta }}</button></sc-if>
+                <sc-if value="{{ g.done }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#0f6f49"><span data-icon="circle-check|check-circle" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Inscriptions envoyées</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{ modal }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeModal }}" style="position:fixed;inset:0;z-index:100;background:rgba(6,20,26,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
+    <div data-reveal="scale" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:101;width:min(480px,calc(100vw - 32px));max-height:calc(100vh - 64px);display:flex;flex-direction:column;border-radius:22px;background:#ffffff;box-shadow:0 40px 100px -30px rgba(6,20,26,.6);overflow:hidden">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:18px 20px;border-bottom:1px solid #eef2f4"><div style="flex:1;min-width:0"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em">Inscrire à « {{ mCourse }} »</div><div style="font-size:13px;color:#52646d;margin-top:2px">{{ mMeta }}</div></div><button type="button" onClick="{{ closeModal }}" aria-label="Fermer" style="width:36px;height:36px;border:none;border-radius:10px;background:#f3f6f7;color:#52646d;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span data-icon="x" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button></div>
+      <div style="flex:1;overflow-y:auto;padding:8px 12px">
+        <sc-for list="{{ mEmps }}" as="e" hint-placeholder-count="6">
+          <button type="button" onClick="{{ e.toggle }}" disabled="{{ e.already }}" style="width:100%;display:flex;align-items:center;gap:11px;padding:9px 8px;border:none;border-radius:11px;background:transparent;font-family:inherit;text-align:left;cursor:pointer;opacity:{{ e.op }}" style-hover="background:#f6f9fa">
+            <span style="width:20px;height:20px;border-radius:6px;border:1.5px solid #c3ced3;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#ffffff;background:#ffffff"><sc-if value="{{ e.on }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;border-radius:6px;background:#0e6f84;display:flex;align-items:center;justify-content:center"><span data-icon="check" data-size="13" data-sw="3" style="display:inline-flex;width:13px;height:13px"></span></span></sc-if></span>
+            <span style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ e.av }};color:#ffffff;font-size:11.5px;font-weight:700;flex-shrink:0">{{ e.ini }}</span>
+            <span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:600;color:#0a1c24">{{ e.name }}</span><span style="display:block;font-size:12px;color:#5f7079">{{ e.role }}</span></span>
+            <sc-if value="{{ e.already }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:#e1f5ec;color:#0f6f49">Déjà inscrit</span></sc-if>
+          </button>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-top:1px solid #eef2f4;background:#f8fafb;flex-wrap:wrap"><span style="font-size:13px;color:#52646d">Coût estimé · <strong style="color:#0a1c24">{{ mCost }} DH</strong></span><button type="button" onClick="{{ confirm }}" disabled="{{ mNone }}" style="margin-left:auto;display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;opacity:{{ mBtnOp }}"><span data-icon="check" data-size="15" data-sw="2.4" style="display:inline-flex;width:15px;height:15px"></span>{{ mLabel }}</button></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const CAT = {
+  technique: ['Technique', '#e4f2f4', '#0b5f72', 'code-xml|code'], soft: ['Soft skills', '#ece9fb', '#5444b8', 'messages-square|message-square'],
+  compliance: ['Conformité', '#fbe9e6', '#a33a28', 'scale'], management: ['Management', '#fbefda', '#8a5207', 'users'],
+  langue: ['Langue', '#e1f5ec', '#0f6f49', 'languages'], securite: ['Sécurité', '#eef2f4', '#33474f', 'shield-check'],
+  leadership: ['Leadership', '#ece9fb', '#3d2f99', 'mic'], digital: ['Digital', '#e7eefb', '#2f4bb0', 'table-2|table'],
+};
+const COURSES = [
+  { id: 'c1', title: "Code du travail marocain : l'essentiel", cat: 'compliance', provider: 'Lex Academy', hours: 7, cost: 2400, enrolled: 18, format: 'Présentiel' },
+  { id: 'c2', title: 'Manager une équipe à distance', cat: 'management', provider: 'ManagerLab', hours: 14, cost: 6500, enrolled: 9, format: 'Hybride' },
+  { id: 'c3', title: 'Anglais professionnel B2', cat: 'langue', provider: 'English Hub Casablanca', hours: 40, cost: 8900, enrolled: 12, format: 'Hybride' },
+  { id: 'c4', title: 'React & TypeScript avancé', cat: 'technique', provider: 'OpenClassrooms', hours: 24, cost: 3200, enrolled: 6, format: 'En ligne' },
+  { id: 'c5', title: 'Négociation commerciale B2B', cat: 'soft', provider: 'Sales Academy', hours: 14, cost: 5800, enrolled: 11, format: 'Présentiel' },
+  { id: 'c6', title: 'Sécurité au travail et premiers secours', cat: 'securite', provider: 'SécuriForm', hours: 7, cost: 1500, enrolled: 24, format: 'Présentiel' },
+  { id: 'c7', title: 'Excel avancé et tableaux croisés', cat: 'digital', provider: 'OpenClassrooms', hours: 12, cost: 1900, enrolled: 15, format: 'En ligne' },
+  { id: 'c8', title: 'Leadership et prise de parole', cat: 'leadership', provider: 'ManagerLab', hours: 10, cost: 4200, enrolled: 7, format: 'Présentiel' },
+];
+const EMPS = [['Yasmine Benali', 'Responsable Marketing'], ['Omar Alaoui', "Chef d'équipe logistique"], ['Karim Bennani', 'Développeur senior'], ['Hind Tazi', 'Chargée de clientèle'], ['Mehdi Rami', 'Commercial'], ['Sara El Fassi', 'Chargée RH'], ['Nadia Berrada', 'Comptable'], ['Youssef Amrani', 'Directeur des opérations'], ['Imane Kettani', 'Product designer'], ['Khadija Zerouali', 'Assistante commerciale']];
+const ASSIGN = [['Yasmine Benali', 'c8', 'En cours', 60, '12/11', 0], ['Omar Alaoui', 'c2', 'À venir', 0, '18/11', 0], ['Karim Bennani', 'c4', 'Terminé', 100, '15/10', 92], ['Hind Tazi', 'c3', 'En cours', 35, '20/12', 0], ['Mehdi Rami', 'c5', 'En cours', 50, '30/11', 0], ['Sara El Fassi', 'c1', 'Terminé', 100, '20/09', 88], ['Nadia Berrada', 'c7', 'Terminé', 100, '10/10', 95], ['Youssef Amrani', 'c2', 'À venir', 0, '18/11', 0]];
+const SKILLS = ['React', 'Data / SQL', 'Négociation', 'Management', 'Anglais', 'Code du travail'];
+const MATRIX = [['Karim Bennani', [3, 2, 0, 1, 2, 0]], ['Imane Kettani', [2, 1, 1, 1, 3, 0]], ['Anas Belhaj', [1, 3, 0, 0, 2, 0]], ['Mehdi Rami', [0, 0, 2, 0, 1, 0]], ['Yasmine Benali', [0, 1, 2, 2, 3, 1]], ['Omar Alaoui', [0, 0, 1, 1, 0, 1]], ['Hind Tazi', [0, 0, 1, 0, 1, 0]], ['Sara El Fassi', [0, 1, 1, 1, 2, 3]]];
+const LV = [['—', '#f3f6f7', '#8a9ba3', 'Non évalué'], ['Débutant', '#e4f2f4', '#0b5f72', 'Débutant'], ['Intermédiaire', '#9fd6df', '#063d4a', 'Intermédiaire'], ['Expert', '#0e6f84', '#ffffff', 'Expert']];
+const ST = { 'À venir': ['#eef2f4', '#33474f', '#c3ced3'], 'En cours': ['#e4f2f4', '#0b5f72', 'linear-gradient(90deg,#0e6f84,#16b6c8)'], 'Terminé': ['#e1f5ec', '#0f6f49', '#16a06b'] };
+const BASE = { total: 78, done: 59, budget: 184500, hours: 1240 };
+const fmt = n => n.toLocaleString('fr-FR').replace(/[\u202f\u00a0\s]/g, '\u00a0');
+const avOf = n => AV[(n.charCodeAt(0) + n.length) % AV.length];
+const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+
+class Component extends DCLogic {
+  state = { tab: 'catalog', cat: 'all', q: '', courses: COURSES.map(c => ({ ...c })), assigns: ASSIGN.map(([name, cid, status, pct, date, score], i) => ({ id: 'a' + i, name, cid, status, pct, date, score })), matrix: MATRIX.map(([n, l]) => [n, [...l]]), modal: null, pick: {}, extraBudget: 0, extraHours: 0, gapDone: {}, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); window.addEventListener('keydown', this.esc); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); window.removeEventListener('keydown', this.esc); }
+  esc = e => { if (e.key === 'Escape') this.setState({ modal: null }); };
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2800); }
+  enroll(cid, names, msg) {
+    const c = this.state.courses.find(x => x.id === cid); if (!c || !names.length) return;
+    this.setState(s => ({
+      assigns: [...names.map((name, k) => ({ id: `n${Date.now()}${k}`, name, cid, status: 'À venir', pct: 0, date: '—', score: 0 })), ...s.assigns],
+      courses: s.courses.map(x => x.id === cid ? { ...x, enrolled: x.enrolled + names.length } : x),
+      extraBudget: s.extraBudget + c.cost * names.length,
+    }));
+    this.toast(msg || `${names.length} collaborateur${names.length > 1 ? 's' : ''} inscrit${names.length > 1 ? 's' : ''} à « ${c.title} »`);
+  }
+  renderVals() {
+    const s = this.state, q = s.q.trim().toLowerCase();
+    const done = s.assigns.filter(a => a.status === 'Terminé').length;
+    const total = BASE.total + s.assigns.length, budget = BASE.budget + s.extraBudget;
+    const list = s.courses.filter(c => (s.cat === 'all' || c.cat === s.cat) && (!q || `${c.title} ${c.provider}`.toLowerCase().includes(q)));
+    const mc = s.modal ? s.courses.find(c => c.id === s.modal) : null;
+    const taken = mc ? s.assigns.filter(a => a.cid === mc.id).map(a => a.name) : [];
+    const picked = Object.keys(s.pick).filter(k => s.pick[k]);
+    const gapFor = (idx, cid) => s.matrix.filter(([, l]) => l[idx] < 2).map(([n]) => n).filter(n => !s.assigns.some(a => a.cid === cid && a.name === n));
+    const mg = gapFor(3, 'c2'), en = gapFor(4, 'c3');
+    return {
+      rootRef: this.rootRef,
+      kTotal: total, kOngoing: s.assigns.filter(a => a.status === 'En cours').length + 14, kRate: Math.round((BASE.done + done) / total * 100),
+      kBudget: fmt(budget), kBudgetPct: String(Math.min(100, Math.round(budget / 250000 * 100))), kBudgetBar: budget > 225000 ? 'linear-gradient(90deg,#df9326,#df5740)' : 'linear-gradient(90deg,#a8650a,#e6a948)', kHours: fmt(BASE.hours + s.extraHours),
+      tabs: [['catalog', 'Catalogue', 'library|book-open'], ['assign', 'Inscriptions', 'list-checks|check-square'], ['skills', 'Compétences', 'grid-3x3|grid']].map(([k, label, icon]) => ({ label, icon, on: s.tab === k, color: s.tab === k ? '#ffffff' : '#52646d', go: () => this.setState({ tab: k }) })),
+      tCat: s.tab === 'catalog', tAssign: s.tab === 'assign', tSkills: s.tab === 'skills',
+      q: s.q, onQ: e => this.setState({ q: e.target.value }),
+      cats: [['all', 'Toutes'], ...Object.keys(CAT).map(k => [k, CAT[k][0]])].map(([k, label]) => ({ label, go: () => this.setState({ cat: k }), bg: s.cat === k ? '#0a1c24' : '#ffffff', color: s.cat === k ? '#ffffff' : '#33474f', border: s.cat === k ? '#0a1c24' : '#e2e8eb' })),
+      courses: list.map((c, i) => ({ ...c, cat: CAT[c.cat][0], bg: CAT[c.cat][1], color: CAT[c.cat][2], icon: CAT[c.cat][3], cost: fmt(c.cost), delay: String(i * 50), assign: () => this.setState({ modal: c.id, pick: {} }) })),
+      noCourses: list.length === 0,
+      assigns: s.assigns.map((a, i) => {
+        const c = s.courses.find(x => x.id === a.cid), st = ST[a.status];
+        return { name: a.name, ini: ini(a.name), av: avOf(a.name), course: c ? c.title : '', status: a.status, stBg: st[0], stColor: st[1], bar: st[2], pct: String(a.pct), date: a.date, delay: String(i * 40),
+          canDone: a.status !== 'Terminé', hasScore: a.status === 'Terminé' && a.score > 0, doneNoScore: a.status === 'Terminé' && !a.score, score: a.score,
+          complete: () => { this.setState(x => ({ assigns: x.assigns.map(y => y.id === a.id ? { ...y, status: 'Terminé', pct: 100, date: '01/11' } : y), extraHours: x.extraHours + (c ? c.hours : 0) })); this.toast(`${a.name} a terminé « ${c ? c.title : ''} » · attestation générée`); } };
+      }),
+      skills: SKILLS.map(name => ({ name })),
+      matrix: s.matrix.map(([name, lv], ri) => ({ name, ini: ini(name), av: avOf(name), delay: String(ri * 40), cells: lv.map((l, ci) => ({ label: LV[l][0], bg: LV[l][1], color: LV[l][2], title: `${name} · ${SKILLS[ci]} : ${LV[l][3]}`, cycle: () => this.setState(x => ({ matrix: x.matrix.map(([n, ls], k) => k === ri ? [n, ls.map((v, j) => j === ci ? (v + 1) % 4 : v)] : [n, ls]) })) })) })),
+      gaps: [
+        { key: 'mg', names: mg, cid: 'c2', icon: 'users', title: `Management · ${mg.length} sous le niveau intermédiaire`, text: mg.length ? `${mg.join(', ')}. Parcours suggéré : « Manager une équipe à distance » (14 h).` : 'Aucun écart restant sur cette compétence.', bg: '#fbefda', border: 'rgba(230,169,72,.4)', color: '#8a5207' },
+        { key: 'en', names: en, cid: 'c3', icon: 'languages', title: `Anglais · ${en.length} sous le niveau B2`, text: en.length ? `${en.join(', ')}. Parcours suggéré : « Anglais professionnel B2 » (40 h).` : 'Aucun écart restant sur cette compétence.', bg: '#e4f2f4', border: 'rgba(22,182,200,.35)', color: '#0b5f72' },
+      ].map(g => ({ ...g, can: g.names.length > 0, done: g.names.length === 0 && !!s.gapDone[g.key], cta: `Inscrire les ${g.names.length}`, go: () => { this.setState(x => ({ gapDone: { ...x.gapDone, [g.key]: true } })); this.enroll(g.cid, g.names); } })),
+      modal: !!mc, mCourse: mc ? mc.title : '', mMeta: mc ? `${mc.provider} · ${mc.hours} h · ${fmt(mc.cost)} DH par personne` : '',
+      mEmps: EMPS.map(([name, role]) => { const already = taken.includes(name); return { name, role, ini: ini(name), av: avOf(name), already, on: !!s.pick[name], op: already ? '.5' : '1', toggle: () => this.setState(x => ({ pick: { ...x.pick, [name]: !x.pick[name] } })) }; }),
+      mCost: mc ? fmt(mc.cost * picked.length) : '0', mNone: picked.length === 0, mBtnOp: picked.length ? '1' : '.5',
+      mLabel: picked.length ? `Inscrire ${picked.length} collaborateur${picked.length > 1 ? 's' : ''}` : 'Sélectionnez des collaborateurs',
+      confirm: () => { if (!mc || !picked.length) return; this.enroll(mc.id, picked); this.setState({ modal: null, pick: {} }); },
+      closeModal: () => this.setState({ modal: null }),
+      addCourse: () => this.toast('Nouvelle formation : renseignez le titre, l\'organisme et le budget'),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

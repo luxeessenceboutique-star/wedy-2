@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Mes congés — Espace collaborateur Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    textarea::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyPortalNav" active="leave" hint-size="100%,63px"></dc-import>
+  <div style="max-width:1180px;margin:0 auto;padding:26px 24px 56px;display:flex;flex-direction:column;gap:18px">
+    <div>
+      <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(28px,3vw,38px);letter-spacing:-.045em;line-height:1.05">Mes congés</h1>
+      <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Posez vos jours en quelques secondes : Wedy compte les jours ouvrables pour vous.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+      <div data-reveal="up" data-delay="60" style="padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#0b5f72,#0e7f96);color:#ffffff"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9">Disponible</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">14,5 j</div></div>
+      <div data-reveal="up" data-delay="110" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">En attente</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ pending }} j</div></div>
+      <div data-reveal="up" data-delay="160" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Après validation</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px;color:#0b5f72">{{ after }} j</div></div>
+      <div data-reveal="up" data-delay="210" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Pris en 2026</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">8 j</div></div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+      <form onSubmit="{{ submit }}" data-reveal="up" data-delay="100" style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:14px;padding:22px;border-radius:22px;background:#ffffff;border:1px solid #e2e8eb">
+        <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px">Nouvelle demande</div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px"><sc-for list="{{ types }}" as="t" hint-placeholder-count="4"><button type="button" onClick="{{ t.go }}" style="display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border-radius:12px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;text-align:left"><span data-icon="{{ t.icon }}" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>{{ t.label }}</button></sc-for></div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Du<input type="date" value="{{ start }}" onChange="{{ onStart }}" style="height:44px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none"></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#33474f">Au<input type="date" value="{{ end }}" onChange="{{ onEnd }}" style="height:44px;padding:0 10px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;font-weight:400;color:#0a1c24;outline:none"></label>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:{{ calcBg }}"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:28px;font-weight:800;color:{{ calcColor }}">{{ days }}</span><span style="font-size:13px;line-height:1.45;color:#33474f">{{ calcText }}</span></div>
+        <textarea value="{{ motif }}" onChange="{{ onMotif }}" rows="2" placeholder="Un mot pour votre manager (optionnel)" style="resize:vertical;padding:10px 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></textarea>
+        <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#52646d"><span data-icon="git-branch|share-2" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Validation : <strong style="color:#0a1c24">Karim Lahlou</strong><span data-icon="arrow-right" data-size="12" style="display:inline-flex;width:12px;height:12px"></span><strong style="color:#0a1c24">RH</strong></div>
+        <button type="submit" style="display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border:none;border-radius:13px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 14px 30px -14px rgba(22,182,200,.85)"><span data-icon="send" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Envoyer la demande</button>
+      </form>
+
+      <div style="flex:1.2 1 420px;min-width:0;display:flex;flex-direction:column;gap:16px">
+        <div data-reveal="up" data-delay="140" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="padding:16px 20px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Historique</div>
+          <sc-for list="{{ reqs }}" as="r" hint-placeholder-count="4">
+            <div data-reveal="up" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef2f4;background:{{ r.bg }};flex-wrap:wrap">
+              <span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{ r.tint }};color:{{ r.color }};flex-shrink:0"><span data-icon="{{ r.icon }}" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span>
+              <div style="flex:1;min-width:160px"><div style="font-size:14px;font-weight:600">{{ r.type }}</div><div style="font-size:12.5px;color:#5f7079">{{ r.dates }}</div></div>
+              <span style="font-family:'Geist Mono',monospace;font-size:12.5px;color:#33474f">{{ r.days }}</span>
+              <span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ r.stBg }};color:{{ r.stColor }}">{{ r.status }}</span>
+              <sc-if value="{{ r.canCancel }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ r.cancel }}" style="height:30px;padding:0 10px;border-radius:8px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:12px;font-weight:600;color:#a33a28;cursor:pointer">Annuler</button></sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div data-reveal="up" data-delay="180" style="padding:18px 20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Mon équipe · 2 prochaines semaines</div>
+          <div style="overflow-x:auto;margin-top:12px"><div style="display:grid;grid-template-columns:repeat(10,minmax(38px,1fr));gap:4px;min-width:420px">
+            <sc-for list="{{ strip }}" as="d" hint-placeholder-count="10"><div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0;border-radius:10px;background:{{ d.bg }}"><span style="font-family:'Geist Mono',monospace;font-size:10px;color:#7d8f97">{{ d.dow }}</span><span style="font-size:13px;font-weight:700;color:{{ d.color }}">{{ d.n }}</span><span style="height:22px;display:flex;align-items:center"><sc-if value="{{ d.hasWho }}" hint-placeholder-val="{{ false }}"><span title="{{ d.title }}" style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ d.av }};color:#ffffff;font-size:8.5px;font-weight:700">{{ d.who }}</span></sc-if></span></div></sc-for>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.2);color:#4fd3a0"><span data-icon="check" data-size="15" data-sw="2.6" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TYPES = { annual: ['Congé annuel', 'sun', '#e4f2f4', '#0b5f72'], sick: ['Maladie', 'thermometer', '#fbe9e6', '#a33a28'], except: ['Exceptionnel', 'heart', '#ece9fb', '#5444b8'], unpaid: ['Sans solde', 'wallet', '#eef2f4', '#33474f'] };
+const HOL = ['2026-11-06', '2026-11-18', '2027-01-01', '2027-01-11', '2027-01-14'];
+const ST = { 'En attente': ['#fbefda', '#8a5207'], 'Approuvé': ['#e1f5ec', '#0f6f49'], 'Refusé': ['#fbe9e6', '#a33a28'] };
+const MO = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const pd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const wd = (a, b) => { if (!a || !b) return 0; let d = pd(a), e = pd(b), n = 0; if (e < d) return -1; while (d <= e) { const w = d.getDay(); if (w && w !== 6 && !HOL.includes(iso(d))) n++; d.setDate(d.getDate() + 1); } return n; };
+const fmtRange = (a, b) => { const x = pd(a), y = pd(b); return a === b ? `${x.getDate()} ${MO[x.getMonth()]} ${x.getFullYear()}` : `${x.getDate()} ${MO[x.getMonth()]} → ${y.getDate()} ${MO[y.getMonth()]} ${y.getFullYear()}`; };
+
+class Component extends DCLogic {
+  state = { type: 'annual', start: '2026-11-12', end: '2026-11-13', motif: '', reqs: [{ id: 'r0', type: 'annual', a: '2026-12-23', b: '2026-12-26', status: 'En attente' }, { id: 'r1', type: 'annual', a: '2026-08-18', b: '2026-08-22', status: 'Approuvé' }, { id: 'r2', type: 'annual', a: '2026-06-02', b: '2026-06-03', status: 'Approuvé' }, { id: 'r3', type: 'sick', a: '2026-03-12', b: '2026-03-12', status: 'Approuvé' }, { id: 'r4', type: 'unpaid', a: '2026-01-06', b: '2026-01-09', status: 'Refusé' }], fresh: null, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state, n = wd(s.start, s.end);
+    const pend = s.reqs.filter(r => r.status === 'En attente' && r.type === 'annual').reduce((t, r) => t + wd(r.a, r.b), 0);
+    const dec = v => String(v).replace('.', ',');
+    const absent = { '2026-11-10': ['LC', 'Lina Chraibi', 'linear-gradient(135deg,#5444b8,#9a8bf0)'], '2026-11-11': ['LC', 'Lina Chraibi', 'linear-gradient(135deg,#5444b8,#9a8bf0)'], '2026-11-12': ['YB', 'Vous', 'linear-gradient(135deg,#0e6f84,#16b6c8)'], '2026-11-13': ['YB', 'Vous', 'linear-gradient(135deg,#0e6f84,#16b6c8)'], '2026-11-03': ['KL', 'Karim Lahlou', 'linear-gradient(135deg,#b8402c,#ef6b54)'] };
+    const strip = []; const d = new Date(2026, 10, 2);
+    while (strip.length < 10) { const w = d.getDay(); if (w && w !== 6) { const k = iso(d), a = absent[k], hol = HOL.includes(k); strip.push({ dow: ['D', 'L', 'M', 'M', 'J', 'V', 'S'][w], n: String(d.getDate()), bg: hol ? '#fbf3e4' : '#f8fafb', color: hol ? '#8a5207' : '#0a1c24', hasWho: !!a || hol, who: a ? a[0] : '★', title: a ? `${a[1]} · absent(e)` : 'Jour férié', av: a ? a[2] : '#df9326' }); } d.setDate(d.getDate() + 1); }
+    return {
+      rootRef: this.rootRef, pending: dec(pend), after: dec(14.5 - pend), strip,
+      types: Object.keys(TYPES).map(k => ({ label: TYPES[k][0], icon: TYPES[k][1], go: () => this.setState({ type: k }), bg: s.type === k ? TYPES[k][2] : '#ffffff', color: s.type === k ? TYPES[k][3] : '#33474f', border: s.type === k ? TYPES[k][3] : '#d6dfe3' })),
+      start: s.start, end: s.end, onStart: e => this.setState({ start: e.target.value, end: s.end < e.target.value ? e.target.value : s.end }), onEnd: e => this.setState({ end: e.target.value }),
+      days: n < 0 ? '—' : String(n), calcBg: n < 0 ? '#fbe9e6' : '#e4f2f4', calcColor: n < 0 ? '#a33a28' : '#0b5f72',
+      calcText: n < 0 ? 'La date de fin est avant la date de début.' : `jour${n > 1 ? 's' : ''} ouvrable${n > 1 ? 's' : ''}, week-ends et jours fériés exclus${s.type === 'annual' ? ` · il vous restera ${dec(14.5 - pend - n)} j` : s.type === 'sick' ? ' · certificat médical à joindre sous 48 h' : ''}.`,
+      motif: s.motif, onMotif: e => this.setState({ motif: e.target.value }),
+      submit: e => { if (e && e.preventDefault) e.preventDefault(); if (n <= 0) { this.toast('Choisissez des dates valides'); return; } if (s.type === 'annual' && n > 14.5 - pend) { this.toast('Solde insuffisant pour cette période'); return; } const id = 'r' + Date.now(); this.setState(x => ({ reqs: [{ id, type: x.type, a: x.start, b: x.end, status: 'En attente' }, ...x.reqs], fresh: id, motif: '' })); this.toast('Demande envoyée à Karim Lahlou'); },
+      reqs: s.reqs.map(r => { const t = TYPES[r.type], k = wd(r.a, r.b); return { type: t[0], icon: t[1], tint: t[2], color: t[3], dates: fmtRange(r.a, r.b), days: `${k} j`, status: r.status, stBg: ST[r.status][0], stColor: ST[r.status][1], bg: r.id === s.fresh ? '#eef9fa' : '#ffffff', canCancel: r.status === 'En attente', cancel: () => { this.setState(x => ({ reqs: x.reqs.filter(y => y.id !== r.id) })); this.toast('Demande annulée'); } }; }),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

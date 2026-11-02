@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Demandes — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="requests" pending="{{ pendingCount }}" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Personnes" title="Demandes" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Demandes</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Congés, documents et autres demandes de vos employés.</p>
+        </div>
+        <div data-reveal="up" data-delay="100" style="display:flex;padding:4px;border-radius:13px;background:#ffffff;border:1px solid #e2e8eb">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button type="button" onClick="{{ t.go }}" style="position:relative;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border:none;border-radius:10px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ t.color }}"><sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="position:absolute;inset:0;border-radius:10px;background:#0a1c24"></span></sc-if><span style="position:relative">{{ t.label }}</span><span style="position:relative;font-family:'Geist Mono',monospace;font-size:11px;padding:1px 6px;border-radius:99px;background:{{ t.badgeBg }}">{{ t.n }}</span></button></sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div data-reveal="up" data-delay="120" style="flex:1 1 380px;min-width:0;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid #eef2f4">
+            <sc-for list="{{ kinds }}" as="k" hint-placeholder-count="4"><button type="button" onClick="{{ k.go }}" style="height:32px;padding:0 12px;border-radius:99px;border:1px solid {{ k.border }};background:{{ k.bg }};color:{{ k.color }};font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">{{ k.label }}</button></sc-for>
+          </div>
+          <sc-for list="{{ list }}" as="r" hint-placeholder-count="6">
+            <button type="button" onClick="{{ r.pick }}" data-reveal="up" data-delay="{{ r.delay }}" style="position:relative;width:100%;display:flex;align-items:center;gap:12px;padding:13px 16px;border:none;border-bottom:1px solid #eef2f4;background:{{ r.bg }};font-family:inherit;text-align:left;cursor:pointer" style-hover="background:#f6fafb">
+              <sc-if value="{{ r.on }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:#16b6c8"></span></sc-if>
+              <span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ r.av }};color:#ffffff;font-size:13px;font-weight:700;flex-shrink:0">{{ r.ini }}</span>
+              <span style="flex:1;min-width:0"><span style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:#0a1c24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span><span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:11px;color:#7d8f97;flex-shrink:0">{{ r.date }}</span></span><span style="display:flex;align-items:center;gap:6px;margin-top:3px"><span data-icon="{{ r.icon }}" data-size="13" style="display:inline-flex;width:13px;height:13px;color:{{ r.kindColor }}"></span><span style="font-size:13px;color:#33474f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.type }}</span><span style="margin-left:auto;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:{{ r.stBg }};color:{{ r.stColor }};flex-shrink:0">{{ r.stLabel }}</span></span></span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="padding:40px 20px;text-align:center;font-size:14px;color:#52646d">Aucune demande dans cette vue.</div></sc-if>
+        </div>
+
+        <sc-if value="{{ hasCur }}" hint-placeholder-val="{{ true }}">
+          <div data-reveal="left" data-delay="160" style="flex:1.3 1 440px;min-width:0;position:sticky;top:90px;border-radius:22px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+            <div style="position:relative;overflow:hidden;padding:24px;background:#06141a;color:#e8eff1;isolation:isolate">
+              <div aria-hidden="true" data-loop="drift" style="position:absolute;right:-80px;top:-120px;width:360px;height:360px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent);z-index:-1"></div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <span style="width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ cur.av }};color:#ffffff;font-size:17px;font-weight:700;border:2px solid rgba(255,255,255,.2)">{{ cur.ini }}</span>
+                <div style="flex:1;min-width:0"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.03em">{{ cur.name }}</div><div style="font-size:13.5px;color:#9fb4bb">{{ cur.role }}</div></div>
+                <span style="font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px;background:{{ cur.stBgDark }};color:{{ cur.stColorDark }}">{{ cur.stLabel }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:18px;padding:14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.15);color:#5fe3f0"><span data-icon="{{ cur.icon }}" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><div><div style="font-size:15px;font-weight:600">{{ cur.type }}</div><div style="font-size:13px;color:#9fb4bb">{{ cur.detail }}</div></div></div>
+            </div>
+            <div style="padding:22px 24px;display:flex;flex-direction:column;gap:16px">
+              <div><div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Motif</div><div style="margin-top:6px;font-size:14.5px;line-height:1.55;color:#1d3540">{{ cur.reason }}</div></div>
+              <sc-if value="{{ cur.isLeave }}" hint-placeholder-val="{{ true }}">
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+                  <div style="padding:12px;border-radius:12px;background:#f3f6f7"><div style="font-size:11.5px;color:#5f7079">Solde actuel</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:22px;font-weight:800">{{ cur.balance }} j</div></div>
+                  <div style="padding:12px;border-radius:12px;background:#f3f6f7"><div style="font-size:11.5px;color:#5f7079">Demandé</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:22px;font-weight:800">{{ cur.days }} j</div></div>
+                  <div style="padding:12px;border-radius:12px;background:#e4f2f4"><div style="font-size:11.5px;color:#0b5f72">Après validation</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:22px;font-weight:800;color:#0b5f72">{{ cur.after }} j</div></div>
+                </div>
+              </sc-if>
+              <div style="display:flex;gap:10px;align-items:flex-start;padding:13px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(22,182,200,.08),rgba(109,90,214,.08));border:1px solid rgba(109,90,214,.18)"><img src="assets/wedy-avatar.png" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#e4f2f4"><div><div style="font-size:12px;font-weight:700;color:#5444b8">Analyse de Wedy</div><div style="margin-top:3px;font-size:13.5px;line-height:1.5;color:#33474f">{{ cur.ai }}</div></div></div>
+              <sc-if value="{{ cur.isPending }}" hint-placeholder-val="{{ true }}">
+                <textarea value="{{ comment }}" onChange="{{ onComment }}" rows="2" placeholder="Ajouter un commentaire pour l'employé (optionnel)" style="width:100%;resize:vertical;padding:11px 13px;border-radius:12px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></textarea>
+                <div style="display:flex;gap:10px">
+                  <button type="button" onClick="{{ refuse }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:46px;border-radius:12px;border:1px solid #f0c9c0;background:#ffffff;color:#a33a28;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:#fbe9e6"><span data-icon="x" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Refuser</button>
+                  <button type="button" onClick="{{ approve }}" style="flex:1.4;position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,#0f6f49,#16a06b);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 12px 26px -12px rgba(22,160,107,.8)"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><span data-icon="check" data-size="16" data-sw="2.4" style="position:relative;display:inline-flex;width:16px;height:16px"></span><span style="position:relative">Approuver</span></button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ cur.isDone }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:14px;background:{{ cur.stBg }};color:{{ cur.stColor }};font-size:14px;font-weight:600"><span data-icon="{{ cur.doneIcon }}" data-size="18" style="display:inline-flex;width:18px;height:18px"></span>{{ cur.doneText }}</div></sc-if>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.2);color:#4fd3a0"><span data-icon="check" data-size="15" data-sw="2.6" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const KIND = { leave: ['calendar', '#6d5ad6', 'Congé'], doc: ['file-text', '#0e6f84', 'Document'], other: ['message-square', '#b06b0c', 'Autre'] };
+const ST = { pending: ['En attente', '#fbefda', '#8a5207', 'rgba(230,169,72,.18)', '#f0bd6a'], approved: ['Approuvée', '#e1f5ec', '#0f6f49', 'rgba(43,189,134,.18)', '#4fd3a0'], refused: ['Refusée', '#fbe9e6', '#a33a28', 'rgba(239,107,84,.18)', '#ef8b78'] };
+const SEED = [
+  { id: 1, name: 'Omar Alaoui', role: "Chef d'équipe logistique · Opérations", kind: 'leave', type: 'Congé annuel', detail: 'Du 4 au 6 novembre 2026 · 3 jours', days: 3, balance: 9, reason: 'Mariage de mon frère à Fès.', date: '30/10', status: 'pending', ai: "Aucun conflit : 1 seule autre absence prévue dans l'équipe Opérations ces jours-là. Solde suffisant." },
+  { id: 2, name: 'Nadia Berrada', role: 'Comptable · Finance', kind: 'doc', type: 'Attestation de salaire', detail: 'Version française · usage bancaire', reason: "Dossier de crédit immobilier auprès de ma banque.", date: '30/10', status: 'pending', ai: "Toutes les données nécessaires sont au dossier. Wedy peut générer l'attestation en un clic après validation." },
+  { id: 3, name: 'Hind Tazi', role: 'Chargée de clientèle · Service client', kind: 'leave', type: 'Congé annuel', detail: 'Du 10 au 11 novembre 2026 · 2 jours', days: 2, balance: 6.5, reason: 'Démarches administratives personnelles.', date: '29/10', status: 'pending', ai: "Attention : son CDD se termine le 27/11. Le solde reste suffisant (4,5 j après validation)." },
+  { id: 4, name: 'Karim Bennani', role: 'Développeur senior · Tech', kind: 'doc', type: 'Attestation de travail', detail: 'Version arabe', reason: 'Demande de visa.', date: '29/10', status: 'pending', ai: 'Document standard. Modèle arabe disponible et à jour.' },
+  { id: 5, name: 'Sara El Fassi', role: 'Chargée RH · RH', kind: 'leave', type: 'Congé exceptionnel', detail: 'Mariage · 4 jours', days: 4, balance: 12, reason: "Mon mariage — congé exceptionnel prévu par le Code du travail.", date: '28/10', status: 'pending', ai: "Le Code du travail prévoit 4 jours pour le mariage du salarié : demande conforme, sans impact sur le solde annuel." },
+  { id: 6, name: 'Mehdi Rami', role: 'Commercial · Commercial', kind: 'leave', type: 'Congé annuel', detail: 'Du 22 au 26 décembre 2026 · 5 jours', days: 5, balance: 1.5, reason: 'Vacances de fin d\'année.', date: '28/10', status: 'pending', ai: "Solde insuffisant : 1,5 j disponible pour 5 j demandés (embauché le 01/10/2026). Proposez un congé sans solde partiel." },
+  { id: 7, name: 'Imane Kettani', role: 'Product designer · Tech', kind: 'other', type: 'Changement de RIB', detail: 'Nouvelle banque', reason: 'Changement de banque à partir de novembre.', date: '27/10', status: 'approved', ai: 'RIB vérifié (24 chiffres, clé valide).' },
+  { id: 8, name: 'Youssef Amrani', role: 'Directeur des opérations · Opérations', kind: 'leave', type: 'Congé annuel', detail: 'Du 2 au 6 novembre 2026 · 5 jours', days: 5, balance: 22, reason: 'Vacances.', date: '25/10', status: 'approved', ai: 'Validé — aucun conflit.' },
+  { id: 9, name: 'Anas Belhaj', role: 'Data analyst · Tech', kind: 'doc', type: 'Attestation de travail', detail: 'Version française', reason: 'Dossier personnel.', date: '22/10', status: 'refused', ai: 'Freelance : une attestation de collaboration est plus adaptée.' },
+];
+
+class Component extends DCLogic {
+  state = { reqs: SEED, tab: 'pending', kind: 'all', cur: 1, comment: '', toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  decide(status) {
+    const r = this.state.reqs.find(x => x.id === this.state.cur); if (!r) return;
+    const reqs = this.state.reqs.map(x => x.id === r.id ? { ...x, status } : x);
+    const next = reqs.find(x => x.status === 'pending' && x.id !== r.id);
+    this.setState({ reqs, comment: '' });
+    this.toast(`${r.type} ${status === 'approved' ? 'approuvé' : 'refusé'} · ${r.name}`);
+    this._t2 = setTimeout(() => { if (this._a && next && this.state.tab === 'pending') this.setState({ cur: next.id }); }, 900);
+  }
+  renderVals() {
+    const s = this.state;
+    const count = st => s.reqs.filter(r => st === 'all' || r.status === st).length;
+    const visible = s.reqs.filter(r => (s.tab === 'all' || r.status === s.tab || (s.tab === 'pending' && r.id === s.cur && r.status !== 'pending')) && (s.kind === 'all' || r.kind === s.kind));
+    const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+    const map = (r, i) => {
+      const k = KIND[r.kind], st = ST[r.status];
+      return { ...r, ini: ini(r.name), av: AV[r.id % AV.length], icon: k[0], kindColor: k[1], stLabel: st[0], stBg: st[1], stColor: st[2], stBgDark: st[3], stColorDark: st[4], on: r.id === s.cur, bg: r.id === s.cur ? '#f3fafb' : '#ffffff', delay: String(i * 45), pick: () => this.setState({ cur: r.id, comment: '' }) };
+    };
+    const cr = s.reqs.find(r => r.id === s.cur);
+    const cur = cr ? { ...map(cr, 0), isLeave: cr.kind === 'leave', isPending: cr.status === 'pending', isDone: cr.status !== 'pending', after: cr.kind === 'leave' ? String(Math.max(0, cr.balance - cr.days)).replace('.', ',') : '', balance: cr.balance != null ? String(cr.balance).replace('.', ',') : '', doneIcon: cr.status === 'approved' ? 'circle-check|check-circle' : 'circle-x|x-circle', doneText: cr.status === 'approved' ? "Demande approuvée — l'employé a été notifié." : "Demande refusée — l'employé a été notifié." } : null;
+    return {
+      rootRef: this.rootRef, pendingCount: String(count('pending')),
+      tabs: [['pending', 'En attente'], ['approved', 'Approuvées'], ['refused', 'Refusées'], ['all', 'Toutes']].map(([k, label]) => ({ label, n: count(k), on: s.tab === k, color: s.tab === k ? '#ffffff' : '#52646d', badgeBg: s.tab === k ? 'rgba(255,255,255,.18)' : '#eef2f4', go: () => this.setState({ tab: k }) })),
+      kinds: [['all', 'Tous les types'], ['leave', 'Congés'], ['doc', 'Documents'], ['other', 'Autres']].map(([k, label]) => ({ label, go: () => this.setState({ kind: k }), bg: s.kind === k ? '#e4f2f4' : '#ffffff', border: s.kind === k ? '#b9dfe5' : '#e2e8eb', color: s.kind === k ? '#0b5f72' : '#52646d' })),
+      list: visible.map(map), empty: visible.length === 0,
+      hasCur: !!cur, cur: cur || {}, comment: s.comment, onComment: e => this.setState({ comment: e.target.value }),
+      approve: () => this.decide('approved'), refuse: () => this.decide('refused'),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

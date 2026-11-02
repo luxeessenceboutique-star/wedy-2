@@ -1,0 +1,101 @@
+- generic [ref=f12e2]:
+  - region "Notifications alt+T"
+  - complementary "التنقل الرئيسي" [ref=f12e4]:
+    - link "Wedy Wedy RH" [ref=f12e5] [cursor=pointer]:
+      - /url: /app
+      - img "Wedy" [ref=f12e6]
+      - generic [ref=f12e7]: Wedy
+      - generic [ref=f12e8]: RH
+    - link "اسأل ويدي… ⌘K" [ref=f12e9] [cursor=pointer]:
+      - /url: /app/copilot
+      - generic [ref=f12e14]: اسأل ويدي…
+      - generic [ref=f12e15]: ⌘K
+    - navigation [ref=f12e16]:
+      - generic [ref=f12e17]:
+        - generic [ref=f12e18]: نظرة عامة
+        - link "لوحة التحكم" [ref=f12e19] [cursor=pointer]:
+          - /url: /app
+        - link "المساعد الذكي جديد" [ref=f12e28] [cursor=pointer]:
+          - /url: /app/copilot
+          - generic [ref=f12e33]: المساعد الذكي
+          - generic [ref=f12e34]: جديد
+        - link "الإشعارات 3" [ref=f12e35] [cursor=pointer]:
+          - /url: /app/notifications
+          - generic [ref=f12e40]: الإشعارات
+          - generic [ref=f12e41]: "3"
+      - generic [ref=f12e42]:
+        - generic [ref=f12e43]: الأشخاص
+        - link "الموظفون" [ref=f12e44] [cursor=pointer]:
+          - /url: /app/employees
+        - link "المتدربون" [ref=f12e52] [cursor=pointer]:
+          - /url: /app/interns
+        - link "الطلبات 6" [ref=f12e58] [cursor=pointer]:
+          - /url: /app/requests
+          - generic [ref=f12e63]: الطلبات
+          - generic [ref=f12e64]: "6"
+        - link "التوظيف" [ref=f12e65] [cursor=pointer]:
+          - /url: /app/recruitment
+        - link "المرشحون" [ref=f12e72] [cursor=pointer]:
+          - /url: /app/candidats
+        - link "الإعلانات AI" [ref=f12e78] [cursor=pointer]:
+          - /url: /app/annonces
+          - generic [ref=f12e83]: الإعلانات
+          - generic [ref=f12e84]: AI
+        - link "تخطيط الموارد البشرية" [ref=f12e85] [cursor=pointer]:
+          - /url: /app/planning-rh
+        - link "الأداء" [ref=f12e90] [cursor=pointer]:
+          - /url: /app/performance
+        - link "الإجازات" [ref=f12e96] [cursor=pointer]:
+          - /url: /app/timeoff
+        - link "الغيابات" [ref=f12e102] [cursor=pointer]:
+          - /url: /app/absences
+        - link "الرواتب" [ref=f12e110] [cursor=pointer]:
+          - /url: /app/payroll
+        - link "الهيكل التنظيمي" [ref=f12e116] [cursor=pointer]:
+          - /url: /app/orgchart
+        - link "الاجتماعات" [ref=f12e124] [cursor=pointer]:
+          - /url: /app/meetings
+      - generic [ref=f12e130]:
+        - generic [ref=f12e131]: تطوير الموارد البشرية
+        - link "التأهيل الوظيفي" [ref=f12e132] [cursor=pointer]:
+          - /url: /app/onboarding
+        - link "التدريب" [ref=f12e139] [cursor=pointer]:
+          - /url: /app/training
+        - link "المواهب" [ref=f12e144] [cursor=pointer]:
+          - /url: /app/talents
+        - link "المناقصات AI" [ref=f12e149] [cursor=pointer]:
+          - /url: /app/tenders
+          - generic [ref=f12e154]: المناقصات
+          - generic [ref=f12e155]: AI
+      - generic [ref=f12e156]:
+        - generic [ref=f12e157]: الوثائق
+        - link "إنشاء" [ref=f12e158] [cursor=pointer]:
+          - /url: /app/generate
+        - link "القوالب" [ref=f12e164] [cursor=pointer]:
+          - /url: /app/templates
+        - link "السجل" [ref=f12e170] [cursor=pointer]:
+          - /url: /app/history
+      - generic [ref=f12e177]:
+        - generic [ref=f12e178]: التحليلات
+        - link "الإحصاءات" [ref=f12e179] [cursor=pointer]:
+          - /url: /app/analytics
+        - link "سجل التدقيق" [ref=f12e184] [cursor=pointer]:
+          - /url: /app/audit
+      - generic [ref=f12e190]:
+        - generic [ref=f12e191]: مساحة العمل
+        - link "التكاملات" [ref=f12e192] [cursor=pointer]:
+          - /url: /app/integrations
+        - link "المستخدمون والأدوار" [ref=f12e197] [cursor=pointer]:
+          - /url: /app/users
+        - link "الإعدادات" [ref=f12e212] [cursor=pointer]:
+          - /url: /app/settings
+        - link "الأمان" [ref=f12e218] [cursor=pointer]:
+          - /url: /app/security
+        - link "المساعدة" [ref=f12e224] [cursor=pointer]:
+          - /url: /app/help
+    - generic [ref=f12e230]:
+      - generic [ref=f12e231]: SI
+      - generic [ref=f12e232]:
+        - generic [ref=f12e233]: Salma Idrissi
+        - generic [ref=f12e234]: Admin RH
+      - button "تسجيل الخروج" [ref=f12e235] [cursor=pointer]

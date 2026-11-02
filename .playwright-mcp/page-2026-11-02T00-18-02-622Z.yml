@@ -1,0 +1,66 @@
+- generic [ref=f22e2]:
+  - region "Notifications alt+T"
+  - generic [ref=f22e3]:
+    - main [ref=f22e4]:
+      - generic [ref=f22e5]:
+        - link "Retour au site" [ref=f22e7] [cursor=pointer]:
+          - /url: /
+        - button "Besoin d'aide ?" [ref=f22e11] [cursor=pointer]
+      - generic [ref=f22e22]:
+        - generic [ref=f22e23]: Connexion sécurisée
+        - heading "Bon retour." [level=1] [ref=f22e27]
+        - paragraph [ref=f22e28]: Connectez-vous avec votre compte Tybot.
+        - generic [ref=f22e29]:
+          - generic [ref=f22e30]: Email
+          - textbox "Email" [ref=f22e32]:
+            - /placeholder: vous@entreprise.com
+        - generic [ref=f22e33]:
+          - generic [ref=f22e34]:
+            - generic [ref=f22e35]: Mot de passe
+            - button "Mot de passe oublié ?" [ref=f22e36] [cursor=pointer]
+          - generic [ref=f22e37]:
+            - textbox "Mot de passe" [ref=f22e38]:
+              - /placeholder: ••••••••
+            - button "Afficher ou masquer le mot de passe" [ref=f22e39] [cursor=pointer]
+        - button "Se connecter" [ref=f22e44] [cursor=pointer]
+        - paragraph [ref=f22e48]:
+          - text: En continuant, vous acceptez les
+          - link "Conditions d'utilisation" [ref=f22e49] [cursor=pointer]:
+            - /url: /legal
+          - text: "& la"
+          - link "Politique de confidentialité" [ref=f22e50] [cursor=pointer]:
+            - /url: /legal
+          - text: .
+    - complementary [ref=f22e51]:
+      - link "Wedy" [ref=f22e53] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f22e56]:
+        - generic [ref=f22e322]:
+          - generic [ref=f22e323]: Attestation de travail
+          - generic [ref=f22e324]: Générée · FR · AR · EN
+        - generic [ref=f22e332]:
+          - generic [ref=f22e333]: Congé approuvé
+          - generic [ref=f22e334]: Omar Alaoui · 3 jours
+        - generic [ref=f22e342]:
+          - generic [ref=f22e343]: Copilote IA
+          - generic [ref=f22e344]: 2 contrats à renouveler ce mois
+      - generic [ref=f22e345]:
+        - heading "RH moderne, pilotée par l'IA." [level=2] [ref=f22e346]:
+          - generic [ref=f22e347]:
+            - generic [ref=f22e348]: RH
+            - generic [ref=f22e349]: moderne,
+          - generic [ref=f22e350]:
+            - generic [ref=f22e351]: pilotée
+            - generic [ref=f22e352]: par
+            - generic [ref=f22e353]: l'IA.
+        - paragraph [ref=f22e354]: Générez, traduisez et classez chaque document RH en quelques secondes — alimenté par Claude AI et vos données d'entreprise.
+        - generic [ref=f22e355]:
+          - generic [ref=f22e356]: Documents IA en secondes
+          - generic [ref=f22e360]:
+            - text: Français ·
+            - generic [ref=f22e365]: العربية
+            - text: · English
+          - generic [ref=f22e366]: Conforme au droit du travail marocain
+      - generic [ref=f22e371]:
+        - generic [ref=f22e372]: © 2026 Wedy · Propulsé par Tybotflow
+        - generic [ref=f22e373]: Cliquez sur l'avatar ✦

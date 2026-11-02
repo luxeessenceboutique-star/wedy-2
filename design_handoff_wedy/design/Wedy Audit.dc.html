@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Journal d'audit — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="audit" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Insights" title="Journal d'audit" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Journal d'audit</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Chaque action, chaque utilisateur, horodatée et conservée 24 mois.</p>
+        </div>
+        <div data-reveal="up" data-delay="100" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" onClick="{{ toggleLive }}" style="display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 14px;border-radius:12px;border:1px solid {{ liveBorder }};background:{{ liveBg }};color:{{ liveColor }};font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap"><sc-if value="{{ live }}" hint-placeholder-val="{{ true }}"><span style="position:relative;display:inline-flex;width:8px;height:8px"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;background:#16a06b"></span><span style="position:relative;width:8px;height:8px;border-radius:50%;background:#16a06b"></span></span></sc-if><sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}"><span data-icon="pause" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></sc-if>{{ liveLabel }}</button>
+          <button type="button" onClick="{{ exportCsv }}" style="display:inline-flex;align-items:center;gap:7px;height:42px;padding:0 14px;border:none;border-radius:12px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#16323c"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Exporter (CSV)</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+        <div data-reveal="up" data-delay="60" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="activity" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.04em;line-height:1.05">{{ kEvents }}</div><div style="font-size:12.5px;color:#52646d">Événements · 30 jours</div></div></div>
+        <div data-reveal="up" data-delay="110" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6"><span data-icon="users" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.04em;line-height:1.05">18</div><div style="font-size:12.5px;color:#52646d">Utilisateurs actifs</div></div></div>
+        <div data-reveal="up" data-delay="160" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fbe9e6;color:#df5740"><span data-icon="shield-alert" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.04em;line-height:1.05;color:#a33a28">3</div><div style="font-size:12.5px;color:#52646d">Connexions refusées</div></div></div>
+        <div data-reveal="up" data-delay="210" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#b06b0c"><span data-icon="hard-drive-download|download" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.04em;line-height:1.05">12</div><div style="font-size:12.5px;color:#52646d">Exports de données</div></div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:12px">
+        <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="2">
+          <div data-reveal="up" data-delay="{{ a.delay }}" style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:16px;background:{{ a.bg }};border:1px solid {{ a.border }};flex-wrap:wrap">
+            <span style="width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#ffffff;color:{{ a.color }};flex-shrink:0"><span data-icon="{{ a.icon }}" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span>
+            <div style="flex:1;min-width:200px"><div style="font-size:14px;font-weight:700;color:{{ a.color }}">{{ a.title }}</div><div style="font-size:12.5px;color:#33474f;margin-top:2px">{{ a.text }}</div></div>
+            <sc-if value="{{ a.open }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:6px"><button type="button" onClick="{{ a.act }}" style="height:34px;padding:0 12px;border:none;border-radius:10px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ a.cta }}</button><button type="button" onClick="{{ a.dismiss }}" style="height:34px;padding:0 11px;border-radius:10px;border:1px solid rgba(10,28,36,.15);background:transparent;font-family:inherit;font-size:12.5px;font-weight:600;color:#33474f;cursor:pointer">Ignorer</button></div></sc-if>
+            <sc-if value="{{ a.closed }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="display:inline-flex;align-items:center;gap:6px;height:34px;font-size:12.5px;font-weight:700;color:#0f6f49"><span data-icon="circle-check|check-circle" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>{{ a.doneLabel }}</span></sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div data-reveal="up" data-delay="140" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <div style="position:relative;flex:1 1 220px;min-width:200px;max-width:320px"><span data-icon="search" data-size="15" style="position:absolute;left:12px;top:50%;margin-top:-7.5px;display:inline-flex;width:15px;height:15px;color:#7d8f97;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Utilisateur, action, IP…" style="width:100%;height:40px;padding:0 12px 0 36px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></div>
+        <sc-for list="{{ mods }}" as="m" hint-placeholder-count="7"><button type="button" onClick="{{ m.go }}" style="height:34px;padding:0 12px;border-radius:99px;border:1px solid {{ m.border }};background:{{ m.bg }};color:{{ m.color }};font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ m.label }}</button></sc-for>
+        <div style="margin-left:auto;display:flex;gap:6px"><sc-for list="{{ sevs }}" as="v" hint-placeholder-count="4"><button type="button" onClick="{{ v.go }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 11px;border-radius:99px;border:1px solid {{ v.border }};background:{{ v.bg }};color:{{ v.color }};font-family:inherit;font-size:12px;font-weight:600;cursor:pointer"><span style="width:7px;height:7px;border-radius:50%;background:{{ v.dot }}"></span>{{ v.label }}</button></sc-for></div>
+      </div>
+
+      <div data-reveal="up" data-delay="160" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 18px;background:#f8fafb"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:15px">Événements</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#5f7079">{{ countLabel }}</span></div>
+        <sc-for list="{{ events }}" as="e" hint-placeholder-count="8">
+          <div data-reveal="up" style="border-top:1px solid #eef2f4;background:{{ e.bg }};transition:background 1.2s">
+            <button type="button" onClick="{{ e.toggle }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:11px 18px;border:none;background:transparent;font-family:inherit;text-align:left;cursor:pointer;flex-wrap:wrap" style-hover="background:#f6fafb">
+              <span style="width:8px;height:8px;border-radius:50%;background:{{ e.dot }};flex-shrink:0"></span>
+              <span style="width:76px;font-family:'Geist Mono',monospace;font-size:12px;color:#52646d">{{ e.time }}</span>
+              <span style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:{{ e.iconBg }};color:{{ e.iconColor }};flex-shrink:0"><span data-icon="{{ e.icon }}" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>
+              <span style="flex:1 1 300px;min-width:0;font-size:13.5px;line-height:1.45;color:#52646d"><strong style="color:#0a1c24;font-weight:600">{{ e.user }}</strong> {{ e.verb }} <strong style="color:#0a1c24;font-weight:600">{{ e.target }}</strong></span>
+              <span style="font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;background:#f3f6f7;color:#33474f;white-space:nowrap">{{ e.module }}</span>
+              <span style="width:124px;font-family:'Geist Mono',monospace;font-size:11.5px;color:#7d8f97;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.ip }}</span>
+              <span data-icon="{{ e.chev }}" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#a3b1b7"></span>
+            </button>
+            <sc-if value="{{ e.open }}" hint-placeholder-val="{{ false }}">
+              <div data-reveal="up" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;padding:2px 18px 16px 18px">
+                <div style="padding:12px 14px;border-radius:12px;background:#fbfcfc;border:1px solid #eef2f4">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Modifications</div>
+                  <sc-if value="{{ e.hasDiff }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px"><sc-for list="{{ e.diff }}" as="d" hint-placeholder-count="1"><div style="display:grid;grid-template-columns:100px minmax(0,1fr);gap:8px;font-size:12.5px;align-items:start"><span style="color:#52646d">{{ d.k }}</span><span style="display:flex;flex-direction:column;gap:3px;font-family:'Geist Mono',monospace;font-size:11.5px"><span style="padding:2px 7px;border-radius:6px;background:#fbe9e6;color:#a33a28;text-decoration:line-through;align-self:flex-start">{{ d.a }}</span><span style="padding:2px 7px;border-radius:6px;background:#e1f5ec;color:#0f6f49;align-self:flex-start">{{ d.b }}</span></span></div></sc-for></div></sc-if>
+                  <sc-if value="{{ e.noDiff }}" hint-placeholder-val="{{ true }}"><div style="margin-top:8px;font-size:12.5px;color:#7d8f97">Aucune donnée modifiée.</div></sc-if>
+                </div>
+                <div style="padding:12px 14px;border-radius:12px;background:#fbfcfc;border:1px solid #eef2f4;display:flex;flex-direction:column;gap:7px;font-size:12.5px">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Contexte</div>
+                  <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#52646d">Appareil</span><span style="font-weight:500">{{ e.device }}</span></div>
+                  <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#52646d">Adresse IP</span><span style="font-family:'Geist Mono',monospace">{{ e.ip }}</span></div>
+                  <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#52646d">ID</span><span style="font-family:'Geist Mono',monospace">{{ e.eid }}</span></div>
+                  <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#52646d">Empreinte</span><span style="font-family:'Geist Mono',monospace;color:#0f6f49">SHA-256 · {{ e.hash }}</span></div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><div style="padding:36px 20px;text-align:center;font-size:14px;color:#52646d">Aucun événement ne correspond à ces filtres.</div></sc-if>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const ICON = { approve: ['circle-check|check-circle', '#e1f5ec', '#0f6f49'], generate: ['sparkles', '#ece9fb', '#5444b8'], update: ['pencil', '#e4f2f4', '#0b5f72'], export: ['download', '#fbefda', '#8a5207'], fail: ['shield-alert', '#fbe9e6', '#a33a28'], login: ['log-in', '#eef2f4', '#33474f'], role: ['user-cog', '#fbefda', '#8a5207'], delete: ['trash-2', '#fbe9e6', '#a33a28'], create: ['user-plus', '#e1f5ec', '#0f6f49'], settings: ['settings', '#eef2f4', '#33474f'], request: ['inbox', '#e4f2f4', '#0b5f72'], view: ['eye', '#eef2f4', '#33474f'] };
+const SEV = { info: '#16b6c8', warn: '#df9326', crit: '#df5740' };
+const MAC = 'Chrome · macOS', IP1 = '196.200.131.42';
+const EV0 = [
+  ['09:41:07', 'Salma Idrissi', 'approve', 'a approuvé la demande de congé de', 'Omar Alaoui', 'Congés', 'info', IP1, MAC],
+  ['09:38:52', 'Wedy IA', 'generate', 'a généré « Attestation de travail » pour', 'Yasmine Benali', 'Documents', 'info', '—', 'Assistant IA'],
+  ['09:31:15', 'Sara El Fassi', 'update', 'a modifié le dossier de', 'Hind Tazi', 'Employés', 'info', '196.200.131.57', 'Edge · Windows', [['Téléphone', '+212 6 61 22 33 44', '+212 6 70 11 22 33'], ['Adresse', '—', '5 rue de Fès, Hay Hassani']]],
+  ['09:12:03', 'Nadia Berrada', 'export', 'a exporté', 'les bulletins de paie d\'octobre', 'Paie', 'warn', '196.200.131.61', 'Chrome · Windows', [['Fichiers', '—', '126 bulletins (PDF)']]],
+  ['08:57:40', 'Salma Idrissi', 'update', 'a modifié le salaire de', 'Yasmine Benali', 'Paie', 'warn', IP1, MAC, [['Salaire brut', '18 000 MAD', '18 500 MAD'], ['Motif', '—', 'Révision annuelle']]],
+  ['08:44:19', 'Inconnu', 'fail', 'connexion refusée pour', 'salma@tython.ma', 'Sécurité', 'crit', '41.250.18.203', 'Firefox · Linux', [['Motif', '—', 'Mot de passe incorrect (3e essai)'], ['Réseau', '—', 'Hors liste autorisée']]],
+  ['08:30:02', 'Salma Idrissi', 'login', "s'est connectée avec", 'double authentification', 'Sécurité', 'info', IP1, MAC],
+  ['08:12:45', 'Salma Idrissi', 'role', 'a attribué le rôle Manager à', 'Youssef Amrani', 'Paramètres', 'warn', IP1, MAC, [['Rôle', 'Employé', 'Manager']]],
+  ['Hier 18:05', 'Karim Bennani', 'delete', 'a supprimé un fichier de', 'son dossier', 'Documents', 'info', '105.66.12.9', 'Safari · iOS', [['Fichier', 'CV_2022.pdf', '—']]],
+  ['Hier 17:22', 'Sara El Fassi', 'create', 'a créé le dossier de', 'Soufiane Berrada', 'Employés', 'info', '196.200.131.57', 'Edge · Windows'],
+  ['Hier 16:10', 'Salma Idrissi', 'settings', 'a rendu la 2FA obligatoire pour', 'les administrateurs', 'Sécurité', 'warn', IP1, MAC, [['2FA admins', 'Optionnelle', 'Obligatoire']]],
+  ['Hier 11:47', 'Wedy IA', 'approve', 'a pré-validé la demande de document de', 'Nadia Berrada', 'Documents', 'info', '—', 'Assistant IA'],
+];
+const POOL = [
+  ['Mehdi Rami', 'request', 'a déposé une demande de congé', '22 → 26 déc.', 'Congés', 'info', '105.71.4.22', 'Chrome · Android'],
+  ['Hind Tazi', 'view', 'a consulté', 'son bulletin de paie', 'Paie', 'info', '196.200.131.88', 'Safari · iOS'],
+  ['Wedy IA', 'generate', 'a envoyé un rappel de pulse à', 'Soufiane Berrada', 'Employés', 'info', '—', 'Assistant IA'],
+  ['Sara El Fassi', 'update', 'a mis à jour le parrain de', 'Soufiane Berrada', 'Employés', 'info', '196.200.131.57', 'Edge · Windows'],
+  ['Youssef Amrani', 'approve', 'a validé les heures supplémentaires de', 'Omar Alaoui', 'Paie', 'info', '196.200.131.70', 'Safari · iOS'],
+];
+const MODS = ['Tous', 'Employés', 'Documents', 'Congés', 'Paie', 'Sécurité', 'Paramètres'];
+const hash = s => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0; return h.toString(16).padStart(8, '0').slice(0, 4) + '…' + ((h * 31) >>> 0).toString(16).slice(-4); };
+const mk = (r, i) => ({ id: 'e' + i, time: r[0], user: r[1], kind: r[2], verb: r[3], target: r[4], module: r[5], sev: r[6], ip: r[7], device: r[8], diff: r[9] || [] });
+
+class Component extends DCLogic {
+  state = { events: EV0.map(mk), q: '', mod: 'Tous', sev: 'all', live: true, open: null, fresh: null, alerts: {}, added: 0, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() {
+    this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go();
+    this._k = 0; this._i = setInterval(() => this.tick(), 6500);
+  }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); clearInterval(this._i); clearTimeout(this._f); }
+  tick() {
+    if (!this._a || !this.state.live) return;
+    const p = POOL[this._k++ % POOL.length], id = 'n' + Date.now();
+    const time = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    this.setState(s => ({ events: [mk([time, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]], 0), ...s.events].map((e, k) => k === 0 ? { ...e, id } : e).slice(0, 40), fresh: id, added: s.added + 1 }));
+    clearTimeout(this._f); this._f = setTimeout(() => this._a && this.setState({ fresh: null }), 1600);
+  }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state, q = s.q.trim().toLowerCase();
+    const list = s.events.filter(e => (s.mod === 'Tous' || e.module === s.mod) && (s.sev === 'all' || e.sev === s.sev) && (!q || `${e.user} ${e.verb} ${e.target} ${e.ip}`.toLowerCase().includes(q)));
+    const AL = [
+      { id: 'a1', icon: 'shield-alert', title: '3 connexions refusées sur salma@tython.ma', text: "Depuis 41.250.18.203, hors du réseau autorisé · aujourd'hui à 08:44", bg: '#fbe9e6', border: 'rgba(223,87,64,.3)', color: '#a33a28', cta: "Bloquer l'IP", doneLabel: 'IP bloquée' },
+      { id: 'a2', icon: 'hard-drive-download|download', title: "Export massif : bulletins de paie d'octobre", text: 'Nadia Berrada · 126 fichiers · 09:12', bg: '#fbefda', border: 'rgba(230,169,72,.4)', color: '#8a5207', cta: 'Marquer vérifié', doneLabel: 'Vérifié' },
+    ];
+    return {
+      rootRef: this.rootRef,
+      live: s.live, paused: !s.live, liveLabel: s.live ? 'En direct' : 'En pause', liveBg: s.live ? '#e1f5ec' : '#ffffff', liveBorder: s.live ? 'rgba(22,160,107,.3)' : '#d6dfe3', liveColor: s.live ? '#0f6f49' : '#33474f',
+      toggleLive: () => this.setState(x => ({ live: !x.live })),
+      exportCsv: () => this.toast(`${list.length} événements exportés en CSV`),
+      kEvents: (4812 + s.added).toLocaleString('fr-FR').replace(/[\u202f\u00a0]/g, ' '),
+      alerts: AL.map((a, i) => { const st = s.alerts[a.id]; return { ...a, delay: String(i * 80), open: !st, closed: st === 'done', act: () => { this.setState(x => ({ alerts: { ...x.alerts, [a.id]: 'done' } })); this.toast(a.id === 'a1' ? 'Adresse 41.250.18.203 bloquée pour tous les comptes' : 'Export marqué comme vérifié'); }, dismiss: () => this.setState(x => ({ alerts: { ...x.alerts, [a.id]: 'hidden' } })) }; }).filter(a => s.alerts[a.id] !== 'hidden'),
+      q: s.q, onQ: e => this.setState({ q: e.target.value }),
+      mods: MODS.map(m => ({ label: m, go: () => this.setState({ mod: m }), bg: s.mod === m ? '#0a1c24' : '#ffffff', color: s.mod === m ? '#ffffff' : '#33474f', border: s.mod === m ? '#0a1c24' : '#e2e8eb' })),
+      sevs: [['all', 'Toutes', '#a3b1b7'], ['info', 'Info', SEV.info], ['warn', 'Attention', SEV.warn], ['crit', 'Critique', SEV.crit]].map(([k, label, dot]) => ({ label, dot, go: () => this.setState({ sev: k }), bg: s.sev === k ? '#0a1c24' : '#ffffff', color: s.sev === k ? '#ffffff' : '#33474f', border: s.sev === k ? '#0a1c24' : '#e2e8eb' })),
+      countLabel: `${list.length} affichés`,
+      events: list.map(e => { const ic = ICON[e.kind] || ICON.view, open = s.open === e.id; return { ...e, icon: ic[0], iconBg: ic[1], iconColor: ic[2], dot: SEV[e.sev], open, chev: open ? 'chevron-up' : 'chevron-down', bg: e.id === s.fresh ? '#e8f8fa' : '#ffffff', hasDiff: e.diff.length > 0, noDiff: e.diff.length === 0, diff: e.diff.map(([k, a, b]) => ({ k, a, b })), eid: 'evt_' + hash(e.id + e.time).slice(0, 6), hash: hash(e.time + e.user + e.target), toggle: () => this.setState({ open: open ? null : e.id }) }; }),
+      empty: list.length === 0,
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

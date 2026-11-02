@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Talents — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="talents" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Développement RH" title="Talents" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Talents</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Profils, risques de départ, succession et plans de développement.</p>
+        </div>
+        <button type="button" onClick="{{ profileAll }}" data-reveal="up" data-delay="100" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#5444b8,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(109,90,214,.85)"><span style="position:absolute;left:0;top:0;bottom:0;width:{{ profPct }}%;background:rgba(255,255,255,.22);transition:width .1s linear"></span><sc-if value="{{ profiling }}" hint-placeholder-val="{{ false }}"><span data-loop="spin" style="position:relative;width:15px;height:15px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#ffffff"></span></sc-if><sc-if value="{{ notProfiling }}" hint-placeholder-val="{{ true }}"><span data-icon="sparkles" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px"></span></sc-if><span style="position:relative">{{ profLabel }}</span></button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+        <div data-reveal="up" data-delay="60" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="users" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:28px;font-weight:800;letter-spacing:-.04em;line-height:1.05">126</div><div style="font-size:12.5px;color:#52646d">Profils talents</div></div></div>
+        <div data-reveal="up" data-delay="110" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fbe9e6;color:#df5740"><span data-icon="triangle-alert|alert-triangle" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:28px;font-weight:800;letter-spacing:-.04em;line-height:1.05;color:#a33a28">7</div><div style="font-size:12.5px;color:#52646d">Risque de départ élevé</div></div></div>
+        <div data-reveal="up" data-delay="160" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#b06b0c"><span data-icon="shield" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:28px;font-weight:800;letter-spacing:-.04em;line-height:1.05">5</div><div style="font-size:12.5px;color:#52646d">Postes critiques</div></div></div>
+        <div data-reveal="up" data-delay="210" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="trending-up" data-size="19" style="display:inline-flex;width:19px;height:19px"></span></span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:28px;font-weight:800;letter-spacing:-.04em;line-height:1.05">3,8<span style="font-size:15px;color:#5f7079;font-weight:600"> / 5</span></div><div style="font-size:12.5px;color:#52646d">Performance moyenne</div></div></div>
+      </div>
+
+      <div data-reveal="up" data-delay="120" style="display:flex;gap:8px;flex-wrap:wrap">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6"><button type="button" onClick="{{ c.go }}" style="display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:99px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap"><span style="width:8px;height:8px;border-radius:50%;background:{{ c.dot }}"></span>{{ c.label }}<span style="font-family:'Geist Mono',monospace;font-size:11px;opacity:.75">{{ c.n }}</span></button></sc-for>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div style="flex:1.2 1 440px;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+            <sc-for list="{{ talents }}" as="t" hint-placeholder-count="8">
+              <button type="button" onClick="{{ t.pick }}" data-reveal="up" data-delay="{{ t.delay }}" style="display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:18px;border:1px solid {{ t.border }};background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;box-shadow:{{ t.shadow }};transition:transform .2s,box-shadow .2s,border-color .2s" style-hover="transform:translateY(-2px)">
+                <span style="display:flex;align-items:center;gap:11px;width:100%"><span style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ t.av }};color:#ffffff;font-size:14px;font-weight:700;flex-shrink:0">{{ t.ini }}</span><span style="flex:1;min-width:0"><span style="display:block;font-size:14.5px;font-weight:600;color:#0a1c24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</span><span style="display:block;font-size:12.5px;color:#5f7079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.role }}</span></span></span>
+                <span style="display:flex;align-items:center;gap:6px;width:100%"><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ t.catBg }};color:{{ t.catColor }};white-space:nowrap">{{ t.cat }}</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:{{ t.riskColor }};white-space:nowrap"><span style="width:7px;height:7px;border-radius:50%;background:{{ t.riskDot }}"></span>Risque {{ t.riskLow }}</span></span>
+                <span style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%">
+                  <span><span style="display:flex;justify-content:space-between;font-size:11px;color:#5f7079"><span>Performance</span><span style="font-family:'Geist Mono',monospace;color:#0a1c24">{{ t.perf }}</span></span><span style="display:block;height:5px;border-radius:99px;background:#eef2f4;overflow:hidden;margin-top:5px"><span data-reveal="growx" style="display:block;height:100%;width:{{ t.perfPct }}%;border-radius:99px;background:#16a06b;transform-origin:left"></span></span></span>
+                  <span><span style="display:flex;justify-content:space-between;font-size:11px;color:#5f7079"><span>Potentiel</span><span style="font-family:'Geist Mono',monospace;color:#0a1c24">{{ t.pot }}</span></span><span style="display:block;height:5px;border-radius:99px;background:#eef2f4;overflow:hidden;margin-top:5px"><span data-reveal="growx" style="display:block;height:100%;width:{{ t.potPct }}%;border-radius:99px;background:#6d5ad6;transform-origin:left"></span></span></span>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+          <sc-if value="{{ noTalents }}" hint-placeholder-val="{{ false }}"><div style="padding:36px 20px;border-radius:18px;border:1px dashed #d0dadf;text-align:center;font-size:14px;color:#52646d">Aucun profil affiché dans cette catégorie.</div></sc-if>
+
+          <div data-reveal="up" style="padding:18px 20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6"><span data-icon="shuffle" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Mobilité interne suggérée</span><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:#ece9fb;color:#5444b8">IA</span></div>
+            <sc-for list="{{ mobility }}" as="m" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #f0f3f4;margin-top:12px;flex-wrap:wrap">
+                <span style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ m.av }};color:#ffffff;font-size:12px;font-weight:700;flex-shrink:0">{{ m.ini }}</span>
+                <div style="flex:1;min-width:200px"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:14px;font-weight:600">{{ m.name }}<span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#7d8f97"></span><span style="color:#0e6f84">{{ m.role }}</span></div><div style="font-size:12.5px;color:#5f7079;margin-top:2px">{{ m.why }}</div></div>
+                <span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;background:#e1f5ec;color:#0f6f49">{{ m.match }}%</span>
+                <sc-if value="{{ m.open }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ m.go }}" style="height:34px;padding:0 12px;border-radius:10px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;color:#0a1c24;cursor:pointer" style-hover="border-color:#16b6c8;color:#0e6f84">Proposer</button></sc-if>
+                <sc-if value="{{ m.sent }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:#0f6f49"><span data-icon="circle-check|check-circle" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Proposé</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div data-reveal="left" data-delay="160" style="flex:1 1 400px;min-width:0;position:sticky;top:90px;border-radius:22px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="position:relative;overflow:hidden;padding:20px 22px;background:#06141a;color:#e8eff1;isolation:isolate">
+            <div aria-hidden="true" data-loop="drift" style="position:absolute;right:-90px;top:-120px;width:340px;height:340px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.5),transparent);z-index:-1"></div>
+            <div style="display:flex;align-items:center;gap:14px"><span style="width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ cur.av }};color:#ffffff;font-size:18px;font-weight:700;border:2px solid rgba(255,255,255,.2);flex-shrink:0">{{ cur.ini }}</span><div style="min-width:0"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:21px;letter-spacing:-.03em">{{ cur.name }}</div><div style="font-size:13px;color:#9fb4bb">{{ cur.role }}</div></div></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.08);color:#ffffff"><span style="width:7px;height:7px;border-radius:50%;background:{{ cur.catDot }}"></span>{{ cur.cat }}</span><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.08);color:#cfdde1"><span style="width:7px;height:7px;border-radius:50%;background:{{ cur.riskDot }}"></span>Risque de départ {{ cur.riskLow }}</span></div>
+          </div>
+          <div style="display:flex;gap:4px;padding:6px;margin:12px 16px 0;border-radius:13px;background:#f3f6f7">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3"><button type="button" onClick="{{ t.go }}" style="position:relative;flex:1;height:34px;border:none;border-radius:9px;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:{{ t.color }}"><sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="position:absolute;inset:0;border-radius:9px;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.14)"></span></sc-if><span style="position:relative">{{ t.label }}</span></button></sc-for>
+          </div>
+          <div style="padding:16px 22px 22px">
+            <sc-if value="{{ tProfile }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+                <div style="padding:12px 14px;border-radius:14px;background:#f3f6f7"><div style="font-size:11.5px;color:#5f7079">Performance</div><div style="display:flex;align-items:baseline;gap:4px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.04em">{{ cur.perf }}</span><span style="font-size:12px;color:#5f7079">/ 5</span></div><div style="height:5px;border-radius:99px;background:#e2e8eb;overflow:hidden;margin-top:6px"><div style="height:100%;width:{{ cur.perfPct }}%;border-radius:99px;background:#16a06b;transition:width .6s"></div></div></div>
+                <div style="padding:12px 14px;border-radius:14px;background:#f3f6f7"><div style="font-size:11.5px;color:#5f7079">Potentiel</div><div style="display:flex;align-items:baseline;gap:4px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:26px;font-weight:800;letter-spacing:-.04em">{{ cur.pot }}</span><span style="font-size:12px;color:#5f7079">/ 5</span></div><div style="height:5px;border-radius:99px;background:#e2e8eb;overflow:hidden;margin-top:6px"><div style="height:100%;width:{{ cur.potPct }}%;border-radius:99px;background:#6d5ad6;transition:width .6s"></div></div></div>
+              </div>
+              <div style="margin-top:18px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:15px">Valeurs Wedy</div>
+              <div style="position:relative;width:100%;max-width:300px;aspect-ratio:280 / 240;margin:6px auto 0">
+                <svg viewBox="-30 -10 280 240" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+                  <polygon points="110,30 186.09,85.28 157.02,174.72 62.98,174.72 33.91,85.28" style="fill:#f8fafb;stroke:#e2e8eb;stroke-width:1px"></polygon>
+                  <polygon points="110,50 167.07,91.46 145.27,158.54 74.73,158.54 52.93,91.46" style="fill:none;stroke:#e2e8eb;stroke-width:1px"></polygon>
+                  <polygon points="110,70 148.04,97.64 133.51,142.36 86.49,142.36 71.96,97.64" style="fill:none;stroke:#e2e8eb;stroke-width:1px"></polygon>
+                  <polygon points="110,90 129.02,103.82 121.76,126.18 98.24,126.18 90.98,103.82" style="fill:none;stroke:#e2e8eb;stroke-width:1px"></polygon>
+                  <line x1="110" y1="110" x2="110" y2="30" style="stroke:#e2e8eb;stroke-width:1px"></line>
+                  <line x1="110" y1="110" x2="186.09" y2="85.28" style="stroke:#e2e8eb;stroke-width:1px"></line>
+                  <line x1="110" y1="110" x2="157.02" y2="174.72" style="stroke:#e2e8eb;stroke-width:1px"></line>
+                  <line x1="110" y1="110" x2="62.98" y2="174.72" style="stroke:#e2e8eb;stroke-width:1px"></line>
+                  <line x1="110" y1="110" x2="33.91" y2="85.28" style="stroke:#e2e8eb;stroke-width:1px"></line>
+                  <g data-reveal="scale" style="transform-origin:110px 110px"><polygon points="{{ cur.radar }}" style="fill:rgba(22,182,200,.22);stroke:#16b6c8;stroke-width:2px;stroke-linejoin:round"></polygon></g>
+                </svg>
+                <span title="Confiance" style="position:absolute;left:50%;top:8.3%;transform:translate(-50%,-50%);text-align:center;line-height:1.2"><span style="display:block;font-size:11.5px;font-weight:700;color:#33474f">Amana</span><span style="display:block;font-family:'Geist Mono',monospace;font-size:11px;color:#0e6f84">{{ cur.v0 }}</span></span>
+                <span title="Excellence" style="position:absolute;left:84%;top:37.1%;transform:translate(-50%,-50%);text-align:center;line-height:1.2"><span style="display:block;font-size:11.5px;font-weight:700;color:#33474f">Itkan</span><span style="display:block;font-family:'Geist Mono',monospace;font-size:11px;color:#0e6f84">{{ cur.v1 }}</span></span>
+                <span title="Engagement" style="position:absolute;left:71%;top:83.7%;transform:translate(-50%,-50%);text-align:center;line-height:1.2"><span style="display:block;font-size:11.5px;font-weight:700;color:#33474f">Iltizam</span><span style="display:block;font-family:'Geist Mono',monospace;font-size:11px;color:#0e6f84">{{ cur.v2 }}</span></span>
+                <span title="Innovation" style="position:absolute;left:29%;top:83.7%;transform:translate(-50%,-50%);text-align:center;line-height:1.2"><span style="display:block;font-size:11.5px;font-weight:700;color:#33474f">Ibdaa</span><span style="display:block;font-family:'Geist Mono',monospace;font-size:11px;color:#0e6f84">{{ cur.v3 }}</span></span>
+                <span title="Croissance" style="position:absolute;left:16%;top:37.1%;transform:translate(-50%,-50%);text-align:center;line-height:1.2"><span style="display:block;font-size:11.5px;font-weight:700;color:#33474f">Nama</span><span style="display:block;font-family:'Geist Mono',monospace;font-size:11px;color:#0e6f84">{{ cur.v4 }}</span></span>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:12px 14px;border-radius:14px;background:{{ cur.riskBg }};border:1px solid {{ cur.riskBorder }}"><span data-icon="{{ cur.riskIcon }}" data-size="17" style="display:inline-flex;width:17px;height:17px;color:{{ cur.riskColor }};flex-shrink:0;margin-top:1px"></span><div><div style="font-size:13px;font-weight:700;color:{{ cur.riskColor }}">Risque de départ {{ cur.riskLow }}</div><div style="font-size:13px;line-height:1.5;color:#33474f;margin-top:2px">{{ cur.riskWhy }}</div></div></div>
+              <div style="display:flex;flex-direction:column;margin-top:14px;font-size:13.5px">
+                <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #f0f3f4"><span style="color:#5f7079">Évolution visée</span><span style="font-weight:600;text-align:right">{{ cur.next }}</span></div>
+                <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #f0f3f4"><span style="color:#5f7079">Parcours</span><span style="font-weight:500;text-align:right">{{ cur.path }}</span></div>
+                <div style="padding:10px 0;border-top:1px solid #f0f3f4">
+                  <div style="color:#5f7079">Successeurs identifiés</div>
+                  <form onSubmit="{{ addSucc }}" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px">
+                    <sc-for list="{{ cur.succ }}" as="x" hint-placeholder-count="1"><span style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px 0 4px;border-radius:99px;background:#e4f2f4;font-size:12.5px;font-weight:600;color:#0b5f72"><span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ x.av }};color:#ffffff;font-size:9px;font-weight:700">{{ x.ini }}</span>{{ x.name }}</span></sc-for>
+                    <input value="{{ succIn }}" onChange="{{ onSuccIn }}" placeholder="+ Ajouter" style="width:120px;height:30px;padding:0 11px;border-radius:99px;border:1px dashed #c3ced3;background:transparent;font-family:inherit;font-size:12.5px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8">
+                  </form>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ tOkr }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:15px">Objectifs · T4 2026</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#52646d">{{ cur.okrAvg }}% en moyenne</span></div>
+                <sc-for list="{{ cur.okrs }}" as="o" hint-placeholder-count="2">
+                  <div data-reveal="up" style="padding:14px;border-radius:14px;border:1px solid #e2e8eb">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span style="font-size:14px;font-weight:600;line-height:1.4">{{ o.title }}</span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:19px;color:{{ o.color }}">{{ o.p }}%</span></div>
+                    <input type="range" min="0" max="100" step="5" value="{{ o.p }}" onChange="{{ o.set }}" aria-label="Progression" style="width:100%;margin:10px 0 0;accent-color:#0e6f84;cursor:pointer">
+                  </div>
+                </sc-for>
+                <form onSubmit="{{ addOkr }}" style="display:flex;gap:8px"><input value="{{ okrIn }}" onChange="{{ onOkrIn }}" placeholder="Nouvel objectif mesurable…" style="flex:1;min-width:0;height:40px;padding:0 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:13.5px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"><button type="submit" style="height:40px;padding:0 14px;border:none;border-radius:11px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Ajouter</button></form>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ tPdi }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:15px">Plan de développement individuel</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#52646d">{{ cur.pdiDone }}</span></div>
+                <div style="height:6px;border-radius:99px;background:#eef2f4;overflow:hidden"><div style="height:100%;width:{{ cur.pdiPct }}%;border-radius:99px;background:linear-gradient(90deg,#0f6f49,#2bbd86);transition:width .6s"></div></div>
+                <sc-for list="{{ cur.pdi }}" as="d" hint-placeholder-count="2">
+                  <div data-reveal="up" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid #e2e8eb;flex-wrap:wrap">
+                    <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ d.typeBg }};color:{{ d.typeColor }}">{{ d.type }}</span>
+                    <div style="flex:1;min-width:150px"><div style="font-size:14px;font-weight:600;color:{{ d.titleColor }};text-decoration:{{ d.deco }}">{{ d.title }}</div><div style="font-size:12px;color:#5f7079;margin-top:2px">Échéance · {{ d.date }}</div></div>
+                    <button type="button" onClick="{{ d.cycle }}" title="Changer le statut" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border-radius:99px;border:1px solid {{ d.stBorder }};background:{{ d.stBg }};color:{{ d.stColor }};font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap"><span data-icon="{{ d.stIcon }}" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>{{ d.status }}</button>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const CAT = { star: ['Star', '#fbefda', '#8a5207', '#df9326'], solid: ['Solid performer', '#e1f5ec', '#0f6f49', '#16a06b'], potential: ['Haut potentiel', '#ece9fb', '#5444b8', '#6d5ad6'], key: ['Joueur clé', '#e4f2f4', '#0b5f72', '#16b6c8'], develop: ['À développer', '#fbe9e6', '#a33a28', '#df5740'] };
+const COUNTS = { star: 9, solid: 18, potential: 11, key: 64, develop: 24 };
+const RISK = { 'Élevé': ['#a33a28', '#fbe9e6', 'rgba(223,87,64,.3)', '#df5740', 'triangle-alert|alert-triangle'], 'Moyen': ['#8a5207', '#fbefda', 'rgba(230,169,72,.4)', '#df9326', 'circle-alert|alert-circle'], 'Faible': ['#0f6f49', '#e1f5ec', 'rgba(22,160,107,.3)', '#16a06b', 'shield-check'] };
+const PDIT = { formation: ['Formation', '#e4f2f4', '#0b5f72'], coaching: ['Coaching', '#ece9fb', '#5444b8'], mentorat: ['Mentorat', '#e1f5ec', '#0f6f49'], projet: ['Projet', '#fbefda', '#8a5207'], lecture: ['Lecture', '#eef2f4', '#33474f'], conference: ['Conférence', '#ece9fb', '#3d2f99'] };
+const PST = { pending: ['À faire', '#ffffff', '#52646d', '#d6dfe3', 'circle'], in_progress: ['En cours', '#e4f2f4', '#0b5f72', '#b9dfe5', 'clock'], completed: ['Terminé', '#e1f5ec', '#0f6f49', '#bfe6d2', 'circle-check|check-circle'] };
+const NEXT = { pending: 'in_progress', in_progress: 'completed', completed: 'pending' };
+const ANG = [-90, -18, 54, 126, 198].map(a => a * Math.PI / 180);
+const T = [
+  { name: 'Imane Kettani', role: 'Product designer', cat: 'star', perf: 4.6, pot: 4.8, risk: 'Moyen', why: 'Sollicitée par des recruteurs ; rémunération 8 % sous le marché.', vals: [4.5, 4.8, 4.2, 4.9, 4.6], next: 'Head of Design', path: 'Expertise produit → management', succ: ['Anas Belhaj'],
+    okrs: [['Lancer le design system v2', 70], ['Réduire de 30 % le temps de maquettage', 45]], pdi: [['Formation au management de designers', 'formation', 'in_progress', '15/12'], ['Mentorat par le directeur technique', 'mentorat', 'pending', '31/01'], ['Conférence UX Casablanca', 'conference', 'completed', '12/10']] },
+  { name: 'Yasmine Benali', role: 'Responsable Marketing', cat: 'star', perf: 4.3, pot: 4.6, risk: 'Élevé', why: 'CDD qui se termine le 12/11 sans avenant signé.', vals: [4.6, 4.3, 4.5, 4.4, 4.7], next: 'Directrice marketing', path: 'Marketing → direction', succ: ['Lina Chraibi'],
+    okrs: [['+25 % de trafic organique', 72], ['Campagne Ramadan 2027', 40]], pdi: [['Leadership et prise de parole', 'formation', 'in_progress', '12/11'], ['Coaching prise de poste de direction', 'coaching', 'pending', '28/02']] },
+  { name: 'Karim Bennani', role: 'Développeur senior', cat: 'solid', perf: 4.1, pot: 3.6, risk: 'Faible', why: 'Engagement élevé ; formation React terminée avec 92/100.', vals: [4.4, 4.6, 4.1, 3.8, 3.9], next: 'Lead développeur', path: 'Expert technique', succ: ['Anas Belhaj'],
+    okrs: [['Couverture de tests à 80 %', 64], ['Migration vers TypeScript strict', 85]], pdi: [['React & TypeScript avancé', 'formation', 'completed', '15/10'], ['Encadrer un développeur junior', 'mentorat', 'in_progress', '31/12']] },
+  { name: 'Sara El Fassi', role: 'Chargée RH', cat: 'potential', perf: 3.7, pot: 4.5, risk: 'Faible', why: 'Très engagée ; souhaite évoluer vers un poste de RRH adjointe.', vals: [4.7, 3.9, 4.6, 4.0, 4.5], next: 'RRH adjointe', path: 'RH généraliste → management RH', succ: [],
+    okrs: [['Digitaliser 100 % des dossiers', 58], ['Recruter en moins de 25 jours', 80]], pdi: [["Code du travail marocain", 'formation', 'completed', '20/09'], ["Projet : refonte de l'onboarding", 'projet', 'in_progress', '15/12'], ['Lecture : « Work Rules! »', 'lecture', 'pending', '31/01']] },
+  { name: 'Mehdi Rami', role: 'Commercial', cat: 'potential', perf: 3.5, pot: 4.2, risk: 'Faible', why: 'Arrivé il y a un mois ; intégration positive (pulse 4/5).', vals: [4.0, 3.6, 4.4, 3.9, 4.3], next: 'Key account manager', path: 'Vente → grands comptes', succ: [],
+    okrs: [['Signer 12 nouveaux clients PME', 33], ['Maîtriser le CRM', 90]], pdi: [['Négociation commerciale B2B', 'formation', 'in_progress', '30/11']] },
+  { name: 'Nadia Berrada', role: 'Comptable', cat: 'key', perf: 3.6, pot: 3.2, risk: 'Faible', why: "Stable, 6 ans d'ancienneté ; candidate naturelle au poste senior.", vals: [4.8, 4.0, 4.3, 3.1, 3.4], next: 'Comptable senior', path: 'Expertise finance', succ: [],
+    okrs: [['Clôture mensuelle en 5 jours', 75]], pdi: [['Excel avancé', 'formation', 'completed', '10/10'], ['Préparation au DCG', 'formation', 'pending', '30/06']] },
+  { name: 'Omar Alaoui', role: "Chef d'équipe logistique", cat: 'key', perf: 3.4, pot: 3.3, risk: 'Élevé', why: 'Heures supplémentaires élevées et entretien annuel en retard.', vals: [4.2, 3.5, 3.8, 3.0, 3.2], next: 'Responsable entrepôt', path: 'Opérations → management', succ: ['Brahim Naciri'],
+    okrs: [['Réduire les retards de livraison de 20 %', 52], ["Absentéisme de l'équipe sous 4 %", 30]], pdi: [['Manager une équipe à distance', 'formation', 'pending', '18/11'], ['Coaching gestion du temps', 'coaching', 'pending', '15/12']] },
+  { name: 'Khadija Zerouali', role: 'Assistante commerciale', cat: 'develop', perf: 2.8, pot: 3.4, risk: 'Moyen', why: "Absences répétées ; un point d'accompagnement est conseillé.", vals: [3.6, 2.9, 3.0, 3.2, 3.5], next: 'Commerciale sédentaire', path: 'Support → vente', succ: [],
+    okrs: [['Traiter les devis sous 48 h', 60]], pdi: [['Négociation commerciale B2B', 'formation', 'pending', '15/01'], ['Mentorat par un commercial senior', 'mentorat', 'in_progress', '31/12']] },
+];
+const MOB = [['Nadia Berrada', 'Comptable senior', 88, "6 ans d'ancienneté, maîtrise de Sage et de la fiscalité marocaine."], ['Sara El Fassi', 'RRH adjointe', 82, 'Haut potentiel, souhaite évoluer vers le management RH.'], ['Anas Belhaj', 'Développeur full-stack', 76, 'Solide en data et en SQL ; React à renforcer.']];
+const avOf = n => AV[(n.charCodeAt(0) + n.length) % AV.length];
+const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+const dec = v => String(v).replace('.', ',');
+
+class Component extends DCLogic {
+  state = { cat: 'all', cur: 0, tab: 'profile', talents: T.map(t => ({ ...t, succ: [...t.succ], okrs: t.okrs.map(o => [...o]), pdi: t.pdi.map(p => [...p]) })), okrIn: '', succIn: '', prof: -1, mob: {}, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); clearInterval(this._p); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2800); }
+  updCur(fn) { this.setState(s => ({ talents: s.talents.map((t, i) => i === s.cur ? fn(t) : t) })); }
+  renderVals() {
+    const s = this.state;
+    const shown = s.talents.map((t, i) => [t, i]).filter(([t]) => s.cat === 'all' || t.cat === s.cat);
+    const c = s.talents[s.cur], cr = RISK[c.risk];
+    const radar = c.vals.map((v, i) => { const r = v / 5 * 80; return `${(110 + r * Math.cos(ANG[i])).toFixed(1)},${(110 + r * Math.sin(ANG[i])).toFixed(1)}`; }).join(' ');
+    const pdiDone = c.pdi.filter(p => p[2] === 'completed').length;
+    const okrAvg = c.okrs.length ? Math.round(c.okrs.reduce((n, o) => n + o[1], 0) / c.okrs.length) : 0;
+    return {
+      rootRef: this.rootRef,
+      profiling: s.prof >= 0, notProfiling: s.prof < 0, profPct: s.prof >= 0 ? String(Math.min(100, Math.round(s.prof / 126 * 100))) : '0',
+      profLabel: s.prof >= 0 ? `Profilage… ${Math.min(s.prof, 126)}/126` : "Profiler avec l'IA",
+      profileAll: () => {
+        if (s.prof >= 0) return;
+        this.setState({ prof: 0 });
+        this._p = setInterval(() => { if (!this._a) return clearInterval(this._p); const n = this.state.prof + 6; if (n >= 126) { clearInterval(this._p); this.setState({ prof: -1 }); this.toast('126 profils talents mis à jour par Wedy'); } else this.setState({ prof: n }); }, 70);
+      },
+      cats: [['all', 'Tous', 126, '#0a1c24'], ...Object.keys(CAT).map(k => [k, CAT[k][0], COUNTS[k], CAT[k][3]])].map(([k, label, n, dot]) => ({ label, n, dot: s.cat === k && k === 'all' ? '#ffffff' : dot, go: () => this.setState({ cat: k }), bg: s.cat === k ? '#0a1c24' : '#ffffff', color: s.cat === k ? '#ffffff' : '#33474f', border: s.cat === k ? '#0a1c24' : '#e2e8eb' })),
+      talents: shown.map(([t, i], k) => ({ name: t.name, role: t.role, ini: ini(t.name), av: avOf(t.name), cat: CAT[t.cat][0], catBg: CAT[t.cat][1], catColor: CAT[t.cat][2],
+        riskLow: t.risk.toLowerCase(), riskColor: RISK[t.risk][0], riskDot: RISK[t.risk][3], perf: dec(t.perf), pot: dec(t.pot), perfPct: String(t.perf * 20), potPct: String(t.pot * 20), delay: String(k * 50),
+        border: i === s.cur ? '#16b6c8' : '#e2e8eb', shadow: i === s.cur ? '0 0 0 3px rgba(22,182,200,.18)' : 'none', pick: () => this.setState({ cur: i, succIn: '', okrIn: '' }) })),
+      noTalents: shown.length === 0,
+      mobility: MOB.map(([name, role, match, why]) => ({ name, role, match, why, ini: ini(name), av: avOf(name), open: !s.mob[name], sent: !!s.mob[name], go: () => { this.setState(x => ({ mob: { ...x.mob, [name]: true } })); this.toast(`Proposition de mobilité envoyée à ${name} : ${role}`); } })),
+      tabs: [['profile', 'Profil talent'], ['okr', 'OKR'], ['pdi', 'PDI']].map(([k, label]) => ({ label, on: s.tab === k, color: s.tab === k ? '#0a1c24' : '#52646d', go: () => this.setState({ tab: k }) })),
+      tProfile: s.tab === 'profile', tOkr: s.tab === 'okr', tPdi: s.tab === 'pdi',
+      cur: {
+        name: c.name, role: c.role, ini: ini(c.name), av: avOf(c.name), cat: CAT[c.cat][0], catDot: CAT[c.cat][3], riskLow: c.risk.toLowerCase(), riskDot: cr[3], riskColor: cr[0], riskBg: cr[1], riskBorder: cr[2], riskIcon: cr[4], riskWhy: c.why,
+        perf: dec(c.perf), pot: dec(c.pot), perfPct: String(c.perf * 20), potPct: String(c.pot * 20), radar, v0: dec(c.vals[0]), v1: dec(c.vals[1]), v2: dec(c.vals[2]), v3: dec(c.vals[3]), v4: dec(c.vals[4]),
+        next: c.next, path: c.path, succ: c.succ.map(n => ({ name: n, ini: ini(n), av: avOf(n) })),
+        okrAvg, okrs: c.okrs.map(([title, p], oi) => ({ title, p, color: p >= 70 ? '#0f6f49' : p >= 40 ? '#0b5f72' : '#8a5207', set: e => { const v = +e.target.value; this.updCur(t => ({ ...t, okrs: t.okrs.map((o, k) => k === oi ? [o[0], v] : o) })); } })),
+        pdiDone: `${pdiDone}/${c.pdi.length} terminées`, pdiPct: String(c.pdi.length ? Math.round(pdiDone / c.pdi.length * 100) : 0),
+        pdi: c.pdi.map(([title, type, st, date], pi) => ({ title, date, type: PDIT[type][0], typeBg: PDIT[type][1], typeColor: PDIT[type][2], status: PST[st][0], stBg: PST[st][1], stColor: PST[st][2], stBorder: PST[st][3], stIcon: PST[st][4], titleColor: st === 'completed' ? '#7d8f97' : '#0a1c24', deco: st === 'completed' ? 'line-through' : 'none',
+          cycle: () => this.updCur(t => ({ ...t, pdi: t.pdi.map((p, k) => k === pi ? [p[0], p[1], NEXT[p[2]], p[3]] : p) })) })),
+      },
+      okrIn: s.okrIn, onOkrIn: e => this.setState({ okrIn: e.target.value }),
+      addOkr: e => { if (e && e.preventDefault) e.preventDefault(); const v = s.okrIn.trim(); if (!v) return; this.updCur(t => ({ ...t, okrs: [...t.okrs, [v, 0]] })); this.setState({ okrIn: '' }); this.toast('Objectif ajouté'); },
+      succIn: s.succIn, onSuccIn: e => this.setState({ succIn: e.target.value }),
+      addSucc: e => { if (e && e.preventDefault) e.preventDefault(); const v = s.succIn.trim(); if (!v) return; this.updCur(t => ({ ...t, succ: [...t.succ, v] })); this.setState({ succIn: '' }); this.toast(`${v} ajouté(e) au plan de succession`); },
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

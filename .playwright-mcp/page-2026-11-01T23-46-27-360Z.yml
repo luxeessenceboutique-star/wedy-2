@@ -1,0 +1,94 @@
+- complementary [ref=f1e4]:
+  - link "Wedy Wedy RH" [ref=f1e5] [cursor=pointer]:
+    - /url: Wedy Dashboard.dc.html
+    - img "Wedy" [ref=f1e6]
+    - generic [ref=f1e7]: Wedy
+    - generic [ref=f1e8]: RH
+  - link "Demander à Wedy… ⌘K" [ref=f1e9] [cursor=pointer]:
+    - /url: Wedy Copilot.dc.html
+    - generic [ref=f1e11]: Demander à Wedy…
+    - generic [ref=f1e12]: ⌘K
+  - navigation [ref=f1e13]:
+    - generic [ref=f1e14]: VUE D'ENSEMBLE
+    - link "Tableau de bord" [ref=f1e15] [cursor=pointer]:
+      - /url: Wedy Dashboard.dc.html
+    - link "Copilote IA New" [ref=f1e19] [cursor=pointer]:
+      - /url: Wedy Copilot.dc.html
+      - generic [ref=f1e21]: Copilote IA
+      - generic [ref=f1e22]: New
+    - link "Notifications 3" [ref=f1e23] [cursor=pointer]:
+      - /url: Wedy Notifications.dc.html
+      - generic [ref=f1e25]: Notifications
+      - generic [ref=f1e26]: "3"
+    - generic [ref=f1e27]: PERSONNES
+    - link "Employés" [ref=f1e28] [cursor=pointer]:
+      - /url: Wedy Employees.dc.html
+    - link "Stagiaires" [ref=f1e31] [cursor=pointer]:
+      - /url: Wedy Interns.dc.html
+    - link "Demandes 6" [ref=f1e34] [cursor=pointer]:
+      - /url: Wedy Requests.dc.html
+      - generic [ref=f1e36]: Demandes
+      - generic [ref=f1e37]: "6"
+    - link "Recrutement" [ref=f1e38] [cursor=pointer]:
+      - /url: Wedy Recruitment.dc.html
+    - link "Candidats" [ref=f1e41] [cursor=pointer]:
+      - /url: Wedy Candidates.dc.html
+    - link "Annonces AI" [ref=f1e44] [cursor=pointer]:
+      - /url: Wedy Job Posts.dc.html
+      - generic [ref=f1e46]: Annonces
+      - generic [ref=f1e47]: AI
+    - link "Planning RH" [ref=f1e48] [cursor=pointer]:
+      - /url: Wedy Planning.dc.html
+    - link "Performance" [ref=f1e51] [cursor=pointer]:
+      - /url: Wedy Performance.dc.html
+    - link "Congés" [ref=f1e54] [cursor=pointer]:
+      - /url: Wedy Time Off.dc.html
+    - link "Absences" [ref=f1e57] [cursor=pointer]:
+      - /url: Wedy Absences.dc.html
+    - link "Paie" [ref=f1e60] [cursor=pointer]:
+      - /url: Wedy Payroll.dc.html
+    - link "Organigramme" [ref=f1e63] [cursor=pointer]:
+      - /url: Wedy Org Chart.dc.html
+    - link "Réunions" [ref=f1e66] [cursor=pointer]:
+      - /url: Wedy Meetings.dc.html
+    - generic [ref=f1e69]: DÉVELOPPEMENT RH
+    - link "Onboarding" [ref=f1e70] [cursor=pointer]:
+      - /url: Wedy Onboarding.dc.html
+    - link "Formation" [ref=f1e73] [cursor=pointer]:
+      - /url: Wedy Training.dc.html
+    - link "Talents" [ref=f1e76] [cursor=pointer]:
+      - /url: Wedy Talents.dc.html
+    - link "Appels d'offres AI" [ref=f1e79] [cursor=pointer]:
+      - /url: Wedy Tenders.dc.html
+      - generic [ref=f1e81]: Appels d'offres
+      - generic [ref=f1e82]: AI
+    - generic [ref=f1e83]: DOCUMENTS
+    - link "Générer" [ref=f1e84] [cursor=pointer]:
+      - /url: Wedy Generate.dc.html
+    - link "Modèles" [ref=f1e87] [cursor=pointer]:
+      - /url: Wedy Templates.dc.html
+    - link "Historique" [ref=f1e90] [cursor=pointer]:
+      - /url: Wedy History.dc.html
+    - generic [ref=f1e93]: INSIGHTS
+    - link "Analytics" [ref=f1e94] [cursor=pointer]:
+      - /url: Wedy Analytics.dc.html
+    - link "Journal d'audit" [ref=f1e97] [cursor=pointer]:
+      - /url: Wedy Audit.dc.html
+    - generic [ref=f1e100]: ESPACE DE TRAVAIL
+    - link "Intégrations" [ref=f1e101] [cursor=pointer]:
+      - /url: Wedy Integrations.dc.html
+    - link "Utilisateurs & rôles" [ref=f1e104] [cursor=pointer]:
+      - /url: Wedy Users.dc.html
+    - link "Paramètres" [ref=f1e107] [cursor=pointer]:
+      - /url: Wedy Settings.dc.html
+    - link "Sécurité" [ref=f1e110] [cursor=pointer]:
+      - /url: Wedy Security.dc.html
+    - link "Aide" [ref=f1e113] [cursor=pointer]:
+      - /url: Wedy Help.dc.html
+  - generic [ref=f1e116]:
+    - generic [ref=f1e117]: SI
+    - generic [ref=f1e118]:
+      - generic [ref=f1e119]: Salma Idrissi
+      - generic [ref=f1e120]: Admin RH
+    - link "Se déconnecter" [ref=f1e121] [cursor=pointer]:
+      - /url: Wedy Login.dc.html

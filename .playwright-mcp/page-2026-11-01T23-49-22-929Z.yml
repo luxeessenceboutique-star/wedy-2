@@ -1,0 +1,14 @@
+- generic [ref=f6e2]:
+  - region "Notifications alt+T"
+  - banner [ref=f6e4]:
+    - generic [ref=f6e5]:
+      - generic [ref=f6e6]: Personnes
+      - generic [ref=f6e10]: Employés
+    - link "Demander à Wedy…" [ref=f6e11] [cursor=pointer]:
+      - /url: /app/copilot
+    - group "Langue" [ref=f6e17]:
+      - button "Français" [pressed] [ref=f6e18] [cursor=pointer]: FR
+      - button "العربية" [ref=f6e19] [cursor=pointer]: ع
+      - button "English" [ref=f6e20] [cursor=pointer]: EN
+    - link "Notifications" [ref=f6e21] [cursor=pointer]:
+      - /url: /app/notifications

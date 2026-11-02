@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Mes documents — Espace collaborateur Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyPortalNav" active="docs" hint-size="100%,63px"></dc-import>
+  <div style="max-width:1180px;margin:0 auto;padding:26px 24px 56px;display:flex;flex-direction:column;gap:18px">
+    <div>
+      <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(28px,3vw,38px);letter-spacing:-.045em;line-height:1.05">Mes documents</h1>
+      <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Vos attestations prêtes en quelques secondes, vos bulletins et votre contrat au même endroit.</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+      <div data-reveal="up" data-delay="100" style="position:relative;overflow:hidden;flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:14px;padding:22px;border-radius:22px;background:#06141a;color:#e8eff1;isolation:isolate">
+        <div aria-hidden="true" data-loop="drift" style="position:absolute;right:-90px;top:-120px;width:340px;height:340px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent);z-index:-1"></div>
+        <div style="display:flex;align-items:center;gap:10px"><img src="assets/wedy-avatar.png" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;background:#0f262e;border:2px solid rgba(95,227,240,.5)"><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px">Demander un document</div><div style="font-size:12.5px;color:#9fb4bb">Wedy le prépare instantanément</div></div></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><sc-for list="{{ types }}" as="t" hint-placeholder-count="4"><button type="button" onClick="{{ t.go }}" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid {{ t.border }};background:{{ t.bg }};font-family:inherit;text-align:left;cursor:pointer;color:#e8eff1"><span style="width:18px;height:18px;border-radius:50%;border:2px solid {{ t.ring }};display:flex;align-items:center;justify-content:center;flex-shrink:0"><sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span style="width:8px;height:8px;border-radius:50%;background:#5fe3f0"></span></sc-if></span><span style="flex:1;font-size:13.5px;font-weight:600">{{ t.label }}</span><span style="font-size:11px;font-weight:600;color:{{ t.noteColor }}">{{ t.note }}</span></button></sc-for></div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><sc-for list="{{ langs }}" as="l" hint-placeholder-count="3"><button type="button" onClick="{{ l.go }}" style="height:40px;border-radius:11px;border:1px solid {{ l.border }};background:{{ l.bg }};color:{{ l.color }};font-family:{{ l.font }};font-size:13px;font-weight:600;cursor:pointer">{{ l.label }}</button></sc-for></div>
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:#b9cbd0">Motif<select value="{{ motif }}" onChange="{{ onMotif }}" style="height:42px;padding:0 10px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:#0d2229;color:#ffffff;font-family:inherit;font-size:14px;font-weight:400;outline:none"><option value="Banque">Dossier bancaire</option><option value="Visa">Demande de visa</option><option value="Administration">Démarche administrative</option><option value="Logement">Location de logement</option></select></label>
+        <button type="button" onClick="{{ request }}" disabled="{{ busy }}" style="position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;height:48px;border:none;border-radius:13px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 14px 30px -12px rgba(22,182,200,.8)"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><sc-if value="{{ busy }}" hint-placeholder-val="{{ false }}"><span data-loop="spin" style="position:relative;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#ffffff"></span><span style="position:relative">Wedy prépare votre document…</span></sc-if><sc-if value="{{ idle }}" hint-placeholder-val="{{ true }}"><span data-icon="wand-sparkles|wand-2" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px"></span><span style="position:relative">{{ cta }}</span></sc-if></button>
+      </div>
+
+      <div style="flex:1.3 1 440px;min-width:0;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+          <div data-reveal="up" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:8px;padding:13px 18px;background:#f8fafb"><span data-icon="{{ g.icon }}" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#0e6f84"></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:14.5px">{{ g.label }}</span></div>
+            <sc-for list="{{ g.items }}" as="d" hint-placeholder-count="3">
+              <div data-reveal="up" style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-top:1px solid #eef2f4;background:{{ d.bg }};transition:background 1s">
+                <span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{ d.tint }};color:{{ d.color }};flex-shrink:0"><span data-icon="{{ d.icon }}" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span>
+                <div style="flex:1;min-width:0"><div dir="{{ d.dir }}" style="font-size:14px;font-weight:600;text-align:left;font-family:{{ d.font }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.title }}</div><div style="font-size:12.5px;color:#5f7079">{{ d.sub }}</div></div>
+                <sc-if value="{{ d.hasLang }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;padding:3px 7px;border-radius:6px;background:#eef5f7;color:#0b5f72">{{ d.lang }}</span></sc-if>
+                <sc-if value="{{ d.pending }}" hint-placeholder-val="{{ false }}"><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:#fbefda;color:#8a5207;white-space:nowrap">Validation RH</span></sc-if>
+                <sc-if value="{{ d.ready }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ d.dl }}" aria-label="Télécharger" style="width:36px;height:36px;border:none;border-radius:10px;background:#f3f6f7;color:#33474f;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#e4f2f4;color:#0e6f84"><span data-icon="download" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TYPES = [['att', 'Attestation de travail', true, { fr: 'Attestation de travail', ar: 'شهادة العمل', en: 'Work certificate' }], ['sal', 'Attestation de salaire', true, { fr: 'Attestation de salaire', ar: 'شهادة الأجر', en: 'Salary certificate' }], ['dom', 'Domiciliation de salaire', false, { fr: 'Attestation de domiciliation de salaire', ar: 'شهادة توطين الأجر', en: 'Salary domiciliation letter' }], ['cert', 'Certificat de travail', false, { fr: 'Certificat de travail', ar: 'شهادة الشغل', en: 'Employment certificate' }]];
+const LANGS = [['fr', 'Français'], ['ar', 'العربية'], ['en', 'English']];
+
+class Component extends DCLogic {
+  state = { type: 'att', lang: 'fr', motif: 'Banque', busy: false, mine: [{ id: 'm0', title: 'Attestation de travail', lang: 'FR', sub: 'Générée par Wedy · ce matin, 09:12', ready: true }], fresh: null, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); clearTimeout(this._b); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2800); }
+  renderVals() {
+    const s = this.state, t = TYPES.find(x => x[0] === s.type);
+    const row = (d, extra) => ({ title: d.title, sub: d.sub, lang: d.lang || '', hasLang: !!d.lang, dir: d.lang === 'AR' ? 'rtl' : 'ltr', font: d.lang === 'AR' ? "'Noto Kufi Arabic',sans-serif" : 'inherit', ready: d.ready !== false, pending: d.ready === false, bg: d.id === s.fresh ? '#eef9fa' : '#ffffff', dl: () => this.toast(`${d.title} téléchargé`), ...extra });
+    return {
+      rootRef: this.rootRef,
+      types: TYPES.map(([k, label, instant]) => { const on = s.type === k; return { label, on, note: instant ? 'Immédiat' : 'Validation RH', noteColor: instant ? '#4fd3a0' : '#f0bd6a', bg: on ? 'rgba(95,227,240,.1)' : 'rgba(255,255,255,.04)', border: on ? 'rgba(95,227,240,.5)' : 'rgba(255,255,255,.1)', ring: on ? '#5fe3f0' : 'rgba(255,255,255,.3)', go: () => this.setState({ type: k }) }; }),
+      langs: LANGS.map(([k, label]) => ({ label, font: k === 'ar' ? "'Noto Kufi Arabic',sans-serif" : 'inherit', go: () => this.setState({ lang: k }), bg: s.lang === k ? '#effbfc' : 'transparent', color: s.lang === k ? '#06141a' : '#cfdde1', border: s.lang === k ? '#effbfc' : 'rgba(255,255,255,.18)' })),
+      motif: s.motif, onMotif: e => this.setState({ motif: e.target.value }),
+      busy: s.busy, idle: !s.busy, cta: t[2] ? 'Générer maintenant' : 'Envoyer la demande aux RH',
+      request: () => {
+        if (s.busy) return;
+        this.setState({ busy: true });
+        this._b = setTimeout(() => {
+          if (!this._a) return;
+          const id = 'm' + Date.now(), title = t[3][s.lang];
+          this.setState(x => ({ busy: false, fresh: id, mine: [{ id, title, lang: s.lang.toUpperCase(), sub: t[2] ? `Générée par Wedy · à l'instant · motif : ${s.motif}` : `Envoyée aux RH · motif : ${s.motif}`, ready: t[2] }, ...x.mine] }));
+          this.toast(t[2] ? `${t[1]} prête à télécharger` : `Demande envoyée · Sara El Fassi la traitera sous 24 h`);
+        }, t[2] ? 1400 : 700);
+      },
+      groups: [
+        { label: 'Demandes récentes', icon: 'sparkles', items: s.mine.map(d => row(d, { icon: d.ready === false ? 'hourglass' : 'file-check', tint: d.ready === false ? '#fbefda' : '#e1f5ec', color: d.ready === false ? '#b06b0c' : '#0f6f49' })) },
+        { label: 'Bulletins de paie', icon: 'receipt|wallet', items: [['Octobre 2026', 'Payé le 30/10 · 13 942 MAD net'], ['Septembre 2026', 'Payé le 30/09 · 13 942 MAD net'], ['Août 2026', 'Payé le 29/08 · 13 942 MAD net']].map(([title, sub], i) => row({ id: 'p' + i, title, sub }, { icon: 'receipt|file-text', tint: '#e4f2f4', color: '#0e6f84' })) },
+        { label: 'Contrat et avenants', icon: 'file-signature|file-pen|file-text', items: [['Contrat CDD 2025-2026', 'Signé électroniquement le 13/11/2025', 'FR'], ['Avenant au contrat', 'Signé le 15/03/2024', 'FR']].map(([title, sub, lang], i) => row({ id: 'c' + i, title, sub, lang }, { icon: 'file-text', tint: '#ece9fb', color: '#5444b8' })) },
+      ],
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

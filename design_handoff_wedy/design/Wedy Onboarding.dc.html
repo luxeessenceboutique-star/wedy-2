@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Onboarding — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder, textarea::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="onboarding" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Développement RH" title="Onboarding" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Onboarding</h1>
+          <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Les 90 premiers jours de chaque nouvel arrivant, étape par étape.</p>
+        </div>
+        <button type="button" onClick="{{ start }}" data-reveal="up" data-delay="100" style="display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 12px 26px -12px rgba(22,182,200,.85)"><span data-icon="user-plus" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Démarrer un onboarding</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+        <div data-reveal="up" data-delay="60" style="padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#0b5f72,#0e7f96);color:#ffffff"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9">Parcours en cours</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ kActive }}</div></div>
+        <div data-reveal="up" data-delay="110" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Pré-boarding</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ kPre }}</div></div>
+        <div data-reveal="up" data-delay="160" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Progression moyenne</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ kAvg }}%</div></div>
+        <div data-reveal="up" data-delay="210" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Satisfaction (pulses)</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ kSat }}<span style="font-size:16px;color:#5f7079;font-weight:600"> / 5</span></div></div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div data-reveal="up" data-delay="120" style="flex:1 1 300px;min-width:0;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="padding:14px 16px">
+            <div style="position:relative"><span data-icon="search" data-size="15" style="position:absolute;left:12px;top:50%;margin-top:-7.5px;display:inline-flex;width:15px;height:15px;color:#7d8f97;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Rechercher un nouvel arrivant…" style="width:100%;height:40px;padding:0 12px 0 36px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></div>
+          </div>
+          <sc-for list="{{ hires }}" as="h" hint-placeholder-count="5">
+            <button type="button" onClick="{{ h.pick }}" data-reveal="up" data-delay="{{ h.delay }}" style="position:relative;width:100%;display:flex;align-items:center;gap:12px;padding:13px 16px;border:none;border-top:1px solid #eef2f4;background:{{ h.bg }};font-family:inherit;text-align:left;cursor:pointer" style-hover="background:#f6fafb">
+              <sc-if value="{{ h.on }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:#16b6c8"></span></sc-if>
+              <span style="position:relative;width:46px;height:46px;flex-shrink:0">
+                <svg viewBox="0 0 46 46" style="position:absolute;inset:0;width:46px;height:46px;transform:rotate(-90deg)"><circle cx="23" cy="23" r="21" style="fill:none;stroke:#eef2f4;stroke-width:3px"></circle><circle cx="23" cy="23" r="21" style="fill:none;stroke:{{ h.ringColor }};stroke-width:3px;stroke-linecap:round;stroke-dasharray:{{ h.dash }};transition:stroke-dasharray .6s cubic-bezier(.2,.8,.2,1)"></circle></svg>
+                <span style="position:absolute;inset:5px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ h.av }};color:#ffffff;font-size:12px;font-weight:700">{{ h.ini }}</span>
+              </span>
+              <span style="flex:1;min-width:0"><span style="display:block;font-size:14px;font-weight:600;color:#0a1c24">{{ h.name }}</span><span style="display:block;font-size:12.5px;color:#5f7079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.role }}</span></span>
+              <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0"><span style="font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:{{ h.chipBg }};color:{{ h.chipColor }};white-space:nowrap">{{ h.dayLabel }}</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#52646d">{{ h.pct }}%</span></span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="flex:2.2 1 600px;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <section data-reveal="left" data-delay="140" style="position:relative;overflow:hidden;border-radius:22px;background:#06141a;color:#e8eff1;padding:22px 24px;isolation:isolate">
+            <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none">
+              <div data-loop="drift" style="position:absolute;left:-10%;top:-90%;width:480px;height:480px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent)"></div>
+              <div data-loop="drift" data-dur="26000" data-delay="-8000" style="position:absolute;right:-8%;top:-70%;width:440px;height:440px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.35),transparent)"></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center">
+              <span style="position:relative;width:66px;height:66px;flex-shrink:0"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(95,227,240,.6)"></span><span style="position:relative;width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ cur.av }};font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:22px;font-weight:700;color:#ffffff;border:2px solid rgba(255,255,255,.2)">{{ cur.ini }}</span></span>
+              <div style="flex:1;min-width:220px">
+                <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:24px;letter-spacing:-.035em">{{ cur.name }}</div>
+                <div style="margin-top:3px;font-size:14px;color:#9fb4bb">{{ cur.role }} · {{ cur.dept }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+                  <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.07);color:#cfdde1"><span data-icon="calendar" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Arrivée le {{ cur.start }}</span>
+                  <span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:rgba(154,139,240,.18);color:#c9c0f8">{{ cur.contract }}</span>
+                  <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.07);color:#cfdde1"><span data-icon="user" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Manager · {{ cur.manager }}</span>
+                </div>
+              </div>
+              <div style="min-width:190px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:baseline;gap:8px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:42px;font-weight:800;letter-spacing:-.05em;line-height:1">{{ cur.pct }}%</span><span style="font-size:13px;color:#9fb4bb">du parcours</span></div>
+                <sc-if value="{{ cur.signed }}" hint-placeholder-val="{{ true }}"><span style="display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:#4fd3a0"><span data-icon="file-check" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Contrat signé</span></sc-if>
+                <sc-if value="{{ cur.unsigned }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ sign }}" style="display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 14px;border:none;border-radius:11px;background:#effbfc;color:#06141a;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap"><span data-icon="pen-line|pen" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>{{ cur.signLabel }}</button></sc-if>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);flex-wrap:wrap">
+              <span data-icon="handshake|users" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#5fe3f0"></span>
+              <span style="font-size:13px;color:#b9cbd0">Parrain / marraine</span>
+              <input value="{{ cur.buddy }}" onChange="{{ onBuddy }}" placeholder="Choisir un parrain…" style="flex:1;min-width:170px;max-width:280px;height:36px;padding:0 12px;border-radius:10px;border:1px solid {{ cur.buddyBorder }};background:rgba(255,255,255,.06);color:#ffffff;font-family:inherit;font-size:13.5px;outline:none">
+              <span style="margin-left:auto;font-size:12.5px;color:#9fb4bb">{{ cur.dayText }}</span>
+            </div>
+          </section>
+
+          <div data-reveal="up" data-delay="180" style="padding:18px 22px 18px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Parcours 30-60-90</span><span style="font-size:12.5px;color:#52646d">{{ cur.phaseText }}</span></div>
+            <div style="position:relative;margin-top:40px;height:10px">
+              <div style="position:absolute;inset:0;display:flex;gap:4px"><span style="flex:1;border-radius:99px 0 0 99px;background:#f5e3c3"></span><span style="flex:1;background:#cdeaef"></span><span style="flex:1;border-radius:0 99px 99px 0;background:#dcd6f6"></span></div>
+              <div style="position:absolute;left:0;top:0;bottom:0;width:{{ cur.markerLeft }}%;border-radius:99px;background:linear-gradient(90deg,#df9326,#16b6c8 50%,#6d5ad6);background-size:{{ cur.gradSize }} 100%;transition:width .8s cubic-bezier(.2,.8,.2,1)"></div>
+              <sc-if value="{{ cur.started }}" hint-placeholder-val="{{ true }}">
+                <span style="position:absolute;top:50%;left:{{ cur.markerLeft }}%;width:22px;height:22px;margin:-11px 0 0 -11px;transition:left .8s cubic-bezier(.2,.8,.2,1)"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;background:rgba(22,182,200,.45)"></span><span style="position:absolute;inset:3px;border-radius:50%;background:#ffffff;border:3px solid #0e6f84"></span></span>
+                <span style="position:absolute;bottom:20px;left:{{ cur.markerLeft }}%;transform:translateX(-50%);white-space:nowrap;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:7px;background:#0a1c24;color:#ffffff;transition:left .8s cubic-bezier(.2,.8,.2,1)">Aujourd'hui · {{ cur.dayShort }}</span>
+              </sc-if>
+              <sc-if value="{{ cur.pre }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;bottom:20px;left:0;white-space:nowrap;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:7px;background:#ece9fb;color:#5444b8">Pré-boarding · arrivée dans {{ cur.daysTo }} jours</span></sc-if>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:10px;font-family:'Geist Mono',monospace;font-size:11px;color:#7d8f97"><span>J1</span><span>J30</span><span>J60</span><span>J90</span></div>
+          </div>
+
+          <div data-reveal="up" data-delay="200" style="display:flex;gap:4px;padding:5px;border-radius:14px;background:#ffffff;border:1px solid #e2e8eb;align-self:flex-start">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2"><button type="button" onClick="{{ t.go }}" style="position:relative;display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border:none;border-radius:10px;background:transparent;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap;color:{{ t.color }}"><sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span data-reveal="pill" style="position:absolute;inset:0;border-radius:10px;background:#0a1c24"></span></sc-if><span data-icon="{{ t.icon }}" data-size="15" style="position:relative;display:inline-flex;width:15px;height:15px"></span><span style="position:relative">{{ t.label }}</span></button></sc-for>
+          </div>
+
+          <sc-if value="{{ tPlan }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;align-items:start">
+              <sc-for list="{{ phases }}" as="p" hint-placeholder-count="3">
+                <div data-reveal="up" data-delay="{{ p.delay }}" style="border-radius:18px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden;box-shadow:{{ p.ring }}">
+                  <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:{{ p.bg }}">
+                    <span style="font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:7px;background:#ffffff;color:{{ p.color }}">{{ p.label }}</span>
+                    <span style="font-weight:700;font-size:15px;color:#0a1c24">{{ p.name }}</span>
+                    <sc-if value="{{ p.current }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:{{ p.color }}"><span data-loop="pulse" style="width:6px;height:6px;border-radius:50%;background:{{ p.bar }}"></span>En cours</span></sc-if>
+                    <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;color:{{ p.color }}">{{ p.count }}</span>
+                  </div>
+                  <div style="height:4px;background:#eef2f4"><div style="height:100%;width:{{ p.pct }}%;background:{{ p.bar }};transition:width .6s cubic-bezier(.2,.8,.2,1)"></div></div>
+                  <div style="padding:8px;display:flex;flex-direction:column;gap:2px">
+                    <sc-for list="{{ p.tasks }}" as="t" hint-placeholder-count="4">
+                      <button type="button" onClick="{{ t.toggle }}" style="display:flex;align-items:flex-start;gap:10px;width:100%;padding:9px 8px;border:none;border-radius:10px;background:transparent;font-family:inherit;text-align:left;cursor:pointer" style-hover="background:#f6f9fa">
+                        <span style="width:19px;height:19px;border-radius:6px;border:1.5px solid #c3ced3;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#ffffff;background:#ffffff;margin-top:1px"><sc-if value="{{ t.done }}" hint-placeholder-val="{{ false }}"><span style="width:19px;height:19px;border-radius:6px;background:{{ p.bar }};display:flex;align-items:center;justify-content:center"><span data-icon="check" data-size="12" data-sw="3" style="display:inline-flex;width:12px;height:12px"></span></span></sc-if></span>
+                        <span style="font-size:13.5px;line-height:1.4;color:{{ t.color }};text-decoration:{{ t.deco }}">{{ t.t }}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ tPulse }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+              <div style="flex:1.3 1 320px;min-width:0;display:flex;flex-direction:column;gap:10px">
+                <div data-reveal="up" style="display:flex;gap:11px;align-items:flex-start;padding:14px;border-radius:16px;background:linear-gradient(135deg,rgba(22,182,200,.08),rgba(109,90,214,.08));border:1px solid rgba(109,90,214,.18)"><img src="assets/wedy-avatar.png" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#e4f2f4"><div><div style="font-size:12px;font-weight:700;color:#5444b8">Analyse de Wedy</div><div style="margin-top:4px;font-size:13.5px;line-height:1.55;color:#1d3540">{{ cur.ai }}</div></div></div>
+                <sc-for list="{{ pulses }}" as="p" hint-placeholder-count="2">
+                  <div data-reveal="up" data-delay="{{ p.delay }}" style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb">
+                    <span style="width:48px;height:48px;border-radius:14px;background:{{ p.bg }};color:{{ p.color }};display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:19px;line-height:1;flex-shrink:0">{{ p.score }}<span style="font-size:9.5px;font-weight:600;margin-top:2px">/ 5</span></span>
+                    <div style="min-width:0"><div style="font-size:13px;font-weight:700">{{ p.when }}</div><div style="font-size:13.5px;line-height:1.5;color:#33474f;margin-top:3px">« {{ p.comment }} »</div></div>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ noPulses }}" hint-placeholder-val="{{ false }}"><div style="padding:28px 16px;border-radius:16px;border:1px dashed #d0dadf;text-align:center;font-size:13.5px;color:#52646d">Aucun pulse pour l'instant.</div></sc-if>
+              </div>
+              <form onSubmit="{{ sendPulse }}" data-reveal="up" data-delay="100" style="flex:1 1 280px;min-width:0;padding:18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb;display:flex;flex-direction:column;gap:12px">
+                <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Nouveau pulse</div>
+                <div style="font-size:13.5px;color:#33474f">Comment se passe l'intégration de {{ cur.first }} ?</div>
+                <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">
+                  <sc-for list="{{ scores }}" as="s" hint-placeholder-count="5"><button type="button" onClick="{{ s.pick }}" style="height:44px;border-radius:11px;border:1px solid {{ s.border }};background:{{ s.bg }};color:{{ s.color }};font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:17px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s">{{ s.n }}</button></sc-for>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:11.5px;color:#7d8f97"><span>Difficile</span><span>Excellente</span></div>
+                <textarea value="{{ comment }}" onChange="{{ onComment }}" rows="3" placeholder="Commentaire du collaborateur ou du manager…" style="resize:vertical;padding:10px 12px;border-radius:11px;border:1px solid #d6dfe3;font-family:inherit;font-size:14px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></textarea>
+                <button type="submit" style="display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer"><span data-icon="send" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Enregistrer le pulse</button>
+              </form>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const PH = [
+  { id: 'd30', label: 'J1–30', name: "S'intégrer", color: '#8a5207', bar: '#df9326', bg: '#fbefda', tasks: ['Accueil et visite des locaux', 'Remise du matériel et des accès', "Présentation de l'équipe et du parrain", 'Formation aux outils (CRM, Wedy)', "Rapport d'étonnement à J+30"] },
+  { id: 'd60', label: 'J31–60', name: 'Contribuer', color: '#0b5f72', bar: '#16b6c8', bg: '#e4f2f4', tasks: ['Premiers dossiers en autonomie', 'Formation métier avancée', 'Objectifs individuels validés', 'Point mi-parcours avec le manager'] },
+  { id: 'd90', label: 'J61–90', name: 'Performer', color: '#5444b8', bar: '#6d5ad6', bg: '#ece9fb', tasks: ['Pleine autonomie sur le poste', "Feedback 360° de l'équipe", "Bilan de période d'essai", 'Confirmation dans le poste'] },
+];
+const HIRES = [
+  { id: 'h1', name: 'Mehdi Rami', role: 'Commercial', dept: 'Commercial', start: '01/10/2026', day: 31, contract: 'CDI', signed: true, buddy: 'Khadija Zerouali', manager: 'Adil Mernissi', done: { d30: [0, 1, 2, 3, 4], d60: [0] }, pulses: [[7, 4, 'Accueil chaleureux, équipe très disponible.'], [30, 4, "L'accès au CRM est arrivé tard, sinon tout va bien."]], ai: "Intégration positive (4/5). Point d'attention : les accès informatiques ont pris une semaine. Préparez-les avant chaque arrivée." },
+  { id: 'h2', name: 'Lina Chraibi', role: 'Stagiaire marketing', dept: 'Marketing', start: '01/09/2026', day: 61, contract: 'Stage', signed: true, buddy: 'Yasmine Benali', manager: 'Karim Lahlou', done: { d30: [0, 1, 2, 3, 4], d60: [0, 1, 2, 3], d90: [0] }, pulses: [[7, 5, "Super accueil, j'ai déjà un vrai projet."], [30, 4, 'Un peu de mal à prioriser mes tâches.'], [60, 5, 'Je me sens utile et bien encadrée.']], ai: 'Très bonne dynamique (4,7/5). Sa marraine Yasmine est en fin de CDD le 12/11 : prévoyez un relais.' },
+  { id: 'h3', name: 'Soufiane Berrada', role: 'Key account manager', dept: 'Commercial', start: '15/10/2026', day: 17, contract: 'CDI', signed: true, buddy: '', manager: 'Adil Mernissi', done: { d30: [0, 1, 2] }, pulses: [[7, 3, "Beaucoup d'informations la première semaine."]], ai: "Premier pulse mitigé (3/5) et toujours pas de parrain. Désignez-en un cette semaine." },
+  { id: 'h4', name: 'Ayoub El Idrissi', role: 'Conseiller client', dept: 'Service client', start: '20/10/2026', day: 12, contract: 'CDD', signed: false, buddy: 'Hind Tazi', manager: 'Hajar Benjelloun', done: { d30: [0, 1] }, pulses: [[7, 4, "L'équipe est sympa et les outils sont simples."]], ai: 'Contrat toujours non signé après 12 jours : envoyez-le en signature électronique.' },
+  { id: 'h5', name: 'Ghita Benkirane', role: 'Chargée de communication', dept: 'Marketing', start: '01/12/2026', day: -30, contract: 'CDI', signed: false, buddy: 'Yasmine Benali', manager: 'Karim Lahlou', done: {}, pulses: [], ai: 'Arrivée dans 30 jours. Wedy a préparé le kit de bienvenue et la demande de matériel.' },
+];
+const avOf = n => AV[(n.charCodeAt(0) + n.length) % AV.length];
+const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+
+class Component extends DCLogic {
+  state = { cur: 'h1', hires: HIRES.map(h => ({ ...h, done: Object.fromEntries(PH.map(p => [p.id, [...(h.done[p.id] || [])]])), pulses: [...h.pulses] })), tab: 'plan', q: '', score: 4, comment: '', toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); clearTimeout(this._s); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2800); }
+  upd(id, fn) { this.setState(s => ({ hires: s.hires.map(h => h.id === id ? fn(h) : h) })); }
+  renderVals() {
+    const s = this.state, total = PH.reduce((n, p) => n + p.tasks.length, 0), C = 2 * Math.PI * 21;
+    const pctOf = h => Math.round(PH.reduce((n, p) => n + h.done[p.id].length, 0) / total * 100);
+    const phaseOf = d => d < 0 ? -1 : d <= 30 ? 0 : d <= 60 ? 1 : 2;
+    const q = s.q.trim().toLowerCase();
+    const hires = s.hires.filter(h => !q || `${h.name} ${h.role} ${h.dept}`.toLowerCase().includes(q)).map((h, i) => {
+      const pct = pctOf(h), ph = phaseOf(h.day);
+      return { name: h.name, role: `${h.role} · ${h.dept}`, ini: ini(h.name), av: avOf(h.name), pct, dash: `${(C * pct / 100).toFixed(1)}px ${C.toFixed(1)}px`, ringColor: ph < 0 ? '#9a8bf0' : PH[ph].bar,
+        on: h.id === s.cur, bg: h.id === s.cur ? '#f3fafb' : '#ffffff', dayLabel: h.day < 0 ? `J${h.day}` : `J+${h.day}`, chipBg: ph < 0 ? '#ece9fb' : PH[ph].bg, chipColor: ph < 0 ? '#5444b8' : PH[ph].color, delay: String(i * 50),
+        pick: () => this.setState({ cur: h.id, comment: '', score: 4 }) };
+    });
+    const h = s.hires.find(x => x.id === s.cur) || s.hires[0];
+    const pct = pctOf(h), ph = phaseOf(h.day), ml = Math.max(0, Math.min(90, h.day)) / 90 * 100;
+    const active = s.hires.filter(x => x.day >= 0), allP = s.hires.flatMap(x => x.pulses.map(p => p[1]));
+    return {
+      rootRef: this.rootRef, q: s.q, onQ: e => this.setState({ q: e.target.value }), hires,
+      kActive: active.length, kPre: s.hires.length - active.length,
+      kAvg: active.length ? Math.round(active.reduce((n, x) => n + pctOf(x), 0) / active.length) : 0,
+      kSat: allP.length ? (allP.reduce((a, b) => a + b, 0) / allP.length).toFixed(1).replace('.', ',') : '—',
+      cur: {
+        name: h.name, first: h.name.split(' ')[0], role: h.role, dept: h.dept, ini: ini(h.name), av: avOf(h.name), start: h.start, contract: h.contract, manager: h.manager, pct,
+        signed: h.signed, unsigned: !h.signed, signLabel: h.day < 0 ? 'Envoyer le contrat' : 'Faire signer le contrat',
+        buddy: h.buddy, buddyBorder: h.buddy ? 'rgba(255,255,255,.14)' : 'rgba(230,169,72,.8)',
+        dayText: h.day < 0 ? `Arrivée dans ${-h.day} jours` : `${h.day} jours depuis l'arrivée`,
+        phaseText: ph < 0 ? 'Pré-boarding' : `Phase ${PH[ph].label} · ${PH[ph].name}`,
+        markerLeft: ml.toFixed(2), gradSize: ml > 0 ? `${(10000 / ml).toFixed(1)}%` : '100%', started: h.day >= 0, pre: h.day < 0, daysTo: String(-h.day), dayShort: `J+${h.day}`, ai: h.ai,
+      },
+      tabs: [['plan', 'Plan 30-60-90', 'list-checks|check-square'], ['pulse', `Pulse surveys (${h.pulses.length})`, 'activity']].map(([k, label, icon]) => ({ label, icon, on: s.tab === k, color: s.tab === k ? '#ffffff' : '#52646d', go: () => this.setState({ tab: k }) })),
+      tPlan: s.tab === 'plan', tPulse: s.tab === 'pulse',
+      phases: PH.map((p, pi) => {
+        const n = h.done[p.id].length;
+        return { ...p, delay: String(pi * 80), ring: pi === ph ? `0 0 0 2px ${p.bar}` : 'none', current: pi === ph, count: `${n}/${p.tasks.length}`, pct: String(Math.round(n / p.tasks.length * 100)),
+          tasks: p.tasks.map((t, ti) => { const d = h.done[p.id].includes(ti); return { t, done: d, color: d ? '#7d8f97' : '#1d3540', deco: d ? 'line-through' : 'none',
+            toggle: () => this.upd(h.id, x => ({ ...x, done: { ...x.done, [p.id]: d ? x.done[p.id].filter(k => k !== ti) : [...x.done[p.id], ti] } })) }; }) };
+      }),
+      pulses: [...h.pulses].reverse().map(([d, sc, c], i) => ({ when: `Pulse J+${d}`, score: sc, comment: c, delay: String(i * 60), bg: sc >= 4 ? '#e1f5ec' : sc === 3 ? '#fbefda' : '#fbe9e6', color: sc >= 4 ? '#0f6f49' : sc === 3 ? '#8a5207' : '#a33a28' })),
+      noPulses: h.pulses.length === 0,
+      scores: [1, 2, 3, 4, 5].map(n => ({ n, bg: s.score === n ? '#0a1c24' : '#ffffff', color: s.score === n ? '#ffffff' : '#33474f', border: s.score === n ? '#0a1c24' : '#d6dfe3', pick: () => this.setState({ score: n }) })),
+      comment: s.comment, onComment: e => this.setState({ comment: e.target.value }),
+      sendPulse: e => {
+        if (e && e.preventDefault) e.preventDefault();
+        if (h.day < 0) { this.toast("Le pulse sera disponible après l'arrivée"); return; }
+        const c = s.comment.trim() || 'Sans commentaire.';
+        this.upd(h.id, x => ({ ...x, pulses: [...x.pulses, [x.day, s.score, c]] }));
+        this.setState({ comment: '' }); this.toast(`Pulse J+${h.day} enregistré pour ${h.name}`);
+      },
+      onBuddy: e => { const v = e.target.value; this.upd(h.id, x => ({ ...x, buddy: v })); },
+      sign: () => {
+        if (h.signed) return;
+        this.toast(h.day < 0 ? `Contrat envoyé à ${h.name}…` : 'Contrat envoyé en signature électronique…');
+        const id = h.id, name = h.name;
+        this._s = setTimeout(() => { if (!this._a) return; this.upd(id, x => ({ ...x, signed: true })); this.toast(`Contrat signé par ${name}`); }, 1500);
+      },
+      start: () => this.toast('Nouveau parcours : Wedy génère le plan 30-60-90 selon le poste'),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

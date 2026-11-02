@@ -1,0 +1,36 @@
+- generic [ref=f14e2]:
+  - region "Notifications alt+T"
+  - generic [ref=f14e3]:
+    - generic [ref=f14e8]:
+      - generic [ref=f14e9]:
+        - img "Wedy" [ref=f14e10]
+        - generic [ref=f14e11]: Wedy
+      - generic [ref=f14e12]:
+        - heading "RH moderne, pilotée par l'IA." [level=1] [ref=f14e13]: RH moderne,pilotée par l'IA.
+        - paragraph [ref=f14e14]: Générez, traduisez et classez chaque document RH en quelques secondes — alimenté par Claude AI et vos données d'entreprise.
+        - generic [ref=f14e15]:
+          - generic [ref=f14e16]: Génération de documents IA en secondes
+          - generic [ref=f14e21]: Trilingue — Français · Arabe · Anglais
+          - generic [ref=f14e27]: Conforme au droit du travail marocain
+      - paragraph [ref=f14e33]: © 2026 Wedy · Propulsé par Tybotflow
+    - generic [ref=f14e35]:
+      - generic [ref=f14e36]:
+        - heading "Bon retour 👋" [level=2] [ref=f14e37]
+        - paragraph [ref=f14e38]: Connectez-vous avec votre compte Tybot.
+      - generic [ref=f14e39]:
+        - generic [ref=f14e40]:
+          - generic [ref=f14e41]: Email
+          - textbox "Email" [ref=f14e42]:
+            - /placeholder: vous@entreprise.com
+        - generic [ref=f14e43]:
+          - generic [ref=f14e44]: Mot de passe
+          - textbox "Mot de passe" [ref=f14e45]:
+            - /placeholder: ••••••••
+        - button "Se connecter" [ref=f14e46] [cursor=pointer]
+      - paragraph [ref=f14e47]:
+        - text: En continuant, vous acceptez les
+        - link "Conditions d'utilisation" [ref=f14e48] [cursor=pointer]:
+          - /url: /legal
+        - text: "&"
+        - link "Politique de confidentialité" [ref=f14e49] [cursor=pointer]:
+          - /url: /legal

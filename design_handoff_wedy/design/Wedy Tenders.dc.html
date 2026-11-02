@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Appels d'offres — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="tenders" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Développement RH" title="Appels d'offres" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div>
+        <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Appels d'offres</h1>
+        <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Un agent IA surveille les marchés publics et analyse chaque dossier de consultation pour vous.</p>
+      </div>
+
+      <section data-reveal="up" data-delay="80" style="position:relative;overflow:hidden;border-radius:24px;background:#06141a;color:#e8eff1;padding:22px 24px;isolation:isolate">
+        <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none">
+          <div data-loop="drift" style="position:absolute;left:-8%;top:-90%;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent)"></div>
+          <div data-loop="drift" data-dur="27000" data-delay="-9000" style="position:absolute;right:-6%;top:-70%;width:460px;height:460px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.35),transparent)"></div>
+          <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:36px 36px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 40%,transparent);mask-image:linear-gradient(90deg,transparent,#000 40%,transparent)"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+          <div style="position:relative;width:92px;height:92px;flex-shrink:0">
+            <span style="position:absolute;inset:0;border-radius:50%;border:1px solid rgba(95,227,240,.25)"></span>
+            <span style="position:absolute;inset:16px;border-radius:50%;border:1px solid rgba(95,227,240,.22)"></span>
+            <span style="position:absolute;inset:32px;border-radius:50%;background:rgba(95,227,240,.14)"></span>
+            <sc-if value="{{ running }}" hint-placeholder-val="{{ false }}"><span data-loop="spin" data-dur="1800" style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(95,227,240,0) 0deg,rgba(95,227,240,0) 270deg,rgba(95,227,240,.55) 360deg)"></span><span data-loop="ping" style="position:absolute;left:62px;top:20px;width:8px;height:8px;border-radius:50%;background:#5fe3f0"></span></sc-if>
+            <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5fe3f0"><span data-icon="radar|scan-search|search" data-size="26" style="display:inline-flex;width:26px;height:26px"></span></span>
+          </div>
+          <div style="flex:1;min-width:260px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:22px;letter-spacing:-.03em">Agent de veille</span><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:{{ stBg }};color:{{ stColor }}"><span data-loop="pulse" style="width:7px;height:7px;border-radius:50%;background:{{ stColor }}"></span>{{ stLabel }}</span></div>
+            <div style="font-size:13px;color:#9fb4bb;margin-top:4px">Tython SARL · Portail des marchés publics · {{ lastRun }}</div>
+            <form onSubmit="{{ addKw }}" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:14px">
+              <span style="font-size:12px;color:#8ea5ad;margin-right:2px">Mots-clés</span>
+              <sc-for list="{{ kws }}" as="k" hint-placeholder-count="4"><span style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 5px 0 11px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);font-size:12.5px;color:#e8eff1">{{ k.t }}<button type="button" onClick="{{ k.remove }}" aria-label="Retirer" style="width:20px;height:20px;border:none;border-radius:50%;background:rgba(255,255,255,.1);color:#cfdde1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0"><span data-icon="x" data-size="11" style="display:inline-flex;width:11px;height:11px"></span></button></span></sc-for>
+              <input value="{{ kwIn }}" onChange="{{ onKw }}" placeholder="+ mot-clé" style="width:120px;height:30px;padding:0 11px;border-radius:99px;border:1px dashed rgba(255,255,255,.28);background:transparent;color:#ffffff;font-family:inherit;font-size:12.5px;outline:none">
+            </form>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;min-width:200px">
+            <sc-if value="{{ idle }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ run }}" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 18px;border:none;border-radius:13px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14.5px;font-weight:600;cursor:pointer;box-shadow:0 14px 30px -12px rgba(22,182,200,.8)"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><span data-icon="play" data-size="15" style="position:relative;display:inline-flex;width:15px;height:15px"></span><span style="position:relative">Lancer la recherche</span></button></sc-if>
+            <sc-if value="{{ running }}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{ stop }}" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 18px;border-radius:13px;border:1px solid rgba(239,107,84,.45);background:rgba(239,107,84,.12);color:#ffb3a5;font-family:inherit;font-size:14.5px;font-weight:600;cursor:pointer"><span data-icon="square" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Arrêter l'agent</button></sc-if>
+            <span style="display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:#9fb4bb"><span data-icon="sparkles" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Dossiers analysés par Claude</span>
+          </div>
+        </div>
+        <sc-if value="{{ showLog }}" hint-placeholder-val="{{ false }}">
+          <div data-reveal="up" style="margin-top:16px;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);overflow:hidden">
+            <div style="height:3px;background:rgba(255,255,255,.06)"><div style="height:100%;width:{{ prog }}%;background:linear-gradient(90deg,#16b6c8,#9a8bf0);transition:width .5s cubic-bezier(.2,.8,.2,1)"></div></div>
+            <div style="padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-family:'Geist Mono',monospace;font-size:12px">
+              <sc-for list="{{ logs }}" as="l" hint-placeholder-count="3"><div data-reveal="up" style="display:flex;gap:10px;color:{{ l.color }}"><span style="color:#5b737b;flex-shrink:0">{{ l.time }}</span><span>{{ l.t }}</span></div></sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </section>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+        <div data-reveal="up" data-delay="80" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="briefcase" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><div><div data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.1">6</div><div style="font-size:12.5px;color:#52646d">AO trouvés</div></div></div>
+        <div data-reveal="up" data-delay="130" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6"><span data-icon="sparkles" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><div><div data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.1">6</div><div style="font-size:12.5px;color:#52646d">Analysés</div></div></div>
+        <div data-reveal="up" data-delay="180" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="paperclip" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><div><div data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.1">19</div><div style="font-size:12.5px;color:#52646d">Fichiers téléchargés</div></div></div>
+        <div data-reveal="up" data-delay="230" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#fbe9e6;color:#df5740"><span data-icon="gauge" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span><div><div data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.1">2</div><div style="font-size:12.5px;color:#52646d">Haute complexité</div></div></div>
+      </div>
+
+      <div data-reveal="up" data-delay="120" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <div style="position:relative;flex:1 1 220px;min-width:200px;max-width:340px"><span data-icon="search" data-size="15" style="position:absolute;left:12px;top:50%;margin-top:-7.5px;display:inline-flex;width:15px;height:15px;color:#7d8f97;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Rechercher un AO, un acheteur, une ville…" style="width:100%;height:40px;padding:0 12px 0 36px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></div>
+        <span style="font-size:12.5px;color:#52646d;margin-left:4px">Complexité</span>
+        <sc-for list="{{ cxs }}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{ c.go }}" style="height:34px;padding:0 12px;border-radius:99px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap">{{ c.label }}</button></sc-for>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;color:#52646d">Trier par</span><select value="{{ sort }}" onChange="{{ onSort }}" style="height:38px;padding:0 30px 0 12px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13px;font-weight:500;color:#33474f;cursor:pointer;outline:none"><option value="deadline">Échéance</option><option value="match">Pertinence</option><option value="cx">Complexité</option><option value="budget">Budget</option></select></div>
+      </div>
+
+      <sc-if value="{{ running }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:#33474f"><span data-loop="spin" style="width:15px;height:15px;border-radius:50%;border:2px solid #d6dfe3;border-top-color:#16b6c8"></span>L'agent analyse les appels d'offres…</div>
+          <sc-for list="{{ skel }}" as="k" hint-placeholder-count="3"><div style="position:relative;overflow:hidden;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb"><span data-loop="scan" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(22,182,200,.09),transparent)"></span><div style="padding:20px;display:flex;gap:16px"><span style="width:56px;height:56px;border-radius:50%;background:#eef2f4;flex-shrink:0"></span><div style="flex:1;display:flex;flex-direction:column;gap:10px"><span style="height:10px;width:28%;border-radius:6px;background:#eef2f4"></span><span style="height:15px;width:66%;border-radius:6px;background:#eef2f4"></span><span style="height:10px;width:48%;border-radius:6px;background:#eef2f4"></span></div></div></div></sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showResults }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ list }}" as="t" hint-placeholder-count="4">
+            <div data-reveal="up" data-delay="{{ t.delay }}" style="border-radius:20px;background:#ffffff;border:1px solid {{ t.border }};overflow:hidden;opacity:{{ t.op }};transition:box-shadow .2s,border-color .2s" style-hover="box-shadow:0 18px 36px -24px rgba(10,28,36,.4)">
+              <div style="display:flex;gap:16px;align-items:flex-start;padding:18px 20px;flex-wrap:wrap">
+                <span style="position:relative;width:56px;height:56px;flex-shrink:0"><svg viewBox="0 0 56 56" style="display:block;width:56px;height:56px;transform:rotate(-90deg)"><circle cx="28" cy="28" r="23" style="fill:none;stroke:#eef2f4;stroke-width:5px"></circle><circle data-reveal="draw" data-frac="{{ t.frac }}" cx="28" cy="28" r="23" style="fill:none;stroke:{{ t.mColor }};stroke-width:5px;stroke-linecap:round;stroke-dasharray:{{ t.dash }}"></circle></svg><span style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1"><span style="font-size:15px;font-weight:800">{{ t.match }}</span><span style="font-size:8.5px;font-weight:600;color:#5f7079;margin-top:2px;letter-spacing:.04em">MATCH</span></span></span>
+                <div style="flex:1;min-width:260px">
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#5f7079">{{ t.ref }}</span><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ t.cxBg }};color:{{ t.cxColor }}">Complexité {{ t.cxLow }}</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ t.dlBg }};color:{{ t.dlColor }}"><span data-icon="{{ t.dlIcon }}" data-size="12" style="display:inline-flex;width:12px;height:12px"></span>{{ t.dlLabel }}</span></div>
+                  <div style="margin-top:7px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;font-size:18px;letter-spacing:-.02em;line-height:1.25">{{ t.title }}</div>
+                  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:7px;font-size:13px;color:#52646d">
+                    <span style="display:inline-flex;align-items:center;gap:5px"><span data-icon="landmark" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>{{ t.buyer }}</span>
+                    <span style="display:inline-flex;align-items:center;gap:5px"><span data-icon="map-pin" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>{{ t.city }}</span>
+                    <span style="display:inline-flex;align-items:center;gap:5px;font-weight:600;color:#0a1c24"><span data-icon="wallet" data-size="13" style="display:inline-flex;width:13px;height:13px;color:#52646d"></span>{{ t.budget }} MAD</span>
+                    <span style="display:inline-flex;align-items:center;gap:5px"><span data-icon="paperclip" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>{{ t.nFiles }} fichiers</span>
+                  </div>
+                  <div style="margin-top:10px;font-size:13.5px;line-height:1.55;color:#33474f">{{ t.summary }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;min-width:170px">
+                  <button type="button" onClick="{{ t.toggle }}" style="display:inline-flex;align-items:center;justify-content:center;gap:7px;height:40px;padding:0 14px;border:none;border-radius:11px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#16323c"><span data-icon="{{ t.toggleIcon }}" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>{{ t.toggleLabel }}</button>
+                  <div style="display:flex;gap:6px">
+                    <button type="button" onClick="{{ t.source }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;color:#33474f;cursor:pointer" style-hover="border-color:#9fb4bb"><span data-icon="external-link" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Source</button>
+                    <button type="button" onClick="{{ t.download }}" aria-label="Télécharger le dossier" style="width:38px;height:38px;border-radius:11px;border:1px solid #d6dfe3;background:#ffffff;color:#33474f;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="border-color:#9fb4bb"><span data-icon="download" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button>
+                  </div>
+                </div>
+              </div>
+              <sc-if value="{{ t.open }}" hint-placeholder-val="{{ false }}">
+                <div data-reveal="up" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;padding:16px 20px 20px;border-top:1px solid #eef2f4;background:#fbfcfc">
+                  <div>
+                    <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Exigences clés</div>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px"><sc-for list="{{ t.reqs }}" as="r" hint-placeholder-count="3"><div style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;line-height:1.45;color:#1d3540"><span data-icon="check" data-size="15" data-sw="2.4" style="display:inline-flex;width:15px;height:15px;color:#16a06b;flex-shrink:0;margin-top:1px"></span>{{ r.t }}</div></sc-for></div>
+                  </div>
+                  <div>
+                    <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Dossier de consultation</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"><sc-for list="{{ t.files }}" as="f" hint-placeholder-count="3"><span style="display:inline-flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:8px;background:#ffffff;border:1px solid #e2e8eb;color:#33474f"><span data-icon="file-text" data-size="12" style="display:inline-flex;width:12px;height:12px;color:#7d8f97"></span>{{ f.t }}</span></sc-for></div>
+                    <div style="display:flex;flex-direction:column;gap:7px;margin-top:12px;font-size:13px">
+                      <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#5f7079">Caution provisoire</span><span style="font-weight:600">{{ t.caution }} MAD</span></div>
+                      <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#5f7079">Visite des lieux</span><span style="font-weight:600">{{ t.visit }}</span></div>
+                      <div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#5f7079">Ouverture des plis</span><span style="font-weight:600">{{ t.dlDate }}</span></div>
+                    </div>
+                  </div>
+                  <div style="padding:14px;border-radius:14px;background:{{ t.recoBg }};border:1px solid {{ t.recoBorder }}">
+                    <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:{{ t.recoColor }}"><span data-icon="{{ t.recoIcon }}" data-size="17" style="display:inline-flex;width:17px;height:17px"></span>Avis de Wedy : {{ t.reco }}</div>
+                    <div style="margin-top:6px;font-size:13px;line-height:1.55;color:#33474f">{{ t.recoWhy }}</div>
+                    <sc-if value="{{ t.canPrepare }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ t.prepare }}" style="margin-top:12px;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border:none;border-radius:10px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer"><span data-icon="wand-sparkles|wand-2" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>Préparer la candidature</button></sc-if>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:48px 20px;border-radius:20px;background:#ffffff;border:1px dashed #d0dadf;text-align:center"><span style="width:50px;height:50px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:#f3f6f7;color:#7d8f97"><span data-icon="search-x|search" data-size="22" style="display:inline-flex;width:22px;height:22px"></span></span><div style="font-weight:700;font-size:16px">Aucun résultat pour ce filtre</div><div style="font-size:14px;color:#52646d">Essayez un autre filtre ou un autre terme.</div><button type="button" onClick="{{ reset }}" style="margin-top:6px;height:38px;padding:0 14px;border-radius:10px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:13.5px;font-weight:600;color:#0a1c24;cursor:pointer">Réinitialiser</button></div>
+      </sc-if>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:calc(100vw - 48px)"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const TODAY = new Date('2026-11-01T00:00:00');
+const TENDERS = [
+  { id: 't1', ref: 'AO n° 47/2026/CC', title: "Refonte du portail citoyen et de l'application mobile", buyer: 'Commune de Casablanca', city: 'Casablanca', deadline: '2026-11-18', budget: 2400000, cx: 'Haute', match: 91, files: ['CPS', 'RC', 'BPU', 'DQE'], caution: 36000, visit: '06/11 à 10:00', reqs: ['Deux références de portails publics de plus de 100 000 utilisateurs', 'Chef de projet certifié et 4 développeurs dédiés', 'Hébergement au Maroc, conformité à la loi 09-08'], reco: 'GO', why: 'Deux références similaires et un budget cohérent avec votre taille. Concurrence attendue : 4 à 6 offres.', summary: "Refonte complète du portail e-services (état civil, urbanisme) et application iOS / Android, avec 12 mois de maintenance." },
+  { id: 't2', ref: 'AO n° 12/2026/ART', title: 'Campagne digitale de promotion touristique 2027', buyer: 'Agence régionale du tourisme', city: 'Marrakech', deadline: '2026-11-25', budget: 950000, cx: 'Moyenne', match: 87, files: ['CPS', 'RC', 'BPU'], caution: 15000, visit: '—', reqs: ['Références de campagnes dans le tourisme', 'Production de 20 vidéos courtes et campagne social ads', 'Reporting mensuel des performances'], reco: 'GO', why: 'Forte adéquation avec votre expertise social media, et 24 jours pour préparer le dossier.', summary: "Conception et diffusion d'une campagne multicanale (Instagram, TikTok, YouTube) pour la saison 2027." },
+  { id: 't3', ref: 'AO n° 08/2026/UR', title: 'Maintenance et hébergement des sites web institutionnels', buyer: 'Université de Rabat', city: 'Rabat', deadline: '2026-11-09', budget: 420000, cx: 'Faible', match: 78, files: ['CPS', 'RC'], caution: 6000, visit: '—', reqs: ['Maintenance corrective et évolutive de 6 sites', 'Disponibilité garantie de 99,5 %', 'Support en français et en arabe'], reco: 'GO', why: 'Marché simple et récurrent, mais la date limite est dans 8 jours : à préparer en priorité.', summary: "Contrat de 24 mois pour la maintenance, la sécurité et l'hébergement de 6 sites WordPress." },
+  { id: 't4', ref: 'AO n° 31/2026/AREF', title: 'Plateforme e-learning pour la formation des enseignants', buyer: "Académie régionale d'éducation et de formation", city: 'Fès', deadline: '2026-12-02', budget: 1800000, cx: 'Haute', match: 74, files: ['CPS', 'RC', 'BPU', 'DQE', 'Annexes'], caution: 27000, visit: '12/11 à 09:30', reqs: ['LMS compatible SCORM pour 15 000 utilisateurs', 'Contenus en arabe et en français', 'Formation de 40 administrateurs'], reco: 'À étudier', why: 'Projet ambitieux : un partenariat avec un éditeur LMS renforcerait nettement votre offre.', summary: "Mise en place d'une plateforme LMS, production de 30 modules et accompagnement sur 18 mois." },
+  { id: 't5', ref: 'AO n° 19/2026/AP', title: 'Production de contenus vidéo institutionnels', buyer: 'Agence portuaire', city: 'Tanger', deadline: '2026-11-14', budget: 600000, cx: 'Moyenne', match: 69, files: ['CPS', 'RC', 'BPU'], caution: 9000, visit: '—', reqs: ['Studio de production et pilote de drone certifié', '10 films institutionnels en 3 langues', 'Cession des droits pour 5 ans'], reco: 'À étudier', why: 'Nécessite un partenaire pour les prises de vue par drone.', summary: 'Réalisation de films institutionnels et de capsules courtes pour les réseaux sociaux.' },
+  { id: 't6', ref: 'AO n° 05/2026/CHR', title: "Audit de sécurité du système d'information", buyer: 'Centre hospitalier régional', city: 'Agadir', deadline: '2026-10-30', budget: 300000, cx: 'Moyenne', match: 52, files: ['CPS', 'RC'], caution: 4500, visit: '—', reqs: ['Auditeurs certifiés ISO 27001', "Tests d'intrusion internes et externes", 'Plan de remédiation détaillé'], reco: 'NO GO', why: 'Expertise cybersécurité hors de votre cœur de métier, et date limite dépassée.', summary: "Audit organisationnel et technique du SI, tests d'intrusion et plan d'action." },
+];
+const CX = { 'Haute': ['#fbe9e6', '#a33a28'], 'Moyenne': ['#fbefda', '#8a5207'], 'Faible': ['#e1f5ec', '#0f6f49'] };
+const CXR = { 'Haute': 0, 'Moyenne': 1, 'Faible': 2 };
+const RECO = { 'GO': ['#e1f5ec', 'rgba(22,160,107,.3)', '#0f6f49', 'circle-check|check-circle'], 'À étudier': ['#fbefda', 'rgba(230,169,72,.4)', '#8a5207', 'circle-help|help-circle'], 'NO GO': ['#fbe9e6', 'rgba(223,87,64,.3)', '#a33a28', 'circle-x|x-circle'] };
+const R = 2 * Math.PI * 23;
+const fmt = n => n.toLocaleString('fr-FR').replace(/[\u202f\u00a0\s]/g, '\u00a0');
+const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const days = t => Math.round((new Date(t.deadline + 'T00:00:00') - TODAY) / 86400000);
+const clock = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const hhmm = () => new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+class Component extends DCLogic {
+  state = { kws: ['digital', 'site web', 'application mobile', 'communication', 'e-learning'], kwIn: '', running: false, hasRun: false, logs: [], prog: 0, lastRun: "dernière recherche aujourd'hui à 08:00", q: '', cx: 'all', sort: 'deadline', open: 't1', toast: '' };
+  rootRef = React.createRef();
+  _timers = [];
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); this.clear(); }
+  clear() { this._timers.forEach(clearTimeout); this._timers = []; }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2800); }
+  run() {
+    const s = this.state; if (s.running) return;
+    if (!s.kws.length) { this.toast('Ajoutez au moins un mot-clé'); return; }
+    this.clear();
+    const steps = [
+      ['Connexion au portail des marchés publics…', '#b9cbd0'],
+      [`Recherche : ${s.kws.slice(0, 3).join(', ')}${s.kws.length > 3 ? '…' : ''}`, '#b9cbd0'],
+      ['42 avis publiés ces 30 derniers jours', '#5fe3f0'],
+      ['Filtrage par pertinence avec Claude…', '#b9cbd0'],
+      ['Téléchargement des dossiers : 19 fichiers', '#b9cbd0'],
+      ['Analyse des CPS et des règlements de consultation…', '#b9cbd0'],
+      ["6 appels d'offres pertinents · 1 urgent", '#4fd3a0'],
+    ];
+    this.setState({ running: true, logs: [], prog: 0, open: null });
+    steps.forEach((st, i) => this._timers.push(setTimeout(() => { if (!this._a) return; this.setState(x => ({ logs: [...x.logs, { t: st[0], color: st[1], time: clock() }], prog: Math.round((i + 1) / steps.length * 100) })); }, 450 + i * 620)));
+    this._timers.push(setTimeout(() => { if (!this._a) return; this.setState({ running: false, hasRun: true, lastRun: `dernière recherche aujourd'hui à ${hhmm()}`, open: 't1' }); this.toast("6 appels d'offres trouvés et analysés"); }, 450 + steps.length * 620 + 350));
+  }
+  stop() { this.clear(); this.setState(x => ({ running: false, logs: [...x.logs, { t: "Agent arrêté par l'utilisateur", color: '#f0bd6a', time: clock() }] })); this.toast('Agent arrêté'); }
+  renderVals() {
+    const s = this.state, q = norm(s.q.trim());
+    const list = TENDERS.filter(t => (s.cx === 'all' || t.cx === s.cx) && (!q || norm(`${t.title} ${t.buyer} ${t.city} ${t.ref}`).includes(q)))
+      .sort((a, b) => s.sort === 'deadline' ? (((days(a) < 0) - (days(b) < 0)) || days(a) - days(b)) : s.sort === 'match' ? b.match - a.match : s.sort === 'cx' ? CXR[a.cx] - CXR[b.cx] : b.budget - a.budget);
+    const st = s.running ? ['Recherche en cours', 'rgba(95,227,240,.14)', '#5fe3f0'] : s.hasRun ? ['Recherche terminée', 'rgba(43,189,134,.16)', '#4fd3a0'] : ['En veille', 'rgba(255,255,255,.08)', '#b9cbd0'];
+    return {
+      rootRef: this.rootRef,
+      running: s.running, idle: !s.running, stLabel: st[0], stBg: st[1], stColor: st[2], lastRun: s.lastRun,
+      kws: s.kws.map(t => ({ t, remove: () => this.setState(x => ({ kws: x.kws.filter(k => k !== t) })) })),
+      kwIn: s.kwIn, onKw: e => this.setState({ kwIn: e.target.value }),
+      addKw: e => { if (e && e.preventDefault) e.preventDefault(); const v = s.kwIn.trim().toLowerCase(); if (!v || s.kws.includes(v)) { this.setState({ kwIn: '' }); return; } this.setState(x => ({ kws: [...x.kws, v], kwIn: '' })); },
+      run: () => this.run(), stop: () => this.stop(),
+      showLog: s.running || s.logs.length > 0, prog: String(s.prog), logs: s.logs,
+      q: s.q, onQ: e => this.setState({ q: e.target.value }), sort: s.sort, onSort: e => this.setState({ sort: e.target.value }),
+      cxs: [['all', 'Toutes'], ['Haute', 'Haute'], ['Moyenne', 'Moyenne'], ['Faible', 'Faible']].map(([k, label]) => ({ label, go: () => this.setState({ cx: k }), bg: s.cx === k ? '#0a1c24' : '#ffffff', color: s.cx === k ? '#ffffff' : '#33474f', border: s.cx === k ? '#0a1c24' : '#e2e8eb' })),
+      skel: [{ k: 1 }, { k: 2 }, { k: 3 }],
+      showResults: !s.running && list.length > 0, noResults: !s.running && list.length === 0,
+      reset: () => this.setState({ q: '', cx: 'all' }),
+      list: list.map((t, i) => {
+        const d = days(t), exp = d < 0, urg = !exp && d <= 10, dd = t.deadline.slice(8, 10) + '/' + t.deadline.slice(5, 7);
+        const dl = exp ? ['Expiré', '#eef2f4', '#52646d', 'calendar-x|calendar'] : urg ? [`Urgent · J-${d}`, '#fbe9e6', '#a33a28', 'flame'] : [`Échéance ${dd} · J-${d}`, '#e4f2f4', '#0b5f72', 'calendar'];
+        const rc = RECO[t.reco], open = s.open === t.id;
+        return {
+          ref: t.ref, title: t.title, buyer: t.buyer, city: t.city, summary: t.summary, budget: fmt(t.budget), nFiles: t.files.length, match: t.match, delay: String(i * 60),
+          frac: String(t.match / 100), dash: `${(R * t.match / 100).toFixed(1)}px ${R.toFixed(1)}px`, mColor: t.match >= 85 ? '#16a06b' : t.match >= 70 ? '#16b6c8' : '#df9326',
+          cxLow: t.cx.toLowerCase(), cxBg: CX[t.cx][0], cxColor: CX[t.cx][1], dlLabel: dl[0], dlBg: dl[1], dlColor: dl[2], dlIcon: dl[3], dlDate: `${dd}/2026`,
+          border: open ? '#b9dfe5' : '#e2e8eb', op: exp ? '.72' : '1', open,
+          toggleLabel: open ? "Masquer l'analyse" : "Voir l'analyse", toggleIcon: open ? 'chevron-up' : 'sparkles',
+          toggle: () => this.setState({ open: open ? null : t.id }),
+          reqs: t.reqs.map(r => ({ t: r })), files: t.files.map(f => ({ t: f })), caution: fmt(t.caution), visit: t.visit,
+          reco: t.reco, recoWhy: t.why, recoBg: rc[0], recoBorder: rc[1], recoColor: rc[2], recoIcon: rc[3], canPrepare: t.reco !== 'NO GO' && !exp,
+          source: () => this.toast("Ouverture de l'avis sur le portail des marchés publics"),
+          download: () => this.toast(`${t.files.length} fichiers du dossier téléchargés`),
+          prepare: () => this.toast('Wedy prépare la liste des pièces et un brouillon de mémoire technique…'),
+        };
+      }),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

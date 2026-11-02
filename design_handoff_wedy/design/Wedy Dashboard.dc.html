@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Tableau de bord — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Kufi+Arabic:wght@400;600;700&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+    ::selection { background: rgba(39,192,212,.3); }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+
+  <aside style="position:sticky;top:0;height:100vh;width:252px;flex-shrink:0;display:flex;flex-direction:column;background:#06141a;color:#e8eff1;border-right:1px solid rgba(255,255,255,.06);overflow:hidden">
+    <div aria-hidden="true" data-loop="drift" style="position:absolute;left:-120px;top:-140px;width:420px;height:420px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.5),transparent);pointer-events:none"></div>
+    <div style="position:relative;display:flex;align-items:center;gap:10px;padding:20px 20px 16px">
+      <img src="assets/wedy-avatar.png" alt="Wedy" style="width:32px;height:32px;border-radius:50%;object-fit:cover;background:#0f262e;border:1.5px solid rgba(255,255,255,.2)">
+      <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:20px;letter-spacing:-.03em;color:#f1f8f9">Wedy</span>
+      <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.1em;padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.06);color:#8ea5ad">RH</span>
+    </div>
+    <button type="button" onClick="{{ openPalette }}" style="position:relative;display:flex;align-items:center;gap:9px;margin:0 14px 12px;padding:9px 12px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#7f969e;font-family:inherit;font-size:13px;cursor:pointer;text-align:left;transition:border-color .2s,background .2s" style-hover="border-color:rgba(95,227,240,.35);background:rgba(39,192,212,.06)"><span data-icon="search" data-size="14" style="display:inline-flex;width:14px;height:14px"></span><span style="flex:1">Rechercher…</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;padding:1px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.1)">⌘K</span></button>
+
+    <nav style="position:relative;flex:1;overflow-y:auto;padding-bottom:12px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.14) transparent">
+      <div style="padding:10px 22px 5px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:#5b737b">VUE D'ENSEMBLE</div>
+      <a href="#" style="position:relative;display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;font-weight:600;color:#5fe3f0;background:rgba(39,192,212,.13);text-decoration:none"><span style="position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:#27c0d4;box-shadow:0 0 12px 1px rgba(39,192,212,.8)"></span><span data-icon="layout-dashboard" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Tableau de bord</a>
+      <a href="Wedy Copilot.dc.html" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="bot" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span><span style="flex:1">Copilote IA</span><span style="font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:rgba(39,192,212,.14);color:#5fe3f0;border:1px solid rgba(39,192,212,.3)">New</span></a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="bell" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span><span style="flex:1">Notifications</span><span style="font-size:10px;font-weight:700;min-width:20px;text-align:center;padding:1px 6px;border-radius:99px;background:#27c0d4;color:#06141a">3</span></a>
+      <div style="padding:16px 22px 5px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:#5b737b">PERSONNES</div>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="users" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Employés</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="graduation-cap" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Stagiaires</a>
+      <a href="#demandes" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="inbox" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span><span style="flex:1">Demandes</span><sc-if value="{{ hasPending }}" hint-placeholder-val="{{ true }}"><span style="font-size:10px;font-weight:700;min-width:20px;text-align:center;padding:1px 6px;border-radius:99px;background:#27c0d4;color:#06141a">{{ pendingCount }}</span></sc-if></a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="target" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Recrutement</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="user-plus" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Candidats</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="megaphone" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span><span style="flex:1">Annonces</span><span style="font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:rgba(154,139,240,.16);color:#b3a8f5;border:1px solid rgba(154,139,240,.3)">AI</span></a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="calendar" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Planning RH</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="trending-up" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Performance</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="clock" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Congés</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="user-x" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Absences</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="wallet" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Paie</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="network" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Organigramme</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="video" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Réunions</a>
+      <div style="padding:16px 22px 5px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:#5b737b">DÉVELOPPEMENT RH</div>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="user-check" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Onboarding</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="book-open" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Formation</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="star" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Talents</a>
+      <div style="padding:16px 22px 5px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:#5b737b">DOCUMENTS</div>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="wand-sparkles|wand-2" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Générer</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="file-text" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Modèles</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="history" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Historique</a>
+      <div style="padding:16px 22px 5px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:#5b737b">INSIGHTS</div>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="chart-column|bar-chart-3" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Analytics</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="clipboard-list" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Journal d'audit</a>
+      <div style="padding:16px 22px 5px;font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.12em;color:#5b737b">ESPACE DE TRAVAIL</div>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="puzzle" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Intégrations</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="user-cog" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Utilisateurs &amp; rôles</a>
+      <a href="#" style="display:flex;align-items:center;gap:10px;padding:8px 11px;margin:1px 12px;border-radius:10px;font-size:13.5px;color:#93a9b0;text-decoration:none;transition:background .15s,color .15s" style-hover="background:rgba(255,255,255,.05);color:#e8eff1"><span data-icon="settings" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#6b838c"></span>Paramètres</a>
+    </nav>
+
+    <div style="position:relative;display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid rgba(255,255,255,.07)">
+      <span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6d5ad6,#16b6c8);color:#ffffff;font-size:12px;font-weight:700;flex-shrink:0">SI</span>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#e8eff1">Salma Idrissi</div><div style="font-size:11.5px;color:#7f969e">Admin RH</div></div>
+      <a href="Wedy Login.dc.html" aria-label="Se déconnecter" style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#7f969e;text-decoration:none" style-hover="background:rgba(255,255,255,.06);color:#ef6b54"><span data-icon="log-out" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></a>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:14px 32px;background:rgba(243,246,247,.82);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border-bottom:1px solid #e2e8eb">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#5f7079;white-space:nowrap;flex-shrink:0"><span>Vue d'ensemble</span><span data-icon="chevron-right" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#a3b1b7"></span><span style="font-weight:600;color:#0a1c24">Tableau de bord</span></div>
+      <button type="button" onClick="{{ openPalette }}" style="margin-left:auto;display:flex;align-items:center;gap:10px;flex:0 1 340px;min-width:0;padding:9px 12px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb;color:#7d8f97;font-family:inherit;font-size:13.5px;cursor:pointer;text-align:left;transition:border-color .2s,box-shadow .2s" style-hover="border-color:#b9dfe5;box-shadow:0 8px 20px -14px rgba(10,28,36,.3)"><span data-icon="search" data-size="15" style="display:inline-flex;width:15px;height:15px"></span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Rechercher ou demander à Wedy…</span><span style="font-family:'Geist Mono',monospace;font-size:11px;padding:1px 6px;border-radius:5px;border:1px solid #e2e8eb;color:#5f7079">⌘K</span></button>
+      <button type="button" onClick="{{ bellToast }}" aria-label="Notifications" style="position:relative;flex-shrink:0;width:40px;height:40px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;color:#33474f;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="border-color:#b9dfe5"><span data-icon="bell" data-size="17" style="display:inline-flex;width:17px;height:17px"></span><span style="position:absolute;top:8px;right:9px;width:8px;height:8px"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;background:#df5740"></span><span style="position:absolute;inset:0;border-radius:50%;background:#df5740;border:1.5px solid #ffffff"></span></span></button>
+      <span style="flex-shrink:0;height:40px;padding:0 12px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:#33474f;letter-spacing:.04em"><span data-icon="globe" data-size="15" style="display:inline-flex;width:15px;height:15px;color:#7d8f97"></span>FR</span>
+    </header>
+
+    <div style="padding:30px 32px 56px;display:flex;flex-direction:column;gap:26px;max-width:1440px;width:100%">
+      <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div>
+          <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05;color:#0a1c24">Bonjour, Salma</h1>
+          <p data-reveal="up" data-delay="70" style="margin:8px 0 0;font-size:15px;color:#52646d">Voici ce qui se passe dans votre équipe aujourd'hui.</p>
+        </div>
+        <div data-reveal="up" data-delay="120" style="display:flex;gap:10px;flex-wrap:wrap">
+          <button type="button" onClick="{{ openPalette }}" style="display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px;white-space:nowrap;flex-shrink:0;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;color:#0a1c24;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:border-color .2s" style-hover="border-color:#9fb4bb"><span data-icon="user-plus" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Ajouter un employé</button>
+          <button type="button" onClick="{{ genToast }}" data-magnet="" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 18px;white-space:nowrap;flex-shrink:0;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 12px 28px -12px rgba(22,182,200,.85);transform:translate(var(--tx,0px),var(--ty,0px));transition:transform .35s cubic-bezier(.2,.8,.2,1)"><span data-loop="shine" style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);pointer-events:none"></span><span data-icon="wand-sparkles|wand-2" data-size="16" style="position:relative;display:inline-flex;width:16px;height:16px"></span><span style="position:relative">Générer un document</span></button>
+        </div>
+      </div>
+
+      <section data-reveal="up" data-delay="160" style="position:relative;overflow:hidden;border-radius:24px;background:#06141a;color:#e8eff1;padding:24px 26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:22px;align-items:center;isolation:isolate">
+        <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none">
+          <div data-loop="drift" style="position:absolute;left:-10%;top:-60%;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent)"></div>
+          <div data-loop="drift" data-dur="26000" data-delay="-8000" style="position:absolute;right:-8%;top:-40%;width:560px;height:560px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.35),transparent)"></div>
+          <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 40%,#000 70%,transparent);mask-image:linear-gradient(90deg,transparent,#000 40%,#000 70%,transparent)"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="position:relative;width:64px;height:64px;flex-shrink:0">
+            <span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(95,227,240,.55)"></span>
+            <img src="assets/wedy-avatar.png" alt="Wedy" style="position:relative;display:block;width:64px;height:64px;border-radius:50%;object-fit:cover;background:#0f262e;border:2px solid rgba(95,227,240,.5)">
+          </div>
+          <div>
+            <div style="display:inline-flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;color:#5fe3f0"><span data-icon="sparkles" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>BRIEFING DU JOUR</div>
+            <div data-loop="shimmer" style="margin-top:6px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:24px;letter-spacing:-.035em;line-height:1.1;background:linear-gradient(90deg,#f1f8f9,#5fe3f0 35%,#b3a8f5 65%,#f1f8f9);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent">Wedy a préparé votre journée.</div>
+            <div style="margin-top:4px;font-family:'Geist Mono',monospace;font-size:11px;color:#7f969e">Généré par Wedy AI · il y a 2 min</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div data-reveal="left" data-delay="400" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><span style="width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(230,169,72,.16);color:#f0bd6a;flex-shrink:0"><span data-icon="file-clock|clock" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span><span style="flex:1;font-size:13.5px;line-height:1.45;color:#dbe7ea"><strong style="color:#ffffff">3 contrats</strong> arrivent à échéance sous 30 jours, dont celui de Yasmine Benali.</span><button type="button" onClick="{{ draftToast }}" style="flex-shrink:0;border:none;border-radius:9px;padding:7px 11px;background:rgba(255,255,255,.08);color:#e8eff1;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,.15)">Préparer</button></div>
+          <div data-reveal="left" data-delay="520" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><span style="width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.15);color:#5fe3f0;flex-shrink:0"><span data-icon="inbox" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span><span style="flex:1;font-size:13.5px;line-height:1.45;color:#dbe7ea"><strong style="color:#ffffff">{{ pendingCount }} demandes</strong> attendent votre validation.</span><button type="button" onClick="{{ goRequests }}" style="flex-shrink:0;border:none;border-radius:9px;padding:7px 11px;background:rgba(255,255,255,.08);color:#e8eff1;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,.15)">Voir</button></div>
+          <div data-reveal="left" data-delay="640" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)"><span style="width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.15);color:#4fd3a0;flex-shrink:0"><span data-icon="trending-up" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span><span style="flex:1;font-size:13.5px;line-height:1.45;color:#dbe7ea">Le taux de présence reste stable à <strong style="color:#ffffff">96 %</strong> sur 30 jours.</span></div>
+        </div>
+      </section>
+
+      <section>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap"><h2 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:17px;font-weight:700;letter-spacing:-.02em">Indicateurs prioritaires</h2><span style="font-size:12.5px;color:#5f7079">Aujourd'hui</span></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+          <a href="#" data-reveal="up" data-delay="200" style="position:relative;overflow:hidden;display:block;min-height:128px;border-radius:18px;padding:15px 16px 14px;background:linear-gradient(135deg,#0b5f72,#0e7f96);color:#ffffff;text-decoration:none;box-shadow:0 8px 20px -12px rgba(11,95,114,.8);transition:box-shadow .2s" style-hover="color:#ffffff;box-shadow:0 18px 34px -14px rgba(11,95,114,.95)"><span style="position:absolute;right:-26px;top:-26px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,.1)"></span><span data-icon="users" data-size="46" style="position:absolute;right:12px;bottom:10px;opacity:.2;display:inline-flex"></span><div style="position:relative;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.9);min-height:27px">Total employés</div><div data-count="" data-delay="300" style="position:relative;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1.05">128</div><div style="position:relative;font-size:11.5px;color:rgba(255,255,255,.92);margin-top:3px">126 actifs · 2 inactifs</div></a>
+          <a href="#" data-reveal="up" data-delay="250" style="position:relative;overflow:hidden;display:block;min-height:128px;border-radius:18px;padding:15px 16px 14px;background:linear-gradient(135deg,#2f4bb0,#4a69d8);color:#ffffff;text-decoration:none;box-shadow:0 8px 20px -12px rgba(47,75,176,.8);transition:box-shadow .2s" style-hover="color:#ffffff;box-shadow:0 18px 34px -14px rgba(47,75,176,.95)"><span style="position:absolute;right:-26px;top:-26px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,.1)"></span><span data-icon="graduation-cap" data-size="46" style="position:absolute;right:12px;bottom:10px;opacity:.2;display:inline-flex"></span><div style="position:relative;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.9);min-height:27px">Stagiaires</div><div data-count="" data-delay="350" style="position:relative;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1.05">9</div><div style="position:relative;font-size:11.5px;color:rgba(255,255,255,.92);margin-top:3px">6 en cours</div></a>
+          <a href="#" data-reveal="up" data-delay="300" style="position:relative;overflow:hidden;display:block;min-height:128px;border-radius:18px;padding:15px 16px 14px;background:linear-gradient(135deg,#0f6f49,#16915f);color:#ffffff;text-decoration:none;box-shadow:0 8px 20px -12px rgba(15,111,73,.8);transition:box-shadow .2s" style-hover="color:#ffffff;box-shadow:0 18px 34px -14px rgba(15,111,73,.95)"><span style="position:absolute;right:-26px;top:-26px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,.1)"></span><span data-icon="user-check" data-size="46" style="position:absolute;right:12px;bottom:10px;opacity:.2;display:inline-flex"></span><div style="position:relative;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.9);min-height:27px">Employés présents</div><div data-count="" data-delay="400" style="position:relative;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1.05">117</div><div style="position:relative;font-size:11.5px;color:rgba(255,255,255,.92);margin-top:3px">sur 126 actifs</div></a>
+          <a href="#demandes" data-reveal="up" data-delay="350" style="position:relative;overflow:hidden;display:block;min-height:128px;border-radius:18px;padding:15px 16px 14px;background:linear-gradient(135deg,#a8650a,#c9810f);color:#ffffff;text-decoration:none;box-shadow:0 8px 20px -12px rgba(168,101,10,.8);transition:box-shadow .2s" style-hover="color:#ffffff;box-shadow:0 18px 34px -14px rgba(168,101,10,.95)"><span style="position:absolute;right:-26px;top:-26px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,.1)"></span><span data-icon="inbox" data-size="46" style="position:absolute;right:12px;bottom:10px;opacity:.2;display:inline-flex"></span><div style="position:relative;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.9);min-height:27px">Demandes en attente</div><div style="position:relative;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1.05">{{ pendingCount }}</div><div style="position:relative;font-size:11.5px;color:rgba(255,255,255,.92);margin-top:3px">{{ pendingSub }}</div></a>
+          <a href="#" data-reveal="up" data-delay="400" style="position:relative;overflow:hidden;display:block;min-height:128px;border-radius:18px;padding:15px 16px 14px;background:linear-gradient(135deg,#5444b8,#6d5ad6);color:#ffffff;text-decoration:none;box-shadow:0 8px 20px -12px rgba(84,68,184,.8);transition:box-shadow .2s" style-hover="color:#ffffff;box-shadow:0 18px 34px -14px rgba(84,68,184,.95)"><span style="position:absolute;right:-26px;top:-26px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,.1)"></span><span data-icon="calendar" data-size="46" style="position:absolute;right:12px;bottom:10px;opacity:.2;display:inline-flex"></span><div style="position:relative;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.9);min-height:27px">Congés en cours</div><div data-count="" data-delay="500" style="position:relative;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1.05">5</div><div style="position:relative;font-size:11.5px;color:rgba(255,255,255,.92);margin-top:3px">en congé aujourd'hui</div></a>
+          <a href="#" data-reveal="up" data-delay="450" style="position:relative;overflow:hidden;display:block;min-height:128px;border-radius:18px;padding:15px 16px 14px;background:linear-gradient(135deg,#b8402c,#d1503a);color:#ffffff;text-decoration:none;box-shadow:0 8px 20px -12px rgba(184,64,44,.8);transition:box-shadow .2s" style-hover="color:#ffffff;box-shadow:0 18px 34px -14px rgba(184,64,44,.95)"><span style="position:absolute;right:-26px;top:-26px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,.1)"></span><span data-icon="user-x" data-size="46" style="position:absolute;right:12px;bottom:10px;opacity:.2;display:inline-flex"></span><div style="position:relative;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.9);min-height:27px">Absences du jour</div><div data-count="" data-delay="550" style="position:relative;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1.05">4</div><div style="position:relative;font-size:11.5px;color:rgba(255,255,255,.92);margin-top:3px">maladie / non justifiée</div></a>
+          <a href="#" data-reveal="up" data-delay="500" style="position:relative;overflow:hidden;display:block;min-height:128px;border-radius:18px;padding:15px 16px 14px;background:linear-gradient(135deg,#0b7f90,#0f98ab);color:#ffffff;text-decoration:none;box-shadow:0 8px 20px -12px rgba(11,127,144,.8);transition:box-shadow .2s" style-hover="color:#ffffff;box-shadow:0 18px 34px -14px rgba(11,127,144,.95)"><span style="position:absolute;right:-26px;top:-26px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,.1)"></span><span data-icon="file-warning" data-size="46" style="position:absolute;right:12px;bottom:10px;opacity:.2;display:inline-flex"></span><div style="position:relative;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.9);min-height:27px">Documents à traiter</div><div data-count="" data-delay="600" style="position:relative;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1.05">7</div><div style="position:relative;font-size:11.5px;color:rgba(255,255,255,.92);margin-top:3px">3 incomplets · 2 à renouveler</div></a>
+        </div>
+      </section>
+
+      <section>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+          <h2 style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:17px;font-weight:700;letter-spacing:-.02em">Autres indicateurs RH</h2>
+          <div style="display:flex;align-items:center;gap:4px;padding:4px;border-radius:12px;background:#ffffff;border:1px solid #e2e8eb">
+            <button type="button" onClick="{{ setP0 }}" style="position:relative;border:none;background:transparent;padding:6px 12px;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:600;color:#52646d;cursor:pointer"><sc-if value="{{ p0 }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;inset:0;border-radius:8px;background:#0a1c24"></span><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ffffff">30 jours</span></sc-if>30 jours</button>
+            <button type="button" onClick="{{ setP1 }}" style="position:relative;border:none;background:transparent;padding:6px 12px;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:600;color:#52646d;cursor:pointer"><sc-if value="{{ p1 }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;border-radius:8px;background:#0a1c24"></span><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ffffff">3 mois</span></sc-if>3 mois</button>
+            <button type="button" onClick="{{ setP2 }}" style="position:relative;border:none;background:transparent;padding:6px 12px;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:600;color:#52646d;cursor:pointer"><sc-if value="{{ p2 }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;border-radius:8px;background:#0a1c24"></span><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ffffff">6 mois</span></sc-if>6 mois</button>
+            <button type="button" onClick="{{ setP3 }}" style="position:relative;border:none;background:transparent;padding:6px 12px;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:600;color:#52646d;cursor:pointer"><sc-if value="{{ p3 }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;border-radius:8px;background:#0a1c24"></span><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ffffff">12 mois</span></sc-if>12 mois</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+          <div data-reveal="up" data-delay="100" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div><div style="display:flex;align-items:center;gap:8px"><span style="width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="percent" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span><span style="font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#5f7079">Taux de présence</span></div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:32px;font-weight:800;letter-spacing:-.035em;margin-top:8px">{{ presence }}%</div><div style="font-size:12px;color:#52646d">sur {{ periodLabel }}</div></div>
+            <div style="position:relative;width:76px;height:76px;flex-shrink:0"><svg viewBox="0 0 76 76" style="display:block;width:76px;height:76px;transform:rotate(-90deg)"><circle cx="38" cy="38" r="30" style="fill:none;stroke:#eef2f4;stroke-width:9px"></circle><circle data-reveal="draw" data-frac="0.96" data-delay="300" cx="38" cy="38" r="30" style="fill:none;stroke:#16a06b;stroke-width:9px;stroke-linecap:round;stroke-dasharray:181px 188.5px"></circle></svg></div>
+          </div>
+          <div data-reveal="up" data-delay="150" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="circle-check|check-circle" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span><span style="font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#5f7079">Demandes acceptées</span></div>
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:32px;font-weight:800;letter-spacing:-.035em;margin-top:8px">{{ accepted }}</div><div style="font-size:12px;color:#52646d">sur {{ periodLabel }}</div>
+            <div style="height:6px;border-radius:99px;background:#eef2f4;margin-top:10px;overflow:hidden"><div data-reveal="growx" data-delay="400" style="height:100%;width:{{ acceptedPct }}%;border-radius:99px;background:#16a06b;transform-origin:left;transition:width .6s cubic-bezier(.2,.8,.2,1)"></div></div>
+          </div>
+          <div data-reveal="up" data-delay="200" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#fbe9e6;color:#df5740"><span data-icon="circle-x|x-circle" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span><span style="font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#5f7079">Demandes refusées</span></div>
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:32px;font-weight:800;letter-spacing:-.035em;margin-top:8px">{{ refused }}</div><div style="font-size:12px;color:#52646d">sur {{ periodLabel }}</div>
+            <div style="height:6px;border-radius:99px;background:#eef2f4;margin-top:10px;overflow:hidden"><div data-reveal="growx" data-delay="450" style="height:100%;width:{{ refusedPct }}%;border-radius:99px;background:#df5740;transform-origin:left;transition:width .6s cubic-bezier(.2,.8,.2,1)"></div></div>
+          </div>
+          <div data-reveal="up" data-delay="250" style="padding:16px 18px;border-radius:18px;background:transparent;border:1.5px dashed #d0dadf">
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#eef2f4;color:#7d8f97"><span data-icon="clock" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span><span style="font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#5f7079">Retards du jour</span></div>
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:32px;font-weight:800;letter-spacing:-.035em;margin-top:8px;color:#9aaab1">—</div><div style="font-size:12px;color:#52646d">Pointage non activé</div>
+          </div>
+          <div data-reveal="up" data-delay="300" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#b06b0c"><span data-icon="file-clock|clock" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span><span style="font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#5f7079">Contrats à échéance</span></div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:8px"><span data-count="" data-delay="400" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:32px;font-weight:800;letter-spacing:-.035em">3</span><span style="font-size:12px;color:#52646d">sous 30 jours · 1 expiré</span></div>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-top:6px;font-size:12px;color:#33474f">
+              <div style="display:flex;justify-content:space-between"><span>Yasmine Benali</span><span style="font-weight:700;color:#b8402c">12 j</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Karim Bennani</span><span style="font-weight:700;color:#5f7079">19 j</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Hind Tazi</span><span style="font-weight:700;color:#5f7079">27 j</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px">
+        <div data-reveal="up" style="padding:20px 22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;min-width:0">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px;letter-spacing:-.02em">Évolution de l'effectif</div><div style="font-size:12.5px;color:#5f7079;margin-top:2px">Recrutements et départs · 6 mois</div></div><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#0f6f49;padding:4px 9px;border-radius:99px;background:#e1f5ec"><span data-icon="trending-up" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>+14 %</span></div>
+          <svg viewBox="0 0 600 210" style="display:block;width:100%;height:auto;margin-top:14px;overflow:visible">
+            <line x1="0" y1="40" x2="600" y2="40" style="stroke:#eef2f4;stroke-width:1px;stroke-dasharray:4 4"></line>
+            <line x1="0" y1="80" x2="600" y2="80" style="stroke:#eef2f4;stroke-width:1px;stroke-dasharray:4 4"></line>
+            <line x1="0" y1="120" x2="600" y2="120" style="stroke:#eef2f4;stroke-width:1px;stroke-dasharray:4 4"></line>
+            <line x1="0" y1="180" x2="600" y2="180" style="stroke:#dfe6e9;stroke-width:1px"></line>
+            <rect data-reveal="growy" data-delay="100" x="31" y="132" width="16" height="48" rx="4" style="fill:#16a06b;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="140" x="53" y="156" width="16" height="24" rx="4" style="fill:#df5740;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="180" x="131" y="108" width="16" height="72" rx="4" style="fill:#16a06b;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="220" x="153" y="168" width="16" height="12" rx="4" style="fill:#df5740;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="260" x="231" y="144" width="16" height="36" rx="4" style="fill:#16a06b;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="300" x="253" y="144" width="16" height="36" rx="4" style="fill:#df5740;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="340" x="331" y="96" width="16" height="84" rx="4" style="fill:#16a06b;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="380" x="353" y="156" width="16" height="24" rx="4" style="fill:#df5740;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="420" x="431" y="84" width="16" height="96" rx="4" style="fill:#16a06b;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="460" x="453" y="168" width="16" height="12" rx="4" style="fill:#df5740;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="500" x="531" y="108" width="16" height="72" rx="4" style="fill:#16a06b;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <rect data-reveal="growy" data-delay="540" x="553" y="156" width="16" height="24" rx="4" style="fill:#df5740;transform-box:fill-box;transform-origin:50% 100%"></rect>
+            <path data-reveal="draw" data-delay="500" data-dur="1800" d="M50 142 C83 142 117 121 150 121 C183 121 217 128 250 128 C283 128 317 93 350 93 C383 93 417 58 450 58 C483 58 517 30 550 30" style="fill:none;stroke:#0e6f84;stroke-width:3px;stroke-linecap:round"></path>
+            <circle cx="550" cy="30" r="6" style="fill:#0e6f84;stroke:#ffffff;stroke-width:3px"></circle>
+            <text x="50" y="204" style="font-family:'Geist Mono',monospace;font-size:13px;fill:#7d8f97;text-anchor:middle">Mai</text>
+            <text x="150" y="204" style="font-family:'Geist Mono',monospace;font-size:13px;fill:#7d8f97;text-anchor:middle">Juin</text>
+            <text x="250" y="204" style="font-family:'Geist Mono',monospace;font-size:13px;fill:#7d8f97;text-anchor:middle">Juil.</text>
+            <text x="350" y="204" style="font-family:'Geist Mono',monospace;font-size:13px;fill:#7d8f97;text-anchor:middle">Août</text>
+            <text x="450" y="204" style="font-family:'Geist Mono',monospace;font-size:13px;fill:#7d8f97;text-anchor:middle">Sept.</text>
+            <text x="550" y="204" style="font-family:'Geist Mono',monospace;font-size:13px;fill:#7d8f97;text-anchor:middle">Oct.</text>
+          </svg>
+          <div style="display:flex;gap:16px;margin-top:10px;font-size:12px;color:#52646d"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:3px;background:#16a06b"></span>Recrutements</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:3px;background:#df5740"></span>Départs</span><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:14px;height:3px;border-radius:2px;background:#0e6f84"></span>Effectif</span></div>
+        </div>
+
+        <div data-reveal="up" data-delay="80" style="padding:20px 22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;min-width:0">
+          <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px;letter-spacing:-.02em">Effectif par service</div>
+          <div style="font-size:12.5px;color:#5f7079;margin-top:2px">Répartition des employés actifs</div>
+          <div style="display:flex;flex-direction:column;gap:13px;margin-top:20px">
+            <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 28px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">Opérations</span><span style="height:10px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="150" style="display:block;height:100%;width:100%;border-radius:99px;background:#0e6f84;transform-origin:left"></span></span><span style="font-weight:700;text-align:right">36</span></div>
+            <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 28px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">Commercial</span><span style="height:10px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="230" style="display:block;height:100%;width:78%;border-radius:99px;background:#16b6c8;transform-origin:left"></span></span><span style="font-weight:700;text-align:right">28</span></div>
+            <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 28px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">Tech</span><span style="height:10px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="310" style="display:block;height:100%;width:67%;border-radius:99px;background:#6d5ad6;transform-origin:left"></span></span><span style="font-weight:700;text-align:right">24</span></div>
+            <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 28px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">Finance</span><span style="height:10px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="390" style="display:block;height:100%;width:42%;border-radius:99px;background:#16a06b;transform-origin:left"></span></span><span style="font-weight:700;text-align:right">15</span></div>
+            <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 28px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">Marketing</span><span style="height:10px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="470" style="display:block;height:100%;width:36%;border-radius:99px;background:#df9326;transform-origin:left"></span></span><span style="font-weight:700;text-align:right">13</span></div>
+            <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 28px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">RH</span><span style="height:10px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" data-delay="550" style="display:block;height:100%;width:28%;border-radius:99px;background:#df5740;transform-origin:left"></span></span><span style="font-weight:700;text-align:right">10</span></div>
+          </div>
+        </div>
+
+        <div data-reveal="up" data-delay="160" style="padding:20px 22px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;min-width:0">
+          <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px;letter-spacing:-.02em">Répartition par contrat</div>
+          <div style="font-size:12.5px;color:#5f7079;margin-top:2px">CDI, CDD, stagiaires…</div>
+          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:18px">
+            <div style="position:relative;width:156px;height:156px;flex-shrink:0">
+              <svg viewBox="0 0 100 100" style="display:block;width:100%;height:100%">
+                <circle cx="50" cy="50" r="38" style="fill:none;stroke:#f1f5f6;stroke-width:13px"></circle>
+                <circle data-reveal="draw" data-frac="0.659" data-delay="200" cx="50" cy="50" r="38" style="fill:none;stroke:#0e6f84;stroke-width:13px;stroke-dasharray:157.3px 238.8px;transform:rotate(-90deg);transform-origin:50px 50px"></circle>
+                <circle data-reveal="draw" data-frac="0.206" data-delay="700" data-dur="700" cx="50" cy="50" r="38" style="fill:none;stroke:#16b6c8;stroke-width:13px;stroke-dasharray:49.2px 238.8px;transform:rotate(150deg);transform-origin:50px 50px"></circle>
+                <circle data-reveal="draw" data-frac="0.063" data-delay="1000" data-dur="500" cx="50" cy="50" r="38" style="fill:none;stroke:#6d5ad6;stroke-width:13px;stroke-dasharray:15px 238.8px;transform:rotate(227.1deg);transform-origin:50px 50px"></circle>
+                <circle data-reveal="draw" data-frac="0.04" data-delay="1200" data-dur="400" cx="50" cy="50" r="38" style="fill:none;stroke:#df9326;stroke-width:13px;stroke-dasharray:9.6px 238.8px;transform:rotate(252.9deg);transform-origin:50px 50px"></circle>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span data-count="" data-delay="200" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:28px;letter-spacing:-.04em">126</span><span style="font-size:11px;color:#5f7079">actifs</span></div>
+            </div>
+            <div style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:10px;font-size:13px">
+              <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:50%;background:#0e6f84"></span><span style="flex:1;color:#33474f">CDI</span><span style="font-weight:700">84</span></div>
+              <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:50%;background:#16b6c8"></span><span style="flex:1;color:#33474f">CDD</span><span style="font-weight:700">27</span></div>
+              <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:50%;background:#6d5ad6"></span><span style="flex:1;color:#33474f">Stage</span><span style="font-weight:700">9</span></div>
+              <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:50%;background:#df9326"></span><span style="flex:1;color:#33474f">Freelance</span><span style="font-weight:700">6</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div style="flex:2 1 520px;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <div id="demandes" data-reveal="up" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px">
+              <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px;letter-spacing:-.02em">Demandes en attente</span><sc-if value="{{ hasPending }}" hint-placeholder-val="{{ true }}"><span style="font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px;background:#fbefda;color:#9a5c08">{{ pendingCount }}</span></sc-if></div>
+              <a href="#" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#0e6f84" style-hover="color:#16b6c8">Gérer<span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></a>
+            </div>
+            <sc-for list="{{ requests }}" as="r" hint-placeholder-count="5">
+              <div data-req="{{ r.id }}" data-reveal="up" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef2f4;overflow:hidden">
+                <sc-if value="{{ r.isLeave }}" hint-placeholder-val="{{ true }}"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6;flex-shrink:0"><span data-icon="calendar" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span></sc-if>
+                <sc-if value="{{ r.isDoc }}" hint-placeholder-val="{{ false }}"><span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84;flex-shrink:0"><span data-icon="file-text" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span></sc-if>
+                <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#0a1c24">{{ r.type }}</div><div style="font-size:12.5px;color:#52646d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }} · {{ r.meta }}</div></div>
+                <span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7d8f97;flex-shrink:0">{{ r.date }}</span>
+                <sc-if value="{{ r.isPending }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:6px;flex-shrink:0"><button type="button" onClick="{{ r.refuse }}" aria-label="Refuser" style="width:36px;height:36px;border-radius:10px;border:1px solid #e2e8eb;background:#ffffff;color:#7d8f97;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s" style-hover="border-color:rgba(223,87,64,.45);color:#df5740;background:#fbe9e6"><span data-icon="x" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></button><button type="button" onClick="{{ r.approve }}" style="height:36px;padding:0 13px;border-radius:10px;border:none;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;transition:background .2s" style-hover="background:#16a06b"><span data-icon="check" data-size="15" data-sw="2.4" style="display:inline-flex;width:15px;height:15px"></span>Approuver</button></div></sc-if>
+                <sc-if value="{{ r.isApproved }}" hint-placeholder-val="{{ false }}"><span data-reveal="scale" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;background:#e1f5ec;color:#0f6f49;font-size:12.5px;font-weight:700;flex-shrink:0"><span data-icon="check" data-size="14" data-sw="2.6" style="display:inline-flex;width:14px;height:14px"></span>Approuvé</span></sc-if>
+                <sc-if value="{{ r.isRefused }}" hint-placeholder-val="{{ false }}"><span data-reveal="scale" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;background:#fbe9e6;color:#a33a28;font-size:12.5px;font-weight:700;flex-shrink:0"><span data-icon="x" data-size="14" data-sw="2.6" style="display:inline-flex;width:14px;height:14px"></span>Refusé</span></sc-if>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noRequests }}" hint-placeholder-val="{{ false }}">
+              <div data-reveal="scale" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:34px 20px;border-top:1px solid #eef2f4;text-align:center"><span style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="party-popper|check" data-size="22" style="display:inline-flex;width:22px;height:22px"></span></span><div style="font-weight:700;font-size:15px">Tout est à jour</div><div style="font-size:13px;color:#52646d">Aucune demande en attente.</div></div>
+            </sc-if>
+          </div>
+
+          <div data-reveal="up" data-delay="80" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px;letter-spacing:-.02em">Documents récents</span><a href="#" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#0e6f84" style-hover="color:#16b6c8">Voir tout<span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></a></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 20px;border-top:1px solid #eef2f4;transition:background .15s" style-hover="background:#f8fafb"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84;flex-shrink:0"><span data-icon="file-text" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500">Attestation de travail</div><div style="font-size:12.5px;color:#52646d">Yasmine Benali</div></div><span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:#e4f2f4;color:#0e6f84">FR</span><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7d8f97;min-width:48px;white-space:nowrap;text-align:right">31 oct.</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 20px;border-top:1px solid #eef2f4;transition:background .15s" style-hover="background:#f8fafb"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84;flex-shrink:0"><span data-icon="file-text" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500">Contrat CDD</div><div style="font-size:12.5px;color:#52646d">Karim Bennani</div></div><span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:#e4f2f4;color:#0e6f84">FR</span><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7d8f97;min-width:48px;white-space:nowrap;text-align:right">30 oct.</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 20px;border-top:1px solid #eef2f4;transition:background .15s" style-hover="background:#f8fafb"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6;flex-shrink:0"><span data-icon="file-text" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500;font-family:'Noto Kufi Arabic',sans-serif">شهادة الأجر</div><div style="font-size:12.5px;color:#52646d">Omar Alaoui</div></div><span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:#ece9fb;color:#5444b8">AR</span><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7d8f97;min-width:48px;white-space:nowrap;text-align:right">30 oct.</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 20px;border-top:1px solid #eef2f4;transition:background .15s" style-hover="background:#f8fafb"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84;flex-shrink:0"><span data-icon="file-text" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500">Convention de stage</div><div style="font-size:12.5px;color:#52646d">Lina Chraibi</div></div><span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:#e4f2f4;color:#0e6f84">FR</span><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7d8f97;min-width:48px;white-space:nowrap;text-align:right">29 oct.</span></div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 20px;border-top:1px solid #eef2f4;transition:background .15s" style-hover="background:#f8fafb"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="file-text" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500">Work certificate</div><div style="font-size:12.5px;color:#52646d">Mehdi Rami</div></div><span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:#e1f5ec;color:#0f6f49">EN</span><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#7d8f97;min-width:48px;white-space:nowrap;text-align:right">28 oct.</span></div>
+          </div>
+        </div>
+
+        <div style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px">
+          <div data-reveal="up" data-delay="120" style="padding:18px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px;letter-spacing:-.02em;margin-bottom:12px">Actions rapides</div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <button type="button" onClick="{{ genToast }}" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;font-size:14px;font-weight:500;color:#0a1c24;cursor:pointer;text-align:left;transition:border-color .2s,background .2s" style-hover="border-color:#b9dfe5;background:#f8fbfb"><span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="wand-sparkles|wand-2" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><span style="flex:1">Générer un document</span><span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#9aaab1"></span></button>
+              <button type="button" onClick="{{ openPalette }}" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;font-size:14px;font-weight:500;color:#0a1c24;cursor:pointer;text-align:left;transition:border-color .2s,background .2s" style-hover="border-color:#b9dfe5;background:#f8fbfb"><span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#e1f6f9;color:#0b7f90"><span data-icon="users" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><span style="flex:1">Ajouter un employé</span><span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#9aaab1"></span></button>
+              <button type="button" onClick="{{ openCopilotToast }}" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;font-size:14px;font-weight:500;color:#0a1c24;cursor:pointer;text-align:left;transition:border-color .2s,background .2s" style-hover="border-color:#b9dfe5;background:#f8fbfb"><span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6"><span data-icon="bot" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><span style="flex:1">Demander au Copilote</span><span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#9aaab1"></span></button>
+              <button type="button" onClick="{{ openPalette }}" style="display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;font-size:14px;font-weight:500;color:#0a1c24;cursor:pointer;text-align:left;transition:border-color .2s,background .2s" style-hover="border-color:#b9dfe5;background:#f8fbfb"><span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="trending-up" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span><span style="flex:1">Voir les analytics</span><span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px;color:#9aaab1"></span></button>
+            </div>
+          </div>
+
+          <div data-reveal="up" data-delay="200" style="position:relative;overflow:hidden;padding:22px;border-radius:20px;background:linear-gradient(140deg,#0b5f72,#0e7f96 55%,#5444b8);color:#ffffff;isolation:isolate">
+            <span aria-hidden="true" data-loop="drift" style="position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.22),transparent);z-index:-1"></span>
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="position:relative;width:48px;height:48px;flex-shrink:0"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(255,255,255,.6)"></span><img src="assets/wedy-avatar.png" alt="" style="position:relative;display:block;width:48px;height:48px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.6)"></span>
+              <div style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.12em;color:rgba(255,255,255,.85)">COPILOTE IA</div>
+            </div>
+            <div style="margin-top:14px;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:21px;letter-spacing:-.03em;line-height:1.15">Votre co-équipier RH, toujours disponible.</div>
+            <p style="margin:8px 0 0;font-size:13.5px;line-height:1.55;color:rgba(255,255,255,.88)">Rédigez, traduisez et analysez en langage naturel — en français, arabe ou anglais.</p>
+            <button type="button" onClick="{{ openCopilotToast }}" style="margin-top:16px;width:100%;height:42px;border:none;border-radius:11px;background:#ffffff;color:#0b5f72;font-family:inherit;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(0,0,0,.35);transition:transform .2s" style-hover="transform:translateY(-1px)">Essayer maintenant<span data-icon="arrow-right" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button>
+          </div>
+        </div>
+      </section>
+
+      <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+        <div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:90;display:flex;align-items:center;gap:12px;padding:12px 18px 12px 12px;border-radius:16px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px;max-width:min(440px,calc(100vw - 48px))">
+          <sc-if value="{{ toastOk }}" hint-placeholder-val="{{ false }}"><span style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.2);color:#4fd3a0;flex-shrink:0"><span data-icon="check" data-size="16" data-sw="2.6" style="display:inline-flex;width:16px;height:16px"></span></span></sc-if>
+          <sc-if value="{{ toastNo }}" hint-placeholder-val="{{ false }}"><span style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(239,107,84,.2);color:#ef6b54;flex-shrink:0"><span data-icon="x" data-size="16" data-sw="2.6" style="display:inline-flex;width:16px;height:16px"></span></span></sc-if>
+          <sc-if value="{{ toastInfo }}" hint-placeholder-val="{{ false }}"><span style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span></sc-if>
+          <span>{{ toastText }}</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showPalette }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closePalette }}" style="position:fixed;inset:0;z-index:100;background:rgba(6,20,26,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 16px">
+          <div onClick="{{ stop }}" data-reveal="scale" style="width:100%;max-width:620px;border-radius:22px;background:#ffffff;border:1px solid #e2e8eb;box-shadow:0 50px 120px -30px rgba(6,20,26,.7);overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid #eef2f4"><span data-icon="search" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#7d8f97"></span><input ref="{{ qRef }}" value="{{ query }}" onChange="{{ onQuery }}" placeholder="Rechercher une page, une action… ou demander à Wedy" style="flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:inherit;font-size:16px;color:#0a1c24"><span style="font-family:'Geist Mono',monospace;font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid #e2e8eb;color:#5f7079">Échap</span></div>
+            <div style="max-height:min(400px,60vh);overflow-y:auto;padding:8px">
+              <sc-if value="{{ hasQuery }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ pickAi }}" onMouseEnter="{{ hoverAi }}" style="position:relative;display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;cursor:pointer">
+                  <sc-if value="{{ aiSel }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;border-radius:12px;background:linear-gradient(135deg,rgba(22,182,200,.1),rgba(109,90,214,.1));box-shadow:inset 0 0 0 1px rgba(109,90,214,.3)"></span></sc-if>
+                  <img src="assets/wedy-avatar.png" alt="" style="position:relative;width:32px;height:32px;border-radius:50%;object-fit:cover;background:#e4f2f4">
+                  <span style="position:relative;flex:1;min-width:0;font-size:14.5px;color:#0a1c24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ aiLabel }}</span>
+                  <span style="position:relative;font-family:'Geist Mono',monospace;font-size:11px;color:#6d5ad6">IA</span>
+                </div>
+              </sc-if>
+              <sc-for list="{{ paletteItems }}" as="p" hint-placeholder-count="0">
+                <div onClick="{{ p.onPick }}" onMouseEnter="{{ p.onHover }}" style="position:relative;display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;cursor:pointer">
+                  <sc-if value="{{ p.isSel }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;border-radius:12px;background:#eef6f7;box-shadow:inset 0 0 0 1px #b9dfe5"></span></sc-if>
+                  <span style="position:relative;width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#f3f6f7;color:#33474f"><span data-icon="{{ p.icon }}" data-size="16" style="display:inline-flex;width:16px;height:16px"></span></span>
+                  <span style="position:relative;flex:1;font-size:14.5px;color:#0a1c24">{{ p.label }}</span>
+                  <span style="position:relative;font-family:'Geist Mono',monospace;font-size:11px;color:#7d8f97">{{ p.group }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:16px;padding:11px 20px;border-top:1px solid #eef2f4;background:#f8fafb;font-family:'Geist Mono',monospace;font-size:11px;color:#5f7079"><span>↑↓ naviguer</span><span>↵ ouvrir</span><span>⌘K fermer</span></div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;motion&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Full&quot;,&quot;Subtle&quot;,&quot;Off&quot;],&quot;default&quot;:&quot;Full&quot;,&quot;tsType&quot;:&quot;'Full'|'Subtle'|'Off'&quot;,&quot;section&quot;:&quot;Animation&quot;}}">
+const EASE = 'cubic-bezier(.2,.8,.2,1)';
+const PERIODS = [
+  { label: '30 jours', presence: 96, accepted: 18, refused: 3 },
+  { label: '3 mois', presence: 95, accepted: 54, refused: 7 },
+  { label: '6 mois', presence: 95, accepted: 101, refused: 12 },
+  { label: '12 mois', presence: 94, accepted: 212, refused: 25 },
+];
+const REQUESTS = [
+  { id: 'r1', kind: 'leave', type: 'Congé annuel', name: 'Omar Alaoui', meta: '3 jours · 4 → 6 nov.', date: '30/10' },
+  { id: 'r2', kind: 'doc', type: 'Attestation de salaire', name: 'Nadia Berrada', meta: 'Pour dossier bancaire', date: '30/10' },
+  { id: 'r3', kind: 'leave', type: 'Congé annuel', name: 'Hind Tazi', meta: '2 jours · 10 → 11 nov.', date: '29/10' },
+  { id: 'r4', kind: 'doc', type: 'Attestation de travail', name: 'Karim Bennani', meta: 'Version arabe', date: '29/10' },
+  { id: 'r5', kind: 'leave', type: 'Congé exceptionnel', name: 'Sara El Fassi', meta: 'Mariage · 4 jours', date: '28/10' },
+  { id: 'r6', kind: 'leave', type: 'Congé annuel', name: 'Mehdi Rami', meta: '5 jours · 22 → 26 déc.', date: '28/10' },
+];
+const PALETTE = [
+  { group: 'Actions', label: 'Générer un document', icon: 'wand-sparkles|wand-2' },
+  { group: 'Actions', label: 'Ajouter un employé', icon: 'user-plus' },
+  { group: 'Actions', label: 'Demander au Copilote', icon: 'bot' },
+  { group: 'Actions', label: 'Importer des employés (Excel)', icon: 'upload' },
+  { group: 'Navigation', label: 'Employés', icon: 'users' },
+  { group: 'Navigation', label: 'Demandes', icon: 'inbox' },
+  { group: 'Navigation', label: 'Recrutement', icon: 'target' },
+  { group: 'Navigation', label: 'Congés', icon: 'clock' },
+  { group: 'Navigation', label: 'Paie', icon: 'wallet' },
+  { group: 'Navigation', label: 'Analytics', icon: 'chart-column|bar-chart-3' },
+  { group: 'Navigation', label: 'Paramètres', icon: 'settings' },
+];
+const LOOPS = {
+  drift: [[{ transform: 'translate(0,0) scale(1)' }, { transform: 'translate(7%,-6%) scale(1.12)' }, { transform: 'translate(-5%,5%) scale(.94)' }, { transform: 'translate(0,0) scale(1)' }], 22000, 'ease-in-out'],
+  spin: [[{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], 60000, 'linear'],
+  pulse: [[{ opacity: 1 }, { opacity: 0.3 }, { opacity: 1 }], 2000, 'ease-in-out'],
+  ping: [[{ transform: 'scale(1)', opacity: 0.6 }, { transform: 'scale(2.2)', opacity: 0 }], 2200, 'cubic-bezier(0,0,.2,1)'],
+  shimmer: [[{ backgroundPosition: '0% 50%' }, { backgroundPosition: '200% 50%' }], 7000, 'linear'],
+  shine: [[{ transform: 'translateX(-150%) skewX(-20deg)', offset: 0 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 0.35 }, { transform: 'translateX(350%) skewX(-20deg)', offset: 1 }], 4200, 'ease-in-out'],
+};
+
+class Component extends DCLogic {
+  state = { period: 0, req: REQUESTS.map(r => ({ ...r, status: 'pending' })), toast: null, palette: false, query: '', sel: 0 };
+  rootRef = React.createRef();
+  qRef = React.createRef();
+
+  mode() {
+    const m = this.props.motion ?? 'Full';
+    if (m !== 'Off' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'Off';
+    return m;
+  }
+
+  componentDidMount() {
+    this._alive = true; this._timers = [];
+    this.init();
+    window.addEventListener('keydown', this.onKey);
+    window.addEventListener('pointermove', this.onPointer, { passive: true });
+    this.loadIcons(0);
+  }
+  componentDidUpdate(prev) {
+    if (prev && prev.motion !== this.props.motion) { this.teardown(); this.init(); return; }
+    this.scan();
+  }
+  componentWillUnmount() {
+    this._alive = false; this.teardown();
+    this._timers.forEach(clearTimeout); clearTimeout(this._iconT); clearTimeout(this._toastT);
+    window.removeEventListener('keydown', this.onKey);
+    window.removeEventListener('pointermove', this.onPointer);
+  }
+  later(ms, fn) { this._timers.push(setTimeout(() => { if (this._alive) fn(); }, ms)); }
+
+  init() {
+    this._ws = {};
+    this._io = new IntersectionObserver(es => es.forEach(this.onSeen), { threshold: 0.1 });
+    const root = this.rootRef.current;
+    if (root) {
+      this._mo = new MutationObserver(ms => {
+        if (ms.every(x => x.target.closest && x.target.closest('[data-icon]'))) return;
+        clearTimeout(this._scanT); this._scanT = setTimeout(this.scan, 60);
+      });
+      this._mo.observe(root, { childList: true, subtree: true });
+    }
+    this.scan();
+  }
+  teardown() {
+    ['_io', '_mo'].forEach(k => { if (this[k]) { this[k].disconnect(); this[k] = null; } });
+    clearTimeout(this._scanT);
+    const root = this.rootRef.current;
+    if (root) { try { root.getAnimations({ subtree: true }).forEach(a => a.cancel()); } catch (_) {} }
+    (this._resets || []).forEach(f => { try { f(); } catch (_) {} });
+    this._resets = [];
+  }
+
+  scan = () => {
+    const root = this.rootRef.current, W = this._ws;
+    if (!root || !W || !this._alive) return;
+    const m = this.mode();
+    this._resets = this._resets || [];
+    this.fillIcons(root);
+    const each = (sel, key, fn) => { const set = W[key] || (W[key] = new WeakSet()); root.querySelectorAll(sel).forEach(el => { if (!set.has(el)) { set.add(el); fn.call(this, el, m); } }); };
+    each('[data-reveal]', 'reveal', this.setupReveal);
+    each('[data-count]', 'count', this.setupCount);
+    each('[data-loop]', 'loop', this.setupLoop);
+  };
+
+  setupReveal(el, m) {
+    if (m === 'Off') return;
+    const kind = el.dataset.reveal || 'up', sub = m === 'Subtle', d = sub ? 8 : 22;
+    let K;
+    switch (kind) {
+      case 'left': K = [{ opacity: 0, translate: `${d}px 0` }, { opacity: 1, translate: '0 0' }]; break;
+      case 'right': K = [{ opacity: 0, translate: `${-d}px 0` }, { opacity: 1, translate: '0 0' }]; break;
+      case 'fade': K = [{ opacity: 0 }, { opacity: 1 }]; break;
+      case 'scale': K = [{ opacity: 0, scale: '0.96' }, { opacity: 1, scale: '1' }]; break;
+      case 'growx': K = [{ scale: '0 1' }, { scale: '1 1' }]; break;
+      case 'growy': K = [{ scale: '1 0' }, { scale: '1 1' }]; break;
+      case 'draw': {
+        let L = 0; try { L = el.getTotalLength(); } catch (_) {}
+        if (!L) return;
+        const f = +(el.dataset.frac || 1);
+        el.style.strokeDasharray = `${(L * f).toFixed(2)}px ${L.toFixed(2)}px`;
+        K = [{ strokeDashoffset: `${(L * f).toFixed(2)}px` }, { strokeDashoffset: '0px' }]; break;
+      }
+      default: K = [{ opacity: 0, translate: `0 ${d}px` }, { opacity: 1, translate: '0 0' }];
+    }
+    const base = kind === 'draw' ? 1400 : (kind === 'growx' || kind === 'growy') ? 1000 : 750;
+    let a;
+    try { a = el.animate(K, { duration: (+el.dataset.dur || base) * (sub ? 0.7 : 1), delay: (+el.dataset.delay || 0) * (sub ? 0.5 : 1), easing: EASE, fill: 'both' }); } catch (_) { return; }
+    a.pause();
+    a.onfinish = () => { try { a.cancel(); } catch (_) {} };
+    el.__reveal = a;
+    this._io.observe(el);
+  }
+  onSeen = (e) => {
+    if (!e.isIntersecting && e.boundingClientRect.bottom >= 0) return;
+    if (this._io) this._io.unobserve(e.target);
+    const a = e.target.__reveal;
+    if (a) { try { e.isIntersecting ? a.play() : a.finish(); } catch (_) {} }
+    if (e.target.__count) e.target.__count(!e.isIntersecting);
+  };
+  setupCount(el, m) {
+    const node = el.firstChild;
+    if (!node || el.childNodes.length !== 1 || node.nodeType !== 3 || m === 'Off') return;
+    const raw = node.nodeValue, mt = raw.match(/\d+/); if (!mt) return;
+    const target = +mt[0], pre = raw.slice(0, mt.index), post = raw.slice(mt.index + mt[0].length);
+    node.nodeValue = pre + '0' + post;
+    this._resets.push(() => { node.nodeValue = raw; });
+    el.__count = (instant) => {
+      if (instant) { node.nodeValue = raw; return; }
+      const start = performance.now() + (+el.dataset.delay || 0), dur = 1500;
+      const step = now => { if (!this._alive) return; const t = Math.max(0, Math.min(1, (now - start) / dur)); node.nodeValue = t >= 1 ? raw : pre + Math.round(target * (1 - Math.pow(2, -10 * t))) + post; if (t < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    };
+    this._io.observe(el);
+  }
+  setupLoop(el, m) {
+    if (m === 'Off') return;
+    const kind = el.dataset.loop;
+    if (m === 'Subtle' && kind === 'drift') return;
+    const def = LOOPS[kind]; if (!def) return;
+    try { el.animate(def[0], { duration: +el.dataset.dur || def[1], iterations: Infinity, easing: def[2], delay: +el.dataset.delay || 0 }); } catch (_) {}
+  }
+
+  onPointer = (e) => {
+    const g = this.mode() === 'Full' && e.target && e.target.closest ? e.target.closest('[data-magnet]') : null;
+    if (g !== this._magEl) { if (this._magEl) { this._magEl.style.setProperty('--tx', '0px'); this._magEl.style.setProperty('--ty', '0px'); } this._magEl = g; }
+    if (g) { const r = g.getBoundingClientRect(); g.style.setProperty('--tx', ((e.clientX - r.left - r.width / 2) * 0.18).toFixed(1) + 'px'); g.style.setProperty('--ty', ((e.clientY - r.top - r.height / 2) * 0.3).toFixed(1) + 'px'); }
+  };
+
+  fillIcons(root) {
+    const L = window.lucide; if (!L || !L.icons) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    root.querySelectorAll('[data-icon]').forEach(el => {
+      if (el.firstChild && el.__icon === el.dataset.icon) return;
+      el.replaceChildren(); el.__icon = el.dataset.icon;
+      let node = null;
+      for (const n of el.dataset.icon.split('|')) { node = L.icons[n.replace(/(^|-)([a-z0-9])/g, (_, __, c) => c.toUpperCase())]; if (node) break; }
+      if (!node) return;
+      const size = el.dataset.size || 18;
+      const svg = document.createElementNS(NS, 'svg');
+      const attrs = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': el.dataset.sw || 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+      Object.keys(attrs).forEach(k => svg.setAttribute(k, attrs[k]));
+      svg.style.display = 'block'; svg.style.flexShrink = '0';
+      const kids = node[0] === 'svg' ? node[2] : node;
+      (kids || []).forEach(c => { if (!Array.isArray(c)) return; const n = document.createElementNS(NS, c[0]); Object.keys(c[1] || {}).forEach(k => { if (k !== 'key') n.setAttribute(k, c[1][k]); }); svg.appendChild(n); });
+      el.appendChild(svg);
+    });
+  }
+  loadIcons(n) {
+    if (!this._alive) return;
+    if (window.lucide && window.lucide.icons) { const r = this.rootRef.current; if (r) this.fillIcons(r); return; }
+    if (n === 20 && !document.querySelector('script[data-lucide-fallback]')) {
+      const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js'; s.setAttribute('data-lucide-fallback', '1'); document.head.appendChild(s);
+    }
+    if (n < 100) this._iconT = setTimeout(() => this.loadIcons(n + 1), 120);
+  }
+
+  toast(text, kind) {
+    clearTimeout(this._toastT);
+    this.setState({ toast: { text, kind: kind || 'info', k: Date.now() } });
+    this._toastT = setTimeout(() => { if (this._alive) this.setState({ toast: null }); }, 3200);
+  }
+
+  decide(id, status) {
+    const r = this.state.req.find(x => x.id === id); if (!r || r.status !== 'pending') return;
+    this.setState(s => ({ req: s.req.map(x => x.id === id ? { ...x, status } : x) }));
+    this.toast(`${r.type} ${status === 'approved' ? 'approuvé' : 'refusé'} · ${r.name}`, status === 'approved' ? 'ok' : 'no');
+    this.later(1300, () => {
+      const root = this.rootRef.current, row = root && root.querySelector(`[data-req="${id}"]`);
+      const done = (a) => this.setState(s => ({ req: s.req.filter(x => x.id !== id) }), () => { if (a) { try { a.cancel(); } catch (_) {} } });
+      if (!row || this.mode() === 'Off') return done();
+      try {
+        const h = row.offsetHeight;
+        const a = row.animate([{ opacity: 1, height: h + 'px' }, { opacity: 0, height: '0px', paddingTop: '0px', paddingBottom: '0px' }], { duration: 420, easing: EASE, fill: 'forwards' });
+        a.onfinish = () => done(a);
+      } catch (_) { done(); }
+    });
+  }
+
+  openPalette = () => { this.setState({ palette: true, query: '', sel: 0 }, () => setTimeout(() => { const q = this.qRef.current; if (q) q.focus(); }, 30)); };
+  closePalette = () => this.setState({ palette: false });
+  filtered() {
+    const q = this.state.query.trim().toLowerCase();
+    return PALETTE.filter(p => !q || p.label.toLowerCase().includes(q) || p.group.toLowerCase().includes(q));
+  }
+  pick(i) {
+    const list = this.filtered(), q = this.state.query.trim();
+    this.setState({ palette: false });
+    if (q && i === list.length) this.toast(`Wedy réfléchit à « ${q} »…`, 'ai');
+    else if (list[i]) this.toast(`Ouverture : ${list[i].label}`, 'info');
+  }
+  onKey = (e) => {
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); this.state.palette ? this.closePalette() : this.openPalette(); return; }
+    if (!this.state.palette) return;
+    const n = this.filtered().length + (this.state.query.trim() ? 1 : 0);
+    if (e.key === 'Escape') { e.preventDefault(); this.closePalette(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); this.setState(s => ({ sel: n ? (s.sel + 1) % n : 0 })); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); this.setState(s => ({ sel: n ? (s.sel - 1 + n) % n : 0 })); }
+    else if (e.key === 'Enter') { e.preventDefault(); this.pick(this.state.sel); }
+  };
+
+  goRequests = () => {
+    const el = document.getElementById('demandes'); if (!el) return;
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 84, behavior: 'smooth' });
+  };
+
+  renderVals() {
+    const s = this.state, P = PERIODS[s.period];
+    const pending = s.req.filter(r => r.status === 'pending');
+    const leaves = pending.filter(r => r.kind === 'leave').length, docs = pending.length - leaves;
+    const list = this.filtered(), q = s.query.trim();
+    const tot = P.accepted + P.refused || 1;
+    return {
+      rootRef: this.rootRef, qRef: this.qRef,
+      p0: s.period === 0, p1: s.period === 1, p2: s.period === 2, p3: s.period === 3,
+      setP0: () => this.setState({ period: 0 }), setP1: () => this.setState({ period: 1 }), setP2: () => this.setState({ period: 2 }), setP3: () => this.setState({ period: 3 }),
+      presence: P.presence, accepted: P.accepted, refused: P.refused, periodLabel: P.label,
+      acceptedPct: Math.round(P.accepted / tot * 100), refusedPct: Math.round(P.refused / tot * 100),
+      pendingCount: pending.length, hasPending: pending.length > 0,
+      pendingSub: pending.length ? `${leaves} congé${leaves > 1 ? 's' : ''} · ${docs} document${docs > 1 ? 's' : ''}` : 'Rien à valider',
+      requests: s.req.map(r => ({
+        ...r, isLeave: r.kind === 'leave', isDoc: r.kind === 'doc',
+        isPending: r.status === 'pending', isApproved: r.status === 'approved', isRefused: r.status === 'refused',
+        approve: () => this.decide(r.id, 'approved'), refuse: () => this.decide(r.id, 'refused'),
+      })),
+      hasRequests: s.req.length > 0, noRequests: s.req.length === 0,
+      showToast: !!s.toast, toastText: s.toast ? s.toast.text : '', toastKey: s.toast ? s.toast.k : 0,
+      toastOk: !!s.toast && s.toast.kind === 'ok', toastNo: !!s.toast && s.toast.kind === 'no', toastInfo: !!s.toast && (s.toast.kind === 'info' || s.toast.kind === 'ai'),
+      showPalette: s.palette, query: s.query, hasQuery: !!q, aiLabel: `Demander à Wedy : « ${q} »`, aiSel: !!q && s.sel === list.length,
+      onQuery: e => this.setState({ query: e.target.value, sel: 0 }),
+      paletteItems: list.map((p, i) => ({ ...p, isSel: i === s.sel, notSel: i !== s.sel, onPick: () => this.pick(i), onHover: () => { if (this.state.sel !== i) this.setState({ sel: i }); } })),
+      pickAi: () => this.pick(list.length), hoverAi: () => this.setState({ sel: list.length }),
+      noResults: list.length === 0 && !q,
+      openPalette: this.openPalette, closePalette: this.closePalette, stop: e => e.stopPropagation(), goRequests: this.goRequests,
+      genToast: () => this.toast('Studio de génération ouvert', 'info'),
+      draftToast: () => this.toast('Wedy prépare 3 avenants de renouvellement…', 'ai'),
+      bellToast: () => this.toast('3 nouvelles notifications', 'info'),
+      openCopilotToast: e => { if (e && e.preventDefault) e.preventDefault(); window.location.href = 'Wedy Copilot.dc.html'; },
+    };
+  }
+}
+</script>
+</body>
+</html>

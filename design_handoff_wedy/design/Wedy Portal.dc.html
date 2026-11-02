@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Accueil — Espace collaborateur Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyPortalNav" active="home" hint-size="100%,63px"></dc-import>
+  <div style="max-width:1180px;margin:0 auto;padding:26px 24px 56px;display:flex;flex-direction:column;gap:18px">
+    <section data-reveal="up" style="position:relative;overflow:hidden;border-radius:26px;background:#06141a;color:#e8eff1;padding:30px 28px;isolation:isolate">
+      <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none"><div data-loop="drift" style="position:absolute;left:-8%;top:-80%;width:560px;height:560px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.65),transparent)"></div><div data-loop="drift" data-dur="27000" data-delay="-9000" style="position:absolute;right:-6%;top:-60%;width:500px;height:500px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.38),transparent)"></div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-end;justify-content:space-between">
+        <div>
+          <div style="font-family:'Geist Mono',monospace;font-size:11.5px;letter-spacing:.12em;color:#5fe3f0">DIMANCHE 1 NOVEMBRE 2026</div>
+          <h1 style="margin:10px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(32px,4vw,48px);letter-spacing:-.045em;line-height:1">Bonjour Yasmine.</h1>
+          <p style="margin:10px 0 0;font-size:15.5px;color:#b9cbd0">Voici ce qui vous concerne cette semaine.</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="Wedy Portal Leave.dc.html" style="display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 16px;border-radius:13px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-size:14px;font-weight:600;box-shadow:0 14px 30px -12px rgba(22,182,200,.8)" style-hover="color:#ffffff"><span data-icon="calendar-plus|calendar" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Demander un congé</a>
+          <a href="Wedy Portal Documents.dc.html" style="display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 16px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#ffffff;font-size:14px;font-weight:600" style-hover="color:#ffffff;background:rgba(255,255,255,.14)"><span data-icon="file-plus|file-text" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Demander un document</a>
+        </div>
+      </div>
+    </section>
+
+    <div data-reveal="up" data-delay="80" style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:16px;background:#fbefda;border:1px solid rgba(230,169,72,.4)"><span data-icon="info" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#b06b0c;flex-shrink:0;margin-top:1px"></span><div style="font-size:13.5px;line-height:1.55;color:#5c3a05"><strong>Votre CDD se termine le 12/11/2026.</strong> Votre manager et l'équipe RH préparent la suite de votre contrat : vous serez notifiée dès qu'une proposition est prête.</div></div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px">
+      <a href="Wedy Portal Leave.dc.html" data-reveal="up" data-delay="100" style="display:flex;align-items:center;gap:18px;padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;color:#0a1c24;transition:border-color .2s,transform .2s" style-hover="color:#0a1c24;border-color:#b9dfe5;transform:translateY(-2px)">
+        <span style="position:relative;width:96px;height:96px;flex-shrink:0"><svg viewBox="0 0 96 96" style="display:block;width:96px;height:96px;transform:rotate(-90deg)"><circle cx="48" cy="48" r="40" style="fill:none;stroke:#eef2f4;stroke-width:10px"></circle><circle data-reveal="draw" data-frac="0.806" data-delay="300" cx="48" cy="48" r="40" style="fill:none;stroke:#16b6c8;stroke-width:10px;stroke-linecap:round;stroke-dasharray:202.6px 251.3px"></circle></svg><span style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:22px;font-weight:800">14,5</span><span style="font-size:10.5px;color:#5f7079">jours</span></span></span>
+        <span><span style="display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Solde de congés</span><span style="display:block;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:18px;margin-top:4px">Disponibles maintenant</span><span style="display:block;font-size:13px;color:#52646d;margin-top:4px">+1,5 jour le 1er décembre</span></span>
+      </a>
+
+      <div data-reveal="up" data-delay="150" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Mes demandes</span><a href="Wedy Portal Documents.dc.html" style="font-size:12.5px;font-weight:600">Tout voir</a></div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:#f8fafb"><span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#0f6f49"><span data-icon="file-check" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span><span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:600">Attestation de travail</span><span style="display:block;font-size:12px;color:#5f7079">Générée par Wedy · ce matin</span></span><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:#e1f5ec;color:#0f6f49">Prête</span></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:#f8fafb"><span style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#b06b0c"><span data-icon="calendar" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span><span style="flex:1;min-width:0"><span style="display:block;font-size:13.5px;font-weight:600">Congé · 23 → 26 décembre</span><span style="display:block;font-size:12px;color:#5f7079">Chez Karim Lahlou</span></span><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:#fbefda;color:#8a5207">En attente</span></div>
+        </div>
+      </div>
+
+      <a href="Wedy Portal Training.dc.html" data-reveal="up" data-delay="200" style="display:flex;flex-direction:column;gap:12px;padding:20px;border-radius:20px;background:linear-gradient(140deg,#5444b8,#6d5ad6 55%,#0e7f96);color:#ffffff" style-hover="color:#ffffff;box-shadow:0 20px 40px -22px rgba(84,68,184,.8)">
+        <span style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9"><span data-icon="graduation-cap" data-size="15" style="display:inline-flex;width:15px;height:15px"></span>Formation en cours</span>
+        <span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:19px;line-height:1.25">Leadership et prise de parole</span>
+        <span style="display:flex;align-items:center;gap:10px"><span style="flex:1;height:7px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden"><span data-reveal="growx" data-delay="400" style="display:block;height:100%;width:60%;border-radius:99px;background:#ffffff;transform-origin:left"></span></span><span style="font-family:'Geist Mono',monospace;font-size:12px">60 %</span></span>
+        <span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600">Reprendre la session 4<span data-icon="arrow-right" data-size="14" style="display:inline-flex;width:14px;height:14px"></span></span>
+      </a>
+
+      <div data-reveal="up" data-delay="120" style="display:flex;align-items:center;gap:14px;padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+        <span style="width:56px;text-align:center;padding:9px 0;border-radius:14px;background:#fbefda;color:#8a5207;font-family:'Geist Mono',monospace;font-size:13px;font-weight:700;line-height:1.25;flex-shrink:0">06<br>NOV</span>
+        <span><span style="display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Prochain jour férié</span><span style="display:block;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:17px;margin-top:3px">Marche Verte</span><span style="display:block;font-size:13px;color:#52646d;margin-top:2px">Vendredi, dans 5 jours</span></span>
+      </div>
+
+      <div data-reveal="up" data-delay="170" style="display:flex;align-items:center;gap:14px;padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+        <span style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b;flex-shrink:0"><span data-icon="receipt|wallet" data-size="22" style="display:inline-flex;width:22px;height:22px"></span></span>
+        <span style="flex:1"><span style="display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Bulletin d'octobre</span><span style="display:block;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:22px;margin-top:3px">13 942 MAD <span style="font-size:13px;font-weight:500;color:#52646d">net</span></span></span>
+        <button type="button" onClick="{{ dlSlip }}" aria-label="Télécharger le bulletin" style="width:40px;height:40px;border:none;border-radius:11px;background:#f3f6f7;color:#33474f;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#e4f2f4;color:#0e6f84"><span data-icon="download" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></button>
+      </div>
+
+      <div data-reveal="up" data-delay="220" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+        <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Mon équipe aujourd'hui</div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:12px">
+          <sc-for list="{{ team }}" as="m" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ m.av }};color:#ffffff;font-size:11px;font-weight:700">{{ m.ini }}</span><span style="flex:1;min-width:0;font-size:13.5px;font-weight:500">{{ m.name }}</span><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:{{ m.color }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ m.color }}"></span>{{ m.st }}</span></div></sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div data-reveal="up" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+      <div style="display:flex;align-items:center;gap:10px"><span data-icon="megaphone" data-size="17" style="display:inline-flex;width:17px;height:17px;color:#0e6f84"></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Annonces de l'entreprise</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin-top:14px">
+        <sc-for list="{{ news }}" as="n" hint-placeholder-count="3"><div data-reveal="up" data-delay="{{ n.delay }}" style="padding:14px;border-radius:14px;background:{{ n.bg }}"><div style="font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;color:{{ n.color }}">{{ n.tag }}</div><div style="font-size:14.5px;font-weight:700;margin-top:6px">{{ n.t }}</div><div style="font-size:13px;line-height:1.5;color:#33474f;margin-top:4px">{{ n.d }}</div></div></sc-for>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.2);color:#4fd3a0"><span data-icon="check" data-size="15" data-sw="2.6" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2400); }
+  renderVals() {
+    return {
+      rootRef: this.rootRef,
+      team: [['Karim Lahlou', 'KL', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'Au bureau', '#16a06b'], ['Lina Chraibi', 'LC', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'Télétravail', '#16b6c8'], ['Ghita Benkirane', 'GB', 'linear-gradient(135deg,#a8650a,#e6a948)', 'Arrive le 01/12', '#9a8bf0']].map(([name, ini, av, st, color]) => ({ name, ini, av, st, color })),
+      news: [['ÉVÉNEMENT · 21 NOV.', 'Séminaire d\'équipe à Ifrane', 'Deux jours pour préparer 2027 ensemble. Inscriptions ouvertes jusqu\'au 10/11.', '#e4f2f4', '#0b5f72'], ['NOUVEAU', 'Télétravail : 2 jours par semaine', 'La nouvelle politique s\'applique dès le 1er décembre, en accord avec votre manager.', '#ece9fb', '#5444b8'], ['AVANTAGE', 'Nouvelle mutuelle santé', 'Une couverture renforcée pour vous et votre famille à partir de janvier.', '#e1f5ec', '#0f6f49']].map(([tag, t, d, bg, color], i) => ({ tag, t, d, bg, color, delay: String(i * 80) })),
+      dlSlip: () => this.toast("Bulletin d'octobre téléchargé"),
+      showToast: !!this.state.toast, toastText: this.state.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

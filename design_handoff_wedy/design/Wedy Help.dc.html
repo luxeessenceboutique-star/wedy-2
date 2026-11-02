@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Aide — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8ea5ad; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="help" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Espace de travail" title="Aide" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1360px;width:100%">
+      <section data-reveal="up" style="position:relative;overflow:hidden;border-radius:26px;background:#06141a;color:#e8eff1;padding:42px 28px 34px;text-align:center;isolation:isolate">
+        <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none">
+          <div data-loop="drift" style="position:absolute;left:-6%;top:-70%;width:560px;height:560px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent)"></div>
+          <div data-loop="drift" data-dur="27000" data-delay="-9000" style="position:absolute;right:-6%;top:-50%;width:500px;height:500px;border-radius:50%;background:radial-gradient(closest-side,rgba(109,90,214,.38),transparent)"></div>
+          <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 40%,#000 30%,transparent 80%);mask-image:radial-gradient(ellipse 60% 70% at 50% 40%,#000 30%,transparent 80%)"></div>
+        </div>
+        <img src="assets/wedy-avatar.png" alt="" style="width:60px;height:60px;border-radius:50%;object-fit:cover;background:#0f262e;border:2px solid rgba(95,227,240,.5);box-shadow:0 0 40px -6px rgba(39,192,212,.7)">
+        <h1 style="margin:16px 0 0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(28px,3.4vw,42px);letter-spacing:-.045em;line-height:1.05">Comment pouvons-nous vous aider ?</h1>
+        <div style="position:relative;max-width:560px;margin:22px auto 0"><span data-icon="search" data-size="18" style="position:absolute;left:18px;top:50%;margin-top:-9px;display:inline-flex;width:18px;height:18px;color:#8ea5ad;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Rechercher : congés, CNSS, modèle en arabe…" style="width:100%;height:54px;padding:0 18px 0 48px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#ffffff;font-family:inherit;font-size:15px;outline:none" style-focus="border-color:rgba(95,227,240,.6);background:rgba(255,255,255,.1)"></div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px"><sc-for list="{{ sugg }}" as="g" hint-placeholder-count="4"><button type="button" onClick="{{ g.go }}" style="height:32px;padding:0 12px;border-radius:99px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#cfdde1;font-family:inherit;font-size:12.5px;cursor:pointer" style-hover="background:rgba(255,255,255,.1);color:#ffffff">{{ g.t }}</button></sc-for></div>
+      </section>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="7">
+          <button type="button" onClick="{{ c.go }}" data-reveal="up" data-delay="{{ c.delay }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:16px;border-radius:18px;border:1px solid {{ c.border }};background:{{ c.bg }};font-family:inherit;text-align:left;cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s" style-hover="transform:translateY(-2px);box-shadow:0 16px 30px -22px rgba(10,28,36,.45)">
+            <span style="width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:{{ c.tint }};color:{{ c.color }}"><span data-icon="{{ c.icon }}" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></span>
+            <span><span style="display:block;font-size:14px;font-weight:700;color:#0a1c24">{{ c.label }}</span><span style="display:block;font-size:12px;color:#5f7079;margin-top:2px">{{ c.n }} articles</span></span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div data-reveal="up" data-delay="100" style="flex:2 1 520px;min-width:0;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;flex-wrap:wrap"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:17px">Questions fréquentes</span><span style="font-size:12.5px;color:#5f7079">{{ faqLabel }}</span></div>
+          <sc-for list="{{ faq }}" as="f" hint-placeholder-count="6">
+            <div style="border-top:1px solid #eef2f4">
+              <button type="button" onClick="{{ f.toggle }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:15px 20px;border:none;background:{{ f.bg }};font-family:inherit;text-align:left;cursor:pointer;transition:background .2s" style-hover="background:#f6fafb">
+                <span style="font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:{{ f.tint }};color:{{ f.color }};white-space:nowrap">{{ f.cat }}</span>
+                <span style="flex:1;font-size:14.5px;font-weight:600;color:#0a1c24">{{ f.q }}</span>
+                <span style="display:inline-flex;transform:rotate({{ f.rot }});transition:transform .3s cubic-bezier(.2,.8,.2,1);color:#7d8f97"><span data-icon="chevron-down" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span>
+              </button>
+              <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="padding:0 20px 18px 20px;font-size:14px;line-height:1.65;color:#33474f">{{ f.a }}<div style="display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12.5px;color:#7d8f97">Cette réponse vous a aidé ?<button type="button" onClick="{{ f.yes }}" style="height:28px;padding:0 10px;border-radius:8px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:12px;font-weight:600;color:#0f6f49;cursor:pointer">Oui</button><button type="button" onClick="{{ f.no }}" style="height:28px;padding:0 10px;border-radius:8px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:12px;font-weight:600;color:#a33a28;cursor:pointer">Non</button></div></div></sc-if>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noFaq }}" hint-placeholder-val="{{ false }}"><div style="padding:30px 20px;border-top:1px solid #eef2f4;text-align:center;font-size:14px;color:#52646d">Aucune réponse trouvée. <a href="Wedy Copilot.dc.html" style="font-weight:600">Posez la question à Wedy</a>.</div></sc-if>
+        </div>
+
+        <div style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:14px">
+          <a href="Wedy Copilot.dc.html" data-reveal="left" data-delay="120" style="display:flex;align-items:center;gap:12px;padding:18px;border-radius:20px;background:linear-gradient(140deg,#5444b8,#6d5ad6 55%,#0e7f96);color:#ffffff" style-hover="color:#ffffff;box-shadow:0 20px 40px -20px rgba(84,68,184,.7)"><img src="assets/wedy-avatar.png" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;background:#e4f2f4;border:2px solid rgba(255,255,255,.4)"><span style="flex:1"><span style="display:block;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Demandez à Wedy</span><span style="display:block;font-size:12.5px;opacity:.9;margin-top:2px">Réponse immédiate, en français, arabe ou anglais.</span></span><span data-icon="arrow-up-right" data-size="18" style="display:inline-flex;width:18px;height:18px"></span></a>
+          <div data-reveal="left" data-delay="160" style="padding:18px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Contacter le support</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+              <button type="button" onClick="{{ chat }}" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer" style-hover="border-color:#b9dfe5"><span data-icon="messages-square|message-square" data-size="17" style="display:inline-flex;width:17px;height:17px;color:#0e6f84"></span><span style="flex:1"><span style="display:block;font-size:13.5px;font-weight:600;color:#0a1c24">Chat en direct</span><span style="display:block;font-size:12px;color:#5f7079">Réponse moyenne en 4 min</span></span><span style="width:8px;height:8px;border-radius:50%;background:#16a06b"></span></button>
+              <a href="mailto:support@wedy.ma" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #e2e8eb;background:#ffffff" style-hover="border-color:#b9dfe5"><span data-icon="mail" data-size="17" style="display:inline-flex;width:17px;height:17px;color:#0e6f84"></span><span style="flex:1"><span style="display:block;font-size:13.5px;font-weight:600;color:#0a1c24">support@wedy.ma</span><span style="display:block;font-size:12px;color:#5f7079">Réponse sous 2 h ouvrées</span></span></a>
+              <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:#f8fafb"><span data-icon="clock" data-size="17" style="display:inline-flex;width:17px;height:17px;color:#7d8f97"></span><span style="font-size:12.5px;color:#52646d">Lundi – vendredi, 9 h – 18 h (heure de Casablanca)</span></div>
+            </div>
+          </div>
+          <div data-reveal="left" data-delay="200" style="padding:18px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="display:flex;align-items:center;gap:8px"><span style="position:relative;display:inline-flex;width:9px;height:9px"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;background:#16a06b"></span><span style="position:relative;width:9px;height:9px;border-radius:50%;background:#16a06b"></span></span><span style="font-size:14px;font-weight:700">Tous les systèmes sont opérationnels</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;font-size:13px">
+              <div style="display:flex;justify-content:space-between"><span style="color:#33474f">Application</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#0f6f49">99,99 %</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:#33474f">Copilote IA</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#0f6f49">99,95 %</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:#33474f">API et webhooks</span><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#0f6f49">99,98 %</span></div>
+            </div>
+          </div>
+          <div data-reveal="left" data-delay="240" style="padding:18px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Nouveautés</div>
+            <sc-for list="{{ news }}" as="n" hint-placeholder-count="3"><div style="display:flex;gap:10px;padding:10px 0;border-top:1px solid #f0f3f4;margin-top:8px"><span style="font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:{{ n.tint }};color:{{ n.color }};height:fit-content;white-space:nowrap">{{ n.tag }}</span><div><div style="font-size:13.5px;font-weight:600">{{ n.t }}</div><div style="font-size:12px;color:#7d8f97;margin-top:2px">{{ n.d }}</div></div></div></sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="heart-handshake|heart" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CATS = { start: ['Démarrage', 'rocket', '#e4f2f4', '#0b5f72', 6], people: ['Employés', 'users', '#ece9fb', '#5444b8', 9], docs: ['Documents', 'file-text', '#e1f5ec', '#0f6f49', 12], leave: ['Congés', 'calendar', '#fbefda', '#8a5207', 8], pay: ['Paie', 'wallet', '#fbe9e6', '#a33a28', 7], sec: ['Sécurité', 'shield-check', '#eef2f4', '#33474f', 5], int: ['Intégrations', 'puzzle', '#e7eefb', '#2f4bb0', 6] };
+const FAQ = [
+  ['start', 'Comment importer mes employés existants ?', "Depuis Employés › Importer, déposez un fichier Excel ou CSV : Wedy détecte automatiquement les colonnes (nom, CIN, poste, date d'embauche…). Vous pouvez aussi importer un CV : l'IA pré-remplit le dossier pour vous."],
+  ['start', 'Mes employés peuvent-ils accéder à Wedy ?', "Oui, via le portail employé : chacun consulte ses soldes, demande des congés ou des documents et suit ses formations, depuis un ordinateur ou un téléphone."],
+  ['docs', 'Puis-je générer un document en arabe ?', "Oui. Choisissez la langue à l'étape 3 du générateur. Les modèles disponibles en arabe s'affichent de droite à gauche ; avec la rédaction IA, Wedy traduit aussi les autres modèles."],
+  ['docs', "Comment ajouter ma signature et le cachet de l'entreprise ?", "Dans Paramètres › Documents, téléversez une image de votre signature et de votre cachet. Ils sont apposés automatiquement sur chaque document généré."],
+  ['leave', 'Comment Wedy calcule-t-il le solde de congés ?', "Par défaut, 1,5 jour ouvrable par mois de service, plus 1,5 jour par période de 5 ans d'ancienneté, conformément au Code du travail. Vous pouvez ajuster ces règles dans Paramètres › Congés et temps."],
+  ['leave', 'Les jours fériés religieux sont-ils pris en compte ?', "Oui. Les fêtes religieuses suivent le calendrier lunaire : Wedy ajuste leurs dates chaque année, et vous pouvez les corriger manuellement si besoin."],
+  ['pay', 'Wedy calcule-t-il la CNSS et l\'IR ?', "Wedy prépare les variables de paie (absences, primes, heures supplémentaires) et contrôle les anomalies. Le calcul final s'exporte vers Sage Paie ou Cegid, et le fichier Damancom est généré pour la CNSS."],
+  ['pay', 'Que vérifie le contrôle IA des bulletins ?', "Les écarts inhabituels : heures supplémentaires élevées, primes sans justificatif, fins de contrat à intégrer, variations de salaire. Chaque alerte doit être vérifiée avant la validation de la paie."],
+  ['sec', 'Comment mes données sont-elles protégées ?', "Vos données sont chiffrées au repos (AES-256) et en transit (TLS 1.3), sauvegardées chaque jour et traitées conformément à la loi 09-08. Chaque action est tracée dans le journal d'audit."],
+  ['int', 'Comment connecter Slack ou Teams ?', "Dans Intégrations, activez l'outil souhaité et autorisez l'accès. Les demandes de congé et les alertes arrivent alors dans vos canaux, avec des boutons d'approbation."],
+  ['people', 'Comment compléter un dossier incomplet ?', "Ouvrez le dossier, onglet Fichiers, puis « Compléter avec l'IA ». Wedy lit les pièces (CV, diplômes, contrat) et propose les champs manquants ; rien n'est modifié sans votre validation."],
+];
+const SUGG = ['Solde de congés', 'Modèle en arabe', 'Export Sage Paie', 'Importer des employés'];
+
+class Component extends DCLogic {
+  state = { q: '', cat: null, open: 0, toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state, norm = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const words = norm(s.q.trim()).split(/\s+/).filter(w => w.length > 2);
+    const list = FAQ.map((f, i) => [f, i]).filter(([f]) => (!s.cat || f[0] === s.cat) && (!words.length || words.some(w => norm(f[1] + ' ' + f[2]).includes(w.replace(/s$/, '')))));
+    return {
+      rootRef: this.rootRef,
+      q: s.q, onQ: e => this.setState({ q: e.target.value, open: null }),
+      sugg: SUGG.map(t => ({ t, go: () => this.setState({ q: t, cat: null, open: null }) })),
+      cats: Object.keys(CATS).map((k, i) => { const c = CATS[k], on = s.cat === k; return { label: c[0], icon: c[1], tint: c[2], color: c[3], n: c[4], delay: String(i * 50), border: on ? c[3] : '#e2e8eb', bg: on ? c[2] : '#ffffff', go: () => this.setState({ cat: on ? null : k, open: null }) }; }),
+      faqLabel: s.cat || s.q ? `${list.length} résultat${list.length > 1 ? 's' : ''}${s.cat ? ' · ' + CATS[s.cat][0] : ''}` : `${FAQ.length} questions`,
+      faq: list.map(([f, i]) => { const c = CATS[f[0]], open = s.open === i; return { q: f[1], a: f[2], cat: c[0], tint: c[2], color: c[3], open, rot: open ? '180deg' : '0deg', bg: open ? '#f8fbfb' : '#ffffff', toggle: () => this.setState({ open: open ? null : i }), yes: () => this.toast('Merci pour votre retour !'), no: () => this.toast('Merci · notre équipe va améliorer cet article') }; }),
+      noFaq: list.length === 0,
+      news: [['IA', '#ece9fb', '#5444b8', 'Rédaction IA des documents en arabe', 'Octobre 2026'], ['Nouveau', '#e1f5ec', '#0f6f49', 'Contrôle IA des bulletins de paie', 'Septembre 2026'], ['Amélioré', '#e4f2f4', '#0b5f72', 'Organigramme interactif avec recherche', 'Août 2026']].map(([tag, tint, color, t, d]) => ({ tag, tint, color, t, d })),
+      chat: () => this.toast('Une conseillère vous répond dans un instant…'),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Sécurité — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="security" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Espace de travail" title="Sécurité" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1360px;width:100%">
+      <div>
+        <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Sécurité</h1>
+        <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Protégez les données personnelles de vos collaborateurs.</p>
+      </div>
+
+      <section data-reveal="up" data-delay="80" style="position:relative;overflow:hidden;border-radius:24px;background:#06141a;color:#e8eff1;padding:24px 26px;isolation:isolate">
+        <div aria-hidden="true" style="position:absolute;inset:0;z-index:-1;pointer-events:none"><div data-loop="drift" style="position:absolute;left:-8%;top:-90%;width:520px;height:520px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent)"></div><div data-loop="drift" data-dur="27000" data-delay="-9000" style="position:absolute;right:-6%;top:-70%;width:460px;height:460px;border-radius:50%;background:radial-gradient(closest-side,rgba(43,189,134,.28),transparent)"></div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:center">
+          <div style="position:relative;width:136px;height:136px;flex-shrink:0">
+            <svg viewBox="0 0 136 136" style="display:block;width:136px;height:136px;transform:rotate(-90deg)"><defs><linearGradient id="secRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:#5fe3f0"></stop><stop offset="1" style="stop-color:#2bbd86"></stop></linearGradient></defs><circle cx="68" cy="68" r="58" style="fill:none;stroke:rgba(255,255,255,.08);stroke-width:12px"></circle><circle cx="68" cy="68" r="58" style="fill:none;stroke:url(#secRing);stroke-width:12px;stroke-linecap:round;stroke-dasharray:{{ ring }};transition:stroke-dasharray 1s cubic-bezier(.2,.8,.2,1)"></circle></svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:38px;font-weight:800;letter-spacing:-.05em;line-height:1">{{ score }}</span><span style="font-size:11.5px;color:#9fb4bb;margin-top:2px">sur 100</span></div>
+          </div>
+          <div style="flex:1;min-width:260px">
+            <div style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.14em;color:#5fe3f0">SCORE DE SÉCURITÉ</div>
+            <div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:26px;letter-spacing:-.035em;margin-top:6px">{{ level }}</div>
+            <div style="font-size:13.5px;color:#9fb4bb;margin-top:4px">{{ levelText }}</div>
+          </div>
+          <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ recos }}" as="r" hint-placeholder-count="3">
+              <div data-reveal="left" data-delay="{{ r.delay }}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)"><span data-icon="{{ r.icon }}" data-size="16" style="display:inline-flex;width:16px;height:16px;color:#f0bd6a"></span><span style="flex:1;font-size:13px;color:#e8eff1">{{ r.t }}</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#4fd3a0">+{{ r.pts }}</span><button type="button" onClick="{{ r.fix }}" style="height:30px;padding:0 11px;border:none;border-radius:8px;background:#effbfc;color:#06141a;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Activer</button></div>
+            </sc-for>
+            <sc-if value="{{ allDone }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;background:rgba(43,189,134,.14);color:#4fd3a0;font-size:13.5px;font-weight:600"><span data-icon="shield-check" data-size="17" style="display:inline-flex;width:17px;height:17px"></span>Toutes les recommandations sont appliquées.</div></sc-if>
+          </div>
+        </div>
+      </section>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px">
+        <div data-reveal="up" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e4f2f4;color:#0e6f84"><span data-icon="smartphone" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><div><div style="font-size:15px;font-weight:700">Double authentification</div><div style="font-size:12.5px;color:#5f7079">Code à usage unique à chaque connexion</div></div></div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:16px"><sc-for list="{{ tfa }}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{ o.go }}" style="height:42px;border-radius:11px;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.color }};font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">{{ o.label }}</button></sc-for></div>
+          <div style="font-size:12.5px;color:#52646d;margin-top:10px">{{ tfaNote }}</div>
+        </div>
+
+        <div data-reveal="up" data-delay="60" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#ece9fb;color:#6d5ad6"><span data-icon="timer" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><div style="flex:1"><div style="font-size:15px;font-weight:700">Expiration de session</div><div style="font-size:12.5px;color:#5f7079">Déconnexion automatique après inactivité</div></div><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:22px;font-weight:800">{{ timeoutLabel }}</span></div>
+          <input type="range" min="15" max="240" step="15" value="{{ timeout }}" onChange="{{ setTimeout }}" aria-label="Durée de session" style="width:100%;margin-top:18px;accent-color:#6d5ad6;cursor:pointer">
+          <div style="display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:11px;color:#7d8f97;margin-top:4px"><span>15 min</span><span>2 h</span><span>4 h</span></div>
+        </div>
+
+        <div data-reveal="up" data-delay="120" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <button type="button" onClick="{{ toggleIp }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:0;border:none;background:transparent;font-family:inherit;text-align:left;cursor:pointer"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#e1f5ec;color:#16a06b"><span data-icon="globe-lock|globe" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><span style="flex:1"><span style="display:block;font-size:15px;font-weight:700;color:#0a1c24">Restriction par adresse IP</span><span style="display:block;font-size:12.5px;color:#5f7079">Accès admin limité à vos réseaux</span></span><span style="position:relative;width:40px;height:24px;border-radius:99px;background:{{ ipTrack }};flex-shrink:0;transition:background .2s"><span style="position:absolute;top:3px;left:{{ ipKnob }};width:18px;height:18px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.3);transition:left .25s"></span></span></button>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:14px;opacity:{{ ipOp }};transition:opacity .2s">
+            <sc-for list="{{ ips }}" as="i" hint-placeholder-count="2"><div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:#f8fafb"><code style="font-family:'Geist Mono',monospace;font-size:12.5px;color:#0a1c24">{{ i.ip }}</code><span style="flex:1;font-size:12px;color:#5f7079">{{ i.label }}</span><button type="button" onClick="{{ i.remove }}" aria-label="Retirer" style="width:26px;height:26px;border:none;border-radius:7px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="color:#df5740"><span data-icon="x" data-size="13" style="display:inline-flex;width:13px;height:13px"></span></button></div></sc-for>
+            <form onSubmit="{{ addIp }}" style="display:flex;gap:6px"><input value="{{ ipIn }}" onChange="{{ onIpIn }}" placeholder="ex. 105.66.0.0/16" style="flex:1;min-width:0;height:36px;padding:0 10px;border-radius:9px;border:1px solid #d6dfe3;font-family:'Geist Mono',monospace;font-size:12.5px;outline:none" style-focus="border-color:#16b6c8"><button type="submit" style="height:36px;padding:0 12px;border:none;border-radius:9px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Ajouter</button></form>
+          </div>
+        </div>
+
+        <div data-reveal="up" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fbefda;color:#b06b0c"><span data-icon="key-round|key" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><div><div style="font-size:15px;font-weight:700">Politique de mots de passe</div><div style="font-size:12.5px;color:#5f7079">Appliquée à la prochaine connexion</div></div></div>
+          <div style="display:flex;flex-direction:column;margin-top:10px"><sc-for list="{{ pwd }}" as="p" hint-placeholder-count="3"><button type="button" onClick="{{ p.toggle }}" style="display:flex;align-items:center;gap:10px;padding:10px 0;border:none;border-top:1px solid #f0f3f4;background:transparent;font-family:inherit;text-align:left;cursor:pointer"><span style="flex:1;font-size:13.5px;color:#1d3540">{{ p.label }}</span><span style="position:relative;width:36px;height:20px;border-radius:99px;background:{{ p.track }};flex-shrink:0;transition:background .2s"><span style="position:absolute;top:2px;left:{{ p.knob }};width:16px;height:16px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.3);transition:left .2s"></span></span></button></sc-for></div>
+        </div>
+
+        <div data-reveal="up" data-delay="60" style="padding:20px;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fbe9e6;color:#df5740"><span data-icon="bell-ring|bell" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><div><div style="font-size:15px;font-weight:700">Alertes de connexion</div><div style="font-size:12.5px;color:#5f7079">Soyez prévenu des accès suspects</div></div></div>
+          <div style="display:flex;flex-direction:column;margin-top:10px"><sc-for list="{{ alerts }}" as="p" hint-placeholder-count="2"><button type="button" onClick="{{ p.toggle }}" style="display:flex;align-items:center;gap:10px;padding:10px 0;border:none;border-top:1px solid #f0f3f4;background:transparent;font-family:inherit;text-align:left;cursor:pointer"><span style="flex:1;font-size:13.5px;color:#1d3540">{{ p.label }}</span><span style="position:relative;width:36px;height:20px;border-radius:99px;background:{{ p.track }};flex-shrink:0;transition:background .2s"><span style="position:absolute;top:2px;left:{{ p.knob }};width:16px;height:16px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.3);transition:left .2s"></span></span></button></sc-for></div>
+        </div>
+
+        <div data-reveal="up" data-delay="120" style="padding:20px;border-radius:20px;background:linear-gradient(140deg,#5444b8,#6d5ad6 55%,#0e7f96);color:#ffffff">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.16)"><span data-icon="building" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span><div style="flex:1"><div style="font-size:15px;font-weight:700">SSO (SAML)</div><div style="font-size:12.5px;opacity:.85">Microsoft Entra ID, Google Workspace, Okta</div></div><span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.18)">{{ ssoChip }}</span></div>
+          <div style="font-size:13px;line-height:1.55;margin-top:12px;opacity:.92">Vos collaborateurs se connectent avec leur compte d'entreprise, et les départs sont révoqués automatiquement.</div>
+          <button type="button" onClick="{{ toggleSso }}" style="margin-top:14px;height:38px;padding:0 14px;border:none;border-radius:10px;background:#ffffff;color:#3d2f99;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">{{ ssoCta }}</button>
+        </div>
+      </div>
+
+      <div data-reveal="up" style="border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;flex-wrap:wrap"><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Sessions actives</span><button type="button" onClick="{{ revokeAll }}" style="height:34px;padding:0 12px;border-radius:9px;border:1px solid #f0c9c0;background:#ffffff;color:#a33a28;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:#fbe9e6">Déconnecter les autres sessions</button></div>
+        <sc-for list="{{ sessions }}" as="x" hint-placeholder-count="4">
+          <div data-reveal="up" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef2f4;flex-wrap:wrap">
+            <span style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#f3f6f7;color:#33474f;flex-shrink:0"><span data-icon="{{ x.icon }}" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></span>
+            <div style="flex:1 1 220px;min-width:0"><div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600">{{ x.user }} · {{ x.device }}<sc-if value="{{ x.current }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:#e1f5ec;color:#0f6f49">Cette session</span></sc-if></div><div style="font-size:12.5px;color:#5f7079">{{ x.place }} · <span style="font-family:'Geist Mono',monospace">{{ x.ip }}</span></div></div>
+            <span style="font-size:12.5px;color:#52646d">{{ x.last }}</span>
+            <sc-if value="{{ x.canRevoke }}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{ x.revoke }}" style="height:32px;padding:0 11px;border-radius:9px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:12.5px;font-weight:600;color:#33474f;cursor:pointer" style-hover="border-color:#df5740;color:#a33a28">Révoquer</button></sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div data-reveal="up" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+        <sc-for list="{{ badges }}" as="b" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:10px;padding:14px 16px;border-radius:16px;background:#ffffff;border:1px solid #e2e8eb"><span data-icon="{{ b.icon }}" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#0e6f84"></span><div><div style="font-size:13.5px;font-weight:700">{{ b.t }}</div><div style="font-size:12px;color:#5f7079">{{ b.s }}</div></div></div></sc-for>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,189,134,.2);color:#4fd3a0;flex-shrink:0"><span data-icon="shield-check" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const SESS = [['Salma Idrissi', 'Chrome · macOS', 'laptop', 'Casablanca', '196.200.131.42', 'Active maintenant', true], ['Salma Idrissi', 'Safari · iPhone', 'smartphone', 'Casablanca', '105.66.12.40', 'Il y a 2 h'], ['Sara El Fassi', 'Edge · Windows', 'monitor', 'Casablanca', '196.200.131.57', 'Il y a 12 min'], ['Youssef Amrani', 'Safari · iPad', 'tablet', 'Tanger', '41.140.22.18', 'Il y a 3 h']];
+
+class Component extends DCLogic {
+  state = { tfa: 'admins', timeout: 30, ip: true, ips: [['196.200.131.0/24', 'Siège · Casablanca'], ['41.140.22.18', 'VPN · Tanger']], ipIn: '', pwd: [true, true, false], alerts: [true, true], sso: false, sessions: SESS.map((x, i) => ({ id: i, user: x[0], device: x[1], icon: x[2], place: x[3], ip: x[4], last: x[5], current: !!x[6] })), toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state, C = 2 * Math.PI * 58;
+    const score = 14 + ({ off: 0, admins: 14, all: 22 })[s.tfa] + (s.ip ? 14 : 0) + (s.timeout <= 30 ? 10 : s.timeout <= 60 ? 6 : 2) + (s.pwd[0] ? 8 : 0) + (s.pwd[1] ? 6 : 0) + (s.pwd[2] ? 6 : 0) + (s.alerts[0] ? 4 : 0) + (s.alerts[1] ? 4 : 0) + (s.sso ? 12 : 0);
+    const recos = [];
+    if (s.tfa !== 'all') recos.push({ icon: 'smartphone', t: 'Rendre la 2FA obligatoire pour tous', pts: s.tfa === 'admins' ? 8 : 22, fix: () => { this.setState({ tfa: 'all' }); this.toast('2FA obligatoire pour tous les utilisateurs'); } });
+    if (!s.pwd[2]) recos.push({ icon: 'key-round|key', t: 'Renouveler les mots de passe tous les 90 jours', pts: 6, fix: () => { this.setState(x => ({ pwd: [x.pwd[0], x.pwd[1], true] })); this.toast('Expiration des mots de passe activée'); } });
+    if (!s.sso) recos.push({ icon: 'building', t: "Connecter l'annuaire de l'entreprise (SSO)", pts: 12, fix: () => { this.setState({ sso: true }); this.toast('SSO SAML activé · Microsoft Entra ID'); } });
+    if (!s.ip) recos.push({ icon: 'globe-lock|globe', t: "Restreindre l'accès admin à vos réseaux", pts: 14, fix: () => { this.setState({ ip: true }); this.toast('Restriction IP activée'); } });
+    if (s.timeout > 30) recos.push({ icon: 'timer', t: 'Réduire la session à 30 minutes', pts: s.timeout <= 60 ? 4 : 8, fix: () => { this.setState({ timeout: 30 }); this.toast('Expiration de session : 30 min'); } });
+    const tog = (key, i, msgOn, msgOff) => () => { const v = !s[key][i]; this.setState(x => ({ [key]: x[key].map((w, k) => k === i ? v : w) })); this.toast(v ? msgOn : msgOff); };
+    const sw = on => ({ track: on ? '#0e6f84' : '#c3ced3', knob: on ? '18px' : '2px' });
+    return {
+      rootRef: this.rootRef, score, ring: `${(C * score / 100).toFixed(1)} ${C.toFixed(1)}`,
+      level: score >= 90 ? 'Excellent' : score >= 75 ? 'Bon niveau de protection' : 'À renforcer', levelText: recos.length ? `${recos.length} recommandation${recos.length > 1 ? 's' : ''} pour atteindre 100.` : 'Votre espace est protégé au maximum.',
+      recos: recos.slice(0, 3).map((r, i) => ({ ...r, delay: String(i * 80) })), allDone: recos.length === 0,
+      tfa: [['off', 'Optionnelle'], ['admins', 'Admins'], ['all', 'Tous']].map(([k, label]) => ({ label, go: () => this.setState({ tfa: k }), bg: s.tfa === k ? '#0a1c24' : '#ffffff', color: s.tfa === k ? '#ffffff' : '#33474f', border: s.tfa === k ? '#0a1c24' : '#d6dfe3' })),
+      tfaNote: s.tfa === 'all' ? 'Obligatoire pour les 126 comptes.' : s.tfa === 'admins' ? 'Obligatoire pour les administrateurs et les RH · 8 comptes.' : 'Chaque utilisateur choisit · non recommandé.',
+      timeout: s.timeout, timeoutLabel: s.timeout < 60 ? `${s.timeout} min` : `${Math.floor(s.timeout / 60)} h${s.timeout % 60 ? ' ' + (s.timeout % 60) : ''}`, setTimeout: e => this.setState({ timeout: +e.target.value }),
+      toggleIp: () => { this.setState(x => ({ ip: !x.ip })); this.toast(s.ip ? 'Restriction IP désactivée' : 'Restriction IP activée'); }, ipTrack: s.ip ? '#16a06b' : '#c3ced3', ipKnob: s.ip ? '19px' : '3px', ipOp: s.ip ? '1' : '.45',
+      ips: s.ips.map(([ip, label], i) => ({ ip, label, remove: () => this.setState(x => ({ ips: x.ips.filter((_, k) => k !== i) })) })),
+      ipIn: s.ipIn, onIpIn: e => this.setState({ ipIn: e.target.value }),
+      addIp: e => { if (e && e.preventDefault) e.preventDefault(); const v = s.ipIn.trim(); if (!/^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/.test(v)) { this.toast('Adresse IP ou plage invalide'); return; } this.setState(x => ({ ips: [...x.ips, [v, 'Ajoutée manuellement']], ipIn: '' })); this.toast(`${v} ajoutée à la liste autorisée`); },
+      pwd: ['12 caractères minimum', 'Chiffres et caractères spéciaux obligatoires', 'Renouvellement tous les 90 jours'].map((label, i) => ({ label, ...sw(s.pwd[i]), toggle: tog('pwd', i, 'Règle activée', 'Règle désactivée') })),
+      alerts: ["Email à l'utilisateur pour chaque nouvel appareil", 'Alerte aux admins après 3 échecs de connexion'].map((label, i) => ({ label, ...sw(s.alerts[i]), toggle: tog('alerts', i, 'Alerte activée', 'Alerte désactivée') })),
+      ssoChip: s.sso ? 'Actif' : 'Enterprise', ssoCta: s.sso ? 'Désactiver le SSO' : 'Configurer le SSO',
+      toggleSso: () => { this.setState(x => ({ sso: !x.sso })); this.toast(s.sso ? 'SSO désactivé' : 'SSO SAML activé · Microsoft Entra ID'); },
+      sessions: s.sessions.map(x => ({ ...x, canRevoke: !x.current, revoke: () => { this.setState(y => ({ sessions: y.sessions.filter(z => z.id !== x.id) })); this.toast(`Session ${x.device} de ${x.user} révoquée`); } })),
+      revokeAll: () => { const n = s.sessions.filter(x => !x.current).length; if (!n) return; this.setState(y => ({ sessions: y.sessions.filter(z => z.current) })); this.toast(`${n} session${n > 1 ? 's' : ''} déconnectée${n > 1 ? 's' : ''}`); },
+      badges: [['lock', 'Chiffrement AES-256', 'Données chiffrées au repos'], ['shield-check', 'TLS 1.3', 'Toutes les connexions chiffrées'], ['database-backup|database', 'Sauvegardes quotidiennes', 'Conservées 30 jours'], ['scale', 'Loi 09-08', 'Protection des données personnelles']].map(([icon, t, sub]) => ({ icon, t, s: sub })),
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

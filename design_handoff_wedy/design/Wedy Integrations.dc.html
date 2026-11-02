@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Intégrations — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="integrations" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Espace de travail" title="Intégrations" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div>
+        <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Intégrations</h1>
+        <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Connectez Wedy aux outils que votre équipe utilise déjà.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+        <div data-reveal="up" data-delay="60" style="padding:16px 18px;border-radius:18px;background:linear-gradient(135deg,#0b5f72,#0e7f96);color:#ffffff"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.9">Connectées</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ nOn }}<span style="font-size:17px;opacity:.75"> / {{ nAll }}</span></div></div>
+        <div data-reveal="up" data-delay="110" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Webhooks actifs</div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">{{ nHooks }}</div></div>
+        <div data-reveal="up" data-delay="160" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Appels API · 30 jours</div><div data-count="" style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em;margin-top:4px">12 480</div></div>
+        <div data-reveal="up" data-delay="210" style="padding:16px 18px;border-radius:18px;background:#ffffff;border:1px solid #e2e8eb"><div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5f7079">Disponibilité</div><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><span style="position:relative;display:inline-flex;width:10px;height:10px"><span data-loop="ping" style="position:absolute;inset:0;border-radius:50%;background:#16a06b"></span><span style="position:relative;width:10px;height:10px;border-radius:50%;background:#16a06b"></span></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:34px;font-weight:800;letter-spacing:-.04em">99,98 %</span></div></div>
+      </div>
+
+      <div data-reveal="up" data-delay="120" style="display:flex;gap:8px;flex-wrap:wrap">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="5"><button type="button" onClick="{{ c.go }}" style="display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border-radius:99px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap"><span data-icon="{{ c.icon }}" data-size="14" style="display:inline-flex;width:14px;height:14px"></span>{{ c.label }}</button></sc-for>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px">
+        <sc-for list="{{ apps }}" as="a" hint-placeholder-count="8">
+          <div data-reveal="up" data-delay="{{ a.delay }}" style="position:relative;display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:18px;background:#ffffff;border:1px solid {{ a.border }};box-shadow:{{ a.shadow }};transition:border-color .3s,box-shadow .3s,transform .2s" style-hover="transform:translateY(-2px)">
+            <div style="display:flex;align-items:center;gap:12px">
+              <span style="position:relative;width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:{{ a.color }};color:#ffffff;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:15px;flex-shrink:0;box-shadow:0 10px 20px -10px {{ a.color }}">{{ a.mono }}<sc-if value="{{ a.on }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:-4px;bottom:-4px;width:18px;height:18px;border-radius:50%;background:#16a06b;border:2.5px solid #ffffff;display:flex;align-items:center;justify-content:center"><span data-icon="check" data-size="10" data-sw="3.4" style="display:inline-flex;width:10px;height:10px"></span></span></sc-if></span>
+              <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">{{ a.name }}</div><div style="font-size:12px;color:#5f7079">{{ a.catLabel }}</div></div>
+              <button type="button" onClick="{{ a.toggle }}" aria-label="{{ a.aria }}" disabled="{{ a.busy }}" style="position:relative;width:44px;height:26px;border:none;border-radius:99px;background:{{ a.track }};cursor:pointer;padding:0;flex-shrink:0;transition:background .25s"><span style="position:absolute;top:3px;left:{{ a.knob }};width:20px;height:20px;border-radius:50%;background:#ffffff;box-shadow:0 1px 3px rgba(10,28,36,.3);transition:left .25s cubic-bezier(.2,.8,.2,1);display:flex;align-items:center;justify-content:center"><sc-if value="{{ a.busy }}" hint-placeholder-val="{{ false }}"><span data-loop="spin" style="width:11px;height:11px;border-radius:50%;border:2px solid #d6dfe3;border-top-color:#16b6c8"></span></sc-if></span></button>
+            </div>
+            <div style="font-size:13px;line-height:1.5;color:#52646d">{{ a.desc }}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid #f0f3f4;font-size:12px">
+              <span style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:{{ a.stColor }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ a.stDot }}"></span>{{ a.status }}</span>
+              <span style="margin-left:auto;color:#7d8f97">{{ a.sync }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+        <div data-reveal="up" style="flex:1 1 340px;min-width:0;padding:20px;border-radius:20px;background:#06141a;color:#e8eff1">
+          <div style="display:flex;align-items:center;gap:10px"><span data-icon="key-round|key" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#5fe3f0"></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Clé API</span><span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(43,189,134,.16);color:#4fd3a0">live</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)"><code style="flex:1;min-width:0;font-family:'Geist Mono',monospace;font-size:13px;color:#cfe9ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ keyText }}</code><button type="button" onClick="{{ toggleKey }}" aria-label="Afficher la clé" style="width:32px;height:32px;border:none;border-radius:8px;background:rgba(255,255,255,.08);color:#cfdde1;cursor:pointer;display:flex;align-items:center;justify-content:center"><span data-icon="{{ keyIcon }}" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button><button type="button" onClick="{{ copyKey }}" aria-label="Copier" style="width:32px;height:32px;border:none;border-radius:8px;background:rgba(255,255,255,.08);color:#cfdde1;cursor:pointer;display:flex;align-items:center;justify-content:center"><span data-icon="copy" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;font-size:12.5px;color:#9fb4bb"><span>Créée le 02/03/2026 · utilisée il y a 4 min</span><button type="button" onClick="{{ regen }}" style="border:none;background:none;color:#f0bd6a;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px"><span data-icon="refresh-cw" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Régénérer</button></div>
+          <div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(0,0,0,.25);font-family:'Geist Mono',monospace;font-size:12px;line-height:1.7;color:#9fb4bb;overflow-x:auto;white-space:pre">curl https://api.wedy.ma/v1/employees \
+  -H "Authorization: Bearer $WEDY_KEY"</div>
+        </div>
+
+        <div data-reveal="up" data-delay="80" style="flex:1.4 1 420px;min-width:0;border-radius:20px;background:#ffffff;border:1px solid #e2e8eb;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:10px;padding:16px 20px"><span data-icon="webhook" data-size="18" style="display:inline-flex;width:18px;height:18px;color:#b06b0c"></span><span style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:16px">Webhooks</span></div>
+          <sc-for list="{{ hooks }}" as="h" hint-placeholder-count="3">
+            <div data-reveal="up" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid #eef2f4;flex-wrap:wrap">
+              <code style="flex:1 1 220px;min-width:0;font-family:'Geist Mono',monospace;font-size:12.5px;color:#33474f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.url }}</code>
+              <span style="font-family:'Geist Mono',monospace;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:7px;background:#fbefda;color:#7a4706">{{ h.evt }}</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#0f6f49;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:#16a06b"></span>{{ h.last }}</span>
+              <button type="button" onClick="{{ h.remove }}" aria-label="Supprimer" style="width:32px;height:32px;border:none;border-radius:8px;background:transparent;color:#7d8f97;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#fbe9e6;color:#df5740"><span data-icon="trash-2" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></button>
+            </div>
+          </sc-for>
+          <form onSubmit="{{ addHook }}" style="display:flex;gap:8px;flex-wrap:wrap;padding:14px 20px;border-top:1px solid #eef2f4;background:#f8fafb">
+            <input value="{{ hookUrl }}" onChange="{{ onHookUrl }}" placeholder="https://votre-app.ma/webhooks/wedy" style="flex:1 1 220px;min-width:0;height:40px;padding:0 12px;border-radius:10px;border:1px solid #d6dfe3;background:#ffffff;font-family:'Geist Mono',monospace;font-size:12.5px;color:#0a1c24;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)">
+            <select value="{{ hookEvt }}" onChange="{{ onHookEvt }}" style="height:40px;padding:0 10px;border-radius:10px;border:1px solid #d6dfe3;background:#ffffff;font-family:'Geist Mono',monospace;font-size:12px;color:#33474f;outline:none"><option value="leave.approved">leave.approved</option><option value="employee.created">employee.created</option><option value="document.generated">document.generated</option><option value="candidate.hired">candidate.hired</option></select>
+            <button type="submit" style="height:40px;padding:0 14px;border:none;border-radius:10px;background:#0a1c24;color:#ffffff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">Ajouter</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0;flex-shrink:0"><span data-icon="plug-zap|zap" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CATS = [['all', 'Toutes', 'layout-grid'], ['cal', 'Calendrier', 'calendar'], ['comm', 'Communication', 'message-square'], ['pay', 'Paie et conformité', 'wallet'], ['dev', 'Développeurs', 'code-xml|code']];
+const APPS = [
+  ['gcal', 'Google Calendar', 'cal', 'Congés, entretiens et réunions synchronisés dans les agendas de chacun.', 'GC', '#4a69d8', true, 'Synchro il y a 5 min'],
+  ['outlook', 'Microsoft Outlook', 'cal', 'Les événements RH dans le calendrier Outlook de votre équipe.', 'OL', '#0e6f84', false],
+  ['ical', 'Apple Calendar', 'cal', "Flux iCal des absences de l'équipe, en lecture seule.", 'AC', '#33474f', false],
+  ['slack', 'Slack', 'comm', 'Notifications et approbations de congés directement dans Slack.', 'SL', '#5444b8', true, 'Synchro il y a 1 min'],
+  ['teams', 'Microsoft Teams', 'comm', 'Alertes RH et validations dans vos canaux Teams.', 'MT', '#2f4bb0', false],
+  ['smtp', 'Email (SMTP)', 'comm', 'Envoyez les documents depuis votre propre nom de domaine.', '@', '#b06b0c', true, '214 emails ce mois'],
+  ['sage', 'Sage Paie', 'pay', 'Export automatique des variables de paie chaque mois.', 'SP', '#16a06b', true, 'Dernier export le 25/10'],
+  ['cegid', 'Cegid', 'pay', 'Synchronisation des fiches salariés dans les deux sens.', 'CG', '#0f6f49', false],
+  ['damancom', 'Damancom · CNSS', 'pay', 'Fichier de déclaration CNSS prêt à téléverser chaque mois.', 'CN', '#b8402c', false],
+  ['api', 'API REST', 'dev', 'Accès programmatique sécurisé à vos données RH.', '{ }', '#0a1c24', true, 'En continu'],
+];
+const rnd = () => Array.from({ length: 24 }, () => 'abcdef0123456789'[Math.floor(Math.random() * 16)]).join('');
+
+class Component extends DCLogic {
+  state = { on: Object.fromEntries(APPS.map(a => [a[0], a[6]])), busy: null, cat: 'all', key: 'wdy_live_8c41e09b7d2a55f3f9a1c6d0', showKey: false, hooks: [['https://erp.tython.ma/hooks/wedy', 'leave.approved', '200 · il y a 3 min'], ['https://hooks.zapier.com/…/8f3k2', 'employee.created', '200 · hier'], ['https://intranet.tython.ma/api/docs', 'document.generated', '200 · il y a 1 h']], hookUrl: '', hookEvt: 'leave.approved', toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); clearTimeout(this._b); }
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state;
+    const list = APPS.filter(a => s.cat === 'all' || a[2] === s.cat);
+    return {
+      rootRef: this.rootRef, nOn: Object.values(s.on).filter(Boolean).length, nAll: APPS.length, nHooks: s.hooks.length,
+      cats: CATS.map(([k, label, icon]) => ({ label, icon, go: () => this.setState({ cat: k }), bg: s.cat === k ? '#0a1c24' : '#ffffff', color: s.cat === k ? '#ffffff' : '#33474f', border: s.cat === k ? '#0a1c24' : '#e2e8eb' })),
+      apps: list.map(([id, name, cat, desc, mono, color, , sync], i) => {
+        const on = s.on[id], busy = s.busy === id;
+        return { name, desc, mono, color, on, busy, delay: String(i * 45), catLabel: CATS.find(c => c[0] === cat)[1], aria: on ? `Déconnecter ${name}` : `Connecter ${name}`,
+          track: on ? '#16a06b' : busy ? '#9fd6df' : '#c3ced3', knob: on || busy ? '21px' : '3px', border: on ? 'rgba(22,160,107,.35)' : '#e2e8eb', shadow: on ? '0 14px 30px -24px rgba(22,160,107,.6)' : 'none',
+          status: busy ? 'Connexion…' : on ? 'Connecté' : 'Non connecté', stColor: busy ? '#0b5f72' : on ? '#0f6f49' : '#7d8f97', stDot: busy ? '#16b6c8' : on ? '#16a06b' : '#c3ced3', sync: on ? (sync || "Synchro à l'instant") : busy ? 'Autorisation en cours' : '—',
+          toggle: () => {
+            if (busy) return;
+            if (on) { this.setState(x => ({ on: { ...x.on, [id]: false } })); this.toast(`${name} déconnecté`); return; }
+            this.setState({ busy: id });
+            this._b = setTimeout(() => { if (!this._a) return; this.setState(x => ({ busy: null, on: { ...x.on, [id]: true } })); this.toast(`${name} connecté avec succès`); }, 1300);
+          } };
+      }),
+      keyText: s.showKey ? s.key : s.key.slice(0, 9) + '••••••••••••' + s.key.slice(-4), keyIcon: s.showKey ? 'eye-off' : 'eye',
+      toggleKey: () => this.setState(x => ({ showKey: !x.showKey })),
+      copyKey: () => { try { navigator.clipboard && navigator.clipboard.writeText(s.key); } catch (_) {} this.toast('Clé API copiée'); },
+      regen: () => { this.setState({ key: 'wdy_live_' + rnd(), showKey: true }); this.toast("Nouvelle clé générée · l'ancienne est révoquée"); },
+      hooks: s.hooks.map(([url, evt, last], i) => ({ url, evt, last, remove: () => { this.setState(x => ({ hooks: x.hooks.filter((_, k) => k !== i) })); this.toast('Webhook supprimé'); } })),
+      hookUrl: s.hookUrl, onHookUrl: e => this.setState({ hookUrl: e.target.value }), hookEvt: s.hookEvt, onHookEvt: e => this.setState({ hookEvt: e.target.value }),
+      addHook: e => { if (e && e.preventDefault) e.preventDefault(); const u = s.hookUrl.trim(); if (!/^https:\/\//.test(u)) { this.toast("L'URL doit commencer par https://"); return; } this.setState(x => ({ hooks: [...x.hooks, [u, x.hookEvt, 'Test envoyé · 200']], hookUrl: '' })); this.toast('Webhook ajouté · événement de test envoyé'); },
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

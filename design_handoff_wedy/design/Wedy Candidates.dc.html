@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <title>Candidats — Wedy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="wedy-fx.js"></script>
+  <style>
+    html, body { margin: 0; background: #f3f6f7; }
+    body { font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    *, *::before, *::after { box-sizing: border-box; }
+    a { color: #0e6f84; text-decoration: none; }
+    a:hover { color: #16b6c8; }
+    input::placeholder { color: #8a9ba3; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;min-height:100vh;background:#f3f6f7;color:#0a1c24;font-family:'Geist',system-ui,sans-serif">
+  <dc-import name="WedyNav" active="candidates" hint-size="252px,100vh" style="position:sticky;top:0;width:252px;height:100vh;flex-shrink:0"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <dc-import name="WedyTopbar" section="Personnes" title="Candidats" hint-size="100%,69px" style="position:sticky;top:0;z-index:20"></dc-import>
+    <div style="padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px;max-width:1440px;width:100%">
+      <div>
+        <h1 data-reveal="up" style="margin:0;font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:clamp(30px,3vw,40px);letter-spacing:-.045em;line-height:1.05">Candidats</h1>
+        <p data-reveal="up" data-delay="60" style="margin:8px 0 0;font-size:15px;color:#52646d">Chaque CV est lu et noté par Wedy. Cliquez sur un profil pour voir l'analyse.</p>
+      </div>
+      <div data-reveal="up" data-delay="100" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <div style="position:relative;flex:1 1 260px;min-width:220px"><span data-icon="search" data-size="16" style="position:absolute;left:14px;top:50%;margin-top:-8px;display:inline-flex;width:16px;height:16px;color:#7d8f97;pointer-events:none"></span><input value="{{ q }}" onChange="{{ onQ }}" placeholder="Rechercher un candidat, une compétence…" style="width:100%;height:44px;padding:0 14px 0 40px;border-radius:12px;border:1px solid #d6dfe3;background:#ffffff;font-family:inherit;font-size:14px;outline:none" style-focus="border-color:#16b6c8;box-shadow:0 0 0 4px rgba(22,182,200,.14)"></div>
+        <sc-for list="{{ stages }}" as="t" hint-placeholder-count="5"><button type="button" onClick="{{ t.go }}" style="height:38px;padding:0 13px;border-radius:99px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">{{ t.label }}</button></sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px">
+        <sc-for list="{{ cards }}" as="c" hint-placeholder-count="8">
+          <button type="button" onClick="{{ c.open }}" data-reveal="up" data-delay="{{ c.delay }}" style="display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:20px;border:1px solid #e2e8eb;background:#ffffff;font-family:inherit;text-align:left;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .2s" style-hover="border-color:#b9dfe5;box-shadow:0 20px 40px -26px rgba(10,28,36,.45);transform:translateY(-3px)">
+            <div style="display:flex;align-items:center;gap:12px;width:100%">
+              <span style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ c.av }};color:#ffffff;font-size:15px;font-weight:700;flex-shrink:0">{{ c.ini }}</span>
+              <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600;color:#0a1c24">{{ c.name }}</span><span style="display:block;font-size:12.5px;color:#5f7079;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.job }}</span></span>
+              <span style="position:relative;width:46px;height:46px;flex-shrink:0"><svg viewBox="0 0 46 46" style="display:block;width:46px;height:46px;transform:rotate(-90deg)"><circle cx="23" cy="23" r="19" style="fill:none;stroke:#eef2f4;stroke-width:4.5px"></circle><circle data-reveal="draw" data-frac="{{ c.frac }}" cx="23" cy="23" r="19" style="fill:none;stroke:{{ c.color }};stroke-width:4.5px;stroke-linecap:round;stroke-dasharray:{{ c.dash }}"></circle></svg><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#0a1c24">{{ c.score }}</span></span>
+            </div>
+            <div style="font-size:13px;line-height:1.5;color:#33474f">{{ c.summary }}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;width:100%"><span style="font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:{{ c.stBg }};color:{{ c.stColor }}">{{ c.stage }}</span><span style="font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;background:#f3f6f7;color:#33474f">{{ c.source }}</span><span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:11.5px;color:#7d8f97">{{ c.exp }}</span></div>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{ open }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ close }}" style="position:fixed;inset:0;z-index:100;background:rgba(6,20,26,.42);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)"></div>
+    <div data-reveal="left" style="position:fixed;top:0;right:0;bottom:0;z-index:101;width:min(520px,100vw);display:flex;flex-direction:column;background:#ffffff;box-shadow:-30px 0 80px -30px rgba(6,20,26,.5);overflow-y:auto">
+      <div style="position:relative;overflow:hidden;padding:24px;background:#06141a;color:#e8eff1;isolation:isolate">
+        <div aria-hidden="true" data-loop="drift" style="position:absolute;right:-80px;top:-120px;width:340px;height:340px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,111,132,.6),transparent);z-index:-1"></div>
+        <button type="button" onClick="{{ close }}" aria-label="Fermer" style="position:absolute;top:16px;right:16px;width:36px;height:36px;border:none;border-radius:10px;background:rgba(255,255,255,.08);color:#e8eff1;cursor:pointer;display:flex;align-items:center;justify-content:center"><span data-icon="x" data-size="17" style="display:inline-flex;width:17px;height:17px"></span></button>
+        <div style="display:flex;align-items:center;gap:14px"><span style="width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ cur.av }};color:#ffffff;font-size:19px;font-weight:700;border:2px solid rgba(255,255,255,.2)">{{ cur.ini }}</span><div><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:23px;letter-spacing:-.03em">{{ cur.name }}</div><div style="font-size:13.5px;color:#9fb4bb">{{ cur.job }} · {{ cur.exp }}</div></div></div>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:18px;padding:14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)"><div style="font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:40px;font-weight:800;letter-spacing:-.04em;color:#5fe3f0">{{ cur.score }}</div><div style="font-size:13px;line-height:1.5;color:#b9cbd0">Score de correspondance Wedy pour le poste « {{ cur.job }} »</div></div>
+      </div>
+      <div style="padding:22px 24px;display:flex;flex-direction:column;gap:18px">
+        <div><div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5444b8"><span data-icon="sparkles" data-size="13" style="display:inline-flex;width:13px;height:13px"></span>Résumé IA du CV</div><div style="margin-top:8px;font-size:14.5px;line-height:1.6;color:#1d3540">{{ cur.long }}</div></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ cur.bars }}" as="b" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:110px minmax(0,1fr) 36px;align-items:center;gap:10px;font-size:13px"><span style="color:#33474f">{{ b.label }}</span><span style="height:8px;border-radius:99px;background:#eef2f4;overflow:hidden"><span data-reveal="growx" style="display:block;height:100%;width:{{ b.v }}%;border-radius:99px;background:linear-gradient(90deg,#0e6f84,#16b6c8);transform-origin:left"></span></span><span style="font-weight:700;text-align:right">{{ b.v }}</span></div></sc-for>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px"><sc-for list="{{ cur.skills }}" as="sk" hint-placeholder-count="4"><span style="font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:99px;background:#e4f2f4;color:#0b5f72">{{ sk.t }}</span></sc-for></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button type="button" onClick="{{ schedule }}" style="flex:1.4;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:46px;border:none;border-radius:12px;background:linear-gradient(135deg,#0e6f84,#16b6c8);color:#ffffff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap"><span data-icon="calendar-plus|calendar" data-size="16" style="display:inline-flex;width:16px;height:16px"></span>Planifier un entretien</button>
+          <button type="button" onClick="{{ reject }}" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;height:46px;border-radius:12px;border:1px solid #f0c9c0;background:#ffffff;color:#a33a28;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#fbe9e6">Refuser</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}"><div data-reveal="up" role="status" style="position:fixed;right:24px;bottom:24px;z-index:120;display:flex;align-items:center;gap:10px;padding:11px 16px 11px 11px;border-radius:14px;background:#0a1c24;color:#e8eff1;box-shadow:0 24px 50px -16px rgba(10,28,36,.6);font-size:14px"><span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(39,192,212,.2);color:#5fe3f0"><span data-icon="sparkles" data-size="15" style="display:inline-flex;width:15px;height:15px"></span></span>{{ toastText }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const AV = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+const ST = { 'Nouveau': ['#eef2f4', '#33474f'], 'Présélection': ['#e4f2f4', '#0b5f72'], 'Entretien': ['#ece9fb', '#5444b8'], 'Offre': ['#fbefda', '#8a5207'], 'Refusé': ['#fbe9e6', '#a33a28'] };
+const C = [
+  ['Zineb Haddad', 'Développeur full-stack', 'Entretien', 'Site carrière', '6 ans', 92, 'React, Node.js et AWS ; a dirigé une équipe de 4 développeurs dans une fintech casablancaise.', ['React', 'Node.js', 'AWS', 'PostgreSQL']],
+  ['Nabil Rachidi', 'Comptable senior', 'Offre', 'Cooptation', '8 ans', 90, 'Expert-comptable stagiaire, maîtrise de Sage et de la fiscalité marocaine (IS, TVA).', ['Sage', 'IS / TVA', 'Consolidation', 'Excel']],
+  ['Ilyas Chraibi', 'Développeur full-stack', 'Présélection', 'LinkedIn', '4 ans', 88, 'Profil TypeScript polyvalent, contributions open source, bonne culture produit.', ['TypeScript', 'Next.js', 'Docker']],
+  ['Asmae Jabri', 'Responsable commercial', 'Offre', 'Rekrute', '7 ans', 87, 'Vente B2B SaaS, portefeuille PME, dépassement d\'objectifs 3 années de suite.', ['Vente B2B', 'CRM', 'Négociation', 'Anglais']],
+  ['Othmane Fikri', 'Responsable commercial', 'Entretien', 'LinkedIn', '5 ans', 85, 'Grands comptes dans les télécoms ; trilingue arabe, français, anglais.', ['Grands comptes', 'Prospection', 'Anglais']],
+  ['Houda Sabri', 'Chargé(e) RH', 'Entretien', 'LinkedIn', '3 ans', 83, 'Généraliste RH, paie et administration du personnel, connaissance du Code du travail.', ['Paie', 'Code du travail', 'Recrutement']],
+  ['Salma Bakkali', 'Développeur full-stack', 'Nouveau', 'Rekrute', '2 ans', 81, 'Jeune développeuse prometteuse, solide en front-end, stage chez une scale-up.', ['Vue.js', 'Tailwind', 'Git']],
+  ['Meryem Ouali', 'Chargé(e) RH', 'Présélection', 'Cooptation', '4 ans', 79, 'Recrutement tech et marque employeur ; à l\'aise avec les outils SIRH.', ['Sourcing', 'Marque employeur', 'SIRH']],
+  ['Ayoub Mansouri', 'Responsable commercial', 'Nouveau', 'LinkedIn', '3 ans', 74, 'Commercial terrain dans la distribution ; à confirmer sur la vente B2B.', ['Terrain', 'Distribution']],
+  ['Hamza Tahiri', 'Comptable senior', 'Nouveau', 'Site carrière', '3 ans', 66, 'Comptabilité générale ; expérience senior limitée pour le poste.', ['Comptabilité', 'Excel']],
+];
+
+class Component extends DCLogic {
+  state = { q: '', stage: 'Tous', open: null, cands: C.map((c, i) => ({ i, name: c[0], job: c[1], stage: c[2], source: c[3], exp: c[4], score: c[5], long: c[6], skills: c[7] })), toast: '' };
+  rootRef = React.createRef();
+  componentDidMount() { this._a = true; const go = () => { if (!this._a) return; if (window.WedyFx && this.rootRef.current) this.fx = window.WedyFx.attach(this.rootRef.current); else setTimeout(go, 50); }; go(); window.addEventListener('keydown', this.esc); }
+  componentDidUpdate() { if (this.fx) this.fx.scan(); }
+  componentWillUnmount() { this._a = false; if (this.fx) this.fx.destroy(); clearTimeout(this._t); window.removeEventListener('keydown', this.esc); }
+  esc = e => { if (e.key === 'Escape') this.setState({ open: null }); };
+  toast(t) { clearTimeout(this._t); this.setState({ toast: t }); this._t = setTimeout(() => this._a && this.setState({ toast: '' }), 2600); }
+  renderVals() {
+    const s = this.state, R = 2 * Math.PI * 19, q = s.q.trim().toLowerCase();
+    const ini = n => n.split(' ').map(w => w[0]).slice(0, 2).join('');
+    const map = (c, k) => ({
+      ...c, ini: ini(c.name), av: AV[c.i % AV.length], delay: String(k * 50), summary: c.long.split(';')[0].split(',').slice(0, 2).join(','),
+      color: c.score >= 85 ? '#16a06b' : c.score >= 75 ? '#16b6c8' : '#df9326', frac: String(c.score / 100), dash: `${(R * c.score / 100).toFixed(1)}px ${R.toFixed(1)}px`,
+      stBg: ST[c.stage][0], stColor: ST[c.stage][1], open: () => this.setState({ open: c.i }),
+    });
+    const list = s.cands.filter(c => (s.stage === 'Tous' || c.stage === s.stage) && (!q || [c.name, c.job, ...c.skills].some(v => v.toLowerCase().includes(q))));
+    const cc = s.cands.find(c => c.i === s.open);
+    const cur = cc ? { ...map(cc, 0), skills: cc.skills.map(t => ({ t })), bars: [['Compétences', Math.min(99, cc.score + 4)], ['Expérience', Math.max(50, cc.score - 6)], ['Langues', Math.min(99, cc.score + 2)], ['Adéquation poste', cc.score]].map(([label, v]) => ({ label, v: String(v) })) } : {};
+    return {
+      rootRef: this.rootRef, q: s.q, onQ: e => this.setState({ q: e.target.value }),
+      stages: ['Tous', 'Nouveau', 'Présélection', 'Entretien', 'Offre'].map(st => ({ label: st, go: () => this.setState({ stage: st }), bg: s.stage === st ? '#0a1c24' : '#ffffff', color: s.stage === st ? '#ffffff' : '#33474f', border: s.stage === st ? '#0a1c24' : '#e2e8eb' })),
+      cards: list.map(map), open: !!cc, cur, close: () => this.setState({ open: null }),
+      schedule: () => { this.setState(x => ({ open: null, cands: x.cands.map(c => c.i === s.open ? { ...c, stage: 'Entretien' } : c) })); this.toast(`Entretien à planifier avec ${cc.name} — invitation prête`); },
+      reject: () => { this.setState(x => ({ open: null, cands: x.cands.map(c => c.i === s.open ? { ...c, stage: 'Refusé' } : c) })); this.toast(`Wedy a rédigé un mail de refus bienveillant pour ${cc.name}`); },
+      showToast: !!s.toast, toastText: s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>

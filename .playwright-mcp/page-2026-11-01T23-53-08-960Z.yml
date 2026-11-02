@@ -1,0 +1,237 @@
+- generic [ref=f10e1]:
+  - generic [ref=f10e2]:
+    - region "Notifications alt+T":
+      - list:
+        - listitem [ref=f10e330]:
+          - generic [ref=f10e335]: Action impossible
+        - listitem [ref=f10e337]:
+          - generic [ref=f10e342]: Employé supprimé · Mohammed Alami
+          - button "Annuler" [ref=f10e344] [cursor=pointer]
+    - generic [ref=f10e3]:
+      - generic [ref=f10e4]:
+        - generic [ref=f10e5]:
+          - generic [ref=f10e6]:
+            - heading "Employés" [level=1] [ref=f10e7]
+            - generic [ref=f10e8]: "126"
+          - paragraph [ref=f10e9]: Dossiers, contrats et documents de toute votre équipe.
+        - generic [ref=f10e10]:
+          - button "Exporter" [ref=f10e11] [cursor=pointer]
+          - button "Ajouter un employé" [ref=f10e15] [cursor=pointer]
+      - generic [ref=f10e17]:
+        - generic [ref=f10e18]: Buttons
+        - generic [ref=f10e19]:
+          - button "Primary" [ref=f10e20] [cursor=pointer]
+          - button "Secondary" [ref=f10e21] [cursor=pointer]
+          - button "Dark" [ref=f10e22] [cursor=pointer]
+          - button "AI" [ref=f10e23] [cursor=pointer]
+          - button "Danger outline" [ref=f10e27] [cursor=pointer]
+          - button "Soft" [ref=f10e28] [cursor=pointer]
+          - button "Loading" [disabled] [ref=f10e29]
+          - button "Disabled" [disabled] [ref=f10e32]
+          - button "Small" [ref=f10e33] [cursor=pointer]
+          - button "Large" [ref=f10e34] [cursor=pointer]
+      - generic [ref=f10e35]:
+        - generic [ref=f10e36]: Badges
+        - generic [ref=f10e37]:
+          - generic [ref=f10e38]: Actif
+          - generic [ref=f10e40]: En congé
+          - generic [ref=f10e42]: Inactif
+          - generic [ref=f10e44]: Planifié
+          - generic [ref=f10e45]: IA
+          - generic [ref=f10e46]: Info
+          - generic [ref=f10e47]: Neutre
+          - generic [ref=f10e48]: Chip 12.5
+      - generic [ref=f10e49]:
+        - generic [ref=f10e50]: Stat cards
+        - generic [ref=f10e51]:
+          - generic [ref=f10e52]:
+            - generic [ref=f10e63]:
+              - generic [ref=f10e64]: Total employés
+              - generic [ref=f10e65]: "128"
+              - generic [ref=f10e66]: 126 actifs · 2 inactifs
+            - generic [ref=f10e75]:
+              - generic [ref=f10e76]: Présents aujourd'hui
+              - generic [ref=f10e77]: "104"
+              - generic [ref=f10e78]: 82 % de l'effectif
+            - generic [ref=f10e86]:
+              - generic [ref=f10e87]: Demandes en attente
+              - generic [ref=f10e88]: "6"
+              - generic [ref=f10e89]: 2 urgentes
+            - generic [ref=f10e98]:
+              - generic [ref=f10e99]: Documents générés
+              - generic [ref=f10e100]: 1 284
+              - generic [ref=f10e101]: +48 cette semaine
+          - generic [ref=f10e102]:
+            - generic [ref=f10e106]:
+              - generic [ref=f10e107]: Effectif actif
+              - generic [ref=f10e108]: "126"
+              - generic [ref=f10e109]:
+                - generic [ref=f10e110]: ▲
+                - text: +4 ce mois
+            - generic [ref=f10e120]:
+              - generic [ref=f10e121]: Taux de présence
+              - generic [ref=f10e122]: 94,2 %
+              - generic [ref=f10e123]:
+                - generic [ref=f10e124]: ▼
+                - text: −1,1 pt
+            - link "Stagiaires 18" [ref=f10e345] [cursor=pointer]:
+              - /url: /app/interns
+              - generic [ref=f10e132]:
+                - generic [ref=f10e133]: Stagiaires
+                - generic [ref=f10e134]: "18"
+      - generic [ref=f10e139]:
+        - generic [ref=f10e140]: Tabs, pills, view toggle
+        - generic [ref=f10e141]:
+          - tablist [ref=f10e142]:
+            - tab "En attente 6" [selected] [ref=f10e143] [cursor=pointer]:
+              - text: En attente
+              - generic [ref=f10e145]: "6"
+            - tab "Approuvées 12" [ref=f10e146] [cursor=pointer]:
+              - text: Approuvées
+              - generic [ref=f10e147]: "12"
+            - tab "Refusées 2" [ref=f10e148] [cursor=pointer]:
+              - text: Refusées
+              - generic [ref=f10e149]: "2"
+          - tablist [ref=f10e150]:
+            - tab "Liste" [selected] [ref=f10e151] [cursor=pointer]
+            - tab "Grille" [ref=f10e154] [cursor=pointer]
+            - tab "Kanban" [ref=f10e160] [cursor=pointer]
+          - group [ref=f10e163]:
+            - button "Tous 24" [pressed] [ref=f10e164] [cursor=pointer]:
+              - text: Tous
+              - generic [ref=f10e165]: "24"
+            - button "Nouveau" [ref=f10e166] [cursor=pointer]
+            - button "Entretien 5" [ref=f10e167] [cursor=pointer]:
+              - text: Entretien
+              - generic [ref=f10e168]: "5"
+      - generic [ref=f10e169]:
+        - generic [ref=f10e170]: Controls
+        - generic [ref=f10e171]:
+          - switch "Switch on" [checked] [ref=f10e172] [cursor=pointer]
+          - switch "Switch off" [ref=f10e174] [cursor=pointer]
+          - switch "Small green" [checked] [ref=f10e176] [cursor=pointer]
+          - checkbox "Checked" [checked] [ref=f10e178] [cursor=pointer]
+          - checkbox "Unchecked" [ref=f10e181] [cursor=pointer]
+          - checkbox "Indeterminate" [checked=mixed] [ref=f10e182] [cursor=pointer]
+      - generic [ref=f10e186]:
+        - generic [ref=f10e187]: Fields
+        - generic [ref=f10e189]:
+          - generic [ref=f10e190]:
+            - generic [ref=f10e191]: Nom complet *
+            - textbox "Nom complet *" [ref=f10e192]:
+              - /placeholder: Mohammed Alami
+          - generic [ref=f10e193]:
+            - generic [ref=f10e194]: Email
+            - textbox "Email" [ref=f10e196]:
+              - /placeholder: avec icône
+          - generic [ref=f10e197]:
+            - generic [ref=f10e198]: CIN *
+            - textbox "CIN *" [invalid] [ref=f10e199]
+            - alert [ref=f10e200]: Le CIN est obligatoire.
+          - generic [ref=f10e201]:
+            - generic [ref=f10e202]: Service
+            - combobox "Service" [ref=f10e203] [cursor=pointer]:
+              - option "Tous les services" [selected]
+              - option "Tech"
+          - generic [ref=f10e204]:
+            - generic [ref=f10e205]: Motif
+            - textbox "Motif" [ref=f10e206]:
+              - /placeholder: Texte libre
+          - searchbox "Rechercher un nom, un poste, un email…" [ref=f10e208]
+      - generic [ref=f10e209]:
+        - generic [ref=f10e210]: Avatars & rings
+        - generic [ref=f10e211]:
+          - generic [ref=f10e212]: SI
+          - generic [ref=f10e213]: YB
+          - generic [ref=f10e214]: OT
+          - generic [ref=f10e215]: KA
+          - generic [ref=f10e216]: NB
+          - generic [ref=f10e217]: ZF
+          - generic [ref=f10e218]: "92"
+          - generic [ref=f10e224]: "74"
+          - generic [ref=f10e230]: "58"
+      - generic [ref=f10e236]:
+        - generic [ref=f10e237]: AI insight & hero
+        - generic [ref=f10e238]:
+          - generic [ref=f10e241]:
+            - generic [ref=f10e242]: Analyse de Wedy
+            - generic [ref=f10e243]: "Solde insuffisant : 2,5 j restants pour 4 j demandés. Le CDD se termine dans 12 jours."
+          - generic [ref=f10e244]: Bonjour, 126 collaborateurs
+      - generic [ref=f10e246]:
+        - generic [ref=f10e247]: Empty state, skeleton
+        - generic [ref=f10e250]:
+          - generic [ref=f10e255]: Aucun employé ne correspond
+          - generic [ref=f10e256]: Essayez d'autres filtres ou un autre terme de recherche.
+          - button "Réinitialiser les filtres" [ref=f10e258] [cursor=pointer]
+      - generic [ref=f10e261]:
+        - generic [ref=f10e262]: Data table
+        - table [ref=f10e267]:
+          - row "Nom complet Service Statut" [ref=f10e268]:
+            - generic [ref=f10e269]: Nom complet
+            - generic [ref=f10e270]: Service
+            - generic [ref=f10e271]: Statut
+          - row "Salma Idrissi SI Salma Idrissi Tech Actif" [ref=f10e272]:
+            - checkbox "Salma Idrissi" [ref=f10e273] [cursor=pointer]
+            - generic [ref=f10e274]:
+              - generic [ref=f10e275]: SI
+              - text: Salma Idrissi
+            - generic [ref=f10e276]: Tech
+            - generic [ref=f10e277]: Actif
+          - row "Omar Tazi OT Omar Tazi Tech Actif" [ref=f10e279]:
+            - checkbox "Omar Tazi" [checked] [ref=f10e280] [cursor=pointer]
+            - generic [ref=f10e283]:
+              - generic [ref=f10e284]: OT
+              - text: Omar Tazi
+            - generic [ref=f10e285]: Tech
+            - generic [ref=f10e286]: Actif
+          - row "Karim Alaoui KA Karim Alaoui Tech Actif" [ref=f10e288]:
+            - checkbox "Karim Alaoui" [ref=f10e289] [cursor=pointer]
+            - generic [ref=f10e290]:
+              - generic [ref=f10e291]: KA
+              - text: Karim Alaoui
+            - generic [ref=f10e292]: Tech
+            - generic [ref=f10e293]: Actif
+      - generic [ref=f10e295]:
+        - generic [ref=f10e296]: Overlays & toasts
+        - generic [ref=f10e297]:
+          - button "Drawer" [ref=f10e298] [cursor=pointer]
+          - button "Modal" [ref=f10e299] [cursor=pointer]
+          - button "Toast" [ref=f10e300] [cursor=pointer]
+          - button "Toast + undo" [ref=f10e301] [cursor=pointer]
+          - button "Toast + undo (stays)" [ref=f10e302] [cursor=pointer]
+          - button "Toast error (stays)" [ref=f10e303] [cursor=pointer]
+          - button "Toast error" [ref=f10e304] [cursor=pointer]
+          - button "Toast info" [ref=f10e305] [cursor=pointer]
+      - generic [ref=f10e306]:
+        - generic [ref=f10e307]: Reveal (scroll in) & loops
+        - generic [ref=f10e308]:
+          - button "Rejouer" [ref=f10e309] [cursor=pointer]
+          - generic [ref=f10e310]:
+            - generic [ref=f10e311]: up
+            - generic [ref=f10e313]: fade
+            - generic [ref=f10e315]: left
+            - generic [ref=f10e317]: right
+            - generic [ref=f10e319]: scale
+            - generic [ref=f10e321]: pill
+            - generic: growx
+            - generic: growy
+          - generic [ref=f10e329]: AI-native
+  - dialog "Ajouter un employé" [ref=f10e348]:
+    - generic [ref=f10e349]:
+      - generic [ref=f10e350]:
+        - generic [ref=f10e353]:
+          - generic [ref=f10e354]: Ajouter un employé
+          - generic [ref=f10e355]: Les champs marqués * sont obligatoires.
+        - button "Fermer" [ref=f10e356] [cursor=pointer]
+      - generic [ref=f10e360]:
+        - generic [ref=f10e361]:
+          - generic [ref=f10e362]: Nom complet *
+          - textbox "Nom complet *" [active] [ref=f10e363]:
+            - /placeholder: Mohammed Alami
+        - generic [ref=f10e364]:
+          - generic [ref=f10e365]: CIN *
+          - textbox "CIN *" [ref=f10e366]:
+            - /placeholder: BK123456
+      - generic [ref=f10e367]:
+        - button "Annuler" [ref=f10e368] [cursor=pointer]
+        - button "Enregistrer" [ref=f10e369] [cursor=pointer]

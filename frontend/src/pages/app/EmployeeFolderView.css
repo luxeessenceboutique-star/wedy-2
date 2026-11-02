@@ -1,0 +1,10 @@
+/* hover / focus rules of Wedy Employee (style-hover / style-focus) */
+.emf-h1:hover { color: #0a1c24 !important; }
+.emf-h2:hover { color: #ffffff !important; background: rgba(255,255,255,.15) !important; }
+.emf-h3:hover { background: rgba(255,255,255,.15) !important; }
+.emf-h4:hover { border-color: #16b6c8 !important; background: #eef8f9 !important; }
+.emf-h5:hover { background: #eef3f5 !important; color: #0a1c24 !important; }
+.emf-h6:hover { background: #16323c !important; }
+.emf-h7:hover { border-color: #b9dfe5 !important; }
+.emf-h8:hover { color: #ffffff !important; }
+.emf-h9:hover { background: #f8fbfb !important; }

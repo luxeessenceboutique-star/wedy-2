@@ -10,14 +10,14 @@ function StatCard({ label, value, sub, icon, color = 'var(--primary)' }: {
   label: string; value: string | number; sub?: string; icon: React.ReactNode; color?: string;
 }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '18px 20px' }}>
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--r-card)', padding: '18px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{label}</div>
           <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--fg)' }}>{value}</div>
           {sub && <div style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 4 }}>{sub}</div>}
         </div>
-        <div style={{ width: 38, height: 38, borderRadius: 'var(--radius-md)', background: `color-mix(in oklab, ${color} 15%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
+        <div style={{ width: 38, height: 38, borderRadius: 'var(--r-input)', background: `color-mix(in oklab, ${color} 15%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
           {icon}
         </div>
       </div>

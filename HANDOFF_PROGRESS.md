@@ -57,6 +57,13 @@ Requests notes (`RequestsPage.tsx`, hand-written against `/requests/inbox`, not 
 - All labels (tabs, kind pills, status chips, per-row type) now go through `t()` — several were hardcoded French only, breaking EN/AR.
 - Fixed a React 19 lint error (setState-in-effect) by deriving the default selection during render instead.
 
+Copilot notes (`CopilotPage.tsx`, hand-written, not generated — full rewrite of the pre-redesign chat UI):
+- The reference's own 280px dark chat sidebar is *not* implemented: the handoff README explicitly flags it as a leftover ("Dashboard and Copilot embed an older inline sidebar — use the shared one"). The page renders only the chat column; `AppShell` provides the real Sidebar/Topbar like every other page.
+- Data grounding is real but server-side: the backend already injects a live DB context (employee counts, contracts expiring, leave requests…) into the system prompt before calling Claude/GPT — there's no client-side mock `tools()` to port, verified live ("Combien avons-nous d'employés actifs ?" → "Nous avons 28 employés actifs chez TYTHON.", a real number from the DB).
+- The language switcher (FR/ع/EN) is real, not decorative: `sendCopilotMessage`'s `context` parameter existed in the API but the backend silently ignored it. Fixed with a 2-line backend change (`routers/copilot.py`) to append it to the system prompt; verified the same question asked in French gets answered in English when "EN" is selected.
+- The greeting uses the real signed-in user's first name (`useAuth()`, same derivation as the Dashboard), not the mock's hardcoded "Salma".
+- `<document titre="…" langue="…">` parsing (for the document-card bubble) is implemented client-side exactly like the reference, but the live backend's system prompt doesn't yet instruct the model to use that tag, so it won't normally trigger — ready for when/if that's added server-side, not left half-built.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -66,7 +73,7 @@ Requests notes (`RequestsPage.tsx`, hand-written against `/requests/inbox`, not 
 | 3 | Employees | Wedy Employees | `/app/employees` | `app/EmployeesPage.tsx` + `EmployeesView.tsx` | ☑ |
 | 4 | Employee folder | Wedy Employee | `/app/employees/:id` | `app/EmployeeFolderPage.tsx` | ☑ |
 | 5 | Requests | Wedy Requests | `/app/requests` | `app/RequestsPage.tsx` | ☑ |
-| 6 | Copilot | Wedy Copilot | `/app/copilot` | `app/CopilotPage.tsx` | ◐ |
+| 6 | Copilot | Wedy Copilot | `/app/copilot` | `app/CopilotPage.tsx` | ☑ |
 | 7 | Generate | Wedy Generate | `/app/generate` | `app/GeneratePage.tsx` | ◐ |
 | 8 | Templates | Wedy Templates | `/app/templates` | `app/TemplatesPage.tsx` | ◐ |
 | 9 | History | Wedy History | `/app/history` | `app/HistoryPage.tsx` | ◐ |

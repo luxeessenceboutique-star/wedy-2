@@ -188,6 +188,8 @@ async def chat(
     # Build live DB context
     db_context = _build_db_context(supabase)
     system = SYSTEM_PROMPT + "\n\n" + db_context
+    if body.context:
+        system += "\n\n" + body.context
 
     try:
         reply = _call_ai(system, messages)

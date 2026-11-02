@@ -1,0 +1,3 @@
+.cop-sugg { transition: border-color .2s, box-shadow .2s, transform .2s; }
+.cop-sugg:hover { border-color: #b9dfe5; box-shadow: 0 16px 30px -18px rgba(10,28,36,.35); transform: translateY(-2px); }
+.cop-cmd:hover { background: #eef6f7 !important; }

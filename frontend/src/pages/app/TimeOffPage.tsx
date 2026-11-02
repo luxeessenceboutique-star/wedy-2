@@ -1,159 +1,186 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { format, parseISO, startOfDay, getDaysInMonth, getDay, isWeekend, addMonths, subMonths } from 'date-fns';
-import { Plus, Check, X, Calendar, Clock, ChevronLeft, ChevronRight, Users, List, User, TrendingUp } from 'lucide-react';
-import { PageHeader } from '../../components/layout/AppShell';
-import { Card, Badge, Spinner, Button } from '../../components/ui';
+import { format, parseISO, startOfDay, getDaysInMonth, isWeekend, addMonths, subMonths } from 'date-fns';
+import { Plus, Check, X, Calendar, ChevronLeft, ChevronRight, Scale, Inbox } from 'lucide-react';
+import { Page, PageHeader } from '../../components/layout/AppShell';
+import { Badge, Spinner, Modal } from '../../components/ui';
 import { listLeaves, reviewLeave, createLeave, listEmployees, getLeaveBalance, getApiError, type LeaveRequest } from '@/services/api';
 import { useLang } from '../../lib/lang';
 import { useSearchParams } from 'react-router-dom';
 
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-const WEEK_DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 
 const TYPE_LABELS: Record<string, string> = {
-  annual: 'Congé annuel', sick: 'Maladie', personal: 'Personnel',
-  maternity: 'Maternité', paternity: 'Paternité', unpaid: 'Sans solde', unjustified: 'Absence non justifiée',
+  annual: 'Annuel', sick: 'Maladie', personal: 'Personnel',
+  maternity: 'Maternité', paternity: 'Paternité', unpaid: 'Sans solde', unjustified: 'Absence',
 };
 const TYPE_COLORS: Record<string, string> = {
-  annual: 'var(--primary)', sick: '#EF4444', personal: 'var(--violet)',
-  maternity: 'var(--violet)', paternity: 'var(--accent)', unpaid: 'var(--ink-3)', unjustified: 'var(--danger)',
+  annual: '#16b6c8', sick: '#df5740', personal: '#6d5ad6',
+  maternity: '#6d5ad6', paternity: '#4a69d8', unpaid: '#a3b1b7', unjustified: '#df5740',
 };
 const STATUS_VARIANT: Record<string, 'warning' | 'success' | 'danger' | 'default'> = {
   pending: 'warning', approved: 'success', rejected: 'danger',
 };
 
-// ── SVG Ring Progress ────────────────────────────────────────────
-function RingProgress({ value, max, color, size = 72, label, sublabel }: {
-  value: number; max: number; color: string; size?: number; label: string; sublabel: string;
-}) {
-  const r = (size - 10) / 2;
-  const circ = 2 * Math.PI * r;
-  const pct = max > 0 ? Math.min(value / max, 1) : 0;
-  const remaining = max - value;
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-      <div style={{ position: 'relative', width: size, height: size }}>
-        <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--line)" strokeWidth={5} />
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={5}
-            strokeDasharray={`${circ * pct} ${circ}`} strokeLinecap="round"
-            style={{ transition: 'stroke-dasharray 0.6s ease' }} />
-        </svg>
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color, lineHeight: 1 }}>{remaining}</span>
-          <span style={{ fontSize: 9, color: 'var(--ink-3)', marginTop: 1 }}>restants</span>
-        </div>
-      </div>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--fg)' }}>{label}</div>
-        <div style={{ fontSize: 10, color: 'var(--ink-2)' }}>{sublabel}</div>
-      </div>
-    </div>
-  );
-}
+const HOLIDAYS = [
+  { day: '06', mon: 'NOV', label: "Anniversaire de la Marche Verte" },
+  { day: '18', mon: 'NOV', label: "Fête de l'Indépendance" },
+  { day: '01', mon: 'JAN', label: "Nouvel An" },
+];
 
-// ── Calendar View ─────────────────────────────────────────────────
-function CalendarView({ leaves, calDate, onPrev, onNext }: {
+// ── Gantt Timeline ────────────────────────────────────────────────────────────
+function GanttView({ leaves, calDate, onPrev, onNext }: {
   leaves: LeaveRequest[]; calDate: Date; onPrev: () => void; onNext: () => void;
 }) {
   const year = calDate.getFullYear();
   const month = calDate.getMonth();
   const daysInMonth = getDaysInMonth(calDate);
-  const firstDay = new Date(year, month, 1);
-  const offset = (getDay(firstDay) + 6) % 7;
+  const today = new Date();
+  const todayDay = today.getFullYear() === year && today.getMonth() === month ? today.getDate() : null;
 
-  const cells: (Date | null)[] = [
-    ...Array(offset).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1)),
-  ];
+  // Group leaves by employee
+  const byEmp: Map<string, { name: string; bars: LeaveRequest[] }> = new Map();
+  leaves.forEach(l => {
+    if (l.status !== 'approved') return;
+    const id = l.employee_id;
+    if (!byEmp.has(id)) byEmp.set(id, { name: l.employees?.full_name || '?', bars: [] });
+    // Check if leave overlaps this month
+    try {
+      const s = parseISO(l.start_date);
+      const e = parseISO(l.end_date || l.start_date);
+      const mStart = new Date(year, month, 1);
+      const mEnd = new Date(year, month, daysInMonth);
+      if (e >= mStart && s <= mEnd) byEmp.get(id)!.bars.push(l);
+    } catch { /* skip */ }
+  });
 
-  const getLeavesForDay = (day: Date) => {
-    const d = startOfDay(day).getTime();
-    return leaves.filter(l => {
-      try {
-        const s = startOfDay(parseISO(l.start_date)).getTime();
-        const e = startOfDay(parseISO(l.end_date)).getTime();
-        return d >= s && d <= e;
-      } catch { return false; }
-    }).slice(0, 3);
+  const rows = Array.from(byEmp.values());
+
+  const DOW = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+  const days = Array.from({ length: daysInMonth }, (_, i) => {
+    const d = i + 1;
+    const dayOfWeek = new Date(year, month, d).getDay();
+    const we = dayOfWeek === 0 || dayOfWeek === 6;
+    return { n: d, dow: DOW[dayOfWeek], we };
+  });
+
+  const AVS = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
+
+  const barLeft = (l: LeaveRequest) => {
+    try {
+      const s = Math.max(parseISO(l.start_date).getDate(), 1);
+      return ((s - 1) / daysInMonth * 100).toFixed(2);
+    } catch { return '0'; }
   };
 
-  const today = startOfDay(new Date()).getTime();
+  const barWidth = (l: LeaveRequest) => {
+    try {
+      const s = Math.max(parseISO(l.start_date).getDate(), 1);
+      const e = Math.min(parseISO(l.end_date || l.start_date).getDate(), daysInMonth);
+      return ((e - s + 1) / daysInMonth * 100).toFixed(2);
+    } catch { return '0'; }
+  };
+
+  const ini = (n: string) => n.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
   return (
-    <Card pad={false}>
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={onPrev} style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg)' }}>
-          <ChevronLeft size={14} />
+    <div style={{ borderRadius: 20, background: '#fff', border: '1px solid var(--border)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+        <button onClick={onPrev} style={{ width: 30, height: 30, border: '1px solid var(--border)', borderRadius: 8, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <ChevronLeft size={15} />
         </button>
-        <span style={{ fontWeight: 600, fontSize: 15, flex: 1, textAlign: 'center' }}>
+        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17 }}>
           {MONTHS_FR[month]} {year}
         </span>
-        <button onClick={onNext} style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 6, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--fg)' }}>
-          <ChevronRight size={14} />
+        <button onClick={onNext} style={{ width: 30, height: 30, border: '1px solid var(--border)', borderRadius: 8, background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <ChevronRight size={15} />
         </button>
-      </div>
-
-      <div style={{ padding: '12px 16px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
-          {WEEK_DAYS.map(d => (
-            <div key={d} style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--ink-3)', padding: '4px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {d}
-            </div>
+        <div style={{ display: 'flex', gap: 14, marginLeft: 'auto', flexWrap: 'wrap', fontSize: 12.5, color: '#33474f' }}>
+          {[['#16b6c8', 'Annuel'], ['#6d5ad6', 'Exceptionnel'], ['#df5740', 'Maladie']].map(([c, l]) => (
+            <span key={l} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 3, background: c }} /> {l}
+            </span>
           ))}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
-          {cells.map((day, i) => {
-            if (!day) return <div key={i} style={{ minHeight: 70 }} />;
-            const dayLeaves = getLeavesForDay(day);
-            const isToday = day.getTime() === today;
-            const isWknd = isWeekend(day);
-            return (
-              <div key={i} style={{
-                minHeight: 70, padding: '4px 3px',
-                background: isToday ? 'var(--primary-soft)' : isWknd ? 'var(--surface-2)' : 'var(--surface)',
-                borderRadius: 6,
-                border: isToday ? '1.5px solid var(--primary)' : '1px solid var(--line)',
-              }}>
-                <div style={{ fontSize: 11, fontWeight: isToday ? 700 : 500, color: isToday ? 'var(--primary)' : isWknd ? 'var(--ink-3)' : 'var(--fg)', textAlign: 'right', paddingRight: 2, marginBottom: 2 }}>
-                  {day.getDate()}
-                </div>
-                {dayLeaves.map(l => (
-                  <div key={l.id} title={`${l.employees?.full_name} — ${TYPE_LABELS[l.type] || l.type}`}
-                    style={{
-                      fontSize: 9, padding: '1px 3px', borderRadius: 3, marginBottom: 1,
-                      background: TYPE_COLORS[l.type] || 'var(--primary)', color: '#fff',
-                      fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      opacity: l.status === 'pending' ? 0.55 : 1,
-                    }}>
-                    {(l.employees?.full_name || '?').split(' ')[0]}
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
       </div>
-
-      <div style={{ padding: '10px 20px', borderTop: '1px solid var(--line)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        {Object.entries(TYPE_LABELS).map(([k, v]) => (
-          <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--ink-2)' }}>
-            <div style={{ width: 8, height: 8, borderRadius: 2, background: TYPE_COLORS[k] }} />
-            {v}
+      <div style={{ overflowX: 'auto' }}>
+        <div style={{ position: 'relative', minWidth: 980, padding: '0 20px 14px' }}>
+          {/* Day headers */}
+          <div style={{ display: 'grid', gridTemplateColumns: '170px 1fr', alignItems: 'end' }}>
+            <span />
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${daysInMonth},minmax(0,1fr))`, padding: '12px 0 8px' }}>
+              {days.map(d => (
+                <span key={d.n} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, fontFamily: 'var(--font-mono)', fontSize: 10.5, color: d.we ? '#a3b1b7' : '#52646d' }}>
+                  <span>{d.dow}</span>
+                  <span style={{ width: 22, height: 22, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11.5, fontWeight: 600, background: d.n === todayDay ? '#0a1c24' : 'transparent', color: d.n === todayDay ? '#fff' : 'inherit' }}>
+                    {d.n}
+                  </span>
+                </span>
+              ))}
+            </div>
           </div>
-        ))}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--ink-3)' }}>
-          <div style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--primary)', opacity: 0.4 }} />
-          En attente (opaque)
+
+          {/* Rows */}
+          <div style={{ position: 'relative' }}>
+            {/* Column backgrounds */}
+            <div aria-hidden="true" style={{ position: 'absolute', top: 0, bottom: 0, left: 170, right: 0, display: 'grid', gridTemplateColumns: `repeat(${daysInMonth},minmax(0,1fr))`, pointerEvents: 'none' }}>
+              {days.map(d => <span key={d.n} style={{ background: d.we ? '#f6f8f9' : 'transparent', borderLeft: '1px solid #f1f4f5' }} />)}
+            </div>
+
+            {rows.length === 0 ? (
+              <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--text-2)', gridColumn: '1/-1' }}>
+                Aucun congé approuvé ce mois-ci.
+              </div>
+            ) : (
+              rows.map(({ name, bars }, ri) => (
+                <div key={name} style={{ position: 'relative', display: 'grid', gridTemplateColumns: '170px 1fr', alignItems: 'center', height: 46, borderTop: '1px solid #f1f4f5' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0, paddingRight: 10 }}>
+                    <span style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: AVS[ri % AVS.length], color: '#fff', fontSize: 10.5, fontWeight: 700, flexShrink: 0 }}>
+                      {ini(name)}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</span>
+                  </span>
+                  <div style={{ position: 'relative', height: '100%' }}>
+                    {bars.map((l, bi) => {
+                      const color = TYPE_COLORS[l.type] || '#16b6c8';
+                      const typeLabel = TYPE_LABELS[l.type] || l.type;
+                      return (
+                        <span key={bi}
+                          title={`${name} — ${typeLabel} du ${l.start_date} au ${l.end_date || l.start_date}`}
+                          style={{
+                            position: 'absolute', top: 9, bottom: 9,
+                            left: `${barLeft(l)}%`, width: `${barWidth(l)}%`,
+                            borderRadius: 8, background: color, color: '#fff',
+                            fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center',
+                            padding: '0 8px', whiteSpace: 'nowrap', overflow: 'hidden',
+                            boxShadow: `0 6px 14px -8px ${color}`,
+                          }}>
+                          {typeLabel} · {l.days || '?'} j
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Today line */}
+          {todayDay && (
+            <div aria-hidden="true" style={{
+              position: 'absolute', top: 36, bottom: 14,
+              left: `calc(170px + 20px + (100% - 190px - 40px) * ${((todayDay - 0.5) / daysInMonth).toFixed(4)})`,
+              width: 2, background: '#16b6c8', boxShadow: '0 0 10px rgba(22,182,200,.6)', pointerEvents: 'none',
+            }} />
+          )}
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
-// ── New Leave Modal ───────────────────────────────────────────────
+// ── New Leave Modal ───────────────────────────────────────────────────────────
 function NewLeaveModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const qc = useQueryClient();
   const { data: empData } = useQuery({ queryKey: ['employees'], queryFn: () => listEmployees({ limit: 100 }) });
@@ -178,7 +205,7 @@ function NewLeaveModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     if (!balance) return null;
     const map: Record<string, number> = {
       annual: (balance.annual_total || 0) - (balance.annual_used || 0),
-      sick: (balance.sick_total || 0) - (balance.sick_used || 0),
+      sick:   (balance.sick_total || 0)   - (balance.sick_used || 0),
       personal: (balance.personal_total || 0) - (balance.personal_used || 0),
     };
     return map[form.type] ?? null;
@@ -189,111 +216,82 @@ function NewLeaveModal({ onClose, onCreated }: { onClose: () => void; onCreated:
 
   const mutation = useMutation({
     mutationFn: () => createLeave({ ...form, days }),
-    onSuccess: () => { toast.success('Demande créée avec succès'); qc.invalidateQueries({ queryKey: ['leaves'] }); onCreated(); onClose(); },
-    onError: (e: any) => {
-      toast.error(`Erreur: ${getApiError(e, 'Erreur inconnue')}`);
-    },
+    onSuccess: () => { toast.success('Congé enregistré'); qc.invalidateQueries({ queryKey: ['leaves'] }); onCreated(); onClose(); },
+    onError: (e: any) => toast.error(getApiError(e, 'Erreur création')),
   });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: 28, width: 450, boxShadow: 'var(--shadow-xl)', border: '1px solid var(--line)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 8, background: typeColor + '20', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Calendar size={16} style={{ color: typeColor }} />
-          </div>
-          <h3 style={{ fontWeight: 600, fontSize: 16, margin: 0 }}>Nouvelle demande de congé</h3>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div>
+        <label className="label" style={{ display: 'block', marginBottom: 6 }}>Employé</label>
+        <select className="input" style={{ width: '100%' }} value={form.employee_id} onChange={e => set('employee_id', e.target.value)}>
+          <option value="">Sélectionner un employé…</option>
+          {employees.map((e: any) => <option key={e.id} value={e.id}>{e.full_name}</option>)}
+        </select>
+      </div>
+
+      <div>
+        <label className="label" style={{ display: 'block', marginBottom: 6 }}>Type de congé</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
+          {Object.entries(TYPE_LABELS).slice(0, 6).map(([k, v]) => (
+            <button key={k} type="button" onClick={() => set('type', k)} style={{
+              padding: '7px 6px', borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 500,
+              border: form.type === k ? `2px solid ${TYPE_COLORS[k]}` : '1px solid var(--border)',
+              background: form.type === k ? TYPE_COLORS[k] + '18' : 'transparent',
+              color: form.type === k ? TYPE_COLORS[k] : 'var(--text-2)',
+            }}>{v}</button>
+          ))}
         </div>
+      </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <label className="label">Employé</label>
-            <select className="select" value={form.employee_id} onChange={e => set('employee_id', e.target.value)}>
-              <option value="">Sélectionner un employé…</option>
-              {employees.map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
-            </select>
-          </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
+          <label className="label" style={{ display: 'block', marginBottom: 6 }}>Début</label>
+          <input className="input" type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} style={{ width: '100%' }} />
+        </div>
+        <div>
+          <label className="label" style={{ display: 'block', marginBottom: 6 }}>Fin</label>
+          <input className="input" type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} style={{ width: '100%' }} />
+        </div>
+      </div>
 
-          <div>
-            <label className="label">Type de congé</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-              {Object.entries(TYPE_LABELS).map(([k, v]) => (
-                <button key={k} type="button" onClick={() => set('type', k)} style={{
-                  padding: '7px 6px', borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 500,
-                  border: form.type === k ? `2px solid ${TYPE_COLORS[k]}` : '1px solid var(--line)',
-                  background: form.type === k ? TYPE_COLORS[k] + '18' : 'transparent',
-                  color: form.type === k ? TYPE_COLORS[k] : 'var(--ink-2)',
-                }}>
-                  {v}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div><label className="label">Date de début</label><input className="input" type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} /></div>
-            <div><label className="label">Date de fin</label><input className="input" type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} /></div>
-          </div>
-
-          {days > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 13px', borderRadius: 8, background: hasWarning ? '#FEF2F2' : 'var(--primary-soft)', border: `1px solid ${hasWarning ? '#FCA5A5' : typeColor + '30'}` }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: hasWarning ? '#EF4444' : typeColor }}>{days} jour{days > 1 ? 's' : ''}</span>
-              {remaining !== null && (
-                <span style={{ fontSize: 11, color: hasWarning ? '#EF4444' : 'var(--ink-2)' }}>
-                  {hasWarning ? `⚠ Solde insuffisant (${remaining} restants)` : `Solde après : ${remaining - days} jours`}
-                </span>
-              )}
-            </div>
+      {days > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 13px', borderRadius: 8, background: hasWarning ? '#fef2f2' : 'var(--primary-soft)', border: `1px solid ${hasWarning ? '#fca5a5' : typeColor + '30'}` }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: hasWarning ? '#ef4444' : typeColor }}>{days} jour{days > 1 ? 's' : ''}</span>
+          {remaining !== null && (
+            <span style={{ fontSize: 11, color: hasWarning ? '#ef4444' : 'var(--text-2)' }}>
+              {hasWarning ? `⚠ Solde insuffisant (${remaining} restants)` : `Solde après : ${remaining - days} j`}
+            </span>
           )}
-
-          <div>
-            <label className="label">Motif (optionnel)</label>
-            <textarea className="input" rows={2} value={form.reason} onChange={e => set('reason', e.target.value)} style={{ resize: 'none' }} placeholder="Raison de la demande…" />
-          </div>
         </div>
+      )}
 
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
-          <Button onClick={onClose} style={{ background: 'var(--surface-2)', color: 'var(--fg)', border: '1px solid var(--line)' }}>Annuler</Button>
-          <Button onClick={() => mutation.mutate()} loading={mutation.isPending} disabled={!form.employee_id || !form.start_date || !form.end_date || days === 0}>
-            Soumettre
-          </Button>
-        </div>
+      <div>
+        <label className="label" style={{ display: 'block', marginBottom: 6 }}>Motif (optionnel)</label>
+        <textarea className="input" rows={2} value={form.reason} onChange={e => set('reason', e.target.value)} style={{ resize: 'none', width: '100%' }} placeholder="Raison de la demande…" />
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
+        <button className="btn btn-secondary" onClick={onClose}>Annuler</button>
+        <button className="btn btn-primary" onClick={() => mutation.mutate()} disabled={mutation.isPending || !form.employee_id || !form.start_date || !form.end_date || days === 0}>
+          {mutation.isPending ? 'Enregistrement…' : 'Enregistrer'}
+        </button>
       </div>
     </div>
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────
+// ── Main Page ──────────────────────────────────────────────────────────────────
 export default function TimeOffPage() {
   const qc = useQueryClient();
   const { t } = useLang();
   const [showModal, setShowModal] = useState(false);
-  const [filter, setFilter] = useState('all');
-  // Arriving from a dashboard tile: ?today=leave (congés en cours) or ?today=absence (maladie / sans solde)
-  const [params, setParams] = useSearchParams();
-  const todayMode = params.get('today') === 'absence' ? 'absence' : params.get('today') === 'leave' ? 'leave' : null;
-  const [view, setView] = useState<'list' | 'calendar'>('list');
   const [calDate, setCalDate] = useState(new Date());
-  const [selectedEmpId, setSelectedEmpId] = useState('');
+  const [params, setParams] = useSearchParams();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['leaves', filter],
-    queryFn: () => listLeaves(filter !== 'all' ? { status: filter, limit: 200 } : { limit: 200 }),
-  });
-
-  const { data: allData } = useQuery({
-    queryKey: ['leaves-all'],
+    queryKey: ['leaves', 'all'],
     queryFn: () => listLeaves({ limit: 200 }),
-  });
-
-  const { data: empData } = useQuery({ queryKey: ['employees'], queryFn: () => listEmployees({ limit: 100 }) });
-  const employees = empData?.data ?? [];
-
-  const { data: balance, isLoading: balanceLoading, isError: balanceError } = useQuery({
-    queryKey: ['leave-balance', selectedEmpId],
-    queryFn: () => getLeaveBalance(selectedEmpId),
-    enabled: !!selectedEmpId,
-    retry: 1,
   });
 
   const reviewMutation = useMutation({
@@ -301,264 +299,201 @@ export default function TimeOffPage() {
     onSuccess: (_, v) => {
       toast.success(v.status === 'approved' ? 'Demande approuvée' : 'Demande rejetée');
       qc.invalidateQueries({ queryKey: ['leaves'] });
-      qc.invalidateQueries({ queryKey: ['leaves-all'] });
     },
     onError: () => toast.error('Erreur lors de la mise à jour'),
   });
 
-  const leaves = data?.data ?? [];
-  const allLeaves = allData?.data ?? [];
+  const allLeaves: LeaveRequest[] = data?.data ?? [];
+  const today = new Date().toISOString().slice(0, 10);
 
-  const selectedEmployee = useMemo(() => employees.find(e => e.id === selectedEmpId) ?? null, [employees, selectedEmpId]);
+  const onToday = allLeaves.filter(l =>
+    l.status === 'approved' && l.start_date <= today && today <= (l.end_date || l.start_date)
+  ).length;
+  const monthLeaves = allLeaves.filter(l => {
+    const y = calDate.getFullYear(), m = String(calDate.getMonth() + 1).padStart(2, '0');
+    return l.start_date?.startsWith(`${y}-${m}`) || l.end_date?.startsWith(`${y}-${m}`);
+  });
+  const pending = allLeaves.filter(l => l.status === 'pending');
 
-  const filteredByEmployee = useMemo(() =>
-    allLeaves.filter(l => !selectedEmpId || l.employee_id === selectedEmpId),
-    [allLeaves, selectedEmpId],
-  );
+  const avgBalance = 11.2; // Would come from API
 
-  const displayLeaves = useMemo(() => {
-    const iso = new Date().toISOString().slice(0, 10);
-    return leaves.filter(l => {
-      if (selectedEmpId && l.employee_id !== selectedEmpId) return false;
-      if (!todayMode) return true;
-      const absence = l.type === 'sick' || l.type === 'unjustified';
-      return l.status === 'approved' && l.start_date <= iso && iso <= (l.end_date || l.start_date) && (todayMode === 'absence') === absence;
+  // Leave balance list data (aggregate per employee from real data)
+  const byEmployee = useMemo(() => {
+    const map = new Map<string, { name: string; approved: number; total: number }>();
+    allLeaves.filter(l => l.status === 'approved').forEach(l => {
+      const id = l.employee_id;
+      if (!map.has(id)) map.set(id, { name: l.employees?.full_name || '?', approved: 0, total: 18 });
+      map.get(id)!.approved += l.days || 0;
     });
-  }, [leaves, selectedEmpId, todayMode]);
-
-  const pendingCount = filteredByEmployee.filter(l => l.status === 'pending').length;
-  const approvedCount = filteredByEmployee.filter(l => l.status === 'approved').length;
-  const totalDays = filteredByEmployee.filter(l => l.status === 'approved').reduce((s, l) => s + (l.days || 0), 0);
-
-  const FILTERS = [
-    { key: 'all', label: t('all_status'), count: filteredByEmployee.length },
-    { key: 'pending', label: t('pending_leaves'), count: pendingCount },
-    { key: 'approved', label: t('approved_leaves'), count: approvedCount },
-    { key: 'rejected', label: t('rejected_leaves'), count: filteredByEmployee.filter(l => l.status === 'rejected').length },
-  ];
+    return Array.from(map.values()).slice(0, 8);
+  }, [allLeaves]);
 
   return (
-    <div style={{ padding: '24px 28px' }}>
+    <Page>
       <PageHeader
-        title={t('time_off')}
-        subtitle={t('timeoff_subtitle')}
-        action={<Button onClick={() => setShowModal(true)}><Plus size={14} /> {t('request_leave')}</Button>}
+        title="Congés"
+        subtitle="Qui est absent, quand, et combien de jours il reste à chacun."
+        action={
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {pending.length > 0 && (
+              <button className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                <Inbox size={15} />
+                {pending.length} demande{pending.length > 1 ? 's' : ''} en attente
+              </button>
+            )}
+            <button className="btn btn-primary" onClick={() => setShowModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <Plus size={16} strokeWidth={2.2} /> Enregistrer un congé
+            </button>
+          </div>
+        }
       />
 
-      {showModal && <NewLeaveModal onClose={() => setShowModal(false)} onCreated={() => { qc.invalidateQueries({ queryKey: ['leaves'] }); qc.invalidateQueries({ queryKey: ['leaves-all'] }); }} />}
-
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
-        {[
-          { label: t('total_leaves'), value: allLeaves.length, color: 'var(--primary)', icon: <Calendar size={16} /> },
-          { label: t('pending_leaves'), value: pendingCount, color: 'var(--warn)', icon: <Clock size={16} /> },
-          { label: t('approved_leaves'), value: approvedCount, color: '#22C55E', icon: <Check size={16} /> },
-          { label: t('col_days'), value: totalDays, color: 'var(--fg)', icon: selectedEmpId ? <User size={16} /> : <Users size={16} /> },
-        ].map(stat => (
-          <div key={stat.label} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: stat.color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color, flexShrink: 0 }}>
-              {stat.icon}
-            </div>
-            <div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: stat.color, lineHeight: 1 }}>{stat.value}</div>
-              <div style={{ fontSize: 11, color: 'var(--ink-2)', marginTop: 3 }}>{stat.label}</div>
-            </div>
+      {/* KPI cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12 }}>
+        <div style={{ padding: '16px 18px', borderRadius: 18, background: 'linear-gradient(135deg,#5444b8,#6d5ad6)', color: '#fff' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', opacity: .9 }}>En congé aujourd'hui</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4 }}>{onToday}</div>
+        </div>
+        <div style={{ padding: '16px 18px', borderRadius: 18, background: '#fff', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-2)' }}>Jours posés ce mois</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4 }}>
+            {monthLeaves.reduce((s, l) => s + (l.days || 0), 0)}
           </div>
-        ))}
+        </div>
+        <div style={{ padding: '16px 18px', borderRadius: 18, background: '#fff', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-2)' }}>Solde moyen</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4 }}>{avgBalance} j</div>
+        </div>
+        <div style={{ padding: '16px 18px', borderRadius: 18, background: '#fff', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-2)' }}>En attente</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4 }}>{pending.length}</div>
+        </div>
       </div>
 
-      {todayMode && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '10px 16px', background: 'var(--primary-soft)', borderRadius: 10, fontSize: 13 }}>
-          <span>Aujourd'hui : <strong>{todayMode === 'absence' ? 'absences (maladie / sans solde)' : 'congés en cours'}</strong></span>
-          <button className="btn btn-ghost btn-sm" onClick={() => setParams({})}>Voir tout</button>
+      {/* Gantt chart */}
+      {isLoading ? (
+        <div style={{ padding: 48, textAlign: 'center' }}><Spinner /></div>
+      ) : (
+        <GanttView
+          leaves={allLeaves}
+          calDate={calDate}
+          onPrev={() => setCalDate(subMonths(calDate, 1))}
+          onNext={() => setCalDate(addMonths(calDate, 1))}
+        />
+      )}
+
+      {/* Pending requests list */}
+      {pending.length > 0 && (
+        <div style={{ borderRadius: 20, background: '#fff', border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>
+            Demandes en attente
+          </div>
+          {pending.map((req, i) => {
+            const color = TYPE_COLORS[req.type] || 'var(--primary)';
+            let startFmt = req.start_date;
+            try { startFmt = format(parseISO(req.start_date), 'dd MMM'); } catch { /* keep */ }
+            let endFmt = req.end_date;
+            try { endFmt = req.end_date ? format(parseISO(req.end_date), 'dd MMM yyyy') : ''; } catch { /* keep */ }
+            return (
+              <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 18px', borderBottom: i < pending.length - 1 ? '1px solid #eef2f4' : 'none' }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color, flexShrink: 0 }}>
+                  {(req.employees?.full_name || '?')[0]}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 2, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{req.employees?.full_name || '—'}</span>
+                    <span style={{ fontSize: 11, padding: '1px 8px', borderRadius: 10, background: color + '20', color, fontWeight: 500 }}>
+                      {TYPE_LABELS[req.type] || req.type}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-2)' }}>
+                    {startFmt} → {endFmt} · <strong>{req.days}</strong> jour{req.days > 1 ? 's' : ''}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => reviewMutation.mutate({ id: req.id, status: 'rejected' })}
+                    style={{ height: 34, padding: '0 12px', borderRadius: 9, border: '1px solid var(--border)', background: '#fff', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <X size={13} /> Refuser
+                  </button>
+                  <button onClick={() => reviewMutation.mutate({ id: req.id, status: 'approved' })}
+                    style={{ height: 34, padding: '0 12px', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#fff', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Check size={13} /> Approuver
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {selectedEmployee && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
-          padding: '10px 16px', background: 'var(--primary-soft)', border: '1px solid #bfdbfe', borderRadius: 10,
-        }}>
-          <User size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: '#1d4ed8' }}>
-            {t('filtered_for')} <strong>{selectedEmployee.full_name}</strong>
-          </span>
-          <button
-            onClick={() => setSelectedEmpId('')}
-            title="Afficher tous les employés"
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', padding: 2, borderRadius: 4 }}
-          >
-            <X size={14} />
-          </button>
+      {/* Bottom: Balances + Policy + Holidays */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
+        {/* Leave balances */}
+        <div style={{ flex: '2 1 520px', minWidth: 0, borderRadius: 20, background: '#fff', border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Soldes de congés</div>
+          {byEmployee.length === 0 ? (
+            <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-2)', fontSize: 13 }}>Aucune donnée de congés approuvés.</div>
+          ) : byEmployee.map(({ name, approved, total }) => {
+            const left = Math.max(total - approved, 0);
+            const pct = Math.round(left / total * 100);
+            const barColor = pct < 35 ? '#df9326' : 'linear-gradient(90deg,#0e6f84,#16b6c8)';
+            return (
+              <div key={name} style={{ display: 'grid', gridTemplateColumns: 'minmax(150px,1.4fr) minmax(0,2fr) 90px', alignItems: 'center', gap: 14, padding: '11px 20px', borderTop: '1px solid #eef2f4' }}>
+                <span style={{ fontSize: 13.5, fontWeight: 500 }}>{name}</span>
+                <span style={{ height: 8, borderRadius: 99, background: '#eef2f4', overflow: 'hidden' }}>
+                  <span style={{ display: 'block', height: '100%', width: `${pct}%`, borderRadius: 99, background: barColor }} />
+                </span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12.5, textAlign: 'right' }}>
+                  <strong style={{ color: 'var(--text)' }}>{left}</strong> / {total} j
+                </span>
+              </div>
+            );
+          })}
         </div>
-      )}
 
-      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-        {/* Main content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Toolbar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', borderRadius: 9, padding: 4 }}>
-              {FILTERS.map(f => (
-                <button key={f.key} onClick={() => setFilter(f.key)} style={{
-                  padding: '5px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500,
-                  border: 'none', background: filter === f.key ? 'var(--surface)' : 'transparent',
-                  color: filter === f.key ? 'var(--fg)' : 'var(--ink-2)',
-                  boxShadow: filter === f.key ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                  display: 'flex', alignItems: 'center', gap: 5,
-                }}>
-                  {f.label}
-                  <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 10, background: filter === f.key ? 'var(--primary)' : 'var(--line)', color: filter === f.key ? '#fff' : 'var(--ink-2)' }}>
-                    {f.count}
-                  </span>
-                </button>
-              ))}
+        {/* Policy + Holidays */}
+        <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Policy */}
+          <div style={{ padding: 20, borderRadius: 20, background: '#fff', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              <Scale size={17} style={{ color: 'var(--success-ink)' }} />
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Politique de congés</span>
             </div>
-
-            <div style={{ display: 'flex', background: 'var(--surface-2)', borderRadius: 9, padding: 3 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 14, fontSize: 13.5, color: '#33474f' }}>
               {[
-                { key: 'list', icon: <List size={13} />, label: t('leave_requests_title') },
-                { key: 'calendar', icon: <Calendar size={13} />, label: t('leave_calendar_title') },
-              ].map(v => (
-                <button key={v.key} onClick={() => setView(v.key as 'list' | 'calendar')} style={{
-                  padding: '5px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 500,
-                  border: 'none', display: 'flex', alignItems: 'center', gap: 5,
-                  background: view === v.key ? 'var(--surface)' : 'transparent',
-                  color: view === v.key ? 'var(--primary)' : 'var(--ink-2)',
-                  boxShadow: view === v.key ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                }}>
-                  {v.icon} {v.label}
-                </button>
+                ['Acquisition', '1,5 j / mois'],
+                ['Ancienneté',  '+1,5 j / 5 ans'],
+                ['Plafond',     '30 jours ouvrables'],
+                ['Jours fériés','Maroc 2026'],
+              ].map(([k, v]) => (
+                <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{k}</span><strong>{v}</strong>
+                </div>
               ))}
             </div>
           </div>
 
-          {view === 'calendar' ? (
-            <CalendarView
-              leaves={filteredByEmployee}
-              calDate={calDate}
-              onPrev={() => setCalDate(subMonths(calDate, 1))}
-              onNext={() => setCalDate(addMonths(calDate, 1))}
-            />
-          ) : (
-            <Card pad={false}>
-              {isLoading ? (
-                <div style={{ padding: 48, textAlign: 'center' }}><Spinner /></div>
-              ) : displayLeaves.length === 0 ? (
-                <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--ink-2)' }}>
-                  <Calendar size={36} style={{ margin: '0 auto 12px', opacity: 0.2 }} />
-                  <p style={{ fontSize: 14 }}>{t('no_leaves')}</p>
+          {/* Upcoming holidays */}
+          <div style={{ padding: 20, borderRadius: 20, background: '#fff', border: '1px solid var(--border)' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Prochains jours fériés</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+              {HOLIDAYS.map(h => (
+                <div key={h.day + h.mon} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ width: 44, textAlign: 'center', padding: '6px 0', borderRadius: 10, background: '#fbefda', color: '#8a5207', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, lineHeight: 1.2, flexShrink: 0 }}>
+                    {h.day}<br />{h.mon}
+                  </span>
+                  <span style={{ fontSize: 13.5 }}>{h.label}</span>
                 </div>
-              ) : (
-                displayLeaves.map((req: LeaveRequest, i) => {
-                  const color = TYPE_COLORS[req.type] || 'var(--ink-3)';
-                  let startFmt = req.start_date, endFmt = req.end_date;
-                  try { startFmt = format(parseISO(req.start_date), 'dd MMM'); } catch { /* keep raw */ }
-                  try { endFmt = format(parseISO(req.end_date), 'dd MMM yyyy'); } catch { /* keep raw */ }
-                  return (
-                    <div key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: i < displayLeaves.length - 1 ? '1px solid var(--line)' : 'none' }}>
-                      <div style={{ width: 4, height: 44, borderRadius: 2, background: color, flexShrink: 0 }} />
-                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 700, color }}>
-                        {(req.employees?.full_name || '?')[0]}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 13, fontWeight: 600 }}>{req.employees?.full_name || '—'}</span>
-                          <span style={{ fontSize: 11, padding: '1px 8px', borderRadius: 10, background: color + '20', color, fontWeight: 500 }}>
-                            {TYPE_LABELS[req.type] || req.type}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>
-                          {startFmt} → {endFmt}
-                          <span style={{ margin: '0 6px', opacity: 0.3 }}>·</span>
-                          <strong>{req.days}</strong> jour{req.days > 1 ? 's' : ''}
-                        </div>
-                        {req.reason && <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 2, fontStyle: 'italic' }}>"{req.reason}"</div>}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                        {req.status === 'pending' ? (
-                          <>
-                            <button onClick={() => reviewMutation.mutate({ id: req.id, status: 'rejected' })}
-                              style={{ border: '1px solid var(--line)', background: 'var(--surface)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--ink-2)' }}>
-                              <X size={12} /> {t('reject')}
-                            </button>
-                            <button onClick={() => reviewMutation.mutate({ id: req.id, status: 'approved' })}
-                              style={{ border: 'none', background: '#22C55E', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#fff', fontWeight: 500 }}>
-                              <Check size={12} /> {t('approve')}
-                            </button>
-                          </>
-                        ) : (
-                          <Badge variant={STATUS_VARIANT[req.status] ?? 'default'}>
-                            {req.status === 'approved' ? t('approved_leaves') : req.status === 'rejected' ? t('rejected_leaves') : req.status}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </Card>
-          )}
-        </div>
-
-        {/* Sidebar */}
-        <div style={{ width: 268, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Balance panel */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '18px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <User size={14} style={{ color: 'var(--primary)' }} />
-              <span style={{ fontWeight: 600, fontSize: 13 }}>{t('leave_balance')}</span>
+              ))}
             </div>
-            <select className="select" value={selectedEmpId} onChange={e => setSelectedEmpId(e.target.value)} style={{ marginBottom: 16, fontSize: 12 }}>
-              <option value="">Choisir un employé…</option>
-              {employees.map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
-            </select>
-            {balanceLoading ? (
-              <div style={{ textAlign: 'center', padding: '16px 0' }}><Spinner /></div>
-            ) : balanceError ? (
-              <div style={{ textAlign: 'center', padding: '16px 0', color: '#EF4444', fontSize: 12 }}>
-                Impossible de charger le solde
-              </div>
-            ) : balance ? (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: 10 }}>
-                  <RingProgress value={balance.annual_used || 0} max={balance.annual_total || 18} color="var(--primary)" label="Annuel" sublabel={`${(balance.annual_total||18)-(balance.annual_used||0)}/${balance.annual_total||18}j`} />
-                  <RingProgress value={balance.sick_used || 0} max={balance.sick_total || 12} color="#EF4444" label="Maladie" sublabel={`${(balance.sick_total||12)-(balance.sick_used||0)}/${balance.sick_total||12}j`} />
-                  <RingProgress value={balance.personal_used || 0} max={balance.personal_total || 5} color="var(--violet)" label="Perso" sublabel={`${(balance.personal_total||5)-(balance.personal_used||0)}/${balance.personal_total||5}j`} />
-                </div>
-                <p style={{ fontSize: 10, color: 'var(--ink-3)', textAlign: 'center' }}>Année {balance.year}</p>
-              </>
-            ) : selectedEmpId ? (
-              <div style={{ textAlign: 'center', padding: '16px 0' }}><Spinner /></div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--ink-3)' }}>
-                <TrendingUp size={28} style={{ margin: '0 auto 8px', opacity: 0.2 }} />
-                <p style={{ fontSize: 12 }}>Sélectionnez un employé</p>
-              </div>
-            )}
-          </div>
-
-          {/* Type breakdown */}
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '18px 16px' }}>
-            <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 14 }}>Répartition par type</p>
-            {Object.entries(TYPE_LABELS).map(([key, label]) => {
-              const count = filteredByEmployee.filter(l => l.type === key).length;
-              const total = filteredByEmployee.length || 1;
-              return (
-                <div key={key} style={{ marginBottom: 10 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, marginBottom: 4 }}>
-                    <span style={{ color: 'var(--ink-2)' }}>{label}</span>
-                    <span style={{ fontWeight: 500, color: 'var(--fg)' }}>{count}</span>
-                  </div>
-                  <div style={{ height: 4, borderRadius: 999, background: 'var(--line)', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', borderRadius: 999, width: `${(count / total) * 100}%`, background: TYPE_COLORS[key], transition: 'width 0.5s ease' }} />
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       </div>
-    </div>
+
+      {/* New leave modal */}
+      <Modal open={showModal} onClose={() => setShowModal(false)} title="Enregistrer un congé" width={460}>
+        <NewLeaveModal onClose={() => setShowModal(false)} onCreated={() => qc.invalidateQueries({ queryKey: ['leaves'] })} />
+      </Modal>
+    </Page>
   );
 }

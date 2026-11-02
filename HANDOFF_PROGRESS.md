@@ -19,6 +19,15 @@ problems; `main` already has ~390), `npm run i18n:check`.
 - ☑ 6. i18n: shell/shared keys in fr/en/ar, `npm run i18n:check`
 - ☑ 7. `ui-lab` dev page
 - ☐ 8. Regression sweep of un-migrated authenticated pages (needs backend + login)
+Login notes (what differs from the reference, and why):
+- The reference's `flex-flow: row-reverse` puts the form on the **right** and the dark brand panel on the **left** (the README says the opposite; HTML wins). Under ~1020px the two wrap (form first), exactly like the reference.
+- **2FA step not built**: the backend has no 2FA endpoint (auth is Tybot's), and a fake code check would be security theatre. Build it when an API exists.
+- "Mot de passe oublié ?" and "Besoin d'aide ?" show an info toast (reset happens in the Tybot account); there is no Tybot reset URL in the repo.
+- Dropped as demo-only: credentials prefill, "Rejouer la démo", the password minimum-length rule (the server decides; existing accounts may have short passwords). Validation is: valid email format, non-empty password. Server errors are shown in the same red box (with the shake).
+- Success screen redirects after 2.2s (0.6s with reduced motion); the bar fills over the same time. The reference never redirected (demo).
+- No language switch on this page (the design has none); the stored language is used.
+- `useReveal` gained `down` / `word` variants and `distance` / `easing` / `scaleFrom` / `maxDelay` options for this screen; `.wedy-spin-rev` loop added.
+- Compared at 1440 and 1024 by measuring both pages (card, inputs, button, chips, headline, footer all within 0.1px). The app's thin 6px scrollbar differs from the reference's default scrollbar, which shifts x positions by a few px.
 
 Notes for the screens:
 - Pages import `PageHeader`/`Page` from `@/components/layout/AppShell`. Wrap a migrated page's content in `<Page>`; the old `PageHeader` padding only applies outside it.
@@ -30,7 +39,7 @@ Notes for the screens:
 
 | # | Screen | Design file | Route | Page file | Status |
 |---|---|---|---|---|---|
-| 1 | Login | Wedy Login | `/login` | `LoginPage.tsx` | ☐ |
+| 1 | Login | Wedy Login | `/login` | `LoginPage.tsx` (+ `components/login/*`, `styles/login.css`) | ☑ |
 | 2 | Dashboard | Wedy Dashboard | `/app` | `app/DashboardPage.tsx` (+ `components/dashboard/HrKpis.tsx`) | ☐ |
 | 3 | Employees | Wedy Employees | `/app/employees` | `app/EmployeesPage.tsx` | ☐ |
 | 4 | Employee folder | Wedy Employee | `/app/employees/:id` | `app/EmployeeFolderPage.tsx` | ☐ |

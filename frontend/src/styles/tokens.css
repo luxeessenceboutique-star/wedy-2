@@ -154,3 +154,7 @@
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .wedy-spin, .animate-spin { animation: wedy-spin .9s linear infinite !important; }
 }
+
+/* Reverse spin (counter-rotating rings) */
+@keyframes wedy-spin-rev { to { transform: rotate(-360deg); } }
+.wedy-spin-rev { animation: wedy-spin-rev var(--dur, 12s) linear var(--delay, 0s) infinite; }

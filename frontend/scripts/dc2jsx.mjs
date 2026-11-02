@@ -155,9 +155,13 @@ const propJs = p => {
   if (p.startsWith('-ms-')) return 'ms' + camel(p.slice(4)).replace(/^./, c => c.toUpperCase());
   return camel(p);
 };
+let usesCssType = false;
 const styleObj = (style, extra = []) => {
   const parts = splitDecls(style).map(([p, v]) => `${propJs(p)}: ${valueJs(v)}`).concat(extra);
-  return parts.length ? `{{ ${parts.join(', ')} }}` : null;
+  if (!parts.length) return null;
+  // custom properties (--dur, --delay, --tx...) are not part of CSSProperties
+  if (parts.some(x => x.startsWith("'--"))) { usesCssType = true; return `{{ ${parts.join(', ')} } as CSSProperties}`; }
+  return `{{ ${parts.join(', ')} }}`;
 };
 
 // hover / focus rules -> classes
@@ -399,7 +403,7 @@ const jsx = renderChildren(tree.children, 3, 'root').filter(Boolean).join('\n');
 const [valsType, valsFrom] = valsSpec.split(' from ');
 const lucideList = [...lucideImports].sort();
 const imports = [
-  usesFragment ? "import { Fragment } from 'react';" : '',
+  usesFragment || usesCssType ? `import { ${[usesFragment ? 'Fragment' : '', usesCssType ? 'type CSSProperties' : ''].filter(Boolean).join(', ')} } from 'react';` : '',
   usesLink ? "import { Link } from 'react-router-dom';" : '',
   lucideList.length ? `import { ${lucideList.join(', ')} } from 'lucide-react';` : '',
   usesRV || usesCount ? `import { ${[usesRV ? 'RV' : '', usesCount ? 'CountText' : ''].filter(Boolean).join(', ')} } from '@/components/motion';` : '',

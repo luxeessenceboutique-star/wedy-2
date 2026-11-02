@@ -69,7 +69,8 @@ function useEmployeesModel() {
   const setView = (m: View) => { setViewState(m); try { localStorage.setItem('employees_view', m); } catch { /* keep in memory */ } };
   const [sel, setSel] = useState<string[]>([]);
   const [importOpen, setImportOpen] = useState(false);
-  const [drawer, setDrawer] = useState(false);
+  // /app/employees?add=1 (dashboard shortcut) opens the drawer straight away
+  const [drawer, setDrawer] = useState(() => new URLSearchParams(location.search).has('add'));
   const [extra, setExtra] = useState(false);
   const [f, setF] = useState<Form>(emptyForm);
   const [formErr, setFormErr] = useState('');

@@ -40,7 +40,7 @@ Notes for the screens:
 | # | Screen | Design file | Route | Page file | Status |
 |---|---|---|---|---|---|
 | 1 | Login | Wedy Login | `/login` | `LoginPage.tsx` (+ `components/login/*`, `styles/login.css`) | ☑ |
-| 2 | Dashboard | Wedy Dashboard | `/app` | `app/DashboardPage.tsx` (+ `components/dashboard/HrKpis.tsx`) | ☐ |
+| 2 | Dashboard | Wedy Dashboard | `/app` | `app/DashboardPage.tsx` (+ `components/dashboard/HrKpis.tsx`) | ☑ |
 | 3 | Employees | Wedy Employees | `/app/employees` | `app/EmployeesPage.tsx` + `EmployeesView.tsx` | ☑ |
 | 4 | Employee folder | Wedy Employee | `/app/employees/:id` | `app/EmployeeFolderPage.tsx` | ☐ |
 | 5 | Requests | Wedy Requests | `/app/requests` | `app/RequestsPage.tsx` | ☐ |

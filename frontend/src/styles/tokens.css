@@ -1,0 +1,156 @@
+/* Wedy design tokens (from design_handoff_wedy/design-tokens.css).
+   Fonts are loaded once, from <link> tags in index.html.
+   NB: --ink-950/900/800 are dark *surfaces*; the legacy --ink / --ink-2 / --ink-3 are *text* colors
+   (aliases defined in styles.css). Prefer --text-* in new code. */
+
+:root {
+  /* Fonts */
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-ui: 'Geist', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --font-ar: 'Noto Kufi Arabic', sans-serif;
+  --font-paper: Georgia, 'Times New Roman', serif;
+
+  /* Ink and dark surfaces */
+  --ink-950: #06141a;
+  --ink-900: #0a1c24;
+  --ink-800: #16323c;
+  --dark-surface-1: #0d2229;
+  --dark-surface-2: #0d2a33;
+
+  /* Light surfaces and lines */
+  --bg: #f3f6f7;
+  --surface: #ffffff;
+  --subtle: #f8fafb;
+  --track: #eef2f4;
+  --border: #e2e8eb;
+  --border-input: #d6dfe3;
+  --control: #c3ced3;
+  --border-hover: #9fb4bb;
+  --border-dashed: #d0dadf;
+
+  /* Text on light */
+  --text: #0a1c24;
+  --text-strong: #1d3540;
+  --text-2: #33474f;
+  --text-muted: #52646d;
+  --text-label: #5f7079;
+  --text-subtle: #7d8f97;
+  --text-placeholder: #8a9ba3;
+  --text-disabled: #a3b1b7;
+
+  /* Text on dark */
+  --on-dark-heading: #f1f8f9;
+  --on-dark: #e8eff1;
+  --on-dark-2: #cfdde1;
+  --on-dark-muted: #9fb4bb;
+  --on-dark-subtle: #6b838c;
+  --on-dark-mono: #5b737b;
+
+  /* Brand teal */
+  --primary: #0e6f84;
+  --primary-400: #16b6c8;
+  --primary-accent: #27c0d4;
+  --primary-glow: #5fe3f0;
+  --primary-ink: #0b5f72;
+  --primary-soft: #e4f2f4;
+  --primary-border: #b9dfe5;
+  --grad-primary: linear-gradient(135deg, #0e6f84, #16b6c8);
+
+  /* AI violet */
+  --ai: #6d5ad6;
+  --ai-600: #5444b8;
+  --ai-800: #3d2f99;
+  --ai-300: #9a8bf0;
+  --ai-on-dark: #b3a8f5;
+  --ai-soft: #ece9fb;
+  --grad-ai: linear-gradient(135deg, #5444b8, #16b6c8);
+  --grad-ai-hero: linear-gradient(140deg, #5444b8, #6d5ad6 55%, #0e7f96);
+
+  /* Status */
+  --success: #16a06b; --success-ink: #0f6f49; --success-soft: #e1f5ec; --success-on-dark: #4fd3a0;
+  --warning: #df9326; --warning-strong: #b06b0c; --warning-ink: #8a5207; --warning-soft: #fbefda; --warning-on-dark: #f0bd6a;
+  --danger: #df5740; --danger-2: #ef6b54; --danger-ink: #a33a28; --danger-soft: #fbe9e6; --danger-border: #f0c9c0; --danger-on-dark: #ef8b78;
+  --info: #2f4bb0; --info-2: #4a69d8; --info-soft: #e7eefb;
+
+  /* KPI gradient cards */
+  --kpi-teal: linear-gradient(135deg, #0b5f72, #0e7f96);
+  --kpi-green: linear-gradient(135deg, #0f6f49, #16915f);
+  --kpi-amber: linear-gradient(135deg, #a8650a, #c9810f);
+  --kpi-violet: linear-gradient(135deg, #5444b8, #6d5ad6);
+
+  /* Avatar gradients. Index = (name.charCodeAt(0) + name.length) % 6 */
+  --av-0: linear-gradient(135deg, #0e6f84, #16b6c8);
+  --av-1: linear-gradient(135deg, #5444b8, #9a8bf0);
+  --av-2: linear-gradient(135deg, #0f6f49, #2bbd86);
+  --av-3: linear-gradient(135deg, #a8650a, #e6a948);
+  --av-4: linear-gradient(135deg, #b8402c, #ef6b54);
+  --av-5: linear-gradient(135deg, #2f4bb0, #4a69d8);
+
+  /* Departments */
+  --dept-operations: #df9326; --dept-commercial: #16a06b; --dept-tech: #6d5ad6; --dept-service-client: #0e6f84;
+  --dept-marketing: #df5740; --dept-finance: #4a69d8; --dept-rh: #16b6c8;
+
+  /* Radii */
+  --r-paper: 6px; --r-xs: 8px; --r-input: 11px; --r-btn: 12px; --r-item: 14px; --r-panel: 16px;
+  --r-stat: 18px; --r-card: 20px; --r-modal: 22px; --r-hero: 24px; --r-landing: 28px; --r-pill: 99px;
+
+  /* Shadows and rings */
+  --sh-primary: 0 12px 26px -12px rgba(22, 182, 200, .85);
+  --sh-ai: 0 14px 30px -14px rgba(109, 90, 214, .8);
+  --sh-card-hover: 0 20px 40px -26px rgba(10, 28, 36, .45);
+  --sh-toast: 0 24px 50px -16px rgba(10, 28, 36, .6);
+  --sh-drawer: -30px 0 80px -30px rgba(6, 20, 26, .5);
+  --sh-modal: 0 40px 100px -30px rgba(6, 20, 26, .6);
+  --ring-focus: 0 0 0 4px rgba(22, 182, 200, .14);
+  --ring-selected: 0 0 0 3px rgba(22, 182, 200, .16);
+  --overlay: rgba(6, 20, 26, .42);
+  --glass: rgba(243, 246, 247, .84);
+
+  /* Layout */
+  --sidebar-w: 252px;
+  --page-pad: 28px 32px 56px;
+  --page-max: 1440px;
+
+  /* Motion */
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --dur-reveal: 620ms;
+  --dur-grow: 1000ms;
+  --dur-pill: 300ms;
+}
+
+/* Keyframes matching wedy-fx.js */
+@keyframes wedy-reveal-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes wedy-reveal-left { from { opacity: 0; transform: translateX(36px); } to { opacity: 1; transform: none; } }
+@keyframes wedy-reveal-scale { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+@keyframes wedy-pill { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes wedy-grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes wedy-grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes wedy-drift { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(7%, -6%) scale(1.12); } }
+@keyframes wedy-ping { from { transform: scale(1); opacity: .6; } to { transform: scale(1.5); opacity: 0; } }
+@keyframes wedy-shine { 0% { transform: translateX(-150%) skewX(-20deg); } 35%, 100% { transform: translateX(350%) skewX(-20deg); } }
+@keyframes wedy-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes wedy-spin { to { transform: rotate(360deg); } }
+@keyframes wedy-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@keyframes wedy-dot { 0%, 100% { transform: translateY(0); opacity: .35; } 50% { transform: translateY(-4px); opacity: 1; } }
+@keyframes wedy-scan { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+@keyframes wedy-shimmer { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+
+/* Loops. Override timing with style="--dur: 12s; --delay: .15s" (replaces data-dur / data-delay). */
+.wedy-drift { animation: wedy-drift var(--dur, 22s) ease-in-out var(--delay, 0s) infinite; }
+.wedy-ping { animation: wedy-ping var(--dur, 2.4s) cubic-bezier(0, 0, .2, 1) var(--delay, 0s) infinite; }
+.wedy-shine { animation: wedy-shine var(--dur, 4.2s) ease-in-out var(--delay, 0s) infinite; }
+.wedy-float { animation: wedy-float var(--dur, 3.2s) ease-in-out var(--delay, 0s) infinite; }
+.wedy-spin { animation: wedy-spin var(--dur, .9s) linear var(--delay, 0s) infinite; }
+.wedy-spin-slow { animation: wedy-spin var(--dur, 12s) linear var(--delay, 0s) infinite; }
+.wedy-pulse { animation: wedy-pulse var(--dur, 2s) ease-in-out var(--delay, 0s) infinite; }
+.wedy-dot { animation: wedy-dot var(--dur, 1s) ease-in-out var(--delay, 0s) infinite; }
+.wedy-scan { animation: wedy-scan var(--dur, 1.3s) ease-in-out var(--delay, 0s) infinite; }
+.wedy-shimmer { animation: wedy-shimmer var(--dur, 7s) linear var(--delay, 0s) infinite; }
+
+/* Reduced motion: no animation or transition anywhere. The spinner is the one exception,
+   it is the only signal that something is loading. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .wedy-spin, .animate-spin { animation: wedy-spin .9s linear infinite !important; }
+}

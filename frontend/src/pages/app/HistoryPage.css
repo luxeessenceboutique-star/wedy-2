@@ -1,0 +1,9 @@
+/* hover / focus rules of Wedy History */
+.hist-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.hist-h1:hover { border-color: #9fb4bb !important; }
+.hist-h2:hover { color: #ffffff !important; }
+.hist-h3:hover { background: #f6fafb !important; }
+.hist-ic { width: 34px; height: 34px; border: none; border-radius: 9px; background: transparent; color: #7d8f97; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+.hist-ic:hover { background: #eef3f5; color: #0a1c24; }
+.hist-ic-dl:hover { background: #e4f2f4; color: #0e6f84; }
+.hist-ic-del:hover { background: #fbe9e6; color: #df5740; }

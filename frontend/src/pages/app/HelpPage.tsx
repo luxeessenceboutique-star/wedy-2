@@ -75,9 +75,9 @@ export default function HelpPage() {
             <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px)', backgroundSize: '40px 40px', WebkitMaskImage: 'radial-gradient(ellipse 60% 70% at 50% 40%,#000 30%,transparent 80%)', maskImage: 'radial-gradient(ellipse 60% 70% at 50% 40%,#000 30%,transparent 80%)' }} />
           </div>
           <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#0f262e', border: '2px solid rgba(95,227,240,.5)', boxShadow: '0 0 40px -6px rgba(39,192,212,.7)', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>
-            🤖
+            <img src="/wedy-avatar.png" alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
           </div>
-          <h1 style={{ margin: '16px 0 0', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(28px,3.4vw,42px)', letterSpacing: '-.045em', lineHeight: 1.05 }}>
+          <h1 style={{ margin: '16px 0 0', color: '#f1f8f9', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(28px,3.4vw,42px)', letterSpacing: '-.045em', lineHeight: 1.05 }}>
             Comment pouvons-nous vous aider ?
           </h1>
           <div style={{ position: 'relative', maxWidth: 560, margin: '22px auto 0' }}>
@@ -188,7 +188,7 @@ export default function HelpPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 18, borderRadius: 20, background: 'linear-gradient(140deg,#5444b8,#6d5ad6 55%,#0e7f96)', color: '#fff', cursor: 'pointer' }}
               onClick={() => toast.info('Ouverture du Copilote…')}>
               <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-                🤖
+                <img src="/wedy-avatar.png" alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Demandez à Wedy</div>

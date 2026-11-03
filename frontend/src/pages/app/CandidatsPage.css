@@ -1,0 +1,10 @@
+/* hover / focus rules of Wedy Candidates */
+.cand-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.cand-h1:hover { border-color: #b9dfe5 !important; box-shadow: 0 20px 40px -26px rgba(10,28,36,.45) !important; transform: translateY(-3px) !important; }
+.cand-h2:hover { background: #fbe9e6 !important; }
+.cand-h3:hover { border-color: #9fb4bb !important; }
+.cand-ghost { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 11px; border-radius: 10px; border: 1px solid #e2e8eb; background: #ffffff; color: #33474f; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.cand-ghost:hover { border-color: #9fb4bb; color: #0a1c24; }
+.cand-ghost.cand-danger { color: #a33a28; border-color: #f0c9c0; }
+.cand-ghost.cand-danger:hover { background: #fbe9e6; }
+.cand-ghost:disabled { opacity: .6; cursor: default; }

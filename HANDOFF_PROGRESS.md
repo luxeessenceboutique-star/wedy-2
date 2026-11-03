@@ -82,6 +82,10 @@ Recruitment notes (`RecruitmentPage.tsx`, hand-written):
 - The previous screen (Tybot SmartDB "candidatures spontanées") is kept, moved to `components/recruitment/SpontaneousApplications.tsx`, opened from the inbox icon button.
 - Note: `/candidats/apply` (used by the public Apply page) does not exist in the backend.
 
+Candidates notes (`CandidatsPage.tsx`):
+- Cards and drawer use the real candidate file: summary = `experience_summary` / `bio` / `notes`, skills + languages, years from `custom_fields.experience_years`. The reference's 4 sub-score bars are derived from the score in the mock (fake), so they are not shown.
+- "Planifier un entretien" opens the shared `ScheduleInterviewDrawer` (also used by Planning) and moves the candidate to "Entretien"; "Refuser" stores `recruitment_stage = rejected` (can be reconsidered). The previous actions (add, hire as employee / intern, delete) are kept in the header and the drawer footer. `?c=<id>` opens a profile (used by the Recruitment cards).
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -99,7 +103,7 @@ Recruitment notes (`RecruitmentPage.tsx`, hand-written):
 | 11 | Absences | Wedy Absences | `/app/absences` | `app/AbsencesPage.tsx` | ◐ |
 | 12 | Planning | Wedy Planning | `/app/planning-rh` | `app/PlanningRHPage.tsx` (+ `CreneauxRHPage.tsx` in a drawer) | ☑ |
 | 13 | Recruitment | Wedy Recruitment | `/app/recruitment` | `app/RecruitmentPage.tsx` (+ `lib/recruitment.ts`) | ☑ |
-| 14 | Candidates | Wedy Candidates | `/app/candidats` | `app/CandidatsPage.tsx` | ◐ |
+| 14 | Candidates | Wedy Candidates | `/app/candidats` | `app/CandidatsPage.tsx` | ☑ |
 | 15 | Job posts | Wedy Job Posts | `/app/annonces` | `app/AnnoncesPage.tsx` + `AnnonceStudioPage.tsx` | ◐ |
 | 16 | Payroll | Wedy Payroll | `/app/payroll` | `app/PayrollPage.tsx` | ◐ |
 | 17 | Performance | Wedy Performance | `/app/performance` | `app/PerformancePage.tsx` | ◐ |

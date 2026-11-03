@@ -1,32 +1,27 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addDays, addWeeks, format, getISOWeek, isSameDay, startOfWeek } from 'date-fns';
 import { CalendarClock, Check, ChevronLeft, ChevronRight, Clock, Flag, MapPin, Plus, Trash2, Users, Video } from 'lucide-react';
 import {
-  listInterviews, listCandidates, listSlots, scheduleInterview, updateInterviewStatus,
+  listInterviews, listCandidates, listSlots, updateInterviewStatus,
   listPlanningNotes, createPlanningNote, deletePlanningNote, getApiError,
 } from '@/services/api';
 import type { Employee, Interview } from '@/services/api';
 import { RV } from '@/components/motion';
 import { Drawer, Spinner } from '@/components/ui';
-import { useLang, type TKey } from '@/lib/lang';
+import { useLang } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { tf } from '@/lib/format';
 import { holidayOn } from '@/lib/holidays';
 import CreneauxRHPage from './CreneauxRHPage';
+import { ScheduleInterviewDrawer } from '@/components/recruitment/ScheduleInterviewDrawer';
+import { INTERVIEW_KIND as KIND } from '@/lib/recruitment';
 import './PlanningRHPage.css';
 
 const H = 52;            // px per hour
 const FIRST_HOUR = 8;    // grid starts at 08:00
 const HOURS = 10;        // 08:00 → 17:00 rows
 
-// [label key, tint, text, accent] per interview type — the reference's palette
-const KIND: Record<string, [TKey, string, string, string]> = {
-  rh: ['pl_kind_rh', '#ece9fb', '#3d2f99', '#6d5ad6'],
-  technical: ['pl_kind_technical', '#e4f2f4', '#0b5f72', '#16b6c8'],
-  final: ['pl_kind_final', '#fbefda', '#7a4706', '#df9326'],
-  realized: ['pl_kind_done', '#e1f5ec', '#0f5a3c', '#16a06b'],
-};
 const kindOf = (iv: Interview) => (iv.status === 'realized' || iv.status === 'completed' ? 'realized' : (KIND[(iv.type || '').toLowerCase()] ? (iv.type || '').toLowerCase() : 'rh'));
 const toHours = (t?: string) => { const [h, m] = (t || '0:0').split(':').map(Number); return (h || 0) + (m || 0) / 60; };
 const hhmm = (t?: string) => (t || '').slice(0, 5);
@@ -34,8 +29,6 @@ const iso = (d: Date) => format(d, 'yyyy-MM-dd');
 const LOCALE: Record<string, string> = { fr: 'fr-FR', en: 'en-GB', ar: 'ar-MA' };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-const inputStyle: CSSProperties = { width: '100%', height: 40, padding: '0 12px', borderRadius: 11, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' };
-const labelStyle: CSSProperties = { display: 'block', fontSize: 12.5, fontWeight: 600, color: '#33474f', marginBottom: 6 };
 
 export default function PlanningRHPage() {
   const { t, lang } = useLang();
@@ -255,62 +248,7 @@ export default function PlanningRHPage() {
           <CreneauxRHPage />
         </div>
       </Drawer>
-      <NewInterviewModal open={evtOpen} onClose={() => setEvtOpen(false)} candidates={candidates} defaultDate={iso(noteDay)} />
+      <ScheduleInterviewDrawer open={evtOpen} onClose={() => setEvtOpen(false)} candidates={candidates} defaultDate={iso(noteDay)} />
     </div>
-  );
-}
-
-function NewInterviewModal({ open, onClose, candidates, defaultDate }: { open: boolean; onClose: () => void; candidates: Employee[]; defaultDate: string }) {
-  const { t } = useLang();
-  const notify = useNotify();
-  const qc = useQueryClient();
-  const empty = { candidate_id: '', date: defaultDate, start_time: '10:00', end_time: '11:00', type: 'rh', recruiter_name: '', meet_link: '', notes: '' };
-  const [f, setF] = useState(empty);
-  const set = (k: keyof typeof empty, v: string) => setF(x => ({ ...x, [k]: v }));
-  const mut = useMutation({
-    mutationFn: () => {
-      const c = candidates.find(x => x.id === f.candidate_id);
-      return scheduleInterview({ ...f, type: f.type as Interview['type'], candidate_name: c?.full_name, job_title: c?.position || undefined, meet_link: f.meet_link || undefined, notes: f.notes || undefined });
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['interviews'] }); notify.success(t('pl_interview_planned')); setF(empty); onClose(); },
-    onError: e => notify.error(getApiError(e, t('error'))),
-  });
-  const submit = () => {
-    if (!f.candidate_id) { notify.error(t('pl_pick_candidate')); return; }
-    if (f.end_time <= f.start_time) { notify.error(t('pl_end_after_start')); return; }
-    mut.mutate();
-  };
-  return (
-    <Drawer open={open} onClose={onClose} title={t('pl_new_interview')} subtitle={t('pl_new_interview_sub')} icon={<CalendarClock size={17} />} width={480}
-      footer={<>
-        <button type="button" className="btn btn-secondary" onClick={onClose}>{t('cancel')}</button>
-        <button type="button" className="btn btn-primary" onClick={submit} disabled={mut.isPending}>{mut.isPending ? <Spinner size={14} color="#fff" /> : <Check size={14} />} {t('pl_schedule')}</button>
-      </>}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div>
-          <label style={labelStyle}>{t('pl_candidate')} *</label>
-          <select value={f.candidate_id} onChange={e => set('candidate_id', e.target.value)} style={inputStyle}>
-            <option value="">{t('pl_pick_candidate')}</option>
-            {candidates.map(c => <option key={c.id} value={c.id}>{c.full_name}{c.position ? ` · ${c.position}` : ''}</option>)}
-          </select>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr 1fr', gap: 10 }}>
-          <div><label style={labelStyle}>{t('pl_date')}</label><input type="date" value={f.date} onChange={e => set('date', e.target.value)} style={inputStyle} /></div>
-          <div><label style={labelStyle}>{t('pl_start')}</label><input type="time" value={f.start_time} onChange={e => set('start_time', e.target.value)} style={inputStyle} /></div>
-          <div><label style={labelStyle}>{t('pl_end')}</label><input type="time" value={f.end_time} onChange={e => set('end_time', e.target.value)} style={inputStyle} /></div>
-        </div>
-        <div>
-          <label style={labelStyle}>{t('pl_type')}</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {(['rh', 'technical', 'final'] as const).map(k => (
-              <button key={k} type="button" onClick={() => set('type', k)} style={{ flex: 1, height: 38, borderRadius: 10, border: `1px solid ${f.type === k ? KIND[k][3] : '#d6dfe3'}`, background: f.type === k ? KIND[k][1] : '#ffffff', color: f.type === k ? KIND[k][2] : '#33474f', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t(KIND[k][0])}</button>
-            ))}
-          </div>
-        </div>
-        <div><label style={labelStyle}>{t('pl_interviewer')}</label><input value={f.recruiter_name} onChange={e => set('recruiter_name', e.target.value)} style={inputStyle} /></div>
-        <div><label style={labelStyle}>{t('pl_meet_link')}</label><input value={f.meet_link} onChange={e => set('meet_link', e.target.value)} placeholder="https://meet.google.com/…" style={inputStyle} /></div>
-        <div><label style={labelStyle}>{t('pl_notes')}</label><textarea rows={3} value={f.notes} onChange={e => set('notes', e.target.value)} style={{ ...inputStyle, height: 'auto', padding: '10px 12px', resize: 'vertical' }} /></div>
-      </div>
-    </Drawer>
   );
 }

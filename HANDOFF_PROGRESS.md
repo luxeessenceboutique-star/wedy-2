@@ -188,6 +188,11 @@ Notifications notes (`app/NotificationsPage.tsx` + `NotificationsView.tsx`):
 - The list is the user's real notifications, grouped by day (today / yesterday / this week / older), with tabs, read-on-click and "tout marquer comme lu". Actions are derived from the type and link: a leave request whose link carries the leave id gets a real "Approuver" (review endpoint, employee notified); others link to Requests, Generate, History or the employee list.
 - Preferences are real for the only channel that exists: `GET|PUT /notifications/preferences` stores, per user, which categories (requests, contracts, recruitment, payroll, security, Wedy AI) show up in Wedy (row `notif:<user id>` in `rh.app_settings`), and the list endpoint filters accordingly. The reference's Email / Slack columns and the 08:30 daily digest are not shown: nothing sends emails, Slack messages or digests.
 
+Integrations notes (`app/IntegrationsPage.tsx` + `IntegrationsView.tsx`):
+- **Needs `backend/database/migrations/webhooks.sql`** (creates or completes `rh.webhooks`: kind, secret, last status) and `app_settings.sql` (iCal token).
+- Only integrations that work are listed: the **iCal feed** of approved leave (`/api/integrations/ical`: enable / regenerate / revoke a secret token; public `GET /api/integrations/ical/{token}.ics`, subscribable from Google Calendar, Outlook and Apple Calendar), **Slack** and **Microsoft Teams** through their incoming-webhook URL (events posted as text), and **JSON webhooks**. Webhooks are now actually dispatched (`services/webhooks.py`, background thread) on `leave.approved`, `employee.created`, `document.generated` and `candidate.hired`; each delivery records its HTTP status, shown per hook and in the "Dernière livraison" KPI; "Tester" sends a test event.
+- Not shown because they do not exist: Google / Outlook OAuth sync, SMTP, Sage Paie, Cegid, Damancom, the REST API key and its call counter, the uptime figure.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -218,7 +223,7 @@ Notifications notes (`app/NotificationsPage.tsx` + `NotificationsView.tsx`):
 | 24 | Analytics | Wedy Analytics | `/app/analytics` | `app/AnalyticsPage.tsx` | ☑ |
 | 25 | Audit | Wedy Audit | `/app/audit` | `app/AuditPage.tsx` | ☑ |
 | 26 | Notifications | Wedy Notifications | `/app/notifications` | `app/NotificationsPage.tsx` | ☑ |
-| 27 | Integrations | Wedy Integrations | `/app/integrations` | `app/IntegrationsPage.tsx` | ◐ |
+| 27 | Integrations | Wedy Integrations | `/app/integrations` | `app/IntegrationsPage.tsx` | ☑ |
 | 28 | Users & roles | Wedy Users | `/app/users` | `app/UsersPage.tsx` | ◐ |
 | 29 | Settings | Wedy Settings | `/app/settings` | `app/SettingsPage.tsx` | ☑ |
 | 30 | Security | Wedy Security | `/app/security` | `app/SecurityPage.tsx` | ◐ |

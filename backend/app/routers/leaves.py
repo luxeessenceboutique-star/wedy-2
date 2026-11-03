@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from supabase import Client
 
+from app.services import webhooks as webhook_service
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.audit import log_action, create_notification, notify_hr
@@ -209,6 +210,10 @@ def review_leave(
 
     # Notify the employee who owns this leave request
     _notify_employee_leave_decision(supabase, leave, status)
+    if status == "approved":
+        emp = (leave_repository.get_employee_email(supabase, leave.get("employee_id")).data or {}) if leave.get("employee_id") else {}
+        webhook_service.emit(supabase, "leave.approved", {"leave_id": leave_id, "employee_id": leave.get("employee_id"), "employee": emp.get("full_name"),
+                                                           "type": leave.get("type"), "start": leave.get("start_date"), "end": leave.get("end_date"), "days": leave.get("days")})
     return leave
 
 

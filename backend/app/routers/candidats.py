@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from uuid import UUID
+from app.services import webhooks as webhook_service
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.repositories import candidate_repository
@@ -131,7 +132,9 @@ def promote_to_employee(
         update["hire_date"] = payload["hire_date"]
     if payload.get("position"):
         update["position"] = payload["position"]
-    candidate_repository.update_status(db, str(candidate_id), update)
+    res = candidate_repository.update_status(db, str(candidate_id), update)
+    row = (getattr(res, "data", None) or [{}])[0] if res is not None else {}
+    webhook_service.emit(db, "candidate.hired", {"employee_id": str(candidate_id), "employee": row.get("full_name"), "position": row.get("position") or payload.get("position")})
     return {"message": "Candidat promu en employé"}
 
 

@@ -1,0 +1,4 @@
+/* hover / focus rules of Wedy Integrations (style-hover / style-focus) */
+.int-h1:hover { transform: translateY(-2px) !important; }
+.int-h2:hover { background: #fbe9e6 !important; color: #df5740 !important; }
+.int-f3:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }

@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Optional
 from supabase import Client
 
+from app.services import webhooks as webhook_service
 from app.services import app_settings
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
@@ -187,6 +188,8 @@ def generate_doc(
     log_action(supabase, current_user["id"], "GENERATE_DOCUMENT", "generated_documents",
                doc.get("id", ""))
 
+    webhook_service.emit(supabase, "document.generated", {"document_id": (doc or {}).get("id"), "document": template.get("name_fr"),
+                                                       "employee_id": payload.employee_id, "employee": employee.get("full_name"), "language": payload.language})
     return {"document": doc, "content": content, "ai_enhanced": ai_enhanced}
 
 

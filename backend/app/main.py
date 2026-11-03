@@ -29,6 +29,7 @@ from app.routers import (
     tenders, annonces, candidats, creneaux, entretiens, contract_types, planning_notes, meetings
 )
 from app.routers import settings as settings_router  # not `settings`: that name is the app config
+from app.routers import integrations
 
 from app.dependencies import get_current_user  # used in protected upload below
 
@@ -63,6 +64,7 @@ app.include_router(contract_types.router, prefix="/api")
 app.include_router(planning_notes.router, prefix="/api")
 app.include_router(meetings.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
+app.include_router(integrations.router, prefix="/api")
 app.include_router(notifications.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(templates.router, prefix="/api")

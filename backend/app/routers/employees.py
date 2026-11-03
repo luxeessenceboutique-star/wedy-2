@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, 
 from fastapi.responses import FileResponse
 from supabase import Client
 
+from app.services import webhooks as webhook_service
 from app.database import get_db
 from app.dependencies import get_current_user, require_role, require_hr_or_admin
 from app.schemas import EmployeeCreate, EmployeeUpdate, EmployeeOut
@@ -388,6 +389,7 @@ def create_employee(
 
     emp = response.data[0]
     log_action(supabase, current_user["id"], "CREATE", "employee", emp["id"])
+    webhook_service.emit(supabase, "employee.created", {"employee_id": emp["id"], "employee": emp.get("full_name"), "position": emp.get("position"), "department": emp.get("department")})
     return _serialize(emp)
 
 

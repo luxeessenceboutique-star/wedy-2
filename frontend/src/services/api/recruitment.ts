@@ -19,8 +19,13 @@ export const listAnnonces = () => api.get<JobAd[]>('/annonces').then(r => r.data
 export const getAnnonce = (id: string) => api.get<JobAd>(`/annonces/${id}`).then(r => r.data);
 export const createAnnonce = (body: Partial<JobAd>) => api.post<JobAd>('/annonces', body).then(r => r.data);
 export const deleteAnnonce = (id: string) => api.delete(`/annonces/${id}`);
-export const chatGenerateAnnonce = (messages: ChatMessage[]) =>
-  api.post<{ reply: string }>('/annonces/chat-generate', { messages }).then(r => r.data);
+export const chatGenerateAnnonce = (messages: ChatMessage[], opts?: { mode?: 'direct'; language?: string; company?: string }) =>
+  api.post<{ reply: string }>('/annonces/chat-generate', { messages, ...opts }, { timeout: 90000 }).then(r => r.data);
+export const updateAnnonce = (ad: JobAd, patch: Partial<JobAd>) =>
+  api.patch<JobAd>(`/annonces/${ad.id}`, {
+    poste: ad.poste, description: ad.description, competences: ad.competences, experience: ad.experience,
+    contenu: ad.contenu, image_url: ad.image_url, is_active: ad.is_active, ...patch,
+  }).then(r => r.data);
 
 // Candidates — backed by the employees table (status='candidate')
 export const listCandidates = () =>

@@ -86,6 +86,10 @@ Candidates notes (`CandidatsPage.tsx`):
 - Cards and drawer use the real candidate file: summary = `experience_summary` / `bio` / `notes`, skills + languages, years from `custom_fields.experience_years`. The reference's 4 sub-score bars are derived from the score in the mock (fake), so they are not shown.
 - "Planifier un entretien" opens the shared `ScheduleInterviewDrawer` (also used by Planning) and moves the candidate to "Entretien"; "Refuser" stores `recruitment_stage = rejected` (can be reconsidered). The previous actions (add, hire as employee / intern, delete) are kept in the header and the drawer footer. `?c=<id>` opens a profile (used by the Recruitment cards).
 
+Job posts notes (`AnnoncesPage.tsx`):
+- Real posts (`/annonces`): status Publiée / Clôturée = `is_active`, toggled by clicking the chip (new `updateAnnonce` → `PATCH /annonces/:id`); delete + copy-application-link added. There is no draft state nor view counter in the backend, so "Brouillon" and "N vues" are not shown. Applications = candidates linked by `custom_fields.ad_id`, or applying for the same position.
+- The studio calls `/annonces/chat-generate` with a new `mode: "direct"` (+ `language`, `company`): the backend then writes the ad at once in FR / AR / EN with the reference's structure instead of the chat flow (which asked questions and always answered in French). The draft is editable before "Publier l'annonce" (`createAnnonce`). `AnnonceStudioPage.tsx` is not routed (left as is).
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -104,7 +108,7 @@ Candidates notes (`CandidatsPage.tsx`):
 | 12 | Planning | Wedy Planning | `/app/planning-rh` | `app/PlanningRHPage.tsx` (+ `CreneauxRHPage.tsx` in a drawer) | ☑ |
 | 13 | Recruitment | Wedy Recruitment | `/app/recruitment` | `app/RecruitmentPage.tsx` (+ `lib/recruitment.ts`) | ☑ |
 | 14 | Candidates | Wedy Candidates | `/app/candidats` | `app/CandidatsPage.tsx` | ☑ |
-| 15 | Job posts | Wedy Job Posts | `/app/annonces` | `app/AnnoncesPage.tsx` + `AnnonceStudioPage.tsx` | ◐ |
+| 15 | Job posts | Wedy Job Posts | `/app/annonces` | `app/AnnoncesPage.tsx` | ☑ |
 | 16 | Payroll | Wedy Payroll | `/app/payroll` | `app/PayrollPage.tsx` | ◐ |
 | 17 | Performance | Wedy Performance | `/app/performance` | `app/PerformancePage.tsx` | ◐ |
 | 18 | Org chart | Wedy Org Chart | `/app/orgchart`, `/employee/orgchart` | `app/OrgChartPage.tsx` | ◐ |

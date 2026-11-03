@@ -95,6 +95,13 @@ class ChatMessage(BaseModel):
 
 class ChatGenerateRequest(BaseModel):
     messages: List[ChatMessage]
+    # "direct": write the ad at once from the form (Job posts studio), in `language` (fr / ar / en)
+    mode: Optional[str] = None
+    language: Optional[str] = None
+    company: Optional[str] = None
+
+
+_LANG_NAMES = {"fr": "français", "ar": "arabe", "en": "anglais"}
 
 
 @router.post("/chat-generate")
@@ -120,6 +127,17 @@ async def chat_generate(
     Répondez toujours en français.
     Si vous générez l'annonce finale, insérez-la dans un bloc de code ou marquez-la clairement.
     """
+
+    if body.mode == "direct":
+        lang = _LANG_NAMES.get((body.language or "fr").lower(), "français")
+        company = (body.company or "").strip() or "l'entreprise"
+        system = f"""Vous êtes un expert en recrutement RH au Maroc.
+    Rédigez directement une annonce d'emploi attractive et professionnelle en {lang} pour {company},
+    à partir des informations données par l'utilisateur (poste, contrat, lieu, points clés). Ne posez pas de question.
+    Structure : une accroche de 2 phrases, « Vos missions » (4 puces), « Votre profil » (4 puces),
+    « Ce que nous offrons » (3 puces), puis une phrase d'appel à candidater (titres traduits dans la langue demandée).
+    Texte brut uniquement, sans Markdown : titres de section sur leur propre ligne, puces commençant par « • ».
+    180 mots maximum. N'inventez ni salaire chiffré ni avantage précis qui ne serait pas dans les points clés."""
 
     messages = [{"role": m.role, "content": m.content} for m in body.messages]
 

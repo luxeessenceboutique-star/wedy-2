@@ -1,0 +1,8 @@
+/* hover / focus rules of Wedy Job Posts */
+.ads-h1:hover { border-color: #b9dfe5 !important; box-shadow: 0 16px 32px -22px rgba(10,28,36,.4) !important; }
+.ads-h2:hover { color: #16b6c8 !important; }
+.ads-h3:hover { background: #16323c !important; }
+.ads-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.ads-icon { width: 28px; height: 28px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: #7d8f97; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.ads-icon:hover { background: #f3f6f7; color: #0a1c24; }
+.ads-icon.ads-danger:hover { background: #fbe9e6; color: #a33a28; }

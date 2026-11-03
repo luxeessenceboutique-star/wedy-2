@@ -1,0 +1,6 @@
+/* hover / focus rules of Wedy Tenders */
+.tdr-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.tdr-h0:hover { background: rgba(255,255,255,.12) !important; color: #e8eff1 !important; }
+.tdr-h1:hover { box-shadow: 0 18px 36px -24px rgba(10,28,36,.4) !important; }
+.tdr-h2:hover { background: #16323c !important; }
+.tdr-h3:hover:not(:disabled) { border-color: #9fb4bb !important; }

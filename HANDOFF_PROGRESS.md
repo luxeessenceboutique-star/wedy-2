@@ -121,6 +121,11 @@ Analytics notes (`AnalyticsPage.tsx`):
 - Headcount curve, hires/departures, departments and contracts come from `/dashboard/kpis?days=365` (12-month `evolution`); absenteeism from the same endpoint over the chosen period (100 − attendance rate). Turnover = departures / average headcount, annualised. Tenure and the age pyramid from active employees' `hire_date` / `birth_date`; time-to-hire from pipeline hires (hire date − application). KPIs without data show "—" / "Pas assez de données" (no sparklines invented).
 - There is no gender field, so the reference's women/men bar is not shown. "Ce que Wedy remarque" is computed (department concentrating departures, contracts ending ≤ 30 days, headcount trend, absenteeism > 4 %). "Exporter le rapport" prints a report (browser → PDF).
 
+Tenders notes (`TendersPage.tsx`):
+- Runs the real agent (`POST /tenders/run`, status polled every 2 s while running, `/tenders/results`, file download through `/tenders/:id/files/:name`). The live log shows the agent's real progress messages. There is no stop endpoint, so "Arrêter l'agent" is not offered (the button shows "Recherche en cours…").
+- Keywords are chips; contact details (required by the portal) and the optional model / API key live in "Paramètres de l'agent" (stored in this browser, like before) together with "Effacer les résultats".
+- MATCH = share of your keywords found in the notice/analysis (shown only when keywords exist). The analysis panel shows the agent's real fields (technologies, project type, files, deadline, budget); the reference's "Avis de Wedy GO/NO GO", caution and site visit have no data, replaced by computed "Points d'attention" (deadline, complexity, missing files, low match).
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -147,7 +152,7 @@ Analytics notes (`AnalyticsPage.tsx`):
 | 20 | Onboarding | Wedy Onboarding | `/app/onboarding` | `app/EmployeeOnboardingPage.tsx` | ☑ |
 | 21 | Training | Wedy Training | `/app/training` | `app/TrainingPage.tsx` | ☑ |
 | 22 | Talents | Wedy Talents | `/app/talents` | `app/TalentsPage.tsx` | ☑ |
-| 23 | Tenders | Wedy Tenders | `/app/tenders` | `app/TendersPage.tsx` | ◐ |
+| 23 | Tenders | Wedy Tenders | `/app/tenders` | `app/TendersPage.tsx` | ☑ |
 | 24 | Analytics | Wedy Analytics | `/app/analytics` | `app/AnalyticsPage.tsx` | ☑ |
 | 25 | Audit | Wedy Audit | `/app/audit` | `app/AuditPage.tsx` | ◐ |
 | 26 | Notifications | Wedy Notifications | `/app/notifications` | `app/NotificationsPage.tsx` | ◐ |

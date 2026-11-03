@@ -197,6 +197,27 @@ MAX_FILE_SIZE_MB=20
 
 ---
 
+### 4.1b Wedy Visio (built-in video meetings)
+
+Meetings and interviews have a free video room inside Wedy (`/visio/:room`): WebRTC peer to peer (up to 6 people),
+the API only relays the handshake over a WebSocket (`/api/visio/ws/...`). Requirements:
+
+- **HTTPS** in production: browsers only give access to the camera and microphone on `https://` (or `localhost`).
+- The reverse proxy must forward WebSocket upgrades on `/api/` (the provided `frontend/nginx.conf` already does).
+- The API must run as **one** uvicorn process (the rooms live in its memory) — the default Docker command does.
+- Optional TURN relay for strict corporate networks (public STUN is used otherwise; most home / mobile networks work without it),
+  e.g. a self-hosted coturn:
+
+```env
+VISIO_TURN_URL=turn:turn.yourdomain.com:3478,turns:turn.yourdomain.com:5349
+VISIO_TURN_USERNAME=wedy
+VISIO_TURN_CREDENTIAL=change_me
+```
+
+Guest invite links (candidates) are signed with `SECRET_KEY` and expire 24 h after the meeting.
+
+---
+
 ### 4.2 Frontend — `frontend/.env`
 
 Copy `frontend/.env.example` to `frontend/.env`:
@@ -462,7 +483,7 @@ Add a build step for the frontend into the existing compose file or serve the `d
 - [ ] Set `APP_ENV=production` in `backend/.env`
 - [ ] Set `ALLOWED_ORIGINS` to the exact frontend domain only
 - [ ] Restrict Docker port exposure — only expose what's needed publicly
-- [ ] Enable HTTPS / SSL certificates (Let's Encrypt or your CA)
+- [ ] Enable HTTPS / SSL certificates (Let's Encrypt or your CA) — also required for Wedy Visio (camera / microphone)
 - [ ] Set `MINIO_SECURE=True` if MinIO is behind HTTPS
 - [ ] Do not commit `.env` files to Git (already in `.gitignore`)
 

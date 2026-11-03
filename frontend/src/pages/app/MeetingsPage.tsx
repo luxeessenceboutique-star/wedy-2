@@ -1,8 +1,9 @@
 import { useMemo, useState, type ChangeEvent, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { CalendarPlus, Check, Database, MapPin, Pencil, Share2, Sparkles, Trash2, Video, X, type LucideIcon } from 'lucide-react';
-import { api, getApiError, listEmployees } from '@/services/api';
+import { CalendarPlus, Check, Database, ExternalLink, Link2, MapPin, Pencil, Share2, Sparkles, Trash2, Video, X, type LucideIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { api, getApiError, getLiveRooms, listEmployees, makeGuestLink, meetingRoom } from '@/services/api';
 import { Drawer, Spinner } from '@/components/ui';
 import { useAuth, isHRRole } from '@/lib/auth';
 import { useLang, type TKey } from '@/lib/lang';
@@ -74,6 +75,17 @@ export default function MeetingsPage() {
   const { user } = useAuth();
   const canEdit = isHRRole(user?.role_name ?? user?.role);
   const notify = useNotify();
+  const navigate = useNavigate();
+  const liveQ = useQuery({ queryKey: ['visio-live'], queryFn: getLiveRooms, refetchInterval: 30_000, retry: false });
+  const liveOf = (id: string) => liveQ.data?.[meetingRoom(id)] ?? 0;
+  const inviteGuest = async (id: string) => {
+    const name = window.prompt(t('vz_guest_prompt'))?.trim();
+    if (!name) return;
+    try {
+      const r = await makeGuestLink(meetingRoom(id), name);
+      try { await navigator.clipboard.writeText(r.url); notify.success(t('vz_link_copied')); } catch { window.prompt(t('vz_copy'), r.url); }
+    } catch (e) { notify.error(getApiError(e, t('error'))); }
+  };
   const qc = useQueryClient();
   const loc = LOCALE[lang] ?? 'fr-FR';
   const [now] = useState(() => Date.now());
@@ -128,7 +140,7 @@ export default function MeetingsPage() {
   const dayFmt = new Intl.DateTimeFormat(loc, { weekday: 'long', day: 'numeric', month: 'long' });
   const timeFmt = new Intl.DateTimeFormat(loc, { hour: '2-digit', minute: '2-digit' });
   const durOf = (min: number) => (min < 60 ? tf(t('mtg_min'), { n: min }) : min % 60 ? tf(t('mtg_h_min'), { h: Math.floor(min / 60), m: String(min % 60).padStart(2, '0') }) : tf(t('mtg_h'), { h: min / 60 }));
-  const placeOf = (m: Meeting) => m.place || (m.visio_url ? t('mtg_visio') : t('mtg_no_place'));
+  const placeOf = (m: Meeting) => m.place || (m.visio_url ? t('mtg_visio') : t('vz_brand'));
   const names = (m: Meeting) => m.participants.map(p => p.name);
   const peopleLabel = (ps: string[]) => (ps.length === 0 ? t('mtg_nobody') : ps.length <= 3 ? ps.join(', ') : tf(t('mtg_and_others'), { names: ps.slice(0, 2).join(', '), n: ps.length - 2 }));
 
@@ -141,7 +153,7 @@ export default function MeetingsPage() {
     g.items.push({
       id: m.id, on: m.id === cur?.id, bg: m.id === cur?.id ? '#f3fafb' : '#ffffff', kBg, kColor,
       time: timeFmt.format(new Date(m.starts_at)), dur: durOf(m.duration_min), title: m.title, next: tab === 'up' && i === 0,
-      placeIcon: m.visio_url && !m.place ? Video : MapPin, place: placeOf(m), faces: ps.slice(0, 3).map(face), hasExtra: ps.length > 3, extra: `+${ps.length - 3}`,
+      placeIcon: !m.place ? Video : MapPin, place: placeOf(m), faces: ps.slice(0, 3).map(face), hasExtra: ps.length > 3, extra: `+${ps.length - 3}`,
       delay: String(Math.min(i, 10) * 50), pick: () => { setSel(m.id); setNewItem(''); },
     });
   });
@@ -168,7 +180,7 @@ export default function MeetingsPage() {
   const curVals: MeetingsVals['cur'] = cur && {
     kind: t((KIND[cur.kind] ?? KIND.meet)[0]), title: cur.title,
     when: `${cap(dayFmt.format(new Date(cur.starts_at)))} · ${timeFmt.format(new Date(cur.starts_at))} · ${durOf(cur.duration_min)}`,
-    place: placeOf(cur), placeIcon: cur.visio_url && !cur.place ? Video : MapPin,
+    place: placeOf(cur), placeIcon: !cur.place ? Video : MapPin,
     faces: names(cur).slice(0, 5).map(face), peopleLabel: peopleLabel(names(cur)),
     upcoming: !isPast, past: isPast, summary: cur.summary ?? '', hasSummary: !!cur.summary?.trim(),
     decisions: cur.decisions.map((d, i) => ({ t: d, delay: String(i * 70) })),
@@ -176,18 +188,23 @@ export default function MeetingsPage() {
       ...a, ini: initialsOf(a.owner || '?'), av: avatarGradient(a.owner || '?'), color: a.done ? '#7d8f97' : '#1d3540', deco: a.done ? 'line-through' : 'none', delay: String(i * 70),
       toggle: () => canEdit && save.mutate({ id: cur.id, body: { actions: cur.actions.map((x, k) => (k === i ? { ...x, done: !x.done } : x)) } }),
     })),
-    actionLabel: isPast ? t('mtg_share') : cur.visio_url ? t('mtg_join') : t('mtg_add_calendar'),
-    actionIcon: isPast ? Share2 : cur.visio_url ? Video : CalendarPlus,
+    actionLabel: isPast ? t('mtg_share') : liveOf(cur.id) ? tf(t('vz_join_live'), { n: liveOf(cur.id) }) : t('vz_join_meeting'),
+    actionIcon: isPast ? Share2 : Video,
     action: () => {
       if (isPast) { navigator.clipboard?.writeText(shareText(cur)).then(() => notify.success(t('mtg_copied')), () => notify.error(t('error'))); return; }
-      if (cur.visio_url) window.open(cur.visio_url, '_blank', 'noopener'); else downloadIcs(cur);
+      navigate(`/visio/${meetingRoom(cur.id)}`);
     },
-    tools: canEdit ? (
+    tools: (
       <span style={{ display: 'inline-flex', gap: 6 }}>
+        {!isPast && <button type="button" aria-label={t('mtg_add_calendar')} title={t('mtg_add_calendar')} onClick={() => downloadIcs(cur)} style={toolBtn}><CalendarPlus size={15} /></button>}
+        {!isPast && cur.visio_url && <button type="button" aria-label={t('vz_external')} title={`${t('vz_external')} · ${cur.visio_url}`} onClick={() => window.open(cur.visio_url!, '_blank', 'noopener')} style={toolBtn}><ExternalLink size={15} /></button>}
+        {!isPast && canEdit && <button type="button" aria-label={t('vz_invite')} title={t('vz_invite')} onClick={() => inviteGuest(cur.id)} style={toolBtn}><Link2 size={15} /></button>}
+        {canEdit && <>
         <button type="button" aria-label={t('edit')} title={t('edit')} onClick={() => setEditing(cur)} style={toolBtn}><Pencil size={15} /></button>
         <button type="button" aria-label={t('delete')} title={t('delete')} onClick={() => { if (window.confirm(tf(t('mtg_confirm_delete'), { title: cur.title }))) del.mutate(cur.id); }} style={toolBtn}><Trash2 size={15} /></button>
+        </>}
       </span>
-    ) : null,
+    ),
   };
 
   const agenda = cur?.agenda ?? [];
@@ -319,7 +336,10 @@ function MeetingDrawer({ open, meeting, onClose, onSaved }: { open: boolean; mee
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div><label style={labelStyle}>{t('mtg_place')}</label><input value={f.place} onChange={e => setF(x => ({ ...x, place: e.target.value }))} placeholder={t('mtg_place_ph')} style={inputStyle} /></div>
-          <div><label style={labelStyle}>{t('mtg_visio_link')}</label><input value={f.visio} onChange={e => setF(x => ({ ...x, visio: e.target.value }))} placeholder="https://meet.google.com/…" style={inputStyle} dir="ltr" /></div>
+          <div>
+            <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '10px 12px', marginBottom: 10, borderRadius: 12, background: '#f2f9fa', border: '1px solid #d7ecef', fontSize: 12.5, color: '#33474f' }}><Video size={15} color="#0e6f84" style={{ flexShrink: 0, marginTop: 1 }} /><span><b style={{ color: '#0a1c24' }}>{t('vz_brand')}</b> · {t('vz_form_note')}</span></div>
+            <label style={labelStyle}>{t('vz_external_opt')}</label><input value={f.visio} onChange={e => setF(x => ({ ...x, visio: e.target.value }))} placeholder="https://meet.google.com/…" style={inputStyle} dir="ltr" />
+          </div>
         </div>
         <div>
           <label style={labelStyle}>{t('mtg_participants')}</label>

@@ -96,7 +96,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { role } = await login(mail, password);
-      const dest = isHRRole(role) ? '/app' : '/employee';
+      const next = new URLSearchParams(window.location.search).get('next');
+      const dest = next && next.startsWith('/') && !next.startsWith('//') ? next : isHRRole(role) ? '/app' : '/employee';
       setDestination(dest);
       setStep('success');
       mosaicRef.current?.burst(1.3);

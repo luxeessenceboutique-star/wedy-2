@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import {
   draftSynthesis, finishInterview, generateFiche, getApiError, getInterviewCv, getInterviewCvText, getInterviewRoom, linkInterviewMeeting,
-  listCandidates, saveFiche, startInterview, uploadEmployeeFile,
+  interviewRoom, listCandidates, makeGuestLink, meetingRoom, saveFiche, startInterview, uploadEmployeeFile,
   type Employee, type Interview, type InterviewDecision, type InterviewFull, type InterviewRoom, type Recommendation, type Scorecard,
 } from '@/services/api';
 import { Spinner } from '@/components/ui';
@@ -24,6 +24,7 @@ import { avatarGradient, initialsOf } from '@/lib/visual';
 import { INTERVIEW_KIND } from '@/lib/recruitment';
 import { DECISIONS, RECO, RECO_ORDER, durationMin, elapsed, interviewStart, overallScore, scoreTone } from '@/lib/interview';
 import { ScheduleInterviewDrawer } from '@/components/recruitment/ScheduleInterviewDrawer';
+import { VisioCall } from '@/components/visio/VisioCall';
 import './InterviewRoomPage.css';
 
 const LOCALE: Record<string, string> = { fr: 'fr-FR', en: 'en-GB', ar: 'ar-MA' };
@@ -179,6 +180,9 @@ export default function InterviewRoomPage() {
 
   // ── finish ───────────────────────────────────────────────────────────────
   const [finishOpen, setFinishOpen] = useState(false);
+  const [callOpen, setCallOpen] = useState(false);
+  const [guestLink, setGuestLink] = useState('');
+  const [linkBusy, setLinkBusy] = useState(false);
   const [decision, setDecision] = useState<InterviewDecision>('later');
   const [nextRound, setNextRound] = useState(false);
   const candQ = useQuery<Employee[]>({ queryKey: ['candidates'], queryFn: listCandidates, enabled: nextRound });
@@ -223,6 +227,16 @@ export default function InterviewRoomPage() {
   const timeLabel = `${iv.start_time.slice(0, 5)} – ${(iv.end_time || '').slice(0, 5)}`;
   const people = room.meeting?.participants ?? [...(iv.interviewers ?? []), { name: cand.full_name }];
   const visio = room.meeting?.visio_url || iv.meet_link;
+  const vRoom = room.meeting ? meetingRoom(room.meeting.id) : interviewRoom(iv.id);
+  const inviteCandidate = async () => {
+    setLinkBusy(true);
+    try {
+      const r = await makeGuestLink(vRoom, cand.full_name);
+      setGuestLink(r.url);
+      try { await navigator.clipboard.writeText(r.url); notify.success(t('vz_link_copied')); } catch { /* the link stays visible */ }
+    } catch (e) { notify.error(getApiError(e, t('error'))); } finally { setLinkBusy(false); }
+  };
+  const mailInvite = guestLink && cand.email ? `mailto:${cand.email}?subject=${encodeURIComponent(tf(t('vz_mail_subject'), { title: cand.position || room.ad?.poste || '' }))}&body=${encodeURIComponent(tf(t('vz_mail_body'), { name: cand.full_name.split(' ')[0], date: dateLabel, time: iv.start_time.slice(0, 5), url: guestLink }))}` : '';
   const startsIn = Math.round((interviewStart(iv.date, iv.start_time).getTime() - now) / 60000);
 
   // sheet editors
@@ -254,7 +268,7 @@ export default function InterviewRoomPage() {
         <div className="room-top-r">
           {statusNode}
           {saveLabel && <span className={`room-save${saveErr ? ' err' : ''}`}>{saveLabel}</span>}
-          {visio && <a href={visio} target="_blank" rel="noreferrer" className="room-btn"><Video size={14} />{t('itv_join')}</a>}
+          <button type="button" className={`room-btn${callOpen ? ' live' : ''}`} onClick={() => setCallOpen(o => !o)}><Video size={14} />{t(callOpen ? 'vz_hide_call' : 'vz_start_call')}</button>
           <button type="button" className="room-btn" onClick={() => window.print()} disabled={!sc}><Printer size={14} />{t('itv_print')}</button>
           {!done && (started
             ? <button type="button" className="room-btn dark" onClick={() => setFinishOpen(true)} disabled={!room.migrated}><Flag size={14} />{t('itv_finish')}</button>
@@ -486,8 +500,15 @@ export default function InterviewRoomPage() {
               <div className="room-card-h"><b><Video size={14} />{t('itv_meeting')}</b>{room.meeting && <Link to="/app/meetings">{t('itv_see_meetings')}</Link>}</div>
               <div className="room-meet-row"><CalendarClock size={14} /><span>{dateLabel}<br /><small>{timeLabel} · {durationMin(iv.start_time, iv.end_time)} min</small></span></div>
               {room.meeting?.place && <div className="room-meet-row"><MapPin size={14} /><span>{room.meeting.place}</span></div>}
-              {visio ? <a className="room-meet-row link" href={visio} target="_blank" rel="noreferrer"><Video size={14} /><span>{visio.replace(/^https?:\/\//, '').slice(0, 38)}</span></a>
-                : <div className="room-meet-row muted"><Video size={14} /><span>{t('itv_no_visio')}</span></div>}
+              <div className="room-visio">
+                <div className="room-meet-row"><Video size={14} /><span><b>{t('vz_brand')}</b><br /><small>{t('vz_card_s')}</small></span></div>
+                <div className="room-visio-btns">
+                  <button type="button" className="room-btn primary" onClick={() => setCallOpen(true)}><Video size={14} />{t('vz_start_call')}</button>
+                  <button type="button" className="room-btn" onClick={inviteCandidate} disabled={linkBusy}>{linkBusy ? <Spinner size={13} /> : <Link2 size={14} />}{t('vz_invite_cand')}</button>
+                </div>
+                {guestLink && <div className="room-visio-link"><input readOnly value={guestLink} onFocus={e => e.target.select()} />{mailInvite && <a href={mailInvite} className="room-btn"><Mail size={13} />{t('vz_send_mail')}</a>}</div>}
+              </div>
+              {visio && <a className="room-meet-row link" href={visio} target="_blank" rel="noreferrer"><ExternalLink size={14} /><span>{t('vz_external')} · {visio.replace(/^https?:\/\//, '').slice(0, 32)}</span></a>}
               <div className="room-people">
                 <Users size={14} />
                 <div>{people.map(p => <span key={p.name} title={p.name} style={{ background: avatarGradient(p.name) }}>{initialsOf(p.name)}</span>)}</div>
@@ -544,6 +565,8 @@ export default function InterviewRoomPage() {
 
       <ScheduleInterviewDrawer open={nextRound} onClose={() => setNextRound(false)} candidates={candQ.data?.length ? candQ.data : [cand]} candidateId={cand.id}
         defaultType={NEXT_TYPE[iv.type] ?? 'final'} onScheduled={(_, n) => { if (n?.id) nav(`/app/entretiens/${n.id}`); }} />
+
+      {callOpen && <VisioCall room={vRoom} auth={{ staff: true }} title={`${cand.full_name} · ${t(kind[0])}`} mode="dock" canInvite guestDefault={cand.full_name} autoJoin onLeave={() => setCallOpen(false)} />}
 
       <PrintSheet iv={iv} room={room} sc={sc} summary={summary} reco={reco} score={score} loc={loc} />
     </div>

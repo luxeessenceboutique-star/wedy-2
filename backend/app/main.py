@@ -30,6 +30,7 @@ from app.routers import (
 )
 from app.routers import settings as settings_router  # not `settings`: that name is the app config
 from app.routers import integrations
+from app.routers import visio
 
 from app.dependencies import get_current_user  # used in protected upload below
 
@@ -89,6 +90,7 @@ app.include_router(annonces.router, prefix="/api")
 app.include_router(candidats.router, prefix="/api")
 app.include_router(creneaux.router, prefix="/api")
 app.include_router(entretiens.router, prefix="/api")
+app.include_router(visio.router, prefix="/api")
 
 
 # Protected Uploads Endpoint

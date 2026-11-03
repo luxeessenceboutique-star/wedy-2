@@ -194,6 +194,16 @@
 .room-closed > div { flex: 1; }
 .room-closed a { font-size: 12.5px; font-weight: 600; color: #0e6f84; text-decoration: none; }
 
+/* Wedy Visio in the meeting card */
+.room-visio { margin: 4px 0 6px; padding: 10px; border-radius: 12px; background: #f2f9fa; border: 1px solid #d7ecef; }
+.room-visio .room-meet-row { padding: 0 0 8px; }
+.room-visio-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.room-visio-btns .room-btn { height: 32px; padding: 0 10px; font-size: 12.5px; }
+.room-visio-link { display: flex; gap: 6px; margin-top: 8px; }
+.room-visio-link input { flex: 1; min-width: 0; height: 32px; padding: 0 8px; border-radius: 9px; border: 1px solid #d6dfe3; font-family: 'Geist Mono', monospace; font-size: 11px; color: #33474f; background: #fff; outline: none; }
+.room-visio-link .room-btn { height: 32px; padding: 0 10px; font-size: 12px; }
+.room-btn.live { background: #e1f5ec; border-color: #b7e2cd; color: #0f6f49; }
+
 /* finish dialog */
 .room-modal { position: fixed; inset: 0; z-index: 60; background: rgba(10, 28, 36, .45); display: flex; align-items: center; justify-content: center; padding: 16px; animation: room-fade .15s ease; }
 @keyframes room-fade { from { opacity: 0; } }

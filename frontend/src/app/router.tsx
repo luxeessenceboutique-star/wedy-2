@@ -40,6 +40,7 @@ import AnnoncesPage from '@/pages/app/AnnoncesPage';
 import PlanningRHPage from '@/pages/app/PlanningRHPage';
 import CandidatsPage from '@/pages/app/CandidatsPage';
 import EntretiensPage from '@/pages/app/EntretiensPage';
+import VisioPage from '@/pages/visio/VisioPage';
 import InterviewRoomPage from '@/pages/app/InterviewRoomPage';
 import PostulerPage from '@/pages/public/PostulerPage';
 
@@ -86,6 +87,7 @@ export function AppRoutes() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/postuler/:id" element={<PostulerPage />} />
+      <Route path="/visio/:room" element={<VisioPage />} />
 
       {/* ── HR Portal ── */}
       <Route path="/app" element={<RequireHR><DashboardPage /></RequireHR>} />

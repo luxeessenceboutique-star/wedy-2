@@ -1,0 +1,3 @@
+/* hover rules of Wedy Analytics */
+.an-h1:hover { border-color: #9fb4bb !important; }
+.an-h2:hover { color: #06141a !important; box-shadow: 0 0 0 4px rgba(39,192,212,.25) !important; }

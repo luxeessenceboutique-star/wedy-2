@@ -117,6 +117,10 @@ Talents notes (`TalentsPage.tsx`):
 - OKR tab (`/okrs`, progress slider saved on release) and PDI tab (`/pdi`, add + status cycle) are real. "Profiler avec l'IA" became "Initialiser les profils" (`/talents/bulk-profile` creates missing default profiles — it is not AI).
 - Mobility = profiles with a target role different from the current position; match % = (performance + potential) / 10. "Proposer" adds a "Mobilité interne : <rôle>" item to the person's PDI (so it persists and shows as proposed).
 
+Analytics notes (`AnalyticsPage.tsx`):
+- Headcount curve, hires/departures, departments and contracts come from `/dashboard/kpis?days=365` (12-month `evolution`); absenteeism from the same endpoint over the chosen period (100 − attendance rate). Turnover = departures / average headcount, annualised. Tenure and the age pyramid from active employees' `hire_date` / `birth_date`; time-to-hire from pipeline hires (hire date − application). KPIs without data show "—" / "Pas assez de données" (no sparklines invented).
+- There is no gender field, so the reference's women/men bar is not shown. "Ce que Wedy remarque" is computed (department concentrating departures, contracts ending ≤ 30 days, headcount trend, absenteeism > 4 %). "Exporter le rapport" prints a report (browser → PDF).
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -144,7 +148,7 @@ Talents notes (`TalentsPage.tsx`):
 | 21 | Training | Wedy Training | `/app/training` | `app/TrainingPage.tsx` | ☑ |
 | 22 | Talents | Wedy Talents | `/app/talents` | `app/TalentsPage.tsx` | ☑ |
 | 23 | Tenders | Wedy Tenders | `/app/tenders` | `app/TendersPage.tsx` | ◐ |
-| 24 | Analytics | Wedy Analytics | `/app/analytics` | `app/AnalyticsPage.tsx` | ◐ |
+| 24 | Analytics | Wedy Analytics | `/app/analytics` | `app/AnalyticsPage.tsx` | ☑ |
 | 25 | Audit | Wedy Audit | `/app/audit` | `app/AuditPage.tsx` | ◐ |
 | 26 | Notifications | Wedy Notifications | `/app/notifications` | `app/NotificationsPage.tsx` | ◐ |
 | 27 | Integrations | Wedy Integrations | `/app/integrations` | `app/IntegrationsPage.tsx` | ◐ |

@@ -1,16 +1,16 @@
 ﻿import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarPlus, ClipboardCheck, GraduationCap, Plus, Search, Sparkles, Trash2, UserPlus, X, Mail, Phone } from 'lucide-react';
-import { listCandidates, listInterviews, createCandidate, updateEmployee, promoteToEmployee, promoteToIntern, deleteCandidate, getApiError } from '@/services/api';
-import type { Employee } from '@/services/api';
+import { CalendarPlus, ClipboardCheck, GraduationCap, Megaphone, Plus, Search, Sparkles, Trash2, UserPlus, X, Mail, Phone } from 'lucide-react';
+import { listAnnonces, listCandidates, listInterviews, createCandidate, updateEmployee, promoteToEmployee, promoteToIntern, deleteCandidate, getApiError } from '@/services/api';
+import type { Employee, JobAd } from '@/services/api';
 import { RV } from '@/components/motion';
 import { Drawer, Spinner } from '@/components/ui';
 import { useLang, type TKey } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { tf } from '@/lib/format';
 import { avatarGradient, initialsOf } from '@/lib/visual';
-import { STAGE_CHIP, stageOf, scoreOf, sourceOf, yearsOf, scoreColor, upcomingByCandidate, type Stage } from '@/lib/recruitment';
+import { NO_AD, adGroups, adIdOf, STAGE_CHIP, stageOf, scoreOf, sourceOf, yearsOf, scoreColor, upcomingByCandidate, type Stage } from '@/lib/recruitment';
 import { ScheduleInterviewDrawer } from '@/components/recruitment/ScheduleInterviewDrawer';
 import './CandidatsPage.css';
 
@@ -38,6 +38,10 @@ export default function CandidatsPage() {
 
   const { data: cands = [], isLoading } = useQuery<Employee[]>({ queryKey: ['candidates'], queryFn: listCandidates });
   const { data: interviews = [] } = useQuery({ queryKey: ['interviews'], queryFn: listInterviews });
+  const { data: ads = [] } = useQuery<JobAd[]>({ queryKey: ['annonces'], queryFn: listAnnonces });
+  const adSel = params.get('ad') ?? '';
+  const setAdSel = (id: string) => setParams(p => { const n = new URLSearchParams(p); if (id) n.set('ad', id); else n.delete('ad'); return n; }, { replace: true });
+  const adName = (c: Employee) => ads.find(a => a.id === adIdOf(c, ads))?.poste ?? '';
   const upcoming = useMemo(() => upcomingByCandidate(interviews), [interviews]);
 
   useEffect(() => {
@@ -71,7 +75,7 @@ export default function CandidatsPage() {
   const list = cands.filter(c => {
     const s = stageOf(c, upcoming.get(c.id));
     const hay = [c.full_name, c.position, c.email, ...(c.skills ?? [])].filter(Boolean).join(' ').toLowerCase();
-    return (stage === 'all' || s === stage) && (!needle || hay.includes(needle));
+    return (stage === 'all' || s === stage) && (!needle || hay.includes(needle)) && (!adSel || adIdOf(c, ads) === adSel);
   }).sort((a, b) => (scoreOf(b) ?? -1) - (scoreOf(a) ?? -1));
   const cur = cands.find(c => c.id === openId);
   const curScore = cur ? scoreOf(cur) : null;
@@ -94,6 +98,10 @@ export default function CandidatsPage() {
           <Search size={16} style={{ position: 'absolute', insetInlineStart: 14, top: '50%', marginTop: -8, color: '#7d8f97', pointerEvents: 'none' }} />
           <input value={q} onChange={e => setQ(e.target.value)} placeholder={t('cand_search_ph')} style={{ width: '100%', height: 44, paddingInline: '40px 14px', borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 14, outline: 'none' }} className="cand-f1" />
         </div>
+        <select value={adSel} onChange={e => setAdSel(e.target.value)} aria-label={t('cand_by_post')} style={{ height: 44, maxWidth: 280, padding: '0 34px 0 14px', borderRadius: 12, border: `1px solid ${adSel ? '#0e6f84' : '#d6dfe3'}`, background: adSel ? '#f2f9fa' : '#ffffff', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, color: '#0a1c24', cursor: 'pointer', outline: 'none' }}>
+          <option value="">{tf(t('cand_all_posts'), { n: cands.length })}</option>
+          {adGroups(cands, ads).map(g => <option key={g.id} value={g.id}>{g.ad ? `${g.ad.poste}${g.ad.is_active ? '' : ` (${t('ads_st_closed')})`}` : t('rec_no_ad')} · {g.n}</option>)}
+        </select>
         {FILTERS.map(st => {
           const on = stage === st;
           return (
@@ -131,6 +139,7 @@ export default function CandidatsPage() {
                 {sum && <div style={{ fontSize: 13, lineHeight: 1.5, color: '#33474f', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{sum}</div>}
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', width: '100%', marginTop: sum ? 0 : 'auto' }}>
                   <span style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: STAGE_CHIP[st][0], color: STAGE_CHIP[st][1] }}>{t(STAGE_LABEL[st])}</span>
+                  {!adSel && adName(c) && <span title={adName(c)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, maxWidth: 170, fontSize: 11.5, fontWeight: 600, padding: '3px 9px', borderRadius: 99, background: '#e4f2f4', color: '#0b5f72', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><Megaphone size={11} />{adName(c)}</span>}
                   {src && <span style={{ fontSize: 11.5, fontWeight: 600, padding: '3px 9px', borderRadius: 99, background: '#f3f6f7', color: '#33474f' }}>{src}</span>}
                   <span style={{ marginInlineStart: 'auto', fontFamily: "'Geist Mono',monospace", fontSize: 11.5, color: '#7d8f97' }}>{yearsLabel(c)}</span>
                 </div>
@@ -170,6 +179,7 @@ export default function CandidatsPage() {
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                 <span style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: STAGE_CHIP[curStage][0], color: STAGE_CHIP[curStage][1] }}>{t(STAGE_LABEL[curStage])}</span>
                 {sourceOf(cur) && <span style={{ fontSize: 11.5, fontWeight: 600, padding: '3px 9px', borderRadius: 99, background: '#f3f6f7', color: '#33474f' }}>{sourceOf(cur)}</span>}
+                {adName(cur) && <button type="button" onClick={() => { setAdSel(adIdOf(cur, ads)); setOpen(null); }} title={t('cand_see_post_cands')} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 600, padding: '3px 9px', borderRadius: 99, border: 'none', background: '#e4f2f4', color: '#0b5f72', cursor: 'pointer', fontFamily: 'inherit' }}><Megaphone size={11} />{adName(cur)}</button>}
                 {curScore !== null && cur.email && <a href={`mailto:${cur.email}`} style={{ marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: '#0e6f84' }}><Mail size={13} />{cur.email}</a>}
               </div>
               {summaryOf(cur) && (
@@ -212,7 +222,7 @@ export default function CandidatsPage() {
 
       <ScheduleInterviewDrawer open={!!schedFor} onClose={() => setSchedFor(null)} candidates={cands} candidateId={schedFor ?? ''}
         onScheduled={c => { if (c) setStageMut.mutate({ c, s: 'interview' }); }} />
-      <AddCandidateDrawer open={addOpen} onClose={() => setAddOpen(false)} onCreated={refresh} />
+      <AddCandidateDrawer open={addOpen} onClose={() => setAddOpen(false)} onCreated={refresh} ads={ads} defaultAd={adSel !== NO_AD ? adSel : ''} />
     </div>
   );
 }
@@ -229,16 +239,19 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
-function AddCandidateDrawer({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
+function AddCandidateDrawer({ open, onClose, onCreated, ads, defaultAd }: { open: boolean; onClose: () => void; onCreated: () => void; ads: JobAd[]; defaultAd: string }) {
   const { t } = useLang();
   const notify = useNotify();
-  const empty = { full_name: '', email: '', phone: '', position: '', source: '', notes: '' };
+  const empty = { full_name: '', email: '', phone: '', position: ads.find(x => x.id === defaultAd)?.poste ?? '', source: '', notes: '', ad_id: defaultAd };
   const [f, setF] = useState(empty);
+  const [lastKey, setLastKey] = useState(`${open}|${defaultAd}`);
+  if (`${open}|${defaultAd}` !== lastKey) { setLastKey(`${open}|${defaultAd}`); if (open) setF(empty); }
+  const pickAd = (id: string) => setF(x => ({ ...x, ad_id: id, position: ads.find(a => a.id === id)?.poste ?? x.position }));
   const set = (k: keyof typeof empty, v: string) => setF(x => ({ ...x, [k]: v }));
   const mut = useMutation({
     mutationFn: async () => {
       const c = await createCandidate({ full_name: f.full_name.trim(), email: f.email.trim() || undefined, phone: f.phone.trim() || undefined, position: f.position.trim() || undefined, notes: f.notes.trim() || undefined });
-      if (f.source.trim() && c?.id) await updateEmployee(c.id, { custom_fields: { ...(c.custom_fields ?? {}), source: f.source.trim(), recruitment_stage: 'new' } });
+      if (c?.id) await updateEmployee(c.id, { custom_fields: { ...(c.custom_fields ?? {}), ...(f.source.trim() ? { source: f.source.trim() } : {}), ...(f.ad_id ? { ad_id: f.ad_id } : {}), recruitment_stage: 'new', stage_changed_at: new Date().toISOString() } });
       return c;
     },
     onSuccess: () => { notify.success(t('cand_added')); setF(empty); onCreated(); onClose(); },
@@ -252,6 +265,12 @@ function AddCandidateDrawer({ open, onClose, onCreated }: { open: boolean; onClo
         <button type="button" className="btn btn-primary" onClick={() => submit()} disabled={mut.isPending}>{mut.isPending ? <Spinner size={14} color="#fff" /> : <Plus size={14} />} {t('cand_add')}</button>
       </>}>
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div><label style={labelStyle}>{t('cand_post')}</label>
+          <select value={f.ad_id} onChange={e => pickAd(e.target.value)} style={inputStyle}>
+            <option value="">{t('rec_no_ad')}</option>
+            {ads.filter(a => a.is_active || a.id === f.ad_id).map(a => <option key={a.id} value={a.id}>{a.poste}{a.description ? ` · ${a.description}` : ''}</option>)}
+          </select>
+        </div>
         <div><label style={labelStyle}>{t('cand_full_name')} *</label><input value={f.full_name} onChange={e => set('full_name', e.target.value)} style={inputStyle} autoFocus /></div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div><label style={labelStyle}>Email</label><input type="email" value={f.email} onChange={e => set('email', e.target.value)} style={inputStyle} /></div>

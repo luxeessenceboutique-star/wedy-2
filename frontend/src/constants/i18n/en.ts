@@ -1398,8 +1398,6 @@ export const en = {
     rec_subtitle: 'Follow every candidate from application to hire. Drag the cards to change stage.',
     rec_all_candidates: 'All candidates',
     rec_publish: 'Publish a job post',
-    rec_spontaneous: 'Spontaneous applications',
-    rec_spontaneous_sub: 'Received through the Tybot assistant.',
     rec_open_posts: 'Open positions',
     rec_active: 'Active candidates',
     rec_interviews_planned: 'Scheduled interviews',
@@ -3523,4 +3521,14 @@ export const en = {
     sk_whatsapp: 'Share on WhatsApp',
     sk_wa_text: 'We\'re hiring:',
     sk_note: 'Every application received through this link lands in Candidates, linked to the post.',
+    // Recrutement par annonce
+    rec_no_ad: 'No job post',
+    rec_no_ad_s: 'Applications added by hand, imported or spontaneous, with no job post.',
+    rec_post_closed: 'Closed job post',
+    rec_post_since: 'posted on {date}',
+    rec_post_cands: 'See the candidates',
+    cand_by_post: 'Filter by job post',
+    cand_all_posts: 'All job posts · {n}',
+    cand_see_post_cands: 'See this post\'s candidates',
+    cand_post: 'Job post',
 } as const;

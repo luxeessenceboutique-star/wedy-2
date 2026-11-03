@@ -96,10 +96,7 @@ api.interceptors.response.use(
   async err => {
     const cfg = err?.config;
     const is401 = err?.response?.status === 401;
-    const isSmartDb = cfg?.url?.includes('/smartdb');
-    // Only treat 401 as session expiry for our own API endpoints,
-    // not for the SmartDB proxy (whose upstream can independently return 401).
-    if (!is401 || isSmartDb || !cfg || isAuthCall(cfg.url) || cfg.skipRelogin) return Promise.reject(err);
+    if (!is401 || !cfg || isAuthCall(cfg.url) || cfg.skipRelogin) return Promise.reject(err);
 
     if (!cfg._retried) {
       cfg._retried = true;

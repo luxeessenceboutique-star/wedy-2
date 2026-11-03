@@ -1,17 +1,16 @@
 import { useMemo, useState, type DragEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, Clock, Inbox, Megaphone, Users } from 'lucide-react';
+import { ArrowUpRight, CalendarClock, Clock, Megaphone, Users } from 'lucide-react';
 import { listCandidates, listEmployees, listInterviews, listAnnonces, updateEmployee, promoteToEmployee, getApiError } from '@/services/api';
 import type { Employee } from '@/services/api';
 import { RV, CountText } from '@/components/motion';
-import { Drawer, Spinner } from '@/components/ui';
+import { Spinner } from '@/components/ui';
 import { useLang } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { tf } from '@/lib/format';
 import { avatarGradient, initialsOf } from '@/lib/visual';
-import { STAGES, stageOf, scoreOf, sourceOf, stageSince, scoreColor, daysSince, upcomingByCandidate, type Stage } from '@/lib/recruitment';
-import SpontaneousApplications from '@/components/recruitment/SpontaneousApplications';
+import { STAGES, NO_AD, adGroups, adIdOf, stageOf, scoreOf, sourceOf, stageSince, scoreColor, daysSince, upcomingByCandidate, type Stage } from '@/lib/recruitment';
 import './RecruitmentPage.css';
 
 const LOCALE: Record<string, string> = { fr: 'fr-FR', en: 'en-GB', ar: 'ar-MA' };
@@ -25,8 +24,9 @@ export default function RecruitmentPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const loc = LOCALE[lang] ?? 'fr-FR';
-  const [job, setJob] = useState<string>('');
-  const [spontOpen, setSpontOpen] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const adSel = params.get('ad') ?? '';
+  const setAdSel = (id: string) => setParams(p => { const n = new URLSearchParams(p); if (id) n.set('ad', id); else n.delete('ad'); return n; }, { replace: true });
   const [over, setOver] = useState<Stage | null>(null);
 
   const { data: candidates = [], isLoading } = useQuery<Employee[]>({ queryKey: ['candidates'], queryFn: listCandidates });
@@ -70,9 +70,12 @@ export default function RecruitmentPage() {
     move.mutate({ e, stage });
   };
 
-  const jobsList = [...new Set(people.map(p => (p.position || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  const pool = people.filter(p => !job || (p.position || '').trim() === job);
-  const active = candidates;
+  // applications grouped by job post (careers page link, else same title); « no post » for the others
+  const groups = adGroups(people, ads);
+  const pool = people.filter(p => !adSel || adIdOf(p, ads) === adSel);
+  const active = pool.filter(p => p.status === 'candidate');
+  const selAd = ads.find(a => a.id === adSel) ?? null;
+  const plannedInPool = pool.filter(p => upcoming.has(p.id)).length;
   const hireDelays = recentHires.map(e => (e.hire_date && e.created_at ? (new Date(e.hire_date).getTime() - new Date(e.created_at).getTime()) / 86400000 : NaN)).filter(n => Number.isFinite(n) && n >= 0);
   const avgDelay = hireDelays.length ? Math.round(hireDelays.reduce((a, b) => a + b, 0) / hireDelays.length) : null;
   const openPosts = ads.filter(a => a.is_active).length;
@@ -95,9 +98,6 @@ export default function RecruitmentPage() {
           <RV as="p" variant="up" delay={60} style={{ margin: '8px 0 0', fontSize: 15, color: '#52646d' }}>{t('rec_subtitle')}</RV>
         </div>
         <RV as="div" variant="up" delay={100} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="button" onClick={() => setSpontOpen(true)} title={t('rec_spontaneous')} aria-label={t('rec_spontaneous')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 42, height: 42, padding: 0, borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', color: '#33474f', cursor: 'pointer' }} className="rec-h1">
-            <Inbox size={16} />
-          </button>
           <Link to="/app/candidats" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 42, padding: '0 14px', borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', color: '#33474f', fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap' }} className="rec-h1">
             <Users size={15} />{t('rec_all_candidates')}
           </Link>
@@ -117,24 +117,38 @@ export default function RecruitmentPage() {
           <div style={statLabel}>{t('rec_active')}</div><div style={statValue}>{active.length}</div>
         </RV>
         <RV as="div" variant="up" delay={180} style={{ padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}>
-          <div style={statLabel}>{t('rec_interviews_planned')}</div><div style={statValue}>{upcoming.size}</div>
+          <div style={statLabel}>{t('rec_interviews_planned')}</div><div style={statValue}>{plannedInPool}</div>
         </RV>
         <RV as="div" variant="up" delay={230} style={{ padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}>
           <div style={statLabel}>{t('rec_avg_delay')}</div><div style={statValue}>{avgDelay === null ? '—' : tf(t('rec_days'), { n: avgDelay })}</div>
         </RV>
       </div>
 
-      {jobsList.length > 0 && (
-        <RV as="div" variant="up" delay={160} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {['', ...jobsList].map(j => {
-            const on = job === j;
-            const n = candidates.filter(c => !j || (c.position || '').trim() === j).length;
-            return (
-              <button key={j || 'all'} type="button" onClick={() => setJob(j)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 38, padding: '0 14px', borderRadius: 99, border: `1px solid ${on ? '#0a1c24' : '#e2e8eb'}`, background: on ? '#0a1c24' : '#ffffff', color: on ? '#ffffff' : '#33474f', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                {j || t('rec_all_posts')}<span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, opacity: 0.75 }}>{n}</span>
-              </button>
-            );
-          })}
+      {groups.length > 0 && (
+        <RV as="div" variant="up" delay={160} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {[{ id: '', label: t('rec_all_posts'), n: people.length, closed: false }, ...groups.map(g => ({ id: g.id, label: g.ad ? g.ad.poste : t('rec_no_ad'), n: g.n, closed: !!g.ad && !g.ad.is_active }))].map(g => {
+              const on = adSel === g.id;
+              return (
+                <button key={g.id || 'all'} type="button" onClick={() => setAdSel(g.id)} title={g.closed ? t('rec_post_closed') : undefined} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 38, padding: '0 14px', borderRadius: 99, border: `1px ${g.id === NO_AD ? 'dashed' : 'solid'} ${on ? '#0a1c24' : '#d6dfe3'}`, background: on ? '#0a1c24' : '#ffffff', color: on ? '#ffffff' : g.closed ? '#7d8f97' : '#33474f', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  {g.closed && <span style={{ width: 6, height: 6, borderRadius: '50%', background: on ? '#ff9c8a' : '#df5740' }} />}
+                  {g.label}<span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, opacity: 0.75 }}>{g.n}</span>
+                </button>
+              );
+            })}
+          </div>
+          {selAd && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '12px 16px', borderRadius: 16, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+              <span style={{ width: 36, height: 36, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e4f2f4', color: '#0e6f84' }}><Megaphone size={16} /></span>
+              <div style={{ minWidth: 0, flex: '1 1 220px' }}>
+                <div style={{ fontWeight: 600, fontSize: 14.5, color: '#0a1c24' }}>{selAd.poste}</div>
+                <div style={{ fontSize: 12.5, color: '#5f7079' }}>{[selAd.description, selAd.created_at ? tf(t('rec_post_since'), { date: new Date(selAd.created_at).toLocaleDateString(loc) }) : '', t(selAd.is_active ? 'ads_st_published' : 'ads_st_closed')].filter(Boolean).join(' · ')}</div>
+              </div>
+              <Link to={`/app/candidats?ad=${selAd.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0e6f84' }}><Users size={14} />{t('rec_post_cands')}</Link>
+              <a href={`/postuler/${selAd.id}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#0e6f84' }}>{t('ads_public_page')}<ArrowUpRight size={14} /></a>
+            </div>
+          )}
+          {adSel === NO_AD && <div style={{ fontSize: 12.5, color: '#5f7079' }}>{t('rec_no_ad_s')}</div>}
         </RV>
       )}
 
@@ -180,6 +194,7 @@ export default function RecruitmentPage() {
                           )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 11, flexWrap: 'wrap' }}>
+                          {!adSel && (() => { const ad = ads.find(x => x.id === adIdOf(p, ads)); return ad ? <span title={ad.poste} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, maxWidth: 150, fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: '#e4f2f4', color: '#0b5f72', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><Megaphone size={10} />{ad.poste}</span> : null; })()}
                           {src && <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: '#f3f6f7', color: '#33474f' }}>{src}</span>}
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#7d8f97' }}><Clock size={11} />{ageLabel(key === 'hired' ? p.hire_date : stageSince(p))}</span>
                           {next && key !== 'hired' && (
@@ -199,9 +214,6 @@ export default function RecruitmentPage() {
         </div>
       </div>
 
-      <Drawer open={spontOpen} onClose={() => setSpontOpen(false)} title={t('rec_spontaneous')} subtitle={t('rec_spontaneous_sub')} icon={<Inbox size={17} />} width={1100}>
-        <SpontaneousApplications />
-      </Drawer>
     </div>
   );
 }

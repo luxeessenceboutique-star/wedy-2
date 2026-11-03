@@ -7,8 +7,11 @@ def list_employees(supabase: Client, status: Optional[str], department_id: Optio
     query = supabase.table("employees").select("*", count="exact")
     if status:
         query = query.eq("status", status)
-    elif exclude_intern:
-        query = query.neq("status", "intern")
+    else:
+        # applications (status = candidate) are never staff: they live in Candidats
+        query = query.neq("status", "candidate")
+        if exclude_intern:
+            query = query.neq("status", "intern")
     if department:
         query = query.eq("department", department)
     if search:

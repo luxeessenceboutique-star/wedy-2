@@ -31,7 +31,7 @@ def count_pending_leave_requests(supabase: Client) -> int:
 
 def count_expiring_contracts(supabase: Client, today: date, within_days: int = 30) -> int:
     try:
-        all_emp = supabase.table("employees").select("contract_end").neq("contract_end", None).execute().data or []
+        all_emp = supabase.table("employees").select("contract_end").neq("contract_end", None).neq("status", "candidate").execute().data or []
         return sum(
             1 for e in all_emp
             if e.get("contract_end")

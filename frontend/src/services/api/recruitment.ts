@@ -39,7 +39,7 @@ export const updateAnnonce = (ad: JobAd, patch: Partial<JobAd>) =>
 
 // Candidates — backed by the employees table (status='candidate')
 export const listCandidates = () =>
-  api.get('/employees', { params: { status: 'candidate', limit: 200 } })
+  api.get('/employees', { params: { status: 'candidate', limit: 1000 } })
     .then(r => (Array.isArray(r.data) ? r.data : r.data?.data ?? []));
 export const createCandidate = (data: { full_name: string; email?: string; phone?: string; position?: string; notes?: string }) =>
   api.post<Employee>('/employees', { ...data, status: 'candidate' }).then(r => r.data);

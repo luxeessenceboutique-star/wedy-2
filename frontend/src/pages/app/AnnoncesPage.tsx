@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowUpRight, Briefcase, Copy, Megaphone, Send, Sparkles, Trash2, Users } from 'lucide-react';
 import { SocialKit } from '@/components/annonces/SocialKit';
 import { useAppSettings } from '@/lib/appSettings';
+import { adIdOf } from '@/lib/recruitment';
 import { listAnnonces, createAnnonce, updateAnnonce, deleteAnnonce, chatGenerateAnnonce, listCandidates, getApiError } from '@/services/api';
 import type { Employee, JobAd } from '@/services/api';
 import { RV } from '@/components/motion';
@@ -40,7 +41,7 @@ export default function AnnoncesPage() {
   const company = settingsQ.data?.company?.name || (typeof user?.profile?.company === 'string' ? user.profile.company : '');
 
   // applications of a post: candidates linked to it (custom_fields.ad_id) or applying for the same position
-  const appsOf = (ad: JobAd) => cands.filter(c => c.custom_fields?.ad_id === ad.id || (!c.custom_fields?.ad_id && (c.position || '').trim().toLowerCase() === ad.poste.trim().toLowerCase())).length;
+  const appsOf = (ad: JobAd) => cands.filter(c => adIdOf(c, ads) === ad.id).length;
 
   const gen = useMutation({
     mutationFn: () => chatGenerateAnnonce([{ role: 'user', content: [
@@ -104,7 +105,7 @@ export default function AnnoncesPage() {
                   <button type="button" onClick={() => toggle.mutate(ad)} title={t(ad.is_active ? 'ads_close' : 'ads_reopen')} style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 10px', borderRadius: 99, border: 'none', background: st[1], color: st[2], whiteSpace: 'nowrap', cursor: 'pointer', fontFamily: 'inherit' }}>{t(st[0])}</button>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14, paddingTop: 12, borderTop: '1px solid #eef2f4', fontSize: 13, color: '#52646d', flexWrap: 'wrap' }}>
-                  <Link to="/app/candidats" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#52646d' }}><Users size={14} /><strong style={{ color: '#0a1c24' }}>{appsOf(ad)}</strong> {t('ads_applications')}</Link>
+                  <Link to={`/app/candidats?ad=${ad.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#52646d' }}><Users size={14} /><strong style={{ color: '#0a1c24' }}>{appsOf(ad)}</strong> {t('ads_applications')}</Link>
                   <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>{ad.created_at ? new Date(ad.created_at).toLocaleDateString('fr-FR') : ''}</span>
                   <span style={{ marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
                     <button type="button" onClick={() => setKit({ ad, fresh: false })} className="ads-share"><Megaphone size={14} />{t('sk_open')}</button>

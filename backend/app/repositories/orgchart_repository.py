@@ -11,7 +11,7 @@ def list_team_members(supabase: Client):
 
 
 def list_employees_for_orgchart(supabase: Client):
-    return supabase.table("employees").select("id, full_name, position, department, photo_url, status").execute()
+    return supabase.table("employees").select("id, full_name, position, department, photo_url, status").neq("status", "candidate").execute()
 
 
 def list_people(supabase: Client):

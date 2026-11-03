@@ -5,7 +5,7 @@ from supabase import Client
 def list_employees_full_context(supabase: Client):
     return supabase.table("employees").select(
         "id,full_name,position,department,status,contract_type,contract_end,hire_date,salary"
-    ).execute()
+    ).neq("status", "candidate").execute()
 
 
 def list_leave_requests_context(supabase: Client):

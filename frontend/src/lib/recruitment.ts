@@ -1,7 +1,7 @@
 // Shared helpers of the recruitment screens (pipeline + candidates).
 // Candidates are rows of the employees table with status = 'candidate'. The pipeline stage, the AI score and the
 // source are kept in `custom_fields` (no dedicated columns): recruitment_stage, ai_score / score, source.
-import type { Employee, Interview } from '@/services/api';
+import type { Employee, Interview, JobAd } from '@/services/api';
 import type { TKey } from '@/lib/lang';
 
 export type Stage = 'new' | 'screen' | 'interview' | 'offer' | 'hired' | 'rejected';
@@ -75,3 +75,26 @@ export const INTERVIEW_KIND: Record<string, [TKey, string, string, string]> = {
   final: ['pl_kind_final', '#fbefda', '#7a4706', '#df9326'],
   realized: ['pl_kind_done', '#e1f5ec', '#0f5a3c', '#16a06b'],
 };
+
+/** Group of applications without a job post (added by hand, imported, spontaneous). */
+export const NO_AD = 'none';
+
+/** The job post an application belongs to: the post it was sent from (custom_fields.ad_id), else the post with the same
+ *  title (open posts first), else NO_AD. Same rule on Recrutement, Candidats and Annonces, so the counts agree. */
+export function adIdOf(c: Employee, ads: JobAd[]): string {
+  const id = cf(c).ad_id;
+  if (typeof id === 'string' && ads.some(a => a.id === id)) return id;
+  const pos = (c.position || '').trim().toLowerCase();
+  if (!pos) return NO_AD;
+  const same = ads.filter(a => a.poste.trim().toLowerCase() === pos);
+  return (same.find(a => a.is_active) ?? same[0])?.id ?? NO_AD;
+}
+
+/** Job posts with their number of applications, open posts first, then the most recent; plus the « no post » group. */
+export function adGroups(people: Employee[], ads: JobAd[]): { id: string; ad: JobAd | null; n: number }[] {
+  const count = new Map<string, number>();
+  people.forEach(p => { const k = adIdOf(p, ads); count.set(k, (count.get(k) ?? 0) + 1); });
+  const sorted = [...ads].sort((a, b) => Number(b.is_active) - Number(a.is_active) || (b.created_at || '').localeCompare(a.created_at || ''));
+  const groups = sorted.map(ad => ({ id: ad.id, ad, n: count.get(ad.id) ?? 0 })).filter(g => g.ad.is_active || g.n > 0);
+  return count.get(NO_AD) ? [...groups, { id: NO_AD, ad: null, n: count.get(NO_AD) ?? 0 }] : groups;
+}

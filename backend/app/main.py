@@ -24,7 +24,7 @@ from app.routers import (
     auth, profiles, employees, interns, documents, cv,
     requests, departments, notifications, dashboard,
     templates, leaves, analytics, copilot, payroll,
-    audit_log, generate, smartdb, performance, users, assets,
+    audit_log, generate, performance, users, assets,
     webhooks, employee_onboarding, training, talents, portal, orgchart,
     tenders, annonces, candidats, creneaux, entretiens, contract_types, planning_notes, meetings
 )
@@ -75,7 +75,6 @@ app.include_router(copilot.router,   prefix="/api")
 app.include_router(payroll.router,   prefix="/api")
 app.include_router(audit_log.router, prefix="/api")
 app.include_router(generate.router,  prefix="/api")
-app.include_router(smartdb.router,   prefix="/api")
 app.include_router(performance.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(assets.router, prefix="/api")

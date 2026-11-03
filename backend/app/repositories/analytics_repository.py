@@ -5,7 +5,7 @@ from supabase import Client
 def list_employees_for_overview(supabase: Client):
     return supabase.table("employees").select(
         "id, full_name, position, contract_type, department, status, hire_date, contract_end"
-    ).execute()
+    ).neq("status", "candidate").execute()
 
 
 def list_generated_documents_meta(supabase: Client):
@@ -21,7 +21,7 @@ def count_pending_hr_requests(supabase: Client):
 
 
 def list_employees_hire_status(supabase: Client):
-    return supabase.table("employees").select("hire_date, status").execute()
+    return supabase.table("employees").select("hire_date, status").neq("status", "candidate").execute()
 
 
 def list_generated_documents_dates(supabase: Client):

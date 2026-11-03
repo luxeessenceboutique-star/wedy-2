@@ -1398,8 +1398,6 @@ export const ar = {
     rec_subtitle: 'تابع كل مرشح من الترشح إلى التوظيف. اسحب البطاقات لتغيير المرحلة.',
     rec_all_candidates: 'جميع المرشحين',
     rec_publish: 'نشر إعلان',
-    rec_spontaneous: 'الترشيحات العفوية',
-    rec_spontaneous_sub: 'وردت عبر مساعد Tybot.',
     rec_open_posts: 'المناصب المفتوحة',
     rec_active: 'المرشحون النشطون',
     rec_interviews_planned: 'المقابلات المبرمجة',
@@ -3523,4 +3521,14 @@ export const ar = {
     sk_whatsapp: 'المشاركة على واتساب',
     sk_wa_text: 'نوظف:',
     sk_note: 'كل ترشيح يصل عبر هذا الرابط يظهر في المترشحين مرتبطًا بالإعلان.',
+    // Recrutement par annonce
+    rec_no_ad: 'بدون إعلان',
+    rec_no_ad_s: 'ترشيحات مضافة يدويًا أو مستوردة أو عفوية، دون إعلان مرتبط.',
+    rec_post_closed: 'إعلان مغلق',
+    rec_post_since: 'نُشر في {date}',
+    rec_post_cands: 'عرض المترشحين',
+    cand_by_post: 'التصفية حسب الإعلان',
+    cand_all_posts: 'كل الإعلانات · {n}',
+    cand_see_post_cands: 'عرض مترشحي هذا الإعلان',
+    cand_post: 'الإعلان',
 } as const;

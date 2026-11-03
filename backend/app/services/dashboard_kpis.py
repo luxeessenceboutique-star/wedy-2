@@ -72,6 +72,7 @@ def compute_kpis(sb: Client, days: int = 30, today: Optional[date] = None) -> di
 
     # ── Workforce ────────────────────────────────────────────────────────────
     emp = _all(sb, "employees", "id,full_name,status,department,contract_type,contract_end,hire_date,cin,updated_at,internship_status", warnings, required=True)
+    emp = [e for e in emp if e.get("status") != "candidate"]   # applications are not staff
     workforce = [e for e in emp if e.get("status") != "intern"]
     active = [e for e in workforce if e.get("status") in ACTIVE_STATUSES]
     inactive = [e for e in workforce if e.get("status") in INACTIVE_STATUSES]

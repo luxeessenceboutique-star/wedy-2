@@ -1,0 +1,5 @@
+/* hover / focus rules of Wedy Performance (style-hover / style-focus) */
+.prf-h1:hover { box-shadow: 0 0 0 4px rgba(39,192,212,.25) !important; }
+.prf-h2:hover { transform: translateY(-2px) !important; }
+.prf-h3:hover { background: #fbe9e6 !important; }
+.prf-h4:hover { text-decoration: underline; }

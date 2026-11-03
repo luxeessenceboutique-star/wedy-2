@@ -51,6 +51,21 @@ def talent_stats(
                 "critical_positions": 0, "avg_performance": 0, "avg_potential": 0}
 
 
+# ── OKR overview (before /{employee_id}) ──────────────────────────────────────
+
+@router.get("/okrs/summary")
+def okr_summary(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """Company-wide view of the individual OKRs: how many, how far, how many reached."""
+    rows = supabase.table("employee_okrs").select("progress, status").neq("status", "cancelled").execute().data or []
+    total = len(rows)
+    done = sum(1 for r in rows if r.get("status") == "completed" or (r.get("progress") or 0) >= 100)
+    avg = round(sum(min(100, r.get("progress") or 0) for r in rows) / total) if total else 0
+    return {"total": total, "completed": done, "avg_progress": avg}
+
+
 # ── Mobility candidates (before /{employee_id}) ───────────────────────────────
 
 @router.get("/mobility/candidates")

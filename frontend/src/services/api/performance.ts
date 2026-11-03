@@ -4,7 +4,7 @@ export type PerformanceReview = {
   id: string; employee_id: string; reviewer_id?: string;
   period: string; score: number; feedback?: string;
   objectives?: string; status: string; created_at: string;
-  employees?: { full_name: string; position: string; department: string };
+  employees?: { full_name: string; position: string; department: string; manager?: string };
   cycle?: string; overall_score?: number; comments?: string;
 };
 

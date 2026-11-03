@@ -162,6 +162,12 @@ Absences notes (`app/AbsencesPage.tsx` + `AbsencesView.tsx`):
 - Absenteeism rate of the quarter = absence working days / (active headcount × working days elapsed), overall and per department (top 5); the insight is computed (top department vs average, the weekday absences concentrate on when ≥ 30 %). Days lost this month and absent today come from the same data.
 - "Relancer" calls the new `POST /leaves/:id/remind`: an in-app notification to the employee's account (409 when the employee has no account, shown as such) and an audit entry. "Déclarer une absence" is a drawer (records it approved, optional justification).
 
+Performance notes (`app/PerformancePage.tsx` + `PerformanceView.tsx`):
+- A campaign is a review period (`2026`, `2026-H2`, `2026-T4`); the hero's eyebrow switches period, the closing date is the end of the period. Every active employee is a row: reviewed (`completed`), planned, self-assessment, late (`late`, or anything unfinished once the period is over) or not planned yet. The ring and the counters come from those rows.
+- New endpoints: `POST /performance/campaign` (one planned review per active employee without one for the period), `POST /performance/:id/remind` (notifies the employee and, when found, their manager; 409 when neither has an account) and `GET /talents/okrs/summary` (company-wide OKR count / reached / average progress).
+- The 9-box comes from the talent profiles (performance × potential, ≥ 4 high, ≤ 2 low); a box filters the list. The goals card shows real indicators instead of the reference's invented company goals: average OKR progress, OKRs reached, self-assessments handed in, talent profiles assessed. "Ce que disent les entretiens" counts themes (career, management, training, workload, remote, recognition, pay, communication) in the period's write-ups.
+- A row opens a review drawer (stage, 1–5 rating, write-up, next goals); "Nouvelle campagne" opens a period drawer. Ratings are whole stars (the table stores an integer 1–5), so no 4,6-style decimals.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -182,7 +188,7 @@ Absences notes (`app/AbsencesPage.tsx` + `AbsencesView.tsx`):
 | 14 | Candidates | Wedy Candidates | `/app/candidats` | `app/CandidatsPage.tsx` | ☑ |
 | 15 | Job posts | Wedy Job Posts | `/app/annonces` | `app/AnnoncesPage.tsx` | ☑ |
 | 16 | Payroll | Wedy Payroll | `/app/payroll` | `app/PayrollPage.tsx` | ☑ |
-| 17 | Performance | Wedy Performance | `/app/performance` | `app/PerformancePage.tsx` | ◐ |
+| 17 | Performance | Wedy Performance | `/app/performance` | `app/PerformancePage.tsx` | ☑ |
 | 18 | Org chart | Wedy Org Chart | `/app/orgchart`, `/employee/orgchart` | `app/OrgChartPage.tsx` | ☑ |
 | 19 | Meetings | Wedy Meetings | `/app/meetings`, `/employee/meetings` | `app/MeetingsPage.tsx` | ◐ |
 | 20 | Onboarding | Wedy Onboarding | `/app/onboarding` | `app/EmployeeOnboardingPage.tsx` | ☑ |

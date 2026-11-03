@@ -4,7 +4,7 @@ from supabase import Client
 
 
 def list_reviews(supabase: Client, employee_id: Optional[str], period: Optional[str], skip: int, limit: int):
-    query = supabase.table("performance_reviews").select("*, employees(full_name, position, department)", count="exact")
+    query = supabase.table("performance_reviews").select("*, employees(full_name, position, department, manager)", count="exact")
     if employee_id:
         query = query.eq("employee_id", employee_id)
     if period:

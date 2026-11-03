@@ -173,6 +173,12 @@ Meetings notes (`app/MeetingsPage.tsx` + `MeetingsView.tsx`):
 - New router `/api/meetings`: list (HR: all; an employee: the meetings they take part in, read-only on `/employee/meetings`), create / update / delete, `POST /:id/suggest-agenda` (Wedy adds 3 items), `POST /:id/minutes` (Wedy writes summary, decisions and actions from the agenda and the notes, never inventing), `POST /:id/send-report` (in-app notification to participants who have an account). AI calls go through the new `ai_service.complete()` (Claude, else the OpenAI-compatible router).
 - Agenda ticks, added items, notes and action ticks are saved as you go. "Ajouter à mon agenda" downloads an .ics, "Rejoindre la visio" opens the meeting link, "Partager" copies the minutes, "PDF" prints them. "Planifier une réunion" and the edit pencil open a drawer (type, date, time, duration, place, visio link, employees + external guests, agenda).
 
+Interns notes (`app/InternsPage.tsx`, `components/interns/*`):
+- Same layout as Employees: header actions (Départements, Importer ▾ smart import / CV, Exporter, Ajouter un stagiaire), quick-filter stats (en cours, fin ≤ 15 jours, à venir, embauchés), filters (search, service, internship status, internship type) and List / Grid / Kanban views, plus a fourth « Registre » view that keeps the full « ETAT DES STAGIAIRES » table (18 columns, sticky name, inline type and status).
+- List columns: intern + email, mission + school, tutor + department, type, status (chip with an overlaid native select, as in Employees), period (end date, red « N j » chip when it ends within 15 days), actions (onboarding, file, edit, delete). Kanban groups by status / type / period / department with drag-and-drop (period is read-only); empty status / type columns can be shown on demand.
+- The intern's file is a side drawer (`?i=<id>` in the address): Profil, Onboarding (phase stepper, mentor, objectives, checklist by phase with completion dates, Moovwin evaluations with the 5 values), Documents (documents on file, e-signature for generated documents, scans of CIN / convention / NDA / attestation) and Administration (hire on CDI via `/interns/:id/convert`, generate a document, delete). The add / edit form is a drawer with every register field; « Importer un CV » now pre-fills that form instead of creating the intern blindly.
+- Fixed on the way: scanned documents were uploaded with `profile_id` while the list asked for `employee_id`, so they never showed up — they now use `employee_id`. Labels of the stored register values (statuses, types) are translated; the stored values are unchanged. The unused legacy `components/KanbanBoard.tsx` was removed.
+
 Entretiens notes (`app/EntretiensPage.tsx`, `app/InterviewRoomPage.tsx`, `routers/entretiens.py`):
 - **Needs the migration `backend/database/migrations/interviews_scorecard.sql`** (new columns on `rh.interviews`: `meeting_id`, `interviewers`, `scorecard`, `overall_score`, `recommendation`, `summary`, `started_at`, `ended_at`). Until then interviews still list and can be planned; the sheet, start and finish answer 503 and both pages say so.
 - List: interviews by tab (à venir / à évaluer = started or past and not closed / terminés / annulés) with KPIs, the next interview, and the active applications that have no interview yet (« Planifier »). `GET /entretiens/board` adds the candidate, whether a CV exists and the sheet progress.
@@ -255,7 +261,7 @@ Extra rows implied by the README (no 1:1 design file):
 
 | Item | Notes | Status |
 |---|---|---|
-| Interns | `/app/interns`, `app/InternsPage.tsx`: Employees layout, `contract = Stage` preset, school / tutor / end-date columns | ☐ |
+| Interns | `/app/interns`, `app/InternsPage.tsx`: Employees layout, `contract = Stage` preset, school / tutor / end-date columns. See « Interns notes » | ☑ |
 | Entretiens (new screen) | `/app/entretiens` (`app/EntretiensPage.tsx`) + interview room `/app/entretiens/:id` (`app/InterviewRoomPage.tsx`), built in the Wedy visual language (no design file). See « Entretiens notes » | ☑ |
 | Portal Org chart + Meetings tabs | already in `PortalNav`; render the Org chart (read-only, no export) and Meetings designs inside the portal shell | ☐ |
 | Remove legacy bits | `.btn`/`.card`/`.badge`/… legacy classes and legacy `--ink`/`--line` aliases once no page uses them; dark-mode leftovers | ☐ |

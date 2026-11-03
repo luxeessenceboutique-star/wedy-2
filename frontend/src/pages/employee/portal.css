@@ -6,3 +6,4 @@
 .ptl-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
 @media (max-width: 720px) { .ptl-wide { grid-column: auto !important; } }
 .pdoc-dl:hover { background: #e4f2f4 !important; color: #0e6f84 !important; }
+.apl-drop:hover { border-color: #16b6c8 !important; }

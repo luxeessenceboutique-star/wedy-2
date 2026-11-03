@@ -38,8 +38,8 @@ export const promoteToEmployee = (id: string, data: any) =>
   api.patch(`/employees/${id}`, { status: 'active', ...data }).then(r => r.data);
 export const promoteToIntern = (id: string, data: any) =>
   api.patch(`/employees/${id}`, { status: 'intern', ...data }).then(r => r.data);
-export const applyCandidate = (data: { full_name: string, email: string, phone?: string, ad_id?: string, interview_date?: string, interview_time?: string, cv_url?: string }) =>
-  api.post('/candidats/apply', data).then(r => r.data);
+export const applyCandidate = (data: { full_name: string; email: string; phone?: string; linkedin?: string; message?: string; ad_id: string; cv_url?: string; slot_id?: string; interview_time?: string }) =>
+  api.post<{ id: string; interview: { date: string; time: string } | null }>('/candidats/apply', data).then(r => r.data);
 
 export type HRSlot = {
   id: string;

@@ -80,7 +80,6 @@ Recruitment notes (`RecruitmentPage.tsx`, hand-written):
 - Dropping a card saves the stage (`updateEmployee`); dropping on "Embauché" asks for confirmation and promotes the candidate (`promoteToEmployee`, hire date = today). The column lists recent hires (≤ 90 days) still tagged `recruitment_stage = hired`.
 - KPIs are real: open posts = active job posts, active candidates, upcoming interviews, average delay = hire date − application date of recent hires ("—" when none).
 - The previous screen (Tybot SmartDB "candidatures spontanées") is kept, moved to `components/recruitment/SpontaneousApplications.tsx`, opened from the inbox icon button.
-- Note: `/candidats/apply` (used by the public Apply page) does not exist in the backend.
 
 Candidates notes (`CandidatsPage.tsx`):
 - Cards and drawer use the real candidate file: summary = `experience_summary` / `bio` / `notes`, skills + languages, years from `custom_fields.experience_years`. The reference's 4 sub-score bars are derived from the score in the mock (fake), so they are not shown.
@@ -141,6 +140,10 @@ Portal notes (documents, training, profile):
 - Training: current and upcoming enrolments, completed ones, and the company catalog; "Demander" sends an enrolment request to HR through the document-request channel (there is no training-request endpoint). No fake progress percentages.
 - Profile: editable contact fields (saved with `PATCH /portal/me`), locked administrative data (CIN, matricule, CNSS / RIB from `custom_fields`, masked RIB), language switch. Notification toggles and password change are not shown: no settings storage, and passwords are managed by the Tybot account.
 
+Apply notes (`public/PostulerPage.tsx`):
+- New public endpoint `POST /candidats/apply` (it was called by the page but did not exist): validates name/email, checks the post is active, refuses a duplicate application to the same post, creates the candidate with `custom_fields` (`ad_id`, `source = Site carrière`, `recruitment_stage = new`, `cv_url`, `linkedin`), books the chosen free slot as an interview (stage → interview) and notifies HR.
+- The page renders the real post: contract/city chips from its description, the AI-written text split into "Vos missions / Votre profil / Ce que nous offrons" cards, key points. CV upload uses the existing public CV extraction to pre-fill the form and show skills; optional interview slot picker; 09-08 consent; success timeline. The reference's company facts (headcount, % women, remote days) have no public data and are not shown.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -181,7 +184,7 @@ Portal notes (documents, training, profile):
 | 34 | Portal documents | Wedy Portal Documents | `/employee/documents` | `employee/MyDocumentsPage.tsx` | ☑ |
 | 35 | Portal training | Wedy Portal Training | `/employee/formation` | `employee/MyTrainingPage.tsx` | ☑ |
 | 36 | Portal profile | Wedy Portal Profile | `/employee/profil` | `employee/MyProfilePage.tsx` | ☑ |
-| 37 | Apply (careers) | Wedy Apply | `/postuler/:id` | `public/PostulerPage.tsx` | ◐ |
+| 37 | Apply (careers) | Wedy Apply | `/postuler/:id` | `public/PostulerPage.tsx` | ☑ |
 | 38 | Landing | Wedy Landing | `/` | `marketing/LandingPage.tsx` | ◐ |
 
 Extra rows implied by the README (no 1:1 design file):

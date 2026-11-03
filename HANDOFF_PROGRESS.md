@@ -100,6 +100,11 @@ Org chart notes (`OrgChartPage.tsx`):
 - Search dims non-matches and opens collapsed departments, zoom/fit as in the reference, person card with "Voir le dossier" (HR only) and mail. "Exporter" prints an A3 landscape sheet (browser print → PDF).
 - The previous ReactFlow "teams/projects" editor is kept as `components/orgchart/ProjectTeamsBoard.tsx`, opened from the network icon (HR only). The portal route renders the same chart read-only.
 
+Onboarding notes (`EmployeeOnboardingPage.tsx`):
+- Newcomers = active employees hired ≤ 120 days ago or arriving later (pre-boarding), plus anyone with a started onboarding (≤ 1 year). Day J+N comes from `hire_date`.
+- The 30-60-90 tasks are the backend's `plan_30/60/90` (labels from the backend defaults, not the reference's demo list); ticking saves them (`PATCH /employee-onboarding/:id`). Buddy = `buddy_name` (saved on blur, suggestions from employees). The contract button records the signature (`/sign-contract`) — there is no e-signature service, so it says "Marquer le contrat signé".
+- Pulses: `/employee-onboarding/:id/pulse` (score → `satisfaction_score`, week from the day). "Analyse de Wedy" is computed from the real file (pulse average, missing buddy, unsigned contract, late tasks, arrival countdown). KPIs from all newcomers' plans and pulses. "Démarrer un onboarding" creates the plan for a chosen employee.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -123,7 +128,7 @@ Org chart notes (`OrgChartPage.tsx`):
 | 17 | Performance | Wedy Performance | `/app/performance` | `app/PerformancePage.tsx` | ◐ |
 | 18 | Org chart | Wedy Org Chart | `/app/orgchart`, `/employee/orgchart` | `app/OrgChartPage.tsx` | ☑ |
 | 19 | Meetings | Wedy Meetings | `/app/meetings`, `/employee/meetings` | `app/MeetingsPage.tsx` | ◐ |
-| 20 | Onboarding | Wedy Onboarding | `/app/onboarding` | `app/EmployeeOnboardingPage.tsx` | ◐ |
+| 20 | Onboarding | Wedy Onboarding | `/app/onboarding` | `app/EmployeeOnboardingPage.tsx` | ☑ |
 | 21 | Training | Wedy Training | `/app/training` | `app/TrainingPage.tsx` | ◐ |
 | 22 | Talents | Wedy Talents | `/app/talents` | `app/TalentsPage.tsx` | ◐ |
 | 23 | Tenders | Wedy Tenders | `/app/tenders` | `app/TendersPage.tsx` | ◐ |

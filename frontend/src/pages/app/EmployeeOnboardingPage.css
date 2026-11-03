@@ -1,0 +1,4 @@
+/* hover / focus rules of Wedy Onboarding */
+.onb-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.onb-h1:hover { background: #f6fafb !important; }
+.onb-h2:hover { background: #f6f9fa !important; }

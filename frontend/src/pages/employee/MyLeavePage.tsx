@@ -1,187 +1,141 @@
-﻿import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Plus, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import { api, getApiError } from '@/services/api';
-import { Button, Input, Spinner, Modal } from '../../components/ui';
-import { toast } from 'sonner';
-import { format, isValid } from 'date-fns';
-import { useLang } from '../../lib/lang';
+﻿import { useState, type CSSProperties, type FormEvent } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowRight, Baby, Ban, GitBranch, Heart, Send, Sun, Thermometer, Wallet } from 'lucide-react';
+import { api, getLeaveBalance, listHolidays, getApiError } from '@/services/api';
+import { RV } from '@/components/motion';
+import { Spinner } from '@/components/ui';
+import { useLang, type TKey } from '@/lib/lang';
+import { useNotify } from '@/lib/notify';
+import { tf } from '@/lib/format';
+import { FIXED_HOLIDAYS } from '@/lib/holidays';
+import './portal.css';
 
-const getMyLeaves = () => api.get('/portal/me/leaves').then(r => r.data).catch(() => []);
-const submitLeave = (body: any) => api.post('/portal/me/leaves', body).then(r => r.data);
+type Leave = { id: string; type?: string; start_date: string; end_date: string; days?: number; status: string; reason?: string; created_at?: string };
+type Me = { id: string; manager?: string };
+const getMe = () => api.get<Me>('/portal/me').then(r => r.data);
+const getLeaves = () => api.get<Leave[]>('/portal/me/leaves').then(r => r.data).catch(() => []);
+const submitLeave = (body: Record<string, unknown>) => api.post('/portal/me/leaves', body).then(r => r.data);
 
-const safeFormat = (d: any) => {
-  if (!d) return '—';
-  const dt = new Date(d);
-  return isValid(dt) ? format(dt, 'dd/MM/yyyy') : d;
-};
-
-function calcDays(start: string, end: string): number {
-  if (!start || !end) return 0;
-  const s = new Date(start); const e = new Date(end);
-  if (!isValid(s) || !isValid(e) || e < s) return 0;
-  return Math.ceil((e.getTime() - s.getTime()) / 86_400_000) + 1;
-}
+// [type, label key, icon, tint, text]
+const TYPES: [string, TKey, typeof Sun, string, string][] = [
+  ['annual', 'leave_type_annual', Sun, '#e4f2f4', '#0b5f72'], ['sick', 'leave_type_sick', Thermometer, '#fbe9e6', '#a33a28'],
+  ['personal', 'leave_type_personal', Heart, '#ece9fb', '#5444b8'], ['unpaid', 'leave_type_unpaid', Wallet, '#eef2f4', '#33474f'],
+  ['maternity', 'leave_type_maternity', Baby, '#e1f5ec', '#0f6f49'], ['paternity', 'leave_type_paternity', Baby, '#e1f5ec', '#0f6f49'],
+];
+const typeOf = (k?: string) => TYPES.find(x => x[0] === k) ?? TYPES[0];
+const ST: Record<string, [TKey, string, string]> = { pending: ['ptl_st_pending', '#fbefda', '#8a5207'], approved: ['ptl_st_approved', '#e1f5ec', '#0f6f49'], rejected: ['ptl_st_rejected', '#fbe9e6', '#a33a28'], cancelled: ['ptl_st_cancelled', '#eef2f4', '#52646d'] };
+const LOCALE: Record<string, string> = { fr: 'fr-FR', en: 'en-GB', ar: 'ar-MA' };
+const fmtDays = (n: number) => String(Math.round(n * 10) / 10).replace('.', ',');
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const statLabel: CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase' };
+const statValue: CSSProperties = { fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4 };
+const dateInput: CSSProperties = { height: 44, padding: '0 10px', borderRadius: 11, border: '1px solid #d6dfe3', fontFamily: 'inherit', fontSize: 14, fontWeight: 400, color: '#0a1c24', outline: 'none' };
 
 export default function MyLeavePage() {
+  const { t, lang } = useLang();
+  const notify = useNotify();
   const qc = useQueryClient();
-  const { t } = useLang();
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ type: 'annual', start_date: '', end_date: '', reason: '' });
-  const [filter, setFilter] = useState('all');
+  const loc = LOCALE[lang] ?? 'fr-FR';
+  const [type, setType] = useState('annual');
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [motif, setMotif] = useState('');
+  const [year] = useState(() => new Date().getFullYear());
 
-  const LEAVE_TYPES = [
-    { value: 'annual',    label: t('leave_type_annual') },
-    { value: 'sick',      label: t('leave_type_sick') },
-    { value: 'personal',  label: t('leave_type_personal') },
-    { value: 'maternity', label: t('leave_type_maternity') },
-    { value: 'paternity', label: t('leave_type_paternity') },
-    { value: 'unpaid',    label: t('leave_type_unpaid') },
-  ];
+  const { data: me } = useQuery({ queryKey: ['portal-me'], queryFn: getMe, retry: false });
+  const { data: balance } = useQuery({ queryKey: ['leave-balance', me?.id], queryFn: () => getLeaveBalance(me!.id), enabled: !!me?.id });
+  const { data: leaves = [], isLoading } = useQuery({ queryKey: ['portal-leaves'], queryFn: getLeaves });
+  const { data: hol } = useQuery({ queryKey: ['holidays'], queryFn: listHolidays, retry: false });
 
-  const STATUS_META: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-    pending:  { label: t('leave_pending'),  color: 'var(--warn)', bg: 'var(--warn-soft)', icon: <Clock size={13} /> },
-    approved: { label: t('leave_approved'), color: 'var(--success)', bg: 'var(--success-soft)', icon: <CheckCircle size={13} /> },
-    rejected: { label: t('leave_rejected'), color: 'var(--danger)', bg: '#fef2f2', icon: <AlertCircle size={13} /> },
+  const holidaySet = new Set([...(hol?.data ?? []).map(h => h.date.slice(0, 10))]);
+  const isHoliday = (d: Date) => holidaySet.has(iso(d)) || FIXED_HOLIDAYS.some(h => iso(d).slice(5) === h.md);
+  const workingDays = (a: string, b: string) => {
+    if (!a || !b || b < a) return 0;
+    let n = 0;
+    for (let d = new Date(`${a}T00:00:00`); iso(d) <= b; d.setDate(d.getDate() + 1)) { const w = d.getDay(); if (w !== 0 && w !== 6 && !isHoliday(d)) n++; }
+    return n;
   };
+  const daysOf = (l: Leave) => l.days ?? workingDays(l.start_date.slice(0, 10), l.end_date.slice(0, 10));
 
-  const { data: leaves = [], isLoading } = useQuery({
-    queryKey: ['portal-leaves'], queryFn: getMyLeaves, retry: false,
+  const b = balance as unknown as { annual_total?: number; annual_used?: number } | undefined;
+  const avail = b ? Math.max(0, (b.annual_total ?? 0) - (b.annual_used ?? 0)) : null;
+  const pending = leaves.filter(l => l.status === 'pending' && (l.type ?? 'annual') === 'annual').reduce((s, l) => s + daysOf(l), 0);
+  const taken = leaves.filter(l => l.status === 'approved' && l.start_date.startsWith(String(year))).reduce((s, l) => s + daysOf(l), 0);
+  const days = workingDays(start, end);
+  const after = avail === null ? null : avail - pending - (type === 'annual' ? days : 0);
+  const over = type === 'annual' && avail !== null && days > 0 && after !== null && after < 0;
+
+  const mut = useMutation({
+    mutationFn: () => submitLeave({ type, start_date: start, end_date: end, reason: motif.trim() || undefined, days }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['portal-leaves'] }); qc.invalidateQueries({ queryKey: ['portal-stats'] }); notify.success(tf(t('pleave_sent'), { n: days })); setStart(''); setEnd(''); setMotif(''); },
+    onError: e => notify.error(getApiError(e, t('error'))),
   });
-
-  const submitMut = useMutation({
-    mutationFn: () => submitLeave({ ...form, days: calcDays(form.start_date, form.end_date) }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['portal-leaves'] });
-      qc.invalidateQueries({ queryKey: ['portal-stats'] });
-      setShowForm(false);
-      setForm({ type: 'annual', start_date: '', end_date: '', reason: '' });
-      toast.success(t('myleave_success'));
-    },
-    onError: (e: any) => toast.error(getApiError(e, t('error'))),
-  });
-
-  const filtered = filter === 'all' ? (leaves as any[]) : (leaves as any[]).filter((l: any) => l.status === filter);
-  const days = calcDays(form.start_date, form.end_date);
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!start || !end) { notify.error(t('pleave_pick_dates')); return; }
+    if (end < start) { notify.error(t('pleave_bad_range')); return; }
+    if (!days) { notify.error(t('pleave_no_workday')); return; }
+    mut.mutate();
+  };
+  const sorted = [...leaves].sort((a, c) => c.start_date.localeCompare(a.start_date));
+  const range = (l: Leave) => `${new Date(l.start_date).toLocaleDateString(loc, { day: 'numeric', month: 'short' })} → ${new Date(l.end_date).toLocaleDateString(loc, { day: 'numeric', month: 'short', year: 'numeric' })}`;
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 780, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>{t('myleave_title')}</h1>
-          <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>{t('myleave_subtitle')}</p>
-        </div>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus size={14} /> {t('myleave_request_btn')}
-        </Button>
+    <div style={{ maxWidth: 1180, margin: '0 auto', padding: '26px 24px 56px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div>
+        <RV as="h1" variant="up" style={{ margin: 0, fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 'clamp(28px,3vw,38px)', letterSpacing: '-.045em', lineHeight: 1.05 }}>{t('pleave_title')}</RV>
+        <RV as="p" variant="up" delay={60} style={{ margin: '8px 0 0', fontSize: 15, color: '#52646d' }}>{t('pleave_subtitle')}</RV>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12 }}>
+        <RV as="div" variant="up" delay={60} style={{ padding: '16px 18px', borderRadius: 18, background: 'linear-gradient(135deg,#0b5f72,#0e7f96)', color: '#ffffff' }}><div style={{ ...statLabel, opacity: 0.9 }}>{t('pleave_k_avail')}</div><div style={statValue}>{avail === null ? '—' : `${fmtDays(avail)} j`}</div></RV>
+        <RV as="div" variant="up" delay={110} style={{ padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}><div style={{ ...statLabel, color: '#5f7079' }}>{t('pleave_k_pending')}</div><div style={statValue}>{fmtDays(pending)} j</div></RV>
+        <RV as="div" variant="up" delay={160} style={{ padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}><div style={{ ...statLabel, color: '#5f7079' }}>{t('pleave_k_after')}</div><div style={{ ...statValue, color: after !== null && after < 0 ? '#a33a28' : '#0b5f72' }}>{after === null ? '—' : `${fmtDays(after)} j`}</div></RV>
+        <RV as="div" variant="up" delay={210} style={{ padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}><div style={{ ...statLabel, color: '#5f7079' }}>{tf(t('pleave_k_taken'), { year })}</div><div style={statValue}>{fmtDays(taken)} j</div></RV>
       </div>
 
-      {/* Filter tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {[
-          { id: 'all',      label: `${t('myleave_filter_all')} (${(leaves as any[]).length})` },
-          { id: 'pending',  label: `${t('leave_pending')} (${(leaves as any[]).filter((l: any) => l.status === 'pending').length})` },
-          { id: 'approved', label: t('myleave_filter_approved') },
-          { id: 'rejected', label: t('myleave_filter_rejected') },
-        ].map(f => (
-          <button key={f.id} onClick={() => setFilter(f.id)}
-            style={{ padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              border: '1px solid var(--line)',
-              background: filter === f.id ? 'var(--primary)' : 'transparent',
-              color: filter === f.id ? '#fff' : 'var(--fg)' }}>
-            {f.label}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
+        <RV as="form" variant="up" delay={100} onSubmit={submit} style={{ flex: '1 1 380px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14, padding: 22, borderRadius: 22, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+          <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 18 }}>{t('pleave_new')}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 6 }}>
+            {TYPES.map(([k, label, Icon]) => {
+              const on = type === k;
+              return <button key={k} type="button" onClick={() => setType(k)} style={{ display: 'flex', alignItems: 'center', gap: 8, height: 44, padding: '0 12px', borderRadius: 12, border: `1px solid ${on ? '#16b6c8' : '#d6dfe3'}`, background: on ? '#e4f2f4' : '#ffffff', color: on ? '#0b5f72' : '#33474f', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', textAlign: 'start' }}><Icon size={15} />{t(label)}</button>;
+            })}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 10 }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>{t('pleave_from')}<input type="date" value={start} onChange={e => { setStart(e.target.value); if (!end || end < e.target.value) setEnd(e.target.value); }} style={dateInput} className="ptl-f1" /></label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>{t('pleave_to')}<input type="date" value={end} min={start || undefined} onChange={e => setEnd(e.target.value)} style={dateInput} className="ptl-f1" /></label>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, background: over ? '#fbe9e6' : '#f3fafb' }}>
+            <span style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontSize: 28, fontWeight: 800, color: over ? '#a33a28' : '#0e6f84' }}>{days}</span>
+            <span style={{ fontSize: 13, lineHeight: 1.45, color: '#33474f' }}>{!start || !end ? t('pleave_calc_empty') : over ? tf(t('pleave_calc_over'), { n: fmtDays(-(after ?? 0)) }) : type === 'annual' && after !== null ? tf(t('pleave_calc_left'), { n: fmtDays(after) }) : t('pleave_calc_plain')}</span>
+          </div>
+          <textarea value={motif} onChange={e => setMotif(e.target.value)} rows={2} placeholder={t('pleave_motif_ph')} style={{ resize: 'vertical', padding: '10px 12px', borderRadius: 11, border: '1px solid #d6dfe3', fontFamily: 'inherit', fontSize: 14, color: '#0a1c24', outline: 'none' }} className="ptl-f1" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#52646d', flexWrap: 'wrap' }}>
+            <GitBranch size={14} />{t('pleave_validation')} {me?.manager && <><strong style={{ color: '#0a1c24' }}>{me.manager}</strong><ArrowRight size={12} className="wy-flip" /></>}<strong style={{ color: '#0a1c24' }}>{t('pleave_hr')}</strong>
+          </div>
+          <button type="submit" disabled={mut.isPending} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, border: 'none', borderRadius: 13, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 14px 30px -14px rgba(22,182,200,.85)' }}>
+            {mut.isPending ? <Spinner size={16} color="#fff" /> : <Send size={16} />}{t('pleave_send')}
           </button>
-        ))}
-      </div>
+        </RV>
 
-      {/* List */}
-      {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
-      ) : filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
-          <Calendar size={40} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
-          <p style={{ fontWeight: 500 }}>{t('myleave_empty')}</p>
-          <Button onClick={() => setShowForm(true)} style={{ marginTop: 8 }}>
-            <Plus size={13} /> {t('myleave_request_btn')}
-          </Button>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {filtered.map((l: any) => {
-            const sm = STATUS_META[l.status] ?? STATUS_META.pending;
-            const typeLabel = LEAVE_TYPES.find(tp => tp.value === l.type)?.label ?? l.type;
+        <RV as="div" variant="up" delay={140} style={{ flex: '1.2 1 420px', minWidth: 0, borderRadius: 20, background: '#ffffff', border: '1px solid #e2e8eb', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16 }}>{t('pleave_history')}</div>
+          {isLoading && <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}><Spinner /></div>}
+          {!isLoading && !sorted.length && <div style={{ padding: '20px', borderTop: '1px solid #eef2f4', fontSize: 13.5, color: '#52646d', textAlign: 'center' }}>{t('pleave_none')}</div>}
+          {sorted.map(l => {
+            const ty = typeOf(l.type), st = ST[l.status] ?? ST.pending, Icon = ty[2] ?? Ban;
             return (
-              <div key={l.id} style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '14px 18px', border: '1px solid var(--line)',
-                borderLeft: `4px solid ${sm.color}`,
-                borderRadius: 12, background: 'var(--surface)',
-              }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14 }}>{typeLabel}</span>
-                    {l.reason && <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>· {l.reason}</span>}
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-2)', display: 'flex', gap: 16 }}>
-                    <span><Calendar size={11} /> {safeFormat(l.start_date)} → {safeFormat(l.end_date)}</span>
-                    <span><strong>{l.days}</strong> {t('myleave_days')}</span>
-                    <span>{t('myleave_submitted_on')} {safeFormat(l.created_at)}</span>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px',
-                  borderRadius: 20, background: sm.bg, color: sm.color, fontWeight: 700, fontSize: 12 }}>
-                  {sm.icon}
-                  <span>{sm.label}</span>
-                </div>
-              </div>
+              <RV key={l.id} as="div" variant="up" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderTop: '1px solid #eef2f4', flexWrap: 'wrap' }}>
+                <span style={{ width: 38, height: 38, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: ty[3], color: ty[4], flexShrink: 0 }}><Icon size={17} /></span>
+                <div style={{ flex: 1, minWidth: 160 }}><div style={{ fontSize: 14, fontWeight: 600 }}>{t(ty[1])}</div><div style={{ fontSize: 12.5, color: '#5f7079' }}>{range(l)}</div></div>
+                <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12.5, color: '#33474f' }}>{fmtDays(daysOf(l))} j</span>
+                <span style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: st[1], color: st[2] }}>{t(st[0])}</span>
+              </RV>
             );
           })}
-        </div>
-      )}
-
-      {/* Modal */}
-      <Modal open={showForm} onClose={() => setShowForm(false)} title={t('myleave_modal_title')} width={480}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <label className="label">{t('myleave_type_label')}</label>
-            <select className="input" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
-              {LEAVE_TYPES.map(tp => <option key={tp.value} value={tp.value}>{tp.label}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label className="label">{t('myleave_start_label')} *</label>
-              <input type="date" className="input" value={form.start_date}
-                onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} required />
-            </div>
-            <div>
-              <label className="label">{t('myleave_end_label')} *</label>
-              <input type="date" className="input" value={form.end_date}
-                onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} required />
-            </div>
-          </div>
-          {days > 0 && (
-            <div style={{ padding: '8px 12px', background: 'var(--primary-soft)', borderRadius: 8, fontSize: 13, color: 'var(--primary)', fontWeight: 600 }}>
-              {t('myleave_duration_tpl').replace('{days}', String(days))}
-            </div>
-          )}
-          <div>
-            <label className="label">{t('myleave_reason_label')}</label>
-            <textarea className="input" rows={2} style={{ resize: 'none', padding: '8px 12px' }}
-              value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
-              placeholder={t('myleave_reason_ph')} />
-          </div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
-            <Button variant="ghost" onClick={() => setShowForm(false)}>{t('cancel')}</Button>
-            <Button
-              onClick={() => submitMut.mutate()}
-              loading={submitMut.isPending}
-              disabled={!form.start_date || !form.end_date || days <= 0}>
-              {t('myleave_submit_btn')}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        </RV>
+      </div>
     </div>
   );
 }

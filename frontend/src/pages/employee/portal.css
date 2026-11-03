@@ -1,0 +1,7 @@
+/* hover rules shared by the employee portal screens */
+.ptl-hw:hover { color: #ffffff !important; }
+.ptl-hg:hover { color: #ffffff !important; background: rgba(255,255,255,.14) !important; }
+.ptl-card:hover { color: #0a1c24 !important; border-color: #b9dfe5 !important; transform: translateY(-2px) !important; }
+.ptl-violet:hover { color: #ffffff !important; box-shadow: 0 20px 40px -22px rgba(84,68,184,.8) !important; }
+.ptl-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+@media (max-width: 720px) { .ptl-wide { grid-column: auto !important; } }

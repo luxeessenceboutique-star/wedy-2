@@ -1,0 +1,7 @@
+/* hover / focus rules of Wedy Planning */
+.pl-h1:hover { border-color: #9fb4bb !important; }
+.pl-h2:hover { color: #ffffff !important; }
+.pl-h3:hover { color: #b8402c !important; }
+.pl-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.pl-nav { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #e2e8eb; background: #ffffff; color: #52646d; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.pl-nav:hover { border-color: #9fb4bb; color: #0a1c24; }

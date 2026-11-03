@@ -380,3 +380,6 @@ a.wy-stat--kpi:hover, button.wy-stat--kpi:hover { border: none; box-shadow: 0 18
 /* sonner: drop its default icon box so the 28px bubble sets the size */
 .wy-toast [data-icon] { width: auto; height: auto; margin: 0; display: flex; }
 .wy-toast [data-content] { flex: 1; min-width: 0; }
+
+/* directional icons (chevrons, arrows) mirror in Arabic */
+[dir="rtl"] .wy-flip { transform: scaleX(-1); }

@@ -70,6 +70,11 @@ Templates notes (`TemplatesPage.tsx` + `TemplatesView.tsx`, generated from `Wedy
 - Letterhead shows `user.profile.company` (fallback "Votre entreprise"), not the reference's hard-coded Tython SARL.
 - `scripts/dedupe-i18n.mjs` removes earlier duplicates after re-running `apply-i18n.mjs` (it appends).
 
+Planning notes (`PlanningRHPage.tsx`, hand-written against the reference):
+- The week grid shows the real interviews (`/entretiens`), colored by type (RH / technique / final / réalisé); week navigation added (the reference shows one fixed week). Fixed-date Moroccan public holidays come from `lib/holidays.ts` (religious holidays are lunar and not listed).
+- The reference's onboardings / trainings / meetings have no dated backend data, so they are not invented on the grid. The "Synchronisé avec Google Calendar" pill was dropped: there is no calendar sync.
+- "Nouvel événement" became "Planifier un entretien" (drawer → `scheduleInterview`); the dark card can mark an interview done (`updateInterviewStatus`). Free slots are the real `/creneaux` of the week; "Gérer les créneaux" opens the existing slots manager in a drawer. "Note du jour" reads/writes `/planning-notes`. The old month calendar (`CalendrierRHPage.tsx`, `PlanningDayNotes.tsx`) was removed.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -85,7 +90,7 @@ Templates notes (`TemplatesPage.tsx` + `TemplatesView.tsx`, generated from `Wedy
 | 9 | History | Wedy History | `/app/history` | `app/HistoryPage.tsx` | ◐ |
 | 10 | Time off | Wedy Time Off | `/app/timeoff` | `app/TimeOffPage.tsx` | ◐ |
 | 11 | Absences | Wedy Absences | `/app/absences` | `app/AbsencesPage.tsx` | ◐ |
-| 12 | Planning | Wedy Planning | `/app/planning-rh` | `app/PlanningRHPage.tsx` + `PlanningDayNotes.tsx` | ◐ |
+| 12 | Planning | Wedy Planning | `/app/planning-rh` | `app/PlanningRHPage.tsx` (+ `CreneauxRHPage.tsx` in a drawer) | ☑ |
 | 13 | Recruitment | Wedy Recruitment | `/app/recruitment` | `app/RecruitmentPage.tsx` | ◐ |
 | 14 | Candidates | Wedy Candidates | `/app/candidats` | `app/CandidatsPage.tsx` | ◐ |
 | 15 | Job posts | Wedy Job Posts | `/app/annonces` | `app/AnnoncesPage.tsx` + `AnnonceStudioPage.tsx` | ◐ |

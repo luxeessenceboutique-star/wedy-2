@@ -139,6 +139,9 @@ def _schema_drift_detail(exc: Exception) -> str | None:
         return (f"La colonne « {col} » manque dans la table {table} de Supabase. "
                 + (f"Exécutez la migration backend/database/migrations/{mig} dans l'éditeur SQL de Supabase." if mig
                    else "Une migration de la base n'a pas été exécutée."))
+    if code == "23503" and "interviews_candidate_id_fkey" in msg:
+        return ("La table interviews est encore reliée à « profiles » au lieu des candidats (employees). "
+                "Exécutez la migration backend/database/migrations/interviews_candidate_fk.sql dans l'éditeur SQL de Supabase.")
     t = _re.search(r"Could not find the table '(?:[^'.]+\.)?([^']+)'", msg)
     if code == "PGRST205" or t:
         name = t.group(1) if t else '?'

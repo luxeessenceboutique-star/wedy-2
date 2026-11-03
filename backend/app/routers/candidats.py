@@ -98,11 +98,15 @@ def apply_public(body: PublicApplication, db: Client = Depends(get_db)):
         slot = (db.table("hr_slots").select("*").eq("id", str(body.slot_id)).limit(1).execute().data or [None])[0]
         if slot and slot.get("status") == "free":
             start = (body.interview_time or slot.get("start_time") or "")[:5]
-            iv = entretien_repository.create_interview(db, {
-                "candidate_id": cand["id"], "date": slot["date"], "start_time": start, "end_time": (slot.get("end_time") or start)[:5],
-                "type": "rh", "status": "confirmed",
-            })
-            if iv.data:
+            try:
+                iv = entretien_repository.create_interview(db, {
+                    "candidate_id": cand["id"], "date": slot["date"], "start_time": start, "end_time": (slot.get("end_time") or start)[:5],
+                    "type": "rh", "status": "confirmed",
+                })
+            except Exception as e:  # the application is saved anyway; HR plans the interview by hand
+                print(f"[apply] interview booking failed for {cand['id']}: {e}")
+                iv = None
+            if iv is not None and iv.data:
                 entretien_repository.reserve_slot(db, str(body.slot_id), iv.data[0]["id"])
                 booked = {"date": slot["date"], "time": start}
                 custom["recruitment_stage"] = "interview"

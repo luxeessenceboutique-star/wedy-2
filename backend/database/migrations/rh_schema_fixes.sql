@@ -54,6 +54,11 @@ CREATE TABLE IF NOT EXISTS rh.import_logs (
 );
 CREATE INDEX IF NOT EXISTS idx_import_logs_created_at ON rh.import_logs (created_at DESC);
 
+-- interviews.candidate_id must point to employees (candidates are employees rows), not profiles.
+ALTER TABLE rh.interviews DROP CONSTRAINT IF EXISTS interviews_candidate_id_fkey;
+ALTER TABLE rh.interviews
+  ADD CONSTRAINT interviews_candidate_id_fkey FOREIGN KEY (candidate_id) REFERENCES rh.employees(id) ON DELETE CASCADE NOT VALID;
+
 -- the API uses the service role, which bypasses RLS
 ALTER TABLE rh.intern_onboarding  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rh.intern_evaluations ENABLE ROW LEVEL SECURITY;

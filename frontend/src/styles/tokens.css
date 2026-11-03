@@ -148,6 +148,17 @@
 .wedy-scan { animation: wedy-scan var(--dur, 1.3s) ease-in-out var(--delay, 0s) infinite; }
 .wedy-shimmer { animation: wedy-shimmer var(--dur, 7s) linear var(--delay, 0s) infinite; }
 
+/* Landing loops: second float, marquees (content is duplicated, so -50% loops seamlessly), caret blink */
+@keyframes wedy-float2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
+@keyframes wedy-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes wedy-marquee-y { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+@keyframes wedy-blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+.wedy-float2 { animation: wedy-float2 var(--dur, 7.8s) ease-in-out var(--delay, 0s) infinite; }
+.wedy-marquee { animation: wedy-marquee var(--dur, 60s) linear var(--delay, 0s) infinite; }
+.wedy-marquee-rev { animation: wedy-marquee var(--dur, 60s) linear var(--delay, 0s) infinite reverse; }
+.wedy-marquee-y { animation: wedy-marquee-y var(--dur, 28s) linear var(--delay, 0s) infinite; }
+.wedy-blink { animation: wedy-blink var(--dur, 1s) linear var(--delay, 0s) infinite; }
+
 /* Reduced motion: no animation or transition anywhere. The spinner is the one exception,
    it is the only signal that something is loading. */
 @media (prefers-reduced-motion: reduce) {

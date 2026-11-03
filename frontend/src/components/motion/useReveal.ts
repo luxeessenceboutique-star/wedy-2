@@ -1,7 +1,16 @@
-import { useEffect, useRef } from 'react';
+import { createContext, useContext, useEffect, useRef } from 'react';
 import { observeOnce, prefersReducedMotion } from '@/lib/inView';
 
-export type RevealVariant = 'up' | 'down' | 'fade' | 'left' | 'right' | 'scale' | 'pill' | 'growx' | 'growy' | 'draw' | 'word';
+export type RevealVariant = 'up' | 'down' | 'fade' | 'left' | 'right' | 'scale' | 'pill' | 'growx' | 'growy' | 'draw' | 'word' | 'blur' | 'pop';
+
+/** Page-wide defaults for reveals below a provider (the landing reference travels 30px over 900ms). */
+export interface RevealTuning {
+  distance?: number;
+  durations?: Partial<Record<RevealVariant, number>>;
+  threshold?: number;
+  rootMargin?: string;
+}
+export const RevealTuningContext = createContext<RevealTuning>({});
 
 export interface RevealOptions {
   /** ms, capped at 900 like wedy-fx.js */
@@ -24,7 +33,7 @@ export interface RevealOptions {
 export const EASE = 'cubic-bezier(.2,.8,.2,1)';
 
 const DURATION: Record<RevealVariant, number> = {
-  up: 620, down: 620, fade: 620, left: 620, right: 620, scale: 620, pill: 300, growx: 1000, growy: 1000, draw: 1300, word: 620,
+  up: 620, down: 620, fade: 620, left: 620, right: 620, scale: 620, pill: 300, growx: 1000, growy: 1000, draw: 1300, word: 620, blur: 620, pop: 650,
 };
 
 // The individual `translate` / `scale` properties are used (not `transform`) so a hover
@@ -41,6 +50,8 @@ function keyframes(el: Element, variant: RevealVariant, o: RevealOptions, rtl: b
     case 'growx': return [{ scale: '0 1' }, { scale: '1 1' }];
     case 'growy': return [{ scale: '1 0' }, { scale: '1 1' }];
     case 'word': return [{ opacity: 0, filter: 'blur(10px)', translate: '0 40%' }, { opacity: 1, filter: 'blur(0px)', translate: '0 0' }];
+    case 'blur': return [{ opacity: 0, filter: 'blur(16px)', translate: '0 40px' }, { opacity: 1, filter: 'blur(0px)', translate: '0 0' }];
+    case 'pop': return [{ opacity: 0, scale: '0.4' }, { opacity: 1, scale: '1.08', offset: 0.7 }, { opacity: 1, scale: '1' }];
     case 'draw': {
       const frac = o.frac ?? 1;
       let len = 0;
@@ -59,7 +70,10 @@ function keyframes(el: Element, variant: RevealVariant, o: RevealOptions, rtl: b
  */
 export function useReveal<T extends Element = HTMLElement>(variant: RevealVariant = 'up', opts: RevealOptions = {}) {
   const ref = useRef<T>(null);
-  const { delay = 0, duration, frac = 1, disabled = false, distance, easing = EASE, scaleFrom, maxDelay = 900 } = opts;
+  const tune = useContext(RevealTuningContext);
+  const { delay = 0, frac = 1, disabled = false, easing = EASE, scaleFrom, maxDelay = 900 } = opts;
+  const duration = opts.duration ?? tune.durations?.[variant];
+  const distance = opts.distance ?? tune.distance;
 
   useEffect(() => {
     const el = ref.current;
@@ -75,9 +89,9 @@ export function useReveal<T extends Element = HTMLElement>(variant: RevealVarian
     anim.pause();
     anim.onfinish = () => { try { anim.cancel(); } catch { /* already cancelled */ } };
 
-    const stop = observeOnce(el, () => anim.play(), () => anim.finish());
+    const stop = observeOnce(el, () => anim.play(), () => anim.finish(), { threshold: tune.threshold, rootMargin: tune.rootMargin });
     return () => { stop(); try { anim.cancel(); } catch { /* already cancelled */ } };
-  }, [variant, delay, duration, frac, disabled, distance, easing, scaleFrom, maxDelay]);
+  }, [variant, delay, duration, frac, disabled, distance, easing, scaleFrom, maxDelay, tune.threshold, tune.rootMargin]);
 
   return ref;
 }

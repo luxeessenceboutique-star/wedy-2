@@ -1,0 +1,12 @@
+/* hover / focus rules of Wedy Landing (style-hover / style-focus) */
+.lnd-h1:hover { background: rgba(255,255,255,.07) !important; color: #ffffff !important; }
+.lnd-h2:hover { color: #ffffff !important; }
+.lnd-h3:hover { color: #06141a !important; box-shadow: 0 0 0 4px rgba(39,192,212,.25),0 10px 30px -6px rgba(39,192,212,.6) !important; }
+.lnd-h4:hover { color: #ffffff !important; border-color: rgba(95,227,240,.45) !important; background: rgba(39,192,212,.08) !important; }
+.lnd-h5:hover { color: #ffffff !important; box-shadow: inset 0 0 0 1px rgba(95,227,240,.6),0 24px 54px -10px rgba(22,182,200,.9) !important; }
+.lnd-h6:hover { color: #ffffff !important; background: rgba(255,255,255,.1) !important; }
+.lnd-h7:hover { border-color: #b9dfe5 !important; box-shadow: 0 14px 30px -18px rgba(10,28,36,.3) !important; }
+.lnd-h8:hover { box-shadow: 0 40px 80px -40px rgba(10,28,36,.32) !important; }
+.lnd-h9:hover { border-color: rgba(95,227,240,.35) !important; background: rgba(39,192,212,.06) !important; }
+.lnd-h10:hover { color: #0a1c24 !important; background: #f3f6f7 !important; border-color: #b3c1c7 !important; }
+.lnd-h11:hover { color: #ffffff !important; background: #16323c !important; }

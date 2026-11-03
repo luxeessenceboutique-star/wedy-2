@@ -43,7 +43,8 @@ for (const l of ['fr', 'en', 'ar']) {
   let s = fs.readFileSync(file, 'utf8');
   const clash = Object.keys(rows[l]).filter(k => new RegExp(`(^|[\s,{])${k}\s*:`).test(s));
   if (clash.length) throw new Error(`${l}.ts already defines: ${clash.slice(0, 8).join(', ')}`);
-  const block = `    // ${label}\n` + Object.entries(rows[l]).map(([k, v]) => `    ${k}: ${q(v)},`).join('\n') + '\n';
+  const eol = s.includes('\r\n') ? '\r\n' : '\n'; // keep the file's line endings
+  const block = `    // ${label}${eol}` + Object.entries(rows[l]).map(([k, v]) => `    ${k}: ${q(v)},`).join(eol) + eol;
   const end = s.lastIndexOf('} as const;');
   fs.writeFileSync(file, s.slice(0, end) + block + s.slice(end));
 }

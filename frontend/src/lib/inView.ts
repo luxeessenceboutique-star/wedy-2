@@ -5,10 +5,15 @@
 type Handlers = { onEnter: () => void; onPassed: () => void };
 
 const handlers = new WeakMap<Element, Handlers>();
-let observer: IntersectionObserver | null = null;
+const observers = new Map<string, IntersectionObserver>();
 
-function getObserver(): IntersectionObserver {
-  if (observer) return observer;
+/** Observer settings; the default matches wedy-fx.js, the landing reference uses `{ threshold: .12, rootMargin: '0px 0px -6% 0px' }`. */
+export type ObserveOptions = { threshold?: number; rootMargin?: string };
+
+function getObserver({ threshold = 0.05, rootMargin = '0px' }: ObserveOptions = {}): IntersectionObserver {
+  const key = `${threshold}|${rootMargin}`;
+  const known = observers.get(key);
+  if (known) return known;
   const io = new IntersectionObserver(entries => {
     for (const e of entries) {
       if (!e.isIntersecting && e.boundingClientRect.bottom >= 0) continue; // below the fold, not reached yet
@@ -18,8 +23,8 @@ function getObserver(): IntersectionObserver {
       if (!h) continue;
       if (e.isIntersecting) h.onEnter(); else h.onPassed();
     }
-  }, { threshold: 0.05 });
-  observer = io;
+  }, { threshold, rootMargin });
+  observers.set(key, io);
   return io;
 }
 
@@ -28,9 +33,9 @@ export function prefersReducedMotion(): boolean {
 }
 
 /** Calls `onEnter` once when the element becomes visible (or `onPassed` if it is already above the viewport). Returns a cleanup. */
-export function observeOnce(el: Element, onEnter: () => void, onPassed: () => void = onEnter): () => void {
+export function observeOnce(el: Element, onEnter: () => void, onPassed: () => void = onEnter, opts?: ObserveOptions): () => void {
   if (typeof IntersectionObserver === 'undefined') { onPassed(); return () => {}; }
-  const io = getObserver();
+  const io = getObserver(opts);
   handlers.set(el, { onEnter, onPassed });
   io.observe(el);
   return () => { handlers.delete(el); io.unobserve(el); };

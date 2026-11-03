@@ -199,7 +199,7 @@ function iconComponent(name) {
   return null;
 }
 
-const LOOPS = { drift: 'wedy-drift', ping: 'wedy-ping', shine: 'wedy-shine', float: 'wedy-float', spin: 'wedy-spin', 'spin-slow': 'wedy-spin-slow', 'spin-rev': 'wedy-spin-rev', pulse: 'wedy-pulse', dot: 'wedy-dot', shimmer: 'wedy-shimmer', scan: 'wedy-scan' };
+const LOOPS = { drift: 'wedy-drift', ping: 'wedy-ping', shine: 'wedy-shine', float: 'wedy-float', spin: 'wedy-spin', 'spin-slow': 'wedy-spin-slow', 'spin-rev': 'wedy-spin-rev', pulse: 'wedy-pulse', dot: 'wedy-dot', shimmer: 'wedy-shimmer', scan: 'wedy-scan', float2: 'wedy-float2', marquee: 'wedy-marquee', 'marquee-rev': 'wedy-marquee-rev', 'marquee-y': 'wedy-marquee-y', blink: 'wedy-blink' };
 const BOOL = new Set(['noValidate', 'disabled', 'required', 'checked', 'multiple', 'readOnly', 'autoFocus', 'hidden', 'selected', 'draggable']);
 const ATTR_RENAME = { class: 'className', for: 'htmlFor', tabindex: 'tabIndex', readonly: 'readOnly', maxlength: 'maxLength', colspan: 'colSpan', autocomplete: 'autoComplete', novalidate: 'noValidate', inputmode: 'inputMode', autofocus: 'autoFocus', contenteditable: 'contentEditable', spellcheck: 'spellCheck' };
 const CONSUMED = /^(data-(reveal|delay|dur|frac|loop|count|icon|size|sw)|hint-.*|style-hover|style-focus|style|ref)$/;

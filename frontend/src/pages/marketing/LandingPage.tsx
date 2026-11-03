@@ -1,159 +1,129 @@
-﻿import React from 'react';
-import { Link } from 'react-router-dom';
-import { Sparkles, FileText, Users, Shield, Globe, Zap, Bot, BarChart3, ArrowRight, Check } from 'lucide-react';
-import { WedyLogo } from '../../components/WedyLogo';
+﻿import { useEffect, useRef, useState } from 'react';
+import { RevealTuningContext, type RevealTuning } from '@/components/motion';
+import { useLang, type TKey } from '@/lib/lang';
+import { LandingView } from './LandingView';
+import { reducedMotion, startLandingEngine } from './landingEngine';
+import './landing.css';
 
-const FEATURES = [
-  { icon: <Bot size={20} />, title: 'Claude AI-Powered', desc: 'Generate, enhance, and translate HR documents with state-of-the-art AI.' },
-  { icon: <FileText size={20} />, title: 'Document Generation', desc: 'Create contracts, attestations, and letters in seconds from employee data.' },
-  { icon: <Globe size={20} />, title: 'Trilingual', desc: 'Full support for French, Arabic (RTL), and English in all documents.' },
-  { icon: <Shield size={20} />, title: 'Moroccan Labor Law', desc: 'Templates built for compliance with Moroccan labor regulations.' },
-  { icon: <Users size={20} />, title: 'Employee Management', desc: 'Centralize employee records, contracts, and history in one place.' },
-  { icon: <BarChart3 size={20} />, title: 'HR Analytics', desc: 'Dashboards and insights to optimize your HR operations.' },
-];
+/** Same prompts as the user bubbles in the chat demo: typed into the input, then "sent". */
+const PROMPT_KEYS: TKey[] = ['lnd_draft_a_work_certificate_for', 'lnd_what_s_the_legal_notice_period', 'lnd_which_departments_had_the_most'];
+const HOLD = 5200;
+// The reference's reveals travel 30px over 900ms (draw 1.8s, grow 1.1s, pop 650ms) and start once 12% is in view.
+const TUNING: RevealTuning = { threshold: 0.12, rootMargin: '0px 0px -6% 0px', distance: 30, durations: { up: 900, down: 900, left: 900, right: 900, fade: 900, scale: 900, word: 900, blur: 900, growx: 1100, growy: 1100, draw: 1800 } };
 
-const PRICING = [
-  { name: 'Starter', price: '199', period: 'MAD/mo', features: ['Up to 25 employees', '50 documents/month', 'FR + AR languages', 'Email support'] },
-  { name: 'Professional', price: '499', period: 'MAD/mo', features: ['Up to 100 employees', 'Unlimited documents', 'All languages + AI', 'Priority support', 'Custom templates'], highlight: true },
-  { name: 'Enterprise', price: 'Custom', period: '', features: ['Unlimited everything', 'SAML SSO', 'Dedicated support', 'SLA guarantee', 'Custom integrations'] },
-];
+export type LandingVals = {
+  s0: boolean; s1: boolean; s2: boolean;
+  u0: boolean; u1: boolean; u2: boolean;
+  a0: boolean; a1: boolean; a2: boolean;
+  typing: boolean;
+  showPh: boolean;
+  pick0: () => void; pick1: () => void; pick2: () => void;
+};
+
+type Chat = { scen: number; phase: 0 | 1 | 2; run: number; total: number };
+type Runner = { pick: (i: number) => void };
 
 export default function LandingPage() {
+  const { t } = useLang();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLSpanElement>(null);
+  const inputBoxRef = useRef<HTMLDivElement>(null);
+  const promptsRef = useRef<string[]>([]);
+  const runnerRef = useRef<Runner | null>(null);
+  const [chat, setChat] = useState<Chat>({ scen: 0, phase: 2, run: 0, total: 0 });
+  // A click on a scenario is handed to the runner (which lives in the effect) through state.
+  const [picked, setPicked] = useState<{ i: number; n: number } | null>(null);
+
+  useEffect(() => { promptsRef.current = PROMPT_KEYS.map(k => t(k)); }, [t]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const motion = !reducedMotion();
+    let tok = 0;
+    let timers: number[] = [];
+    let alive = true;
+    let run = 0;
+
+    const setInput = (text: string) => {
+      const n = inputRef.current;
+      if (n) n.textContent = text;
+      const b = inputBoxRef.current;
+      if (b) b.scrollLeft = text ? b.scrollWidth : 0;
+    };
+    const stopChat = () => { tok++; timers.forEach(clearTimeout); timers = []; };
+    const runScenario = (i: number) => {
+      if (!alive) return;
+      stopChat();
+      const mine = tok;
+      const later = (ms: number, fn: () => void) => { timers.push(window.setTimeout(() => { if (alive && mine === tok) fn(); }, ms)); };
+      if (!motion) { setChat(c => ({ ...c, scen: i, phase: 2 })); return; }
+      const text = promptsRef.current[i] ?? '';
+      const chars = Array.from(text);
+      const delays = chars.map(() => 14 + Math.random() * 26);
+      const total = 600 + delays.reduce((a, b) => a + b, 0) + 450 + 1400 + HOLD;
+      run++;
+      setInput('');
+      setChat({ scen: i, phase: 0, run, total });
+      let k = 0;
+      const send = () => {
+        setInput('');
+        setChat(c => ({ ...c, phase: 1 }));
+        later(1400, () => setChat(c => ({ ...c, phase: 2 })));
+        later(1400 + HOLD, () => runScenario((i + 1) % PROMPT_KEYS.length));
+      };
+      const type = () => {
+        k++;
+        setInput(chars.slice(0, k).join(''));
+        if (k < chars.length) later(delays[k], type); else later(450, send);
+      };
+      later(600, type);
+    };
+
+    let chatIn = false;
+    const stopEngine = startLandingEngine(root, {
+      onChatVisible: visible => {
+        if (visible && !chatIn) { chatIn = true; runScenario(0); }
+        else if (!visible && chatIn) { chatIn = false; stopChat(); setInput(''); setChat(c => (c.phase === 2 ? c : { ...c, phase: 2 })); }
+      },
+    });
+    runnerRef.current = { pick: i => { chatIn = true; runScenario(i); } };
+
+    return () => {
+      alive = false;
+      stopChat();
+      stopEngine();
+      runnerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => { if (picked) runnerRef.current?.pick(picked.i); }, [picked]);
+
+  // The progress bar under the active scenario fills over the whole scenario.
+  useEffect(() => {
+    if (!chat.run) return;
+    const bar = rootRef.current?.querySelector<HTMLElement>('[data-scen-bar]');
+    if (!bar) return;
+    let a: Animation | null = null;
+    try { a = bar.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: chat.total, easing: 'linear', fill: 'forwards' }); } catch { /* unsupported */ }
+    return () => { try { a?.cancel(); } catch { /* gone */ } };
+  }, [chat.run, chat.total]);
+
+  const { scen, phase } = chat;
+  const pick = (i: number) => () => setPicked(p => ({ i, n: (p?.n ?? 0) + 1 }));
+  const v: LandingVals = {
+    s0: scen === 0, s1: scen === 1, s2: scen === 2,
+    u0: scen === 0 && phase >= 1, u1: scen === 1 && phase >= 1, u2: scen === 2 && phase >= 1,
+    a0: scen === 0 && phase >= 2, a1: scen === 1 && phase >= 2, a2: scen === 2 && phase >= 2,
+    typing: phase === 1,
+    showPh: phase !== 0,
+    pick0: pick(0), pick1: pick(1), pick2: pick(2),
+  };
   return (
-    <div  style={{ background: 'var(--bg)', color: 'var(--fg)' }}>
-      {/* Nav */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'var(--bg)', borderBottom: '1px solid var(--line)', backdropFilter: 'blur(8px)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', gap: 32 }}>
-          <WedyLogo size={26} />
-          <nav style={{ display: 'flex', gap: 20, flex: 1 }}>
-            {['Features', 'Pricing', 'Security', 'About'].map(l => (
-              <a key={l} href={`#${l.toLowerCase()}`} style={{ fontSize: 13, color: 'var(--ink-2)' }}>{l}</a>
-            ))}
-          </nav>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Link to="/login"><button className="btn btn-ghost btn-sm">Sign in</button></Link>
-            <Link to="/login"><button className="btn btn-primary btn-sm">Start free</button></Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section style={{ maxWidth: 1100, margin: '0 auto', padding: '80px 24px 60px', textAlign: 'center' }}>
-        <div className="badge badge-primary" style={{ marginBottom: 20, display: 'inline-flex', gap: 6 }}>
-          <Sparkles size={11} /> AI-powered HR for Moroccan companies
-        </div>
-        <h1 style={{ fontSize: 'clamp(36px, 5vw, 64px)', fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.03em', maxWidth: 800, margin: '0 auto 20px' }}>
-          The <span style={{ color: 'var(--primary)' }}>AI-native</span> HR platform for modern teams.
-        </h1>
-        <p style={{ fontSize: 18, color: 'var(--ink-2)', maxWidth: 540, margin: '0 auto 36px', lineHeight: 1.6 }}>
-          Wedy drafts, translates, and files every HR document — powered by Python and Claude AI. Built for Moroccan labor law compliance.
-        </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link to="/login"><button className="btn btn-primary btn-lg">Start free trial <ArrowRight size={15} /></button></Link>
-          <button className="btn btn-ghost btn-lg">Book a demo</button>
-        </div>
-        <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 32, color: 'var(--ink-2)', fontSize: 13, flexWrap: 'wrap' }}>
-          {['No credit card required', 'Free 14-day trial', 'Cancel anytime'].map(t => (
-            <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Check size={13} style={{ color: 'var(--success)' }} /> {t}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* App preview */}
-      <section style={{ maxWidth: 1100, margin: '0 auto 80px', padding: '0 24px' }}>
-        <div style={{ borderRadius: 'var(--radius-xl)', border: '1px solid var(--line)', overflow: 'hidden', boxShadow: 'var(--shadow-xl)', background: 'var(--surface-2)' }}>
-          <div style={{ background: 'var(--surface)', padding: '12px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            {['var(--danger)', 'var(--warn)', 'var(--success)'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c }} />)}
-            <div style={{ flex: 1, marginLeft: 8, height: 22, background: 'var(--surface-2)', borderRadius: 4, maxWidth: 260, fontSize: 11, display: 'flex', alignItems: 'center', paddingInline: 8, color: 'var(--ink-2)' }}>
-              app.wedy.ai/dashboard
-            </div>
-          </div>
-          <div style={{ height: 380, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ textAlign: 'center', color: 'var(--ink-2)' }}>
-              <BarChart3 size={48} style={{ opacity: 0.2, marginBottom: 12 }} />
-              <p style={{ fontSize: 14 }}>Dashboard preview</p>
-              <Link to="/login"><button className="btn btn-primary btn-sm" style={{ marginTop: 12 }}>Try it live →</button></Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" style={{ maxWidth: 1100, margin: '0 auto 80px', padding: '0 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 12 }}>Everything HR teams need</h2>
-          <p style={{ fontSize: 16, color: 'var(--ink-2)' }}>From document generation to analytics — all in one platform.</p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-          {FEATURES.map(f => (
-            <div key={f.title} style={{ padding: 24, border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)' }}>
-              <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', marginBottom: 14 }}>
-                {f.icon}
-              </div>
-              <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{f.title}</h3>
-              <p style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.6 }}>{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" style={{ maxWidth: 1100, margin: '0 auto 80px', padding: '0 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 12 }}>Simple, transparent pricing</h2>
-          <p style={{ fontSize: 16, color: 'var(--ink-2)' }}>Start free, scale as you grow.</p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
-          {PRICING.map(p => (
-            <div key={p.name} style={{
-              padding: 28, border: p.highlight ? '2px solid var(--primary)' : '1px solid var(--line)',
-              borderRadius: 'var(--radius-lg)', background: p.highlight ? 'var(--primary-soft)' : 'var(--surface)',
-              position: 'relative',
-            }}>
-              {p.highlight && <div className="badge badge-primary" style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)' }}>Most popular</div>}
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{p.name}</h3>
-              <div style={{ marginBottom: 20 }}>
-                <span style={{ fontSize: 32, fontWeight: 700 }}>{p.price}</span>
-                {p.period && <span style={{ fontSize: 13, color: 'var(--ink-2)', marginLeft: 4 }}>{p.period}</span>}
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {p.features.map(f => (
-                  <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                    <Check size={13} style={{ color: 'var(--success)', flexShrink: 0 }} /> {f}
-                  </li>
-                ))}
-              </ul>
-              <Link to="/login">
-                <button className={`btn ${p.highlight ? 'btn-primary' : 'btn-ghost'}`} style={{ width: '100%' }}>
-                  Get started
-                </button>
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section style={{ background: 'var(--primary)', color: '#fff', padding: '60px 24px', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 32, fontWeight: 700, color: '#fff', marginBottom: 12 }}>Ready to transform your HR?</h2>
-        <p style={{ opacity: 0.85, fontSize: 16, marginBottom: 28 }}>Join HR teams using Wedy to automate their daily operations.</p>
-        <Link to="/login"><button className="btn btn-lg" style={{ background: 'var(--surface)', color: 'var(--primary)' }}>Start free trial <ArrowRight size={15} /></button></Link>
-      </section>
-
-      {/* Footer */}
-      <footer style={{ borderTop: '1px solid var(--line)', padding: '28px 24px', textAlign: 'center', color: 'var(--ink-2)', fontSize: 13 }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <WedyLogo size={20} />
-          <span>© 2026 Wedy · Powered by Python + Claude AI</span>
-          <div style={{ display: 'flex', gap: 16 }}>
-            <a href="#" style={{ color: 'var(--ink-2)' }}>Privacy</a>
-            <a href="#" style={{ color: 'var(--ink-2)' }}>Terms</a>
-            <a href="#" style={{ color: 'var(--ink-2)' }}>Contact</a>
-          </div>
-        </div>
-      </footer>
-    </div>
+    <RevealTuningContext.Provider value={TUNING}>
+      <div className="lnd-root">
+        <LandingView v={v} rootRef={rootRef} inputRef={inputRef} inputBoxRef={inputBoxRef} />
+      </div>
+    </RevealTuningContext.Provider>
   );
 }

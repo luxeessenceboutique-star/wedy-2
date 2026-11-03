@@ -144,6 +144,12 @@ Apply notes (`public/PostulerPage.tsx`):
 - New public endpoint `POST /candidats/apply` (it was called by the page but did not exist): validates name/email, checks the post is active, refuses a duplicate application to the same post, creates the candidate with `custom_fields` (`ad_id`, `source = Site carrière`, `recruitment_stage = new`, `cv_url`, `linkedin`), books the chosen free slot as an interview (stage → interview) and notifies HR.
 - The page renders the real post: contract/city chips from its description, the AI-written text split into "Vos missions / Votre profil / Ce que nous offrons" cards, key points. CV upload uses the existing public CV extraction to pre-fill the form and show skills; optional interview slot picker; 09-08 consent; success timeline. The reference's company facts (headcount, % women, remote days) have no public data and are not shown.
 
+Landing notes (`marketing/LandingPage.tsx` + `LandingView.tsx`):
+- The markup is generated from the reference; `landingEngine.ts` ports its pointer / scroll engine (nav tint, hero glow and cursor mosaic, magnetic buttons, card tilt, rotating verb, fitted dashboard mock, timed mock sequences, FR / ع / EN cycle) and the page runs the copilot demo (prompts typed into the input, typing dots, answer, progress bar, next scenario) while the chat is in view. Reveals use the reference's own tuning (30px / 900ms, starts at 12% visible) through `RevealTuningContext`; the landing's loops (larger float and ping, 4-step drift, 60s spins, marquees, caret blink) are in `landing.css` and `tokens.css`.
+- The page is marketing content: the dashboard, chat answers and audit log are illustrations, not account data. Everything is translated (FR / EN / AR); the marquee's document names stay in their own language on purpose, and the footer language links switch the UI language.
+- Links: "Sign in", "Get started", "Start free trial" (pricing and final CTA) go to `/login`; "Contact sales", "Book a demo" and "Contact" open a mail to support@wedy.ma. Privacy / Terms / About keep the reference's in-page anchors (there are no legal pages yet).
+- Below 600px the nav link row is hidden: the reference clips "Copilot" mid-word there.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -185,7 +191,7 @@ Apply notes (`public/PostulerPage.tsx`):
 | 35 | Portal training | Wedy Portal Training | `/employee/formation` | `employee/MyTrainingPage.tsx` | ☑ |
 | 36 | Portal profile | Wedy Portal Profile | `/employee/profil` | `employee/MyProfilePage.tsx` | ☑ |
 | 37 | Apply (careers) | Wedy Apply | `/postuler/:id` | `public/PostulerPage.tsx` | ☑ |
-| 38 | Landing | Wedy Landing | `/` | `marketing/LandingPage.tsx` | ◐ |
+| 38 | Landing | Wedy Landing | `/` | `marketing/LandingPage.tsx` | ☑ |
 
 Extra rows implied by the README (no 1:1 design file):
 

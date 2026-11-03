@@ -31,3 +31,37 @@ export function nextHolidays(from: Date, n = 3): { date: Date; key: TKey }[] {
   }
   return out;
 }
+
+/** A holiday as the screens use it: month-day, a year when it only applies once, and its label. */
+export type Holiday = { md: string; year: number | null; label: string };
+
+/** The fixed civil holidays plus the ones HR stored in the `holidays` table (e.g. the religious ones). */
+export function mergeHolidays(t: (k: TKey) => string, stored: { name: string; date: string; is_recurring?: boolean | null }[] = []): Holiday[] {
+  const out: Holiday[] = FIXED_HOLIDAYS.map(h => ({ md: h.md, year: null, label: t(h.key) }));
+  for (const h of stored) {
+    const md = h.date.slice(5, 10);
+    const year = h.is_recurring === false ? +h.date.slice(0, 4) : null;
+    if (!out.some(x => x.md === md && (x.year === null || x.year === year))) out.push({ md, year, label: h.name });
+  }
+  return out;
+}
+
+const mdOf = (d: Date) => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** The holiday on a date, if any. */
+export const holidayAt = (list: Holiday[], d: Date) => list.find(h => h.md === mdOf(d) && (h.year === null || h.year === d.getFullYear()));
+
+/** The next `n` holidays from `from` (inclusive), soonest first. */
+export function upcomingHolidays(list: Holiday[], from: Date, n = 3): { date: Date; label: string }[] {
+  const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const all: { date: Date; label: string }[] = [];
+  for (const y of [start.getFullYear(), start.getFullYear() + 1]) {
+    for (const h of list) {
+      if (h.year !== null && h.year !== y) continue;
+      const [m, d] = h.md.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      if (date >= start) all.push({ date, label: h.label });
+    }
+  }
+  return all.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, n);
+}

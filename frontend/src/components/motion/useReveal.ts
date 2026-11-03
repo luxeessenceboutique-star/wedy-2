@@ -89,7 +89,9 @@ export function useReveal<T extends Element = HTMLElement>(variant: RevealVarian
     anim.pause();
     anim.onfinish = () => { try { anim.cancel(); } catch { /* already cancelled */ } };
 
-    const stop = observeOnce(el, () => anim.play(), () => anim.finish(), { threshold: tune.threshold, rootMargin: tune.rootMargin });
+    // A grow reveal starts at scale 0, a zero-width box the observer never sees enter: watch its parent.
+    const target = (variant === 'growx' || variant === 'growy') && el.parentElement ? el.parentElement : el;
+    const stop = observeOnce(target, () => anim.play(), () => anim.finish(), { threshold: tune.threshold, rootMargin: tune.rootMargin });
     return () => { stop(); try { anim.cancel(); } catch { /* already cancelled */ } };
   }, [variant, delay, duration, frac, disabled, distance, easing, scaleFrom, maxDelay, tune.threshold, tune.rootMargin]);
 

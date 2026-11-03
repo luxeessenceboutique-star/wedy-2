@@ -40,3 +40,9 @@ export const listHolidays = () => api.get<{ data: { name: string; date: string }
 // ── EmployeeFolder compatibility helper ───────────────────────────────
 export const listLeaveRequests = (params?: Record<string, string | number>) =>
   listLeaves(params).then(r => r.data);
+
+export type StaffBalance = LeaveBalance & { full_name: string; department?: string | null; stored: boolean };
+
+/** Every active employee's balance for the year (HR). */
+export const listLeaveBalances = (year?: number) =>
+  api.get<{ data: StaffBalance[]; year: number }>('/leaves/balances', { params: year ? { year } : {} }).then(r => r.data);

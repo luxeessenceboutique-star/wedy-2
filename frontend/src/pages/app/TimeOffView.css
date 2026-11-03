@@ -1,0 +1,4 @@
+/* hover / focus rules of Wedy Time Off (style-hover / style-focus) */
+.tof-h1:hover { color: #0a1c24 !important; border-color: #9fb4bb !important; }
+.tof-h2:hover { color: #0a1c24 !important; border-color: #9fb4bb !important; background: #f8fafb !important; }
+.tof-h3:hover { background: #f3fafb !important; color: #0b5f72 !important; }

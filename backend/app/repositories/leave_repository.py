@@ -61,3 +61,28 @@ def list_auth_users(supabase: Client):
 
 def list_holidays(supabase: Client):
     return supabase.table("holidays").select("*").order("date").execute()
+
+def list_staff_for_balances(supabase: Client):
+    """Employees who accrue leave (active or currently on leave)."""
+    return (
+        supabase.table("employees")
+        .select("id, full_name, department, hire_date")
+        .in_("status", ["active", "on-leave"])
+        .order("full_name")
+        .execute()
+    )
+
+
+def list_leave_balances(supabase: Client, year: int):
+    return supabase.table("leave_balances").select("*").eq("year", year).execute()
+
+
+def list_approved_leaves_between(supabase: Client, start: str, end: str):
+    return (
+        supabase.table("leave_requests")
+        .select("employee_id, type, days")
+        .eq("status", "approved")
+        .gte("start_date", start)
+        .lte("start_date", end)
+        .execute()
+    )

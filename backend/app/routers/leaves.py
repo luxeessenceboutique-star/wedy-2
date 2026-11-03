@@ -45,6 +45,53 @@ def list_leaves(
     return {"data": res.data, "count": count_res.count or 0}
 
 
+def _default_annual_total(hire_date: Optional[str]) -> int:
+    """Default yearly entitlement: 21 days, +1 per 5 years of seniority, capped at 30."""
+    from datetime import datetime, date as _date
+    if not hire_date:
+        return 21
+    try:
+        seniority = (datetime.now().date() - _date.fromisoformat(str(hire_date)[:10])).days // 365
+    except ValueError:
+        return 21
+    return int(min(21 + (seniority // 5), 30))
+
+
+@router.get("/balances")
+def list_balances(
+    year: int = Query(default=None),
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """Every active employee's balance for the year, in one call (read-only).
+
+    A stored leave_balances row wins; for an employee without one, the default entitlement is
+    returned with the approved leave of that year counted as used (nothing is written).
+    """
+    from datetime import datetime
+    y = year or datetime.now().year
+    staff = leave_repository.list_staff_for_balances(supabase).data or []
+    stored = {r["employee_id"]: r for r in (leave_repository.list_leave_balances(supabase, y).data or [])}
+    used: dict = {}
+    for lv in leave_repository.list_approved_leaves_between(supabase, f"{y}-01-01", f"{y}-12-31").data or []:
+        kind = {"annual": "annual_used", "sick": "sick_used", "personal": "personal_used"}.get(lv.get("type"))
+        if kind:
+            bucket = used.setdefault(lv["employee_id"], {"annual_used": 0, "sick_used": 0, "personal_used": 0})
+            bucket[kind] += lv.get("days") or 0
+    out = []
+    for emp in staff:
+        row = stored.get(emp["id"])
+        if row:
+            entry = {k: row.get(k) for k in ("annual_total", "annual_used", "sick_total", "sick_used", "personal_total", "personal_used")}
+        else:
+            entry = {"annual_total": _default_annual_total(emp.get("hire_date")), "sick_total": 12, "personal_total": 5,
+                     **used.get(emp["id"], {"annual_used": 0, "sick_used": 0, "personal_used": 0})}
+        entry.update({"employee_id": emp["id"], "full_name": emp.get("full_name"), "department": emp.get("department"),
+                      "year": y, "stored": bool(row)})
+        out.append(entry)
+    return {"data": out, "year": y}
+
+
 @router.get("/balance/{employee_id}")
 def get_balance(
     employee_id: str,
@@ -60,9 +107,7 @@ def get_balance(
         try:
             emp = leave_repository.get_employee_hire_date(supabase, employee_id)
             if emp.data and emp.data.get("hire_date"):
-                hd = _date.fromisoformat(emp.data["hire_date"][:10])
-                seniority = (datetime.now().date() - hd).days // 365
-                base = min(21 + (seniority // 5) * 1, 30)
+                base = _default_annual_total(emp.data["hire_date"])
         except Exception:
             pass
         return {

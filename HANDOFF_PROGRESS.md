@@ -150,6 +150,13 @@ Landing notes (`marketing/LandingPage.tsx` + `LandingView.tsx`):
 - Links: "Sign in", "Get started", "Start free trial" (pricing and final CTA) go to `/login`; "Contact sales", "Book a demo" and "Contact" open a mail to support@wedy.ma. Privacy / Terms / About keep the reference's in-page anchors (there are no legal pages yet).
 - Below 600px the nav link row is hidden: the reference clips "Copilot" mid-word there.
 
+Time off notes (`app/TimeOffPage.tsx` + `TimeOffView.tsx`):
+- New HR endpoint `GET /leaves/balances?year=` (read-only): every active employee's balance in one call — the stored `leave_balances` row, or the default entitlement (21 d, +1 per 5 years, max 30) with that year's approved leave counted as used. It feeds the balances list and the real "Solde moyen".
+- The timeline shows the approved leave overlapping the month (three colour families: annual, exceptional = personal / maternity / paternity / unpaid, sick = sick / unjustified), with month navigation; KPIs are computed from the same data. Pending requests link to Requests (`?kind=leave`), where they are approved.
+- Public holidays: the fixed civil dates (`lib/holidays.ts`) plus whatever HR stored in the `holidays` table (the lunar ones); they stripe the timeline, count in "Jours fériés ce mois" and fill "Prochains jours fériés".
+- "Enregistrer un congé" opens a drawer: employee, type, dates, days counted in working days (no Sundays, no holidays, editable), balance check, and "approve now" (goes through the review endpoint, so the balance and the employee notification follow). Balances list shows 8 rows with a "show all" toggle.
+- Grow reveals (bars) now watch their parent: at scale 0 they have no width and the observer never saw them enter, which left the reference's balance bars empty.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -163,7 +170,7 @@ Landing notes (`marketing/LandingPage.tsx` + `LandingView.tsx`):
 | 7 | Generate | Wedy Generate | `/app/generate` | `app/GeneratePage.tsx` | ◐ |
 | 8 | Templates | Wedy Templates | `/app/templates` | `app/TemplatesPage.tsx` + `TemplatesView.tsx` | ☑ |
 | 9 | History | Wedy History | `/app/history` | `app/HistoryPage.tsx` | ☑ |
-| 10 | Time off | Wedy Time Off | `/app/timeoff` | `app/TimeOffPage.tsx` | ◐ |
+| 10 | Time off | Wedy Time Off | `/app/timeoff` | `app/TimeOffPage.tsx` | ☑ |
 | 11 | Absences | Wedy Absences | `/app/absences` | `app/AbsencesPage.tsx` | ◐ |
 | 12 | Planning | Wedy Planning | `/app/planning-rh` | `app/PlanningRHPage.tsx` (+ `CreneauxRHPage.tsx` in a drawer) | ☑ |
 | 13 | Recruitment | Wedy Recruitment | `/app/recruitment` | `app/RecruitmentPage.tsx` (+ `lib/recruitment.ts`) | ☑ |

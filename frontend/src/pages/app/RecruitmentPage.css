@@ -1,0 +1,4 @@
+/* hover rules of Wedy Recruitment */
+.rec-h1:hover { color: #0a1c24 !important; border-color: #9fb4bb !important; }
+.rec-h2:hover { color: #ffffff !important; }
+.rec-h3:hover { box-shadow: 0 14px 28px -16px rgba(10,28,36,.45) !important; transform: translateY(-2px) !important; }

@@ -1,534 +1,207 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
-import { api, getApiError } from '@/services/api';
-import {
-  RefreshCw, Search, X, Eye, Table2, AlertTriangle,
-  Hash, Calendar, Mail, Globe, ToggleLeft, Paperclip, Key,
-  Layers, ChevronDown, Type, Link2,
-} from 'lucide-react';
-import { Spinner } from '../../components/ui';
+import { useMemo, useState, type DragEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CalendarClock, Clock, Inbox, Megaphone, Users } from 'lucide-react';
+import { listCandidates, listEmployees, listInterviews, listAnnonces, updateEmployee, promoteToEmployee, getApiError } from '@/services/api';
+import type { Employee } from '@/services/api';
+import { RV, CountText } from '@/components/motion';
+import { Drawer, Spinner } from '@/components/ui';
+import { useLang } from '@/lib/lang';
+import { useNotify } from '@/lib/notify';
+import { tf } from '@/lib/format';
+import { avatarGradient, initialsOf } from '@/lib/visual';
+import { STAGES, stageOf, scoreOf, sourceOf, stageSince, scoreColor, daysSince, upcomingByCandidate, type Stage } from '@/lib/recruitment';
+import SpontaneousApplications from '@/components/recruitment/SpontaneousApplications';
+import './RecruitmentPage.css';
 
-// ── Proxy helper ──────────────────────────────────────────────────────────────
-
-const BASE_ID = 'prd6w1jt4faaysm';
-
-const dbGet = async (path: string, params?: Record<string, any>) => {
-  const res = await api.get(`/smartdb${path}`, { params });
-  return res.data;
-};
-
-// Tables to hide (internal/system tables only)
-const EXCLUDED_IDS = new Set<string>([]);
-const isExcluded = (t: DBTable) =>
-  EXCLUDED_IDS.has(t.id) ||
-  ['faq', 'tech', 'test', 'qa', 'testing', 'new table', 'règles'].some(kw =>
-    t.title.toLowerCase().includes(kw)
-  );
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface DBTable { id: string; title: string; type?: string }
-interface DBColumn {
-  id: string; title: string; uidt?: string; dt?: string;
-  pk?: boolean; rqd?: boolean; ai?: boolean;
-  colOptions?: { type?: string };
-}
-interface PageInfo { totalRows?: number }
-
-// ── Column types ──────────────────────────────────────────────────────────────
-
-const COL_TYPES: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-  SingleLineText:      { label: 'Texte',      color: 'var(--ink-2)',  bg: 'var(--surface-2)',     icon: <Type size={11} /> },
-  LongText:            { label: 'Long texte', color: 'var(--ink-2)',  bg: 'var(--surface-2)',     icon: <Type size={11} /> },
-  Email:               { label: 'Email',      color: '#7c3aed',          bg: 'var(--violet-soft)',             icon: <Mail size={11} /> },
-  URL:                 { label: 'URL',        color: '#2563eb',          bg: 'var(--primary-soft)',             icon: <Globe size={11} /> },
-  Number:              { label: 'Nombre',     color: 'var(--primary)',   bg: 'var(--primary-soft)', icon: <Hash size={11} /> },
-  DateTime:            { label: 'DateHeure',  color: 'var(--warn)',          bg: 'var(--warn-soft)',             icon: <Calendar size={11} /> },
-  Date:                { label: 'Date',       color: 'var(--warn)',          bg: 'var(--warn-soft)',             icon: <Calendar size={11} /> },
-  Checkbox:            { label: 'Booléen',    color: '#dc2626',          bg: '#fef2f2',             icon: <ToggleLeft size={11} /> },
-  MultiSelect:         { label: 'Multi',      color: '#7c3aed',          bg: '#faf5ff',             icon: <Layers size={11} /> },
-  SingleSelect:        { label: 'Liste',      color: '#6d28d9',          bg: 'var(--violet-soft)',             icon: <ChevronDown size={11} /> },
-  Attachment:          { label: 'Fichier',    color: '#9333ea',          bg: '#fdf4ff',             icon: <Paperclip size={11} /> },
-  ID:                  { label: 'ID',         color: 'var(--fg)',        bg: 'var(--surface-2)',     icon: <Key size={11} /> },
-  LinkToAnotherRecord: { label: 'Relation',   color: 'var(--primary)',   bg: 'var(--primary-soft)', icon: <Link2 size={11} /> },
-  Lookup:              { label: 'Lookup',     color: 'var(--primary)',   bg: 'var(--primary-soft)', icon: <Search size={11} /> },
-};
-const getCT = (uidt?: string) =>
-  COL_TYPES[uidt ?? ''] ?? { label: uidt || '?', color: 'var(--ink-2)', bg: 'var(--surface-2)', icon: <Type size={11} /> };
-
-// ── Status badges ─────────────────────────────────────────────────────────────
-
-const STATUS_CFG: Record<string, { bg: string; text: string; border: string; dot: string }> = {
-  'Valide':              { bg: '#f0fdf4', text: '#166534', border: '#86efac', dot: 'var(--success)' },
-  'Qualifie':            { bg: 'var(--success-soft)', text: '#065f46', border: '#6ee7b7', dot: 'var(--success)' },
-  'En cours traitement': { bg: 'var(--primary-soft)', text: '#1e40af', border: '#93c5fd', dot: 'var(--primary)' },
-  'Entretien fait':      { bg: 'var(--violet-soft)', text: '#5b21b6', border: '#c4b5fd', dot: 'var(--violet)' },
-  'Non valide':          { bg: '#fff1f2', text: '#9f1239', border: '#fda4af', dot: '#f43f5e' },
-  'Non qualifie':        { bg: '#fdf2f8', text: '#86198f', border: '#f0abfc', dot: '#d946ef' },
-};
-const getCfg = (s?: string) =>
-  STATUS_CFG[s ?? ''] ?? { bg: 'var(--surface-2)', text: 'var(--ink-2)', border: 'var(--line)', dot: 'var(--ink-3)' };
-
-// ── Parsers ───────────────────────────────────────────────────────────────────
-
-const pickArray = (data: any): any[] => {
-  if (Array.isArray(data)) return data;
-  for (const k of ['list', 'data', 'columns', 'records', 'results', 'rows', 'tables'])
-    if (Array.isArray(data?.[k])) return data[k];
-  return [];
-};
-const parseColumns = (raw: any[]): DBColumn[] =>
-  raw.map(c => ({
-    id: c.id ?? String(Math.random()), title: c.title ?? c.name ?? '?',
-    uidt: c.uidt ?? c.type, dt: c.dt,
-    pk: c.pk ?? false, rqd: c.rqd ?? false, ai: c.ai ?? false,
-    colOptions: c.colOptions,
-  }));
-const parsePageInfo = (data: any): PageInfo => {
-  if (Array.isArray(data)) return { totalRows: data.length };
-  const pi = data?.pageInfo ?? data?.page_info ?? {};
-  return { totalRows: pi.totalRows ?? pi.total_rows ?? pi.total ?? pi.count ?? data?.total ?? data?.count };
-};
-
-// ── Cell renderer ─────────────────────────────────────────────────────────────
-
-function Cell({ val, col }: { val: any; col: DBColumn }) {
-  if (val === null || val === undefined)
-    return <span style={{ color: 'var(--ink-3)', fontStyle: 'italic', fontSize: 11 }}>—</span>;
-  if (col.uidt === 'Checkbox')
-    return <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 5, background: val ? 'var(--success-soft)' : 'var(--surface-2)', color: val ? '#16a34a' : 'var(--ink-3)', fontSize: 12, fontWeight: 800, border: `1px solid ${val ? '#86efac' : 'var(--line)'}` }}>{val ? '✓' : '✗'}</span>;
-  if (col.uidt === 'MultiSelect') {
-    const opts = Array.isArray(val) ? val : String(val).split(',');
-    return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>{opts.slice(0, 3).map((o: any, i) => <span key={i} style={{ fontSize: 10, padding: '2px 7px', background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 999, fontWeight: 600 }}>{String(o).trim()}</span>)}{opts.length > 3 && <span style={{ fontSize: 10, color: 'var(--ink-2)' }}>+{opts.length - 3}</span>}</div>;
-  }
-  if (col.uidt === 'SingleSelect') {
-    const cfg = getCfg(String(val));
-    return <span style={{ fontSize: 11, padding: '2px 10px', background: cfg.bg, color: cfg.text, borderRadius: 999, fontWeight: 600, border: `1px solid ${cfg.border}`, whiteSpace: 'nowrap' }}>{String(val)}</span>;
-  }
-  if (col.uidt === 'URL' && typeof val === 'string' && val.startsWith('http'))
-    return <a href={val} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', fontSize: 12, textDecoration: 'none', fontWeight: 500 }}>🔗 Lien</a>;
-  if (col.uidt === 'DateTime' || col.uidt === 'Date') {
-    try { return <span style={{ fontSize: 12, color: 'var(--warn)', background: 'var(--warn-soft)', padding: '2px 8px', borderRadius: 6, fontWeight: 600, border: '1px solid #fde68a' }}>{new Date(val).toLocaleDateString('fr-MA')}</span>; }
-    catch { return <span style={{ fontSize: 12 }}>{String(val)}</span>; }
-  }
-  if (col.pk)
-    return <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-2)', background: 'var(--surface-2)', padding: '2px 7px', borderRadius: 5, border: '1px solid var(--line)' }}>{String(val)}</span>;
-  const s = String(val);
-  return <span style={{ fontSize: 13, color: 'var(--fg)' }}>{s.length > 50 ? s.slice(0, 50) + '…' : s}</span>;
-}
-
-// ── Time filter config ────────────────────────────────────────────────────────
-
-type TimeFilter = '24h' | '7d' | '1m' | 'all';
-
-const TIME_FILTERS: { key: TimeFilter; label: string }[] = [
-  { key: '24h', label: 'Dernières 24h' },
-  { key: '7d',  label: '7 derniers jours' },
-  { key: '1m',  label: 'Dernier mois' },
-  { key: 'all', label: 'Tout' },
-];
-
-const getCutoff = (tf: TimeFilter): Date | null => {
-  const now = Date.now();
-  if (tf === '24h') return new Date(now - 24 * 3600 * 1000);
-  if (tf === '7d')  return new Date(now - 7  * 24 * 3600 * 1000);
-  if (tf === '1m')  return new Date(now - 30 * 24 * 3600 * 1000);
-  return null;
-};
-
-// ── Tab accent colors ─────────────────────────────────────────────────────────
-
-const TAB_COLORS = ['var(--success)', 'var(--danger)', 'var(--primary)', 'var(--warn)', 'var(--violet)'];
-
-// ── Page ─────────────────────────────────────────────────────────────────────
-
-const LIMIT = 50;
-const HIDDEN_COLS = ['nc_order', 'CreatedAt', 'UpdatedAt', 'CreatedAt1', 'CV_CV'];
+const LOCALE: Record<string, string> = { fr: 'fr-FR', en: 'en-GB', ar: 'ar-MA' };
+const C = 2 * Math.PI * 15;
+const statLabel = { fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: '#5f7079' } as const;
+const statValue = { fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4 } as const;
 
 export default function RecruitmentPage() {
-  const [allTables,   setAllTables]   = useState<DBTable[]>([]);
-  const [activeIdx,   setActiveIdx]   = useState(0);
-  const [columns,     setColumns]     = useState<DBColumn[]>([]);
-  const [records,     setRecords]     = useState<any[]>([]);
-  const [pageInfo,    setPageInfo]    = useState<PageInfo>({});
-  const [offset,      setOffset]      = useState(0);
-  const [search,      setSearch]      = useState('');
-  const [loadTables,  setLoadTables]  = useState(false);
-  const [loadData,    setLoadData]    = useState(false);
-  const [err,         setErr]         = useState<string | null>(null);
-  const [rowDetail,   setRowDetail]   = useState<any | null>(null);
-  const [timeFilter,  setTimeFilter]  = useState<TimeFilter>('all');
-  const [tableCounts, setTableCounts] = useState<Record<string, number>>({});
+  const { t, lang } = useLang();
+  const notify = useNotify();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const loc = LOCALE[lang] ?? 'fr-FR';
+  const [job, setJob] = useState<string>('');
+  const [spontOpen, setSpontOpen] = useState(false);
+  const [over, setOver] = useState<Stage | null>(null);
 
-  // Only show the two application tables
-  const tables = allTables.filter(t => !isExcluded(t));
-  const active  = tables[activeIdx] ?? null;
+  const { data: candidates = [], isLoading } = useQuery<Employee[]>({ queryKey: ['candidates'], queryFn: listCandidates });
+  const { data: interviews = [] } = useQuery({ queryKey: ['interviews'], queryFn: listInterviews });
+  const { data: ads = [] } = useQuery({ queryKey: ['annonces'], queryFn: listAnnonces });
+  // hired from the pipeline: employees whose file still carries recruitment_stage = hired (last 90 days)
+  const { data: emps } = useQuery({ queryKey: ['employees', 'recent-hires'], queryFn: () => listEmployees({ status: 'active', limit: 500 }) });
 
-  // ── Fetch tables list ─────────────────────────────────────────────────────
+  const upcoming = useMemo(() => upcomingByCandidate(interviews), [interviews]);
+  const recentHires = (emps?.data ?? []).filter(e => e.custom_fields?.recruitment_stage === 'hired' && (daysSince(e.hire_date) ?? 999) <= 90);
+  const people = [...candidates, ...recentHires];
 
-  const fetchTables = async () => {
-    setLoadTables(true); setErr(null);
-    try {
-      const data = await dbGet(`/bases/${BASE_ID}/tables`);
-      setAllTables(pickArray(data));
-    } catch (e: any) {
-      setErr(getApiError(e, 'Erreur de connexion'));
-    } finally { setLoadTables(false); }
+  const move = useMutation({
+    mutationFn: async ({ e, stage }: { e: Employee; stage: Stage }) => {
+      const custom_fields = { ...(e.custom_fields ?? {}), recruitment_stage: stage, stage_changed_at: new Date().toISOString() };
+      if (stage === 'hired') return promoteToEmployee(e.id, { hire_date: new Date().toISOString().slice(0, 10), custom_fields });
+      return updateEmployee(e.id, { custom_fields, ...(e.status !== 'candidate' ? { status: 'candidate' } : {}) });
+    },
+    onMutate: async ({ e, stage }) => {
+      await qc.cancelQueries({ queryKey: ['candidates'] });
+      const prev = qc.getQueryData<Employee[]>(['candidates']);
+      if (stage !== 'hired') qc.setQueryData<Employee[]>(['candidates'], list => (list ?? []).map(x => x.id === e.id ? { ...x, custom_fields: { ...(x.custom_fields ?? {}), recruitment_stage: stage, stage_changed_at: new Date().toISOString() } } : x));
+      return { prev };
+    },
+    onSuccess: (_, { e, stage }) => {
+      const label = t(STAGES.find(s => s[0] === stage)![1]);
+      notify.success(stage === 'hired' ? tf(t('rec_hired_toast'), { name: e.full_name }) : `${e.full_name} → ${label}`);
+    },
+    onError: (err, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['candidates'], ctx.prev); notify.error(getApiError(err, t('error'))); },
+    onSettled: () => { qc.invalidateQueries({ queryKey: ['candidates'] }); qc.invalidateQueries({ queryKey: ['employees'] }); },
+  });
+
+  const drop = (stage: Stage) => (ev: DragEvent) => {
+    ev.preventDefault();
+    setOver(null);
+    let id = '';
+    try { id = ev.dataTransfer.getData('text/plain'); } catch { /* ignore */ }
+    const e = people.find(p => p.id === id);
+    if (!e || stageOf(e, upcoming.get(e.id)) === stage) return;
+    if (stage === 'hired' && !window.confirm(tf(t('rec_confirm_hire'), { name: e.full_name }))) return;
+    move.mutate({ e, stage });
   };
 
-  // ── Fetch records (with optional time filter) ─────────────────────────────
-
-  const fetchRecords = useCallback(async (tbl: DBTable, off: number, tf: TimeFilter) => {
-    setLoadData(true); setErr(null);
-    try {
-      const cutoff = getCutoff(tf);
-
-      if (tf !== 'all' && cutoff) {
-        // Time-filtered mode: fetch a large batch with standard params only
-        // (NocoDB rejects unknown params like sort/where on some endpoints),
-        // then filter client-side by CreatedAt.
-        const params: Record<string, any> = { limit: 200, offset: 0 };
-        const [colRes, recRes] = await Promise.all([
-          dbGet(`/tables/${tbl.id}/columns`),
-          dbGet(`/tables/${tbl.id}/records`, params),
-        ]);
-        const raw = pickArray(recRes);
-        const filtered = raw.filter((r: any) => {
-          const dateStr = r.CreatedAt ?? r.created_at ?? r['Created At'] ?? r.nc_created_at;
-          if (!dateStr) return true;
-          try { return new Date(dateStr) >= cutoff; } catch { return true; }
-        });
-        setColumns(parseColumns(pickArray(colRes)));
-        setRecords(filtered);
-        setPageInfo({ totalRows: filtered.length });
-      } else {
-        // Normal paginated fetch (no time filter)
-        const params: Record<string, any> = { limit: LIMIT, offset: off };
-        const [colRes, recRes] = await Promise.all([
-          dbGet(`/tables/${tbl.id}/columns`),
-          dbGet(`/tables/${tbl.id}/records`, params),
-        ]);
-        setColumns(parseColumns(pickArray(colRes)));
-        setRecords(pickArray(recRes));
-        setPageInfo(parsePageInfo(recRes));
-      }
-    } catch (e: any) {
-      setErr(getApiError(e, 'Erreur de chargement'));
-    } finally { setLoadData(false); }
-  }, []);
-
-  // Pre-fetch totals for all tabs (without time filter, for counts)
-  const fetchCounts = useCallback(async (tbls: DBTable[]) => {
-    const results: Record<string, number> = {};
-    await Promise.allSettled(
-      tbls.map(async t => {
-        try {
-          const r = await dbGet(`/tables/${t.id}/records`, { limit: 1, offset: 0 });
-          results[t.id] = parsePageInfo(r).totalRows ?? 0;
-        } catch { results[t.id] = 0; }
-      })
-    );
-    setTableCounts(results);
-  }, []);
-
-  // ── Effects ───────────────────────────────────────────────────────────────
-
-  useEffect(() => { fetchTables(); }, []);
-
-  // When tables load, fetch counts for the tab badges
-  useEffect(() => {
-    const displayTables = allTables.filter(t => !isExcluded(t));
-    if (displayTables.length > 0) fetchCounts(displayTables);
-  }, [allTables, fetchCounts]);
-
-  // Re-fetch when active table or time filter changes
-  useEffect(() => {
-    if (active) { setOffset(0); setSearch(''); fetchRecords(active, 0, timeFilter); }
-  }, [active?.id, timeFilter, fetchRecords]);
-
-  // ── Derived values ────────────────────────────────────────────────────────
-
-  const visCols       = columns.filter(c => c.title && c.title !== '?' && !HIDDEN_COLS.includes(c.title));
-  const filteredRec   = search
-    ? records.filter(r => Object.values(r).some(v => String(v ?? '').toLowerCase().includes(search.toLowerCase())))
-    : records;
-  const total    = pageInfo.totalRows ?? filteredRec.length;
-  const curPage  = Math.floor(offset / LIMIT) + 1;
-  const totPages = Math.max(1, Math.ceil(total / LIMIT));
-
-  const goPage = (o: number) => {
-    setOffset(o);
-    if (active) fetchRecords(active, o, timeFilter);
+  const jobsList = [...new Set(people.map(p => (p.position || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const pool = people.filter(p => !job || (p.position || '').trim() === job);
+  const active = candidates;
+  const hireDelays = recentHires.map(e => (e.hire_date && e.created_at ? (new Date(e.hire_date).getTime() - new Date(e.created_at).getTime()) / 86400000 : NaN)).filter(n => Number.isFinite(n) && n >= 0);
+  const avgDelay = hireDelays.length ? Math.round(hireDelays.reduce((a, b) => a + b, 0) / hireDelays.length) : null;
+  const openPosts = ads.filter(a => a.is_active).length;
+  const nextLabel = (iso: string, time: string) => {
+    const d = new Date(`${iso}T00:00:00`);
+    const w = d.toLocaleDateString(loc, { weekday: 'short' });
+    return `${w.charAt(0).toUpperCase()}${w.slice(1)} ${time.slice(0, 5)}`;
   };
-
-  const accentColor = TAB_COLORS[activeIdx % TAB_COLORS.length];
-
-  // ── Render ────────────────────────────────────────────────────────────────
+  const ageLabel = (iso?: string) => {
+    const n = daysSince(iso);
+    if (n === null) return '';
+    return n === 0 ? t('rec_today') : tf(t('rec_days'), { n });
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: 'var(--bg)' }}>
-
-      {/* ── Page header ── */}
-      <div style={{ padding: '16px 24px 0', background: 'var(--surface)', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          {/* Title */}
-          <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--fg)' }}>Candidatures Spontanées</h1>
-            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--ink-2)' }}>
-              {loadTables ? 'Chargement…' : `${tables.length} table${tables.length !== 1 ? 's' : ''} · Smart App`}
-            </p>
-          </div>
-
-          {/* Time filter chips */}
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            {TIME_FILTERS.map(f => (
-              <button
-                key={f.key}
-                onClick={() => setTimeFilter(f.key)}
-                style={{
-                  padding: '5px 13px', borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  border: '1px solid',
-                  borderColor: timeFilter === f.key ? accentColor : 'var(--line)',
-                  background: timeFilter === f.key ? accentColor + '18' : 'var(--surface)',
-                  color: timeFilter === f.key ? accentColor : 'var(--ink-2)',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Refresh */}
-          <button
-            onClick={() => { fetchTables(); if (active) fetchRecords(active, offset, timeFilter); }}
-            style={{ background: 'none', border: '1px solid var(--line)', cursor: 'pointer', color: 'var(--ink-2)', padding: '6px 9px', borderRadius: 8, display: 'flex', transition: 'all 0.15s' }}
-            title="Actualiser"
-          >
-            <RefreshCw size={14} style={{ animation: (loadTables || loadData) ? 'spin 1s linear infinite' : 'none' }} />
-          </button>
+    <div style={{ padding: '28px 32px 56px', display: 'flex', flexDirection: 'column', gap: 20, width: '100%' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <RV as="h1" variant="up" style={{ margin: 0, fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3vw,40px)', letterSpacing: '-.045em', lineHeight: 1.05 }}>{t('rec_title')}</RV>
+          <RV as="p" variant="up" delay={60} style={{ margin: '8px 0 0', fontSize: 15, color: '#52646d' }}>{t('rec_subtitle')}</RV>
         </div>
-
-        {/* Table tabs */}
-        {loadTables ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 14, color: 'var(--ink-2)', fontSize: 12 }}>
-            <Spinner size={14} /> Chargement des tables…
-          </div>
-        ) : tables.length === 0 ? (
-          <div style={{ paddingBottom: 14, fontSize: 13, color: 'var(--ink-2)' }}>Aucune table disponible</div>
-        ) : (
-          <div style={{ display: 'flex', gap: 0 }}>
-            {tables.map((t, i) => {
-              const color   = TAB_COLORS[i % TAB_COLORS.length];
-              const isActive = i === activeIdx;
-              const count   = tableCounts[t.id];
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => { setActiveIdx(i); }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '10px 18px', fontSize: 13, fontWeight: isActive ? 700 : 500,
-                    border: 'none', borderBottom: isActive ? `2px solid ${color}` : '2px solid transparent',
-                    background: 'none', cursor: 'pointer', color: isActive ? color : 'var(--ink-2)',
-                    transition: 'all 0.15s', marginBottom: -1,
-                  }}
-                >
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: isActive ? color : 'var(--line)', flexShrink: 0 }} />
-                  {t.title}
-                  {count !== undefined && (
-                    <span style={{
-                      fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999,
-                      background: isActive ? color + '18' : 'var(--surface-2)',
-                      color: isActive ? color : 'var(--ink-2)',
-                      border: `1px solid ${isActive ? color + '44' : 'var(--line)'}`,
-                    }}>
-                      {count.toLocaleString()}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <RV as="div" variant="up" delay={100} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button type="button" onClick={() => setSpontOpen(true)} title={t('rec_spontaneous')} aria-label={t('rec_spontaneous')} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 42, height: 42, padding: 0, borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', color: '#33474f', cursor: 'pointer' }} className="rec-h1">
+            <Inbox size={16} />
+          </button>
+          <Link to="/app/candidats" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 42, padding: '0 14px', borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', color: '#33474f', fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap' }} className="rec-h1">
+            <Users size={15} />{t('rec_all_candidates')}
+          </Link>
+          <Link to="/app/annonces" style={{ position: 'relative', overflow: 'hidden', display: 'inline-flex', alignItems: 'center', gap: 8, height: 42, padding: '0 16px', borderRadius: 12, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', boxShadow: '0 12px 26px -12px rgba(22,182,200,.85)' }} className="rec-h2">
+            <span className="wedy-shine" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '40%', background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)', pointerEvents: 'none' }} />
+            <Megaphone size={16} style={{ position: 'relative' }} /><span style={{ position: 'relative' }}>{t('rec_publish')}</span>
+          </Link>
+        </RV>
       </div>
 
-      {/* ── Error banner ── */}
-      {err && (
-        <div style={{ padding: '9px 20px', background: '#fef2f2', color: '#b91c1c', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, borderBottom: '1px solid #fecaca' }}>
-          <AlertTriangle size={14} /> {err}
-          <button onClick={() => setErr(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c' }}><X size={13} /></button>
-        </div>
-      )}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12 }}>
+        <RV as="div" variant="up" delay={80} style={{ padding: '16px 18px', borderRadius: 18, background: 'linear-gradient(135deg,#0b5f72,#0e7f96)', color: '#ffffff' }}>
+          <div style={{ ...statLabel, color: undefined, opacity: 0.9 }}>{t('rec_open_posts')}</div>
+          <CountText as="div" text={String(openPosts)} style={statValue} />
+        </RV>
+        <RV as="div" variant="up" delay={130} style={{ padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+          <div style={statLabel}>{t('rec_active')}</div><div style={statValue}>{active.length}</div>
+        </RV>
+        <RV as="div" variant="up" delay={180} style={{ padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+          <div style={statLabel}>{t('rec_interviews_planned')}</div><div style={statValue}>{upcoming.size}</div>
+        </RV>
+        <RV as="div" variant="up" delay={230} style={{ padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+          <div style={statLabel}>{t('rec_avg_delay')}</div><div style={statValue}>{avgDelay === null ? '—' : tf(t('rec_days'), { n: avgDelay })}</div>
+        </RV>
+      </div>
 
-      {/* ── Content ── */}
-      {!active ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: 'var(--ink-2)', fontSize: 14 }}>Aucune table à afficher.</p>
-        </div>
-      ) : (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-          {/* Search + stats bar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 20px', borderBottom: '1px solid var(--line)', flexShrink: 0, background: 'var(--surface)' }}>
-            <div style={{ position: 'relative', flex: 1, maxWidth: 260 }}>
-              <Search size={12} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-2)', pointerEvents: 'none' }} />
-              <input
-                className="input"
-                style={{ paddingLeft: 28, fontSize: 12, padding: '6px 10px 6px 28px' }}
-                placeholder="Rechercher dans les résultats…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
-            {search && (
-              <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', display: 'flex' }}>
-                <X size={13} />
+      {jobsList.length > 0 && (
+        <RV as="div" variant="up" delay={160} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {['', ...jobsList].map(j => {
+            const on = job === j;
+            const n = candidates.filter(c => !j || (c.position || '').trim() === j).length;
+            return (
+              <button key={j || 'all'} type="button" onClick={() => setJob(j)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 38, padding: '0 14px', borderRadius: 99, border: `1px solid ${on ? '#0a1c24' : '#e2e8eb'}`, background: on ? '#0a1c24' : '#ffffff', color: on ? '#ffffff' : '#33474f', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                {j || t('rec_all_posts')}<span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, opacity: 0.75 }}>{n}</span>
               </button>
-            )}
-            <div style={{ flex: 1 }} />
-            <span style={{ fontSize: 12, color: 'var(--ink-2)', fontWeight: 500 }}>
-              {loadData ? '…' : `${total.toLocaleString()} enregistrement${total !== 1 ? 's' : ''}`}
-              {timeFilter !== 'all' && <span style={{ marginLeft: 6, color: accentColor, fontWeight: 600 }}>· {TIME_FILTERS.find(f => f.key === timeFilter)?.label}</span>}
-            </span>
-          </div>
+            );
+          })}
+        </RV>
+      )}
 
-          {/* Data table */}
-          {loadData ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-              <Spinner /><span style={{ color: 'var(--ink-2)', fontSize: 13 }}>Chargement…</span>
-            </div>
-          ) : filteredRec.length === 0 ? (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-2)' }}>
-              <Table2 size={36} style={{ opacity: 0.12, marginBottom: 12 }} />
-              <p style={{ fontWeight: 600, margin: '0 0 6px' }}>Aucun enregistrement</p>
-              <p style={{ fontSize: 13, margin: 0 }}>
-                {timeFilter !== 'all'
-                  ? `Aucune candidature reçue pendant la période sélectionnée.`
-                  : `Cette table ne contient aucun enregistrement.`}
-              </p>
-            </div>
-          ) : (
-            <>
-              <div style={{ flex: 1, overflow: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 600 }}>
-                  <thead style={{ position: 'sticky', top: 0, zIndex: 5 }}>
-                    <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--line)' }}>
-                      <th style={{ width: 48, padding: '10px 14px', fontWeight: 600, color: 'var(--ink-3)', fontSize: 11, borderRight: '1px solid var(--line)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '.06em' }}>#</th>
-                      {visCols.map(col => {
-                        const ct = getCT(col.uidt);
-                        return (
-                          <th key={col.id} style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: 'var(--ink-3)', fontSize: 11, whiteSpace: 'nowrap', borderRight: '1px solid var(--line)', minWidth: 110, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                              <span style={{ color: col.pk ? 'var(--warn)' : ct.color, display: 'flex' }}>{col.pk ? <Key size={11} /> : ct.icon}</span>
-                              {col.title}
-                            </div>
-                          </th>
-                        );
-                      })}
-                      <th style={{ width: 48, padding: '10px 8px', borderLeft: '1px solid var(--line)' }} />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRec.map((row, ri) => (
-                      <tr
-                        key={ri}
-                        style={{ borderBottom: '1px solid var(--line)', cursor: 'pointer' }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLTableRowElement).style.background = 'var(--surface-2)'; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = ''; }}
-                        onClick={() => setRowDetail(row)}
-                      >
-                        <td style={{ padding: '9px 14px', color: 'var(--ink-3)', fontSize: 11, borderRight: '1px solid var(--line)', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
-                          {offset + ri + 1}
-                        </td>
-                        {visCols.map(col => (
-                          <td key={col.id} style={{ padding: '9px 14px', borderRight: '1px solid var(--line)', maxWidth: 260, overflow: 'hidden' }}>
-                            <Cell val={row[col.title]} col={col} />
-                          </td>
-                        ))}
-                        <td style={{ padding: '7px 10px', borderLeft: '1px solid var(--line)', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={() => setRowDetail(row)}
-                            style={{ background: 'none', border: '1px solid var(--line)', cursor: 'pointer', color: 'var(--ink-2)', padding: '4px 7px', borderRadius: 6, display: 'flex', transition: 'all 0.1s' }}
-                            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'none'; }}
-                          >
-                            <Eye size={12} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination — only in unfiltered mode (time filter loads all at once) */}
-              {timeFilter === 'all' && total > LIMIT && (
-                <div style={{ padding: '10px 20px', borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: 'var(--surface)' }}>
-                  <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>
-                    <b style={{ color: 'var(--fg)' }}>{offset + 1}–{Math.min(offset + LIMIT, total)}</b> sur <b style={{ color: 'var(--fg)' }}>{total.toLocaleString()}</b>
-                  </span>
-                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    {[{ l: '«', o: 0, d: offset === 0 }, { l: '‹', o: Math.max(0, offset - LIMIT), d: offset === 0 }].map(b => (
-                      <button key={b.l} onClick={() => !b.d && goPage(b.o)} disabled={b.d}
-                        style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 11px', cursor: b.d ? 'not-allowed' : 'pointer', color: b.d ? 'var(--ink-3)' : 'var(--fg)', fontSize: 13, fontWeight: 700, opacity: b.d ? 0.4 : 1 }}>{b.l}</button>
-                    ))}
-                    <span style={{ fontSize: 12, color: accentColor, padding: '5px 14px', background: accentColor + '18', border: `1px solid ${accentColor}44`, borderRadius: 6, fontWeight: 700 }}>
-                      {curPage} / {totPages}
-                    </span>
-                    {[{ l: '›', o: offset + LIMIT, d: offset + LIMIT >= total }, { l: '»', o: (totPages - 1) * LIMIT, d: offset + LIMIT >= total }].map(b => (
-                      <button key={b.l} onClick={() => !b.d && goPage(b.o)} disabled={b.d}
-                        style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 11px', cursor: b.d ? 'not-allowed' : 'pointer', color: b.d ? 'var(--ink-3)' : 'var(--fg)', fontSize: 13, fontWeight: 700, opacity: b.d ? 0.4 : 1 }}>{b.l}</button>
-                    ))}
-                  </div>
+      <div style={{ overflowX: 'auto', paddingBottom: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(240px,1fr))', gap: 12, minWidth: 1240, alignItems: 'start' }}>
+          {STAGES.map(([key, label, dot, bg], ci) => {
+            const cards = pool.filter(p => stageOf(p, upcoming.get(p.id)) === key);
+            return (
+              <RV key={key} as="div" variant="up" delay={ci * 70}
+                onDragOver={(e: DragEvent) => { e.preventDefault(); if (over !== key) setOver(key); }}
+                onDragLeave={() => setOver(o => (o === key ? null : o))}
+                onDrop={drop(key)}
+                style={{ padding: 12, borderRadius: 20, background: bg, border: `1px solid ${over === key ? dot : '#e2e8eb'}`, minHeight: 420, transition: 'border-color .2s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 6px 12px' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: dot }} />
+                  <span style={{ fontWeight: 700, fontSize: 14 }}>{t(label)}</span>
+                  <span style={{ marginInlineStart: 'auto', fontFamily: "'Geist Mono',monospace", fontSize: 12, color: '#52646d', padding: '1px 8px', borderRadius: 99, background: 'rgba(255,255,255,.7)' }}>{cards.length}</span>
                 </div>
-              )}
-            </>
-          )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {isLoading && ci === 0 && <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}><Spinner /></div>}
+                  {cards.map(p => {
+                    const sc = scoreOf(p);
+                    const next = upcoming.get(p.id);
+                    const src = sourceOf(p);
+                    return (
+                      <RV key={p.id} as="div" variant="up" draggable onDragStart={(e: DragEvent) => { try { e.dataTransfer.setData('text/plain', p.id); } catch { /* ignore */ } }}
+                        onClick={() => navigate(p.status === 'candidate' ? `/app/candidats?c=${p.id}` : `/app/employees/${p.id}`)}
+                        style={{ padding: 13, borderRadius: 15, background: '#ffffff', border: '1px solid #e2e8eb', cursor: 'grab', boxShadow: '0 2px 8px -5px rgba(10,28,36,.35)', transition: 'box-shadow .2s,transform .2s' }} className="rec-h3">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarGradient(p.full_name), color: '#ffffff', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{initialsOf(p.full_name)}</span>
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.full_name}</span>
+                            <span style={{ display: 'block', fontSize: 12, color: '#5f7079', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.position || '—'}</span>
+                          </span>
+                          {sc !== null && (
+                            <span style={{ position: 'relative', width: 38, height: 38, flexShrink: 0 }}>
+                              <svg viewBox="0 0 38 38" style={{ display: 'block', width: 38, height: 38, transform: 'rotate(-90deg)' }}>
+                                <circle cx="19" cy="19" r="15" style={{ fill: 'none', stroke: '#eef2f4', strokeWidth: 4 }} />
+                                <circle cx="19" cy="19" r="15" style={{ fill: 'none', stroke: scoreColor(sc), strokeWidth: 4, strokeLinecap: 'round', strokeDasharray: `${(C * sc / 100).toFixed(1)}px ${C.toFixed(1)}px` }} />
+                              </svg>
+                              <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, fontWeight: 700 }}>{sc}</span>
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 11, flexWrap: 'wrap' }}>
+                          {src && <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: '#f3f6f7', color: '#33474f' }}>{src}</span>}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#7d8f97' }}><Clock size={11} />{ageLabel(key === 'hired' ? p.hire_date : stageSince(p))}</span>
+                          {next && key !== 'hired' && (
+                            <span style={{ marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: '#6d5ad6' }}><CalendarClock size={11} />{nextLabel(next.date, next.start_time)}</span>
+                          )}
+                        </div>
+                      </RV>
+                    );
+                  })}
+                  {!isLoading && cards.length === 0 && (
+                    <div style={{ padding: '18px 10px', borderRadius: 14, border: '1px dashed rgba(10,28,36,.14)', textAlign: 'center', fontSize: 12.5, color: '#7d8f97' }}>{t('rec_drop_here')}</div>
+                  )}
+                </div>
+              </RV>
+            );
+          })}
         </div>
-      )}
+      </div>
 
-      {/* ── Row detail modal ── */}
-      {rowDetail && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={() => setRowDetail(null)}
-        >
-          <div
-            style={{ background: 'var(--surface)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--line)', width: '100%', maxWidth: 540, maxHeight: '82vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: accentColor, display: 'inline-block' }} />
-                <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>{active?.title} — Détail</p>
-              </div>
-              <button onClick={() => setRowDetail(null)} style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', cursor: 'pointer', color: 'var(--ink-2)', padding: 7, borderRadius: 8, display: 'flex' }}><X size={14} /></button>
-            </div>
-            <div style={{ overflowY: 'auto', padding: '14px 20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
-                {visCols.map(col => {
-                  const ct = getCT(col.uidt);
-                  return (
-                    <div key={col.id} style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '10px 12px', border: '1px solid var(--line)', borderLeft: `3px solid ${col.pk ? 'var(--warn)' : ct.color}` }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
-                        <span style={{ color: col.pk ? 'var(--warn)' : ct.color, display: 'flex' }}>{col.pk ? <Key size={10} /> : ct.icon}</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-2)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{col.title}</span>
-                      </div>
-                      <div style={{ paddingLeft: 2 }}>
-                        {rowDetail[col.title] !== null && rowDetail[col.title] !== undefined
-                          ? <Cell val={rowDetail[col.title]} col={col} />
-                          : <span style={{ fontSize: 12, color: 'var(--ink-3)', fontStyle: 'italic' }}>vide</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <Drawer open={spontOpen} onClose={() => setSpontOpen(false)} title={t('rec_spontaneous')} subtitle={t('rec_spontaneous_sub')} icon={<Inbox size={17} />} width={1100}>
+        <SpontaneousApplications />
+      </Drawer>
     </div>
   );
 }

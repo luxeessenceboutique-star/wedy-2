@@ -75,6 +75,13 @@ Planning notes (`PlanningRHPage.tsx`, hand-written against the reference):
 - The reference's onboardings / trainings / meetings have no dated backend data, so they are not invented on the grid. The "Synchronisé avec Google Calendar" pill was dropped: there is no calendar sync.
 - "Nouvel événement" became "Planifier un entretien" (drawer → `scheduleInterview`); the dark card can mark an interview done (`updateInterviewStatus`). Free slots are the real `/creneaux` of the week; "Gérer les créneaux" opens the existing slots manager in a drawer. "Note du jour" reads/writes `/planning-notes`. The old month calendar (`CalendrierRHPage.tsx`, `PlanningDayNotes.tsx`) was removed.
 
+Recruitment notes (`RecruitmentPage.tsx`, hand-written):
+- Candidates are `employees` rows with `status = candidate`. The pipeline stage, AI score and source live in `custom_fields` (`recruitment_stage`, `ai_score`, `source`, `stage_changed_at`) — no new columns. Without a stored stage a candidate is "Entretien" if an interview is coming, else "Nouveau". The score ring / source chip only show when the data exists.
+- Dropping a card saves the stage (`updateEmployee`); dropping on "Embauché" asks for confirmation and promotes the candidate (`promoteToEmployee`, hire date = today). The column lists recent hires (≤ 90 days) still tagged `recruitment_stage = hired`.
+- KPIs are real: open posts = active job posts, active candidates, upcoming interviews, average delay = hire date − application date of recent hires ("—" when none).
+- The previous screen (Tybot SmartDB "candidatures spontanées") is kept, moved to `components/recruitment/SpontaneousApplications.tsx`, opened from the inbox icon button.
+- Note: `/candidats/apply` (used by the public Apply page) does not exist in the backend.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -91,7 +98,7 @@ Planning notes (`PlanningRHPage.tsx`, hand-written against the reference):
 | 10 | Time off | Wedy Time Off | `/app/timeoff` | `app/TimeOffPage.tsx` | ◐ |
 | 11 | Absences | Wedy Absences | `/app/absences` | `app/AbsencesPage.tsx` | ◐ |
 | 12 | Planning | Wedy Planning | `/app/planning-rh` | `app/PlanningRHPage.tsx` (+ `CreneauxRHPage.tsx` in a drawer) | ☑ |
-| 13 | Recruitment | Wedy Recruitment | `/app/recruitment` | `app/RecruitmentPage.tsx` | ◐ |
+| 13 | Recruitment | Wedy Recruitment | `/app/recruitment` | `app/RecruitmentPage.tsx` (+ `lib/recruitment.ts`) | ☑ |
 | 14 | Candidates | Wedy Candidates | `/app/candidats` | `app/CandidatsPage.tsx` | ◐ |
 | 15 | Job posts | Wedy Job Posts | `/app/annonces` | `app/AnnoncesPage.tsx` + `AnnonceStudioPage.tsx` | ◐ |
 | 16 | Payroll | Wedy Payroll | `/app/payroll` | `app/PayrollPage.tsx` | ◐ |

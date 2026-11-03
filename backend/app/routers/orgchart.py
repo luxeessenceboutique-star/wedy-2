@@ -61,6 +61,16 @@ def get_orgchart(
     return {"projects": projects_out, "unassigned": unassigned}
 
 
+@router.get("/people")
+def get_org_people(
+    supabase: Client = Depends(get_db),
+    _user: dict = Depends(get_current_user),
+):
+    """Everyone shown in the company org chart (active, on leave and interns), with department and manager."""
+    res = orgchart_repository.list_people(supabase)
+    return res.data or []
+
+
 # ── Projects CRUD ─────────────────────────────────────────────────────────────
 
 @router.post("/projects", status_code=201)

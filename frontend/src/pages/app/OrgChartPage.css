@@ -1,0 +1,11 @@
+/* hover / focus rules of Wedy Org Chart */
+.org-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.org-zbtn { width: 34px; height: 34px; border: none; border-radius: 9px; background: transparent; color: #33474f; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+.org-zbtn:hover { background: #f3f6f7; }
+.org-h1:hover { border-color: #9fb4bb !important; }
+.org-h2:hover { background: #16323c !important; }
+.org-h3:hover { background: #eef5f7 !important; }
+.org-h4:hover { transform: translateX(2px) !important; }
+[dir="rtl"] .org-h4:hover { transform: translateX(-2px) !important; }
+.org-h5:hover { color: #ffffff !important; }
+.org-h6:hover { color: #0e6f84 !important; border-color: #b9dfe5 !important; }

@@ -40,3 +40,10 @@ export const removeOrgMember = (projectId: string, employeeId: string) =>
 
 export const updateOrgMemberRole = (projectId: string, employeeId: string, role: string) =>
   api.patch(`/orgchart/projects/${projectId}/members/${employeeId}`, { role_in_team: role }).then(r => r.data);
+
+export type OrgPerson = {
+  id: string; full_name: string; position?: string; department?: string; manager?: string;
+  email?: string; photo_url?: string; status: string;
+};
+/** Everyone in the company org chart (active, on leave, interns), readable by every signed-in user. */
+export const getOrgPeople = () => api.get<OrgPerson[]>('/orgchart/people').then(r => r.data);

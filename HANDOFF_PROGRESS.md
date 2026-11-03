@@ -95,6 +95,11 @@ Payroll notes (`PayrollPage.tsx`):
 - The "Contrôle IA" items are real rule-based checks: active employee without payslip (→ create it), bonus without a justification note, gross ±20 % vs last month, contract ending this month. "Marquer vérifié" is stored on the payslip (`notes` gets an `[ok:<kind>]` tag) so it is shared by the team.
 - KPIs, employer cost and the 6-month chart come from `/payroll`; employer charges are an estimate with the Moroccan rates (labelled so). "Exporter vers Sage Paie" became the existing CSV export (no Sage connector). Deadlines are the legal ones (salary at month end, CNSS on the 10th, IR at the end of next month). Rows keep PDF download and delete.
 
+Org chart notes (`OrgChartPage.tsx`):
+- New read endpoint `GET /orgchart/people` (any signed-in user: active, on-leave and interns with department, manager, email). The tree is built from it: top card = the person whose position reads "Directeur général / CEO / PDG / gérant" (else the company), one column per department sorted by size, head = best match of directeur > responsable/manager > chef, then whoever others name as `manager`. First 3 members shown, "+ N autres" expands.
+- Search dims non-matches and opens collapsed departments, zoom/fit as in the reference, person card with "Voir le dossier" (HR only) and mail. "Exporter" prints an A3 landscape sheet (browser print → PDF).
+- The previous ReactFlow "teams/projects" editor is kept as `components/orgchart/ProjectTeamsBoard.tsx`, opened from the network icon (HR only). The portal route renders the same chart read-only.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -116,7 +121,7 @@ Payroll notes (`PayrollPage.tsx`):
 | 15 | Job posts | Wedy Job Posts | `/app/annonces` | `app/AnnoncesPage.tsx` | ☑ |
 | 16 | Payroll | Wedy Payroll | `/app/payroll` | `app/PayrollPage.tsx` | ☑ |
 | 17 | Performance | Wedy Performance | `/app/performance` | `app/PerformancePage.tsx` | ◐ |
-| 18 | Org chart | Wedy Org Chart | `/app/orgchart`, `/employee/orgchart` | `app/OrgChartPage.tsx` | ◐ |
+| 18 | Org chart | Wedy Org Chart | `/app/orgchart`, `/employee/orgchart` | `app/OrgChartPage.tsx` | ☑ |
 | 19 | Meetings | Wedy Meetings | `/app/meetings`, `/employee/meetings` | `app/MeetingsPage.tsx` | ◐ |
 | 20 | Onboarding | Wedy Onboarding | `/app/onboarding` | `app/EmployeeOnboardingPage.tsx` | ◐ |
 | 21 | Training | Wedy Training | `/app/training` | `app/TrainingPage.tsx` | ◐ |

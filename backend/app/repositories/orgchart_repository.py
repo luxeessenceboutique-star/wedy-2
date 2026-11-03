@@ -14,6 +14,16 @@ def list_employees_for_orgchart(supabase: Client):
     return supabase.table("employees").select("id, full_name, position, department, photo_url, status").execute()
 
 
+def list_people(supabase: Client):
+    return (
+        supabase.table("employees")
+        .select("id, full_name, position, department, manager, email, photo_url, status")
+        .in_("status", ["active", "on-leave", "intern"])
+        .order("full_name")
+        .execute()
+    )
+
+
 def create_project(supabase: Client, data: dict):
     return supabase.table("orgchart_projects").insert(data).execute()
 

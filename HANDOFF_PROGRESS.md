@@ -193,6 +193,11 @@ Integrations notes (`app/IntegrationsPage.tsx` + `IntegrationsView.tsx`):
 - Only integrations that work are listed: the **iCal feed** of approved leave (`/api/integrations/ical`: enable / regenerate / revoke a secret token; public `GET /api/integrations/ical/{token}.ics`, subscribable from Google Calendar, Outlook and Apple Calendar), **Slack** and **Microsoft Teams** through their incoming-webhook URL (events posted as text), and **JSON webhooks**. Webhooks are now actually dispatched (`services/webhooks.py`, background thread) on `leave.approved`, `employee.created`, `document.generated` and `candidate.hired`; each delivery records its HTTP status, shown per hook and in the "Dernière livraison" KPI; "Tester" sends a test event.
 - Not shown because they do not exist: Google / Outlook OAuth sync, SMTP, Sage Paie, Cegid, Damancom, the REST API key and its call counter, the uptime figure.
 
+Security notes (`app/SecurityPage.tsx` + `SecurityView.tsx`):
+- Two settings are real and enforced (section `security` of `rh.app_settings`): the **session timeout** (`useIdleLogout` in both shells signs out after N minutes without activity, shared across tabs) and the **IP allow-list** for HR / admin access, checked in `require_hr_or_admin` (30 s cache; `X-Forwarded-For` aware). Saving refuses an enabled list that does not contain the caller's own address (`GET /settings/whoami-ip`), so an admin cannot lock themselves out.
+- Sign-in, passwords, 2FA and SSO belong to the Tybot account: the 2FA, password-policy, login-alert and SSO controls of the reference are replaced by an explanation, not by toggles that would do nothing. The sessions table (no session data exists) becomes the list of privileged accounts (admin / HR) with "Retirer le rôle".
+- The score and recommendations are computed from what is configured (timeout, allow-list, number of privileged accounts); the badges state facts about the app (role checks, audit log, timeout, 09-08 consent on applications) instead of infrastructure claims.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -224,9 +229,9 @@ Integrations notes (`app/IntegrationsPage.tsx` + `IntegrationsView.tsx`):
 | 25 | Audit | Wedy Audit | `/app/audit` | `app/AuditPage.tsx` | ☑ |
 | 26 | Notifications | Wedy Notifications | `/app/notifications` | `app/NotificationsPage.tsx` | ☑ |
 | 27 | Integrations | Wedy Integrations | `/app/integrations` | `app/IntegrationsPage.tsx` | ☑ |
-| 28 | Users & roles | Wedy Users | `/app/users` | `app/UsersPage.tsx` | ◐ |
+| 28 | Users & roles | Wedy Users | `/app/users` | `app/UsersPage.tsx` | ◐ (data real; permissions matrix now truthful; layout not yet regenerated) |
 | 29 | Settings | Wedy Settings | `/app/settings` | `app/SettingsPage.tsx` | ☑ |
-| 30 | Security | Wedy Security | `/app/security` | `app/SecurityPage.tsx` | ◐ |
+| 30 | Security | Wedy Security | `/app/security` | `app/SecurityPage.tsx` | ☑ |
 | 31 | Help | Wedy Help | `/app/help` | `app/HelpPage.tsx` | ◐ |
 | 32 | Portal home | Wedy Portal | `/employee` | `employee/EmployeeDashboard.tsx` | ☑ |
 | 33 | Portal leave | Wedy Portal Leave | `/employee/conges` | `employee/MyLeavePage.tsx` | ☑ |

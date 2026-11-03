@@ -6,7 +6,7 @@ from typing import Any
 
 from supabase import Client
 
-SECTIONS = ("company", "prefs", "leave", "docs", "assets")
+SECTIONS = ("company", "prefs", "leave", "docs", "assets", "security")
 
 DEFAULTS: dict[str, dict[str, Any]] = {
     "company": {"name": "Tython SARL", "sector": "", "ice": "", "rc": "", "if": "", "cnss": "", "address": "", "city": "Casablanca", "phone": "", "email": ""},
@@ -15,6 +15,9 @@ DEFAULTS: dict[str, dict[str, Any]] = {
     "leave": {"monthly": 1.5, "bonus": 1.5, "cap": 30, "flow": "mgr-rh", "off_holidays": []},
     "docs": {"prefix": "ATT-", "lang": "fr", "qr": True},
     "assets": {"logo": None, "signature": None, "stamp": None},
+    # session_timeout: minutes of inactivity before the app signs out (0 = never);
+    # ip_allow + ips: HR / admin API calls only from these addresses or CIDR ranges.
+    "security": {"session_timeout": 0, "ip_allow": False, "ips": []},
 }
 
 
@@ -43,3 +46,48 @@ def leave_rules(supabase: Client) -> dict[str, Any]:
         return load(supabase)[0]["leave"]
     except Exception:
         return dict(DEFAULTS["leave"])
+
+
+# ── IP allow-list (cached, read on every HR / admin request) ───────────────────
+import ipaddress
+import time
+
+_ip_cache: dict[str, Any] = {"at": 0.0, "value": None}
+
+
+def ip_rules(supabase: Client) -> dict[str, Any]:
+    """The security section, cached for 30 s so the check costs nothing per request."""
+    if time.time() - _ip_cache["at"] < 30 and _ip_cache["value"] is not None:
+        return _ip_cache["value"]
+    try:
+        value = load(supabase)[0]["security"]
+    except Exception:
+        value = dict(DEFAULTS["security"])
+    _ip_cache.update(at=time.time(), value=value)
+    return value
+
+
+def forget_ip_rules() -> None:
+    _ip_cache.update(at=0.0, value=None)
+
+
+def ip_allowed(ip: str, ranges: list[dict[str, str]]) -> bool:
+    try:
+        addr = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    for r in ranges:
+        try:
+            if addr in ipaddress.ip_network(str(r.get("ip", "")).strip(), strict=False):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
+def client_ip(request) -> str:
+    """The caller's address, behind a reverse proxy when X-Forwarded-For is set."""
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else ""

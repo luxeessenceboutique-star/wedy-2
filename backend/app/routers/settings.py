@@ -3,7 +3,7 @@ import base64
 from datetime import datetime
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from supabase import Client
 
@@ -22,6 +22,7 @@ class SettingsPatch(BaseModel):
     prefs: Optional[dict[str, Any]] = None
     leave: Optional[dict[str, Any]] = None
     docs: Optional[dict[str, Any]] = None
+    security: Optional[dict[str, Any]] = None
 
 
 def _save(supabase: Client, key: str, value: dict, user_id: str):
@@ -40,13 +41,26 @@ def get_settings(supabase: Client = Depends(get_db), current_user: dict = Depend
 
 
 @router.patch("")
-def update_settings(payload: SettingsPatch, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
+def update_settings(payload: SettingsPatch, request: Request, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
     data, _ = app_settings.load(supabase)
+    sec = payload.security
+    if sec is not None:
+        merged = {**data["security"], **sec}
+        ips = [r for r in (merged.get("ips") or []) if isinstance(r, dict) and str(r.get("ip", "")).strip()]
+        for r in ips:
+            if not _valid_net(r["ip"]):
+                raise HTTPException(status_code=422, detail=f"invalid_ip:{r['ip']}")
+        if merged.get("ip_allow"):
+            here = app_settings.client_ip(request)
+            if not ips or not app_settings.ip_allowed(here, ips):
+                raise HTTPException(status_code=409, detail=f"ip_not_in_list:{here}")  # would lock this admin out
+        sec["ips"] = ips
     for key, value in payload.model_dump(exclude_none=True).items():
         allowed = app_settings.DEFAULTS[key].keys()
         merged = {**data[key], **{k: v for k, v in value.items() if k in allowed}}
         _save(supabase, key, merged, current_user["id"])
         data[key] = merged
+    app_settings.forget_ip_rules()
     log_action(supabase, current_user["id"], "UPDATE", "settings", None)
     return {**data, "stored": True}
 
@@ -76,3 +90,18 @@ def delete_asset(kind: str, supabase: Client = Depends(get_db), current_user: di
     assets = {**data["assets"], kind: None}
     _save(supabase, "assets", assets, current_user["id"])
     return {"assets": assets}
+
+
+def _valid_net(value: str) -> bool:
+    import ipaddress
+    try:
+        ipaddress.ip_network(value.strip(), strict=False)
+        return True
+    except ValueError:
+        return False
+
+
+@router.get("/whoami-ip")
+def whoami_ip(request: Request, current_user: dict = Depends(get_current_user)):
+    """The address the server sees for this browser (to fill the allow-list safely)."""
+    return {"ip": app_settings.client_ip(request)}

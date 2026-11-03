@@ -6,11 +6,13 @@ import { cx } from '@/lib/visual';
 import { listNotifications, getInboxCount } from '@/services/api';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { useIdleLogout } from '@/lib/useIdleLogout';
 
 export { PageHeader } from './PageHeader';
 export { Page } from './Page';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  useIdleLogout();
   const { user } = useAuth();
   const { t } = useLang();
   const [menuOpen, setMenuOpen] = React.useState(false);

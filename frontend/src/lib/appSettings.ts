@@ -8,10 +8,11 @@ export type Prefs = { lang: 'fr' | 'ar' | 'en'; tz: string; date: 'dmy' | 'iso';
 export type LeaveRules = { monthly: number; bonus: number; cap: number; flow: 'mgr-rh' | 'rh' | 'mgr'; off_holidays: string[] };
 export type DocOptions = { prefix: string; lang: 'fr' | 'ar' | 'en'; qr: boolean };
 export type Assets = { logo: string | null; signature: string | null; stamp: string | null };
-export type AppSettings = { company: CompanyProfile; prefs: Prefs; leave: LeaveRules; docs: DocOptions; assets: Assets; stored: boolean };
+export type SecuritySettings = { session_timeout: number; ip_allow: boolean; ips: { ip: string; label: string }[] };
+export type AppSettings = { company: CompanyProfile; prefs: Prefs; leave: LeaveRules; docs: DocOptions; assets: Assets; security: SecuritySettings; stored: boolean };
 
 export const getAppSettings = () => api.get<AppSettings>('/settings').then(r => r.data);
-export const patchAppSettings = (body: Partial<Pick<AppSettings, 'company' | 'prefs' | 'leave' | 'docs'>>) => api.patch<AppSettings>('/settings', body).then(r => r.data);
+export const patchAppSettings = (body: Partial<Pick<AppSettings, 'company' | 'prefs' | 'leave' | 'docs' | 'security'>>) => api.patch<AppSettings>('/settings', body).then(r => r.data);
 export const uploadAsset = (kind: keyof Assets, file: File) => {
   const fd = new FormData();
   fd.append('file', file);

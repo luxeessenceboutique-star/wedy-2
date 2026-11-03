@@ -47,14 +47,14 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   autre:                 'Autre',
 };
 
-// ── Permissions matrix (static demo) ─────────────────────────────────────────
-const MODULES = ['Employés', 'Documents', 'Congés', 'Paie', 'Recrutement', 'Analytics', 'Paramètres', 'Sécurité'];
-const PERM_ROLES = ['admin', 'hr', 'manager', 'employee'];
+// ── Permissions matrix: what the server enforces (require_hr_or_admin, portal /me routes) ──
+const MODULES = ['Employés', 'Documents', 'Congés', 'Paie', 'Recrutement', 'Analytics', 'Paramètres', 'Utilisateurs'];
+const PERM_ROLES = ['admin', 'hr', 'employee'];
+// 0 = no access, 1 = read (own data for an employee), 2 = edit (own requests for an employee)
 const PERM_INIT: Record<string, number[]> = {
-  admin:    [2, 2, 2, 2, 2, 2, 2, 2],
-  hr:       [2, 2, 2, 2, 2, 1, 0, 0],
-  manager:  [1, 1, 2, 0, 1, 1, 0, 0],
-  employee: [0, 1, 1, 0, 0, 0, 0, 0],
+  admin:    [2, 2, 2, 2, 2, 1, 2, 2],
+  hr:       [2, 2, 2, 2, 2, 1, 2, 2],
+  employee: [1, 1, 2, 0, 0, 0, 0, 0],
 };
 const PERM_LV = [
   { Icon: Minus,  bg: '#f3f6f7', color: '#a3b1b7', label: 'Aucun accès' },
@@ -283,26 +283,18 @@ function RoleDropdown({ user, currentRole, onChanged }: { user: { email: string;
 
 // ── Permissions Panel ──────────────────────────────────────────────────────────
 function PermissionsPanel() {
-  const [perms, setPerms] = useState(() => JSON.parse(JSON.stringify(PERM_INIT)));
-
-  const cycle = (role: string, mi: number) => {
-    if (role === 'admin') return;
-    setPerms((prev: any) => ({
-      ...prev,
-      [role]: prev[role].map((v: number, j: number) => j === mi ? (v + 1) % 3 : v),
-    }));
-  };
+  const perms = PERM_INIT;
 
   return (
     <div style={{ borderRadius: 20, background: '#fff', border: '1px solid var(--border)', overflow: 'hidden' }}>
       <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Permissions</div>
-        <div style={{ fontSize: 12.5, color: 'var(--text-2)', marginTop: 2 }}>Cliquez une case pour changer le niveau d'accès.</div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-2)', marginTop: 2 }}>Ce que chaque rôle peut faire, appliqué par le serveur. Admin et RH ont les mêmes droits ; un employé ne voit que ses propres données dans son espace.</div>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <div style={{ minWidth: 380, padding: '12px 18px 16px' }}>
           {/* Header */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(110px,1fr) repeat(4,60px)', gap: 6, alignItems: 'end', paddingBottom: 6, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-2)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(110px,1fr) repeat(3,60px)', gap: 6, alignItems: 'end', paddingBottom: 6, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-2)' }}>
             <span />
             {PERM_ROLES.map(r => (
               <span key={r} style={{ textAlign: 'center' }}>{getRoleCfg(r).label.substring(0, 7)}</span>
@@ -310,29 +302,19 @@ function PermissionsPanel() {
           </div>
           {/* Rows */}
           {MODULES.map((mod, mi) => (
-            <div key={mod} style={{ display: 'grid', gridTemplateColumns: 'minmax(110px,1fr) repeat(4,60px)', gap: 6, alignItems: 'center', marginTop: 5 }}>
+            <div key={mod} style={{ display: 'grid', gridTemplateColumns: 'minmax(110px,1fr) repeat(3,60px)', gap: 6, alignItems: 'center', marginTop: 5 }}>
               <span style={{ fontSize: 13, color: 'var(--text)' }}>{mod}</span>
               {PERM_ROLES.map(role => {
                 const v = perms[role][mi];
                 const lv = PERM_LV[v];
-                const locked = role === 'admin';
                 const Icon = lv.Icon;
                 return (
-                  <button
+                  <span
                     key={role}
-                    type="button"
-                    onClick={() => cycle(role, mi)}
-                    disabled={locked}
-                    title={`${getRoleCfg(role).label} · ${mod} : ${lv.label}${locked ? ' (verrouillé)' : ''}`}
-                    style={{
-                      height: 32, border: 'none', borderRadius: 8,
-                      background: lv.bg, color: lv.color,
-                      cursor: locked ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'background .2s',
-                    }}>
+                    title={`${getRoleCfg(role).label} · ${mod} : ${lv.label}`}
+                    style={{ height: 32, borderRadius: 8, background: lv.bg, color: lv.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Icon size={14} />
-                  </button>
+                  </span>
                 );
               })}
             </div>

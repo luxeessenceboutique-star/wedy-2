@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Optional
 from supabase import Client
 
+from app.services import app_settings
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.audit import log_action
@@ -36,8 +37,18 @@ def _fmt_date(val) -> str:
         return str(val)
 
 
-def build_context(emp: dict, extra: dict = None) -> dict:
+def build_context(emp: dict, extra: dict = None, company: Optional[dict] = None) -> dict:
+    co = company or app_settings.DEFAULTS["company"]
     ctx = {
+        "company":          co.get("name") or "",
+        "company_address":  co.get("address") or "",
+        "company_city":     co.get("city") or "",
+        "company_phone":    co.get("phone") or "",
+        "company_email":    co.get("email") or "",
+        "company_ice":      co.get("ice") or "",
+        "company_rc":       co.get("rc") or "",
+        "company_if":       co.get("if") or "",
+        "company_cnss":     co.get("cnss") or "",
         "today":            date.today().strftime("%d/%m/%Y"),
         "full_name":        emp.get("full_name") or "",
         "cin":              emp.get("cin") or "",
@@ -110,7 +121,7 @@ def generate_doc(
     employee = e_res.data
 
     # 3. Build context and render
-    ctx = build_context(employee, payload.extra_variables or {})
+    ctx = build_context(employee, payload.extra_variables or {}, app_settings.load(supabase)[0]["company"])
     content = render_template(template.get("body_template", ""), ctx)
 
     # 4. Optional AI enhancement

@@ -9,6 +9,7 @@ import { tf } from '@/lib/format';
 import { avatarGradient, initialsOf } from '@/lib/visual';
 import { holidayAt, mergeHolidays, upcomingHolidays, workingDays, type Holiday } from '@/lib/holidays';
 import { TimeOffView } from './TimeOffView';
+import { useAppSettings } from '@/lib/appSettings';
 
 export type TimeOffVals = {
   loading: boolean;
@@ -53,7 +54,8 @@ export default function TimeOffPage() {
   const holQ = useQuery({ queryKey: ['holidays'], queryFn: listHolidays, staleTime: 3600_000 });
 
   const leaves = useMemo(() => leavesQ.data?.data ?? [], [leavesQ.data]);
-  const hols = useMemo(() => mergeHolidays(t, holQ.data?.data), [t, holQ.data]);
+  const { data: appSettings } = useAppSettings();
+  const hols = useMemo(() => mergeHolidays(t, holQ.data?.data, appSettings?.leave.off_holidays), [t, holQ.data, appSettings]);
   const balances = useMemo(() => balQ.data?.data ?? [], [balQ.data]);
 
   const y = cursor.getFullYear(), m = cursor.getMonth();

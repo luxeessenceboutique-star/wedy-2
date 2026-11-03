@@ -11,6 +11,7 @@ from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.audit import log_action, create_notification, notify_hr
 from app.repositories import leave_repository
+from app.services import app_settings
 
 router = APIRouter(prefix="/leaves", tags=["Leaves"])
 
@@ -45,16 +46,20 @@ def list_leaves(
     return {"data": res.data, "count": count_res.count or 0}
 
 
-def _default_annual_total(hire_date: Optional[str]) -> int:
-    """Default yearly entitlement: 21 days, +1 per 5 years of seniority, capped at 30."""
+def _default_annual_total(hire_date: Optional[str], rules: Optional[dict] = None) -> float:
+    """Default yearly entitlement from the leave rules of the settings (Code du travail by default:
+    1.5 d per month, +1.5 d per 5 years of seniority, 30 d max)."""
     from datetime import datetime, date as _date
-    if not hire_date:
-        return 21
-    try:
-        seniority = (datetime.now().date() - _date.fromisoformat(str(hire_date)[:10])).days // 365
-    except ValueError:
-        return 21
-    return int(min(21 + (seniority // 5), 30))
+    rules = rules or app_settings.DEFAULTS["leave"]
+    monthly, bonus, cap = float(rules.get("monthly") or 1.5), float(rules.get("bonus") or 0), float(rules.get("cap") or 30)
+    seniority = 0
+    if hire_date:
+        try:
+            seniority = (datetime.now().date() - _date.fromisoformat(str(hire_date)[:10])).days // 365
+        except ValueError:
+            seniority = 0
+    total = min(monthly * 12 + bonus * (seniority // 5), cap)
+    return int(total) if float(total).is_integer() else round(total, 1)
 
 
 @router.get("/balances")
@@ -78,13 +83,14 @@ def list_balances(
         if kind:
             bucket = used.setdefault(lv["employee_id"], {"annual_used": 0, "sick_used": 0, "personal_used": 0})
             bucket[kind] += lv.get("days") or 0
+    rules = app_settings.leave_rules(supabase)
     out = []
     for emp in staff:
         row = stored.get(emp["id"])
         if row:
             entry = {k: row.get(k) for k in ("annual_total", "annual_used", "sick_total", "sick_used", "personal_total", "personal_used")}
         else:
-            entry = {"annual_total": _default_annual_total(emp.get("hire_date")), "sick_total": 12, "personal_total": 5,
+            entry = {"annual_total": _default_annual_total(emp.get("hire_date"), rules), "sick_total": 12, "personal_total": 5,
                      **used.get(emp["id"], {"annual_used": 0, "sick_used": 0, "personal_used": 0})}
         entry.update({"employee_id": emp["id"], "full_name": emp.get("full_name"), "department": emp.get("department"),
                       "year": y, "stored": bool(row)})
@@ -103,11 +109,11 @@ def get_balance(
     y = year or datetime.now().year
 
     def _safe_default() -> dict:
-        base = 21
+        base = _default_annual_total(None, app_settings.leave_rules(supabase))
         try:
             emp = leave_repository.get_employee_hire_date(supabase, employee_id)
             if emp.data and emp.data.get("hire_date"):
-                base = _default_annual_total(emp.data["hire_date"])
+                base = _default_annual_total(emp.data["hire_date"], app_settings.leave_rules(supabase))
         except Exception:
             pass
         return {
@@ -328,3 +334,37 @@ def list_holidays(
     """Fetch public holidays."""
     res = leave_repository.list_holidays(supabase)
     return {"data": res.data or []}
+
+
+class HolidayIn(BaseModel):
+    name: str
+    date: date
+    is_recurring: bool = False
+
+
+@router.post("/holidays", status_code=201)
+def add_holiday(
+    payload: HolidayIn,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """A public holiday HR adds (typically the lunar ones, whose date changes every year)."""
+    name = payload.name.strip()
+    if not name:
+        raise HTTPException(status_code=422, detail="Nom requis")
+    try:
+        res = supabase.table("holidays").insert({"name": name, "date": str(payload.date), "is_recurring": payload.is_recurring}).execute()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    log_action(supabase, current_user["id"], "CREATE", "holiday", (res.data or [{}])[0].get("id"))
+    return (res.data or [{}])[0]
+
+
+@router.delete("/holidays/{holiday_id}", status_code=204)
+def delete_holiday(
+    holiday_id: str,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    supabase.table("holidays").delete().eq("id", holiday_id).execute()
+    log_action(supabase, current_user["id"], "DELETE", "holiday", holiday_id)

@@ -10,6 +10,7 @@ import { tf } from '@/lib/format';
 import { avatarGradient, initialsOf } from '@/lib/visual';
 import { mergeHolidays, workingDays, type Holiday } from '@/lib/holidays';
 import { AbsencesView } from './AbsencesView';
+import { useAppSettings } from '@/lib/appSettings';
 
 export type AbsencesVals = {
   loading: boolean; rtl: boolean;
@@ -53,7 +54,8 @@ export default function AbsencesPage() {
   const leavesQ = useQuery({ queryKey: ['absences-all'], queryFn: () => listLeaves({ limit: 1000 }), refetchInterval: 60_000 });
   const empQ = useQuery({ queryKey: ['employees', 'staff-list'], queryFn: () => listEmployees({ limit: 1000 }) });
   const holQ = useQuery({ queryKey: ['holidays'], queryFn: listHolidays, staleTime: 3600_000 });
-  const hols = useMemo(() => mergeHolidays(t, holQ.data?.data), [t, holQ.data]);
+  const { data: appSettings } = useAppSettings();
+  const hols = useMemo(() => mergeHolidays(t, holQ.data?.data, appSettings?.leave.off_holidays), [t, holQ.data, appSettings]);
   const staff = useMemo(() => (empQ.data?.data ?? []).filter(e => STAFF.has(e.status ?? 'active')), [empQ.data]);
 
   const refresh = () => ['absences-all', 'leaves', 'leave-balances', 'dashboard-kpis'].forEach(k => qc.invalidateQueries({ queryKey: [k] }));

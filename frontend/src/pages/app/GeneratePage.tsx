@@ -19,7 +19,13 @@ import { toast } from 'sonner';
 import { useLang, type TKey } from '@/lib/lang';
 import { tf } from '@/lib/format';
 import './GeneratePage.css';
+import { companyInitials, useAppSettings, type AppSettings, type CompanyProfile } from '@/lib/appSettings';
 
+/** Before /settings answers (or if the table is not created yet): the company of the official templates. */
+const FALLBACK_CO: Pick<AppSettings, 'company' | 'assets'> = {
+  company: { name: 'Tython SARL', sector: '', ice: '', rc: '', if: '', cnss: '', address: '', city: 'Casablanca', phone: '', email: '' },
+  assets: { logo: null, signature: null, stamp: null },
+};
 const CAT_STYLE: Record<string, { label: string; bg: string; color: string }> = {
   attestation: { label: 'Attestation', bg: '#e1f5ec', color: '#0f6f49' },
   contrat: { label: 'Contrat', bg: '#e4f2f4', color: '#0b5f72' },
@@ -52,7 +58,7 @@ const fmt = (d?: string | null) => {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : ddmmyyyy(new Date(d));
 };
-const resolveVar = (name: string, emp: Employee): string => {
+const resolveVar = (name: string, emp: Employee, co: CompanyProfile): string => {
   const MAP: Record<string, () => string> = {
     full_name: () => emp.full_name || '', cin: () => emp.cin || '', email: () => emp.email || '', phone: () => emp.phone || '',
     address: () => emp.address || '', city: () => emp.city || '', nationality: () => emp.nationality || '',
@@ -60,7 +66,9 @@ const resolveVar = (name: string, emp: Employee): string => {
     matricule: () => emp.matricule || '', contract_type: () => emp.contract_type || '', hire_date: () => fmt(emp.hire_date),
     contract_start: () => fmt(emp.contract_start || emp.hire_date), contract_end: () => (emp.contract_end ? fmt(emp.contract_end) : ''),
     internship_start: () => fmt(emp.internship_start), internship_end: () => (emp.internship_end ? fmt(emp.internship_end) : ''),
-    salary: () => (emp.salary ? `${Number(emp.salary).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD` : ''), today: () => ddmmyyyy(new Date()), company: () => 'Tython SARL',
+    salary: () => (emp.salary ? `${Number(emp.salary).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD` : ''), today: () => ddmmyyyy(new Date()), company: () => co.name || '',
+    company_address: () => co.address || '', company_city: () => co.city || '', company_phone: () => co.phone || '', company_email: () => co.email || '',
+    company_ice: () => co.ice || '', company_rc: () => co.rc || '', company_if: () => co.if || '', company_cnss: () => co.cnss || '',
   };
   return MAP[name]?.() ?? '';
 };
@@ -68,6 +76,10 @@ const resolveVar = (name: string, emp: Employee): string => {
 type Step = 0 | 1 | 2 | 3;
 
 export default function GeneratePage() {
+  const { data: settingsData } = useAppSettings();
+  const co = settingsData ?? FALLBACK_CO;
+  const coLine = [[co.company.address, co.company.city].filter(Boolean).join(', '), co.company.phone].filter(Boolean).join(' · ');
+  const coIds = [co.company.rc && `RC ${co.company.rc}`, co.company.ice && `ICE ${co.company.ice}`, co.company.cnss && `CNSS ${co.company.cnss}`].filter(Boolean).join(' · ');
   const { t } = useLang();
   const [params] = useSearchParams();
 
@@ -78,8 +90,10 @@ export default function GeneratePage() {
   const [templateId, setTemplateId] = useState(params.get('template_id') ?? '');
   const [tplCategory, setTplCategory] = useState('');
   const [extraVars, setExtraVars] = useState<Record<string, string>>({});
-  const [language, setLanguage] = useState('fr');
+  const [pickedLang, setLanguage] = useState<string | null>(null);
   const [useAI, setUseAI] = useState(true);
+  // Default: the document language chosen in Settings (other languages than French go through Wedy AI).
+  const language = !useAI ? 'fr' : pickedLang ?? settingsData?.docs?.lang ?? 'fr';
   const [result, setResult] = useState<{ id: string; content: string; document_type: string; byAi: boolean; lang: string } | null>(null);
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState('');
@@ -112,7 +126,7 @@ export default function GeneratePage() {
 
   const templateVars = tpl ? extractVars(tpl.body_template) : [];
   const vars = templateVars.map(v => {
-    const auto = person ? resolveVar(v, person) : '';
+    const auto = person ? resolveVar(v, person, co.company) : '';
     const value = extraVars[v] ?? auto;
     return { name: v, value, missing: !value.trim(), auto: !!auto && value === auto };
   });
@@ -386,13 +400,15 @@ export default function GeneratePage() {
               ) : (
                 <div dir={rtl ? 'rtl' : 'ltr'} style={{ position: 'relative', maxWidth: 700, margin: '0 auto', background: '#ffffff', borderRadius: 6, boxShadow: '0 30px 60px -30px rgba(10,28,36,.4), 0 0 0 1px #e2e8eb', padding: '44px 48px 30px', minHeight: 640, display: 'flex', flexDirection: 'column', color: '#1d2a30', fontFamily: rtl ? "'Noto Kufi Arabic',sans-serif" : "Georgia,'Times New Roman',serif" }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ width: 46, height: 46, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#06141a,#0e6f84)', color: '#ffffff', fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 800, fontSize: 16, letterSpacing: '-.02em', flexShrink: 0 }}>TY</span>
+                    {co.assets.logo
+                      ? <span style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><img src={co.assets.logo} alt="" style={{ maxWidth: 46, maxHeight: 46, objectFit: 'contain' }} /></span>
+                      : <span style={{ width: 46, height: 46, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#06141a,#0e6f84)', color: '#ffffff', fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 800, fontSize: 16, letterSpacing: '-.02em', flexShrink: 0 }}>{companyInitials(co.company.name)}</span>}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16, color: '#0a1c24' }}>Tython SARL</div>
-                      <div style={{ fontFamily: "'Geist',system-ui,sans-serif", fontSize: 11.5, color: '#5f7079' }}>112 boulevard d'Anfa, 20040 Casablanca · +212 5 22 00 00 00</div>
+                      <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16, color: '#0a1c24' }}>{co.company.name}</div>
+                      {coLine && <div style={{ fontFamily: "'Geist',system-ui,sans-serif", fontSize: 11.5, color: '#5f7079' }}>{coLine}</div>}
                     </div>
                   </div>
-                  <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, color: '#7d8f97', marginTop: 10, direction: 'ltr', textAlign: rtl ? 'right' : 'left' }}>RC 345 678 · ICE 001 234 567 000 089 · CNSS 1 234 567</div>
+                  {coIds && <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, color: '#7d8f97', marginTop: 10, direction: 'ltr', textAlign: rtl ? 'right' : 'left' }}>{coIds}</div>}
                   <div style={{ height: 2, background: 'linear-gradient(90deg,#0e6f84,#16b6c8)', marginTop: 14 }} />
                   <div style={{ margin: '34px 0 26px', textAlign: 'center', fontFamily: rtl ? "'Noto Kufi Arabic',sans-serif" : "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: rtl ? '0' : '.12em', color: '#0a1c24' }}>{docTitle}</div>
                   {!editing ? (
@@ -402,19 +418,19 @@ export default function GeneratePage() {
                   ) : (
                     <textarea value={body.replace(/<[^>]+>/g, '')} onChange={e => { setBody(e.target.value); setModified(true); }} dir={rtl ? 'rtl' : 'ltr'} style={{ width: '100%', minHeight: 300, resize: 'vertical', padding: 12, borderRadius: 8, border: '1.5px dashed #9fd6df', background: '#f8fdfd', fontFamily: 'inherit', fontSize: 14.5, lineHeight: 1.8, color: '#1d2a30', outline: 'none' }} />
                   )}
-                  <div style={{ marginTop: 28, fontSize: 14, textAlign: rtl ? 'left' : 'right' }}>{tf(t('gen_place_date'), { date: ddmmyyyy(new Date()) })}</div>
+                  <div style={{ marginTop: 28, fontSize: 14, textAlign: rtl ? 'left' : 'right' }}>{tf(t('gen_place_date'), { date: ddmmyyyy(new Date()), city: co.company.city || 'Casablanca' })}</div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 22 }}>
                     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: 220 }}>
                       <span style={{ fontFamily: "'Geist',system-ui,sans-serif", fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>{t('gen_signature_dept')}</span>
-                      <span style={{ fontFamily: "'Brush Script MT','Segoe Script',cursive", fontSize: 26, color: '#0b3f52', transform: 'rotate(-4deg)' }}>{initialsOf(person.manager || 'Wedy RH').slice(0, 1)}. {(person.manager || 'Wedy RH').split(' ').slice(-1)[0]}</span>
-                      <span style={{ position: 'absolute', right: -6, top: 6, width: 88, height: 88, borderRadius: '50%', border: '2.5px solid rgba(14,111,132,.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(14,111,132,.75)', fontFamily: "'Geist Mono',monospace", fontSize: 8.5, fontWeight: 700, letterSpacing: '.08em', lineHeight: 1.35, transform: 'rotate(-14deg)', direction: 'ltr' }}>
-                        <span>TYTHON</span><span style={{ fontSize: 7 }}>SARL</span><span>CASABLANCA</span>
-                      </span>
+                      {co.assets.signature ? <img src={co.assets.signature} alt="" style={{ maxWidth: 180, maxHeight: 70, objectFit: 'contain' }} /> : <span style={{ fontFamily: "'Brush Script MT','Segoe Script',cursive", fontSize: 26, color: '#0b3f52', transform: 'rotate(-4deg)' }}>{initialsOf(person.manager || 'Wedy RH').slice(0, 1)}. {(person.manager || 'Wedy RH').split(' ').slice(-1)[0]}</span>}
+                      {co.assets.stamp
+                        ? <img src={co.assets.stamp} alt="" style={{ position: 'absolute', right: -6, top: 0, width: 96, height: 96, objectFit: 'contain', opacity: .85, transform: 'rotate(-10deg)' }} />
+                        : <span style={{ position: 'absolute', right: -6, top: 6, width: 88, height: 88, borderRadius: '50%', border: '2.5px solid rgba(14,111,132,.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(14,111,132,.75)', fontFamily: "'Geist Mono',monospace", fontSize: 8.5, fontWeight: 700, letterSpacing: '.08em', lineHeight: 1.35, transform: 'rotate(-14deg)', direction: 'ltr', textAlign: 'center', textTransform: 'uppercase', padding: 8, overflow: 'hidden' }}><span>{co.company.name}</span>{co.company.city && <span style={{ fontSize: 7 }}>{co.company.city}</span>}</span>}
                     </div>
                   </div>
                   <div style={{ flex: 1 }} />
                   <div style={{ marginTop: 34, paddingTop: 12, borderTop: '1px solid #eef2f4', display: 'flex', justifyContent: 'space-between', gap: 10, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, color: '#8a9ba3', direction: 'ltr' }}>
-                    <span>{`Généré par Wedy · ${verifCode}`}</span><span>{`Vérification : wedy.ma/v/${verifCode}`}</span>
+                    <span>{`Wedy · ${verifCode}`}</span>{co.company.email && <span>{co.company.email}</span>}
                   </div>
                 </div>
               )}

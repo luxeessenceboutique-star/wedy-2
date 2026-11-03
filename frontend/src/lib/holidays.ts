@@ -35,9 +35,9 @@ export function nextHolidays(from: Date, n = 3): { date: Date; key: TKey }[] {
 /** A holiday as the screens use it: month-day, a year when it only applies once, and its label. */
 export type Holiday = { md: string; year: number | null; label: string };
 
-/** The fixed civil holidays plus the ones HR stored in the `holidays` table (e.g. the religious ones). */
-export function mergeHolidays(t: (k: TKey) => string, stored: { name: string; date: string; is_recurring?: boolean | null }[] = []): Holiday[] {
-  const out: Holiday[] = FIXED_HOLIDAYS.map(h => ({ md: h.md, year: null, label: t(h.key) }));
+/** The fixed civil holidays (minus those switched off in Settings) plus the ones HR stored in the `holidays` table (e.g. the religious ones). */
+export function mergeHolidays(t: (k: TKey) => string, stored: { name: string; date: string; is_recurring?: boolean | null }[] = [], off: string[] = []): Holiday[] {
+  const out: Holiday[] = FIXED_HOLIDAYS.filter(h => !off.includes(h.md)).map(h => ({ md: h.md, year: null, label: t(h.key) }));
   for (const h of stored) {
     const md = h.date.slice(5, 10);
     const year = h.is_recurring === false ? +h.date.slice(0, 4) : null;
@@ -73,4 +73,24 @@ export function workingDays(from: Date, to: Date, list: Holiday[]): number {
     if (d.getDay() !== 0 && !holidayAt(list, d)) n++;
   }
   return n;
+}
+
+/** Lunar holidays (Morocco): [key, Hijri month, Hijri day, number of days]. Their Gregorian date moves every year. */
+export const LUNAR_HOLIDAYS: { key: TKey; month: number; day: number; days: number }[] = [
+  { key: 'hol_eid_fitr', month: 10, day: 1, days: 2 },
+  { key: 'hol_eid_adha', month: 12, day: 10, days: 2 },
+  { key: 'hol_muharram', month: 1, day: 1, days: 1 },
+  { key: 'hol_mawlid', month: 3, day: 12, days: 2 },
+];
+
+/** Estimated Gregorian date of a Hijri day in a Gregorian year (Umm al-Qura calendar; Morocco may differ by a day). */
+export function estimateLunar(year: number, month: number, day: number): Date | null {
+  let fmt: Intl.DateTimeFormat;
+  try { fmt = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { month: 'numeric', day: 'numeric' }); } catch { return null; }
+  for (let d = new Date(year, 0, 1); d.getFullYear() === year; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+    const parts = fmt.formatToParts(d);
+    const m = Number(parts.find(p => p.type === 'month')?.value), dd = Number(parts.find(p => p.type === 'day')?.value);
+    if (m === month && dd === day) return d;
+  }
+  return null;
 }

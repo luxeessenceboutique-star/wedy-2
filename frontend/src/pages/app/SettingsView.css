@@ -1,0 +1,5 @@
+/* hover / focus rules of Wedy Settings (style-hover / style-focus) */
+.set-h1:hover { background: #f3f6f7 !important; }
+.set-f2:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.set-f3:focus { border-color: #16b6c8 !important; }
+.set-h4:hover { background: #eef3f5 !important; color: #0a1c24 !important; }

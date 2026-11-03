@@ -173,6 +173,12 @@ Meetings notes (`app/MeetingsPage.tsx` + `MeetingsView.tsx`):
 - New router `/api/meetings`: list (HR: all; an employee: the meetings they take part in, read-only on `/employee/meetings`), create / update / delete, `POST /:id/suggest-agenda` (Wedy adds 3 items), `POST /:id/minutes` (Wedy writes summary, decisions and actions from the agenda and the notes, never inventing), `POST /:id/send-report` (in-app notification to participants who have an account). AI calls go through the new `ai_service.complete()` (Claude, else the OpenAI-compatible router).
 - Agenda ticks, added items, notes and action ticks are saved as you go. "Ajouter à mon agenda" downloads an .ics, "Rejoindre la visio" opens the meeting link, "Partager" copies the minutes, "PDF" prints them. "Planifier une réunion" and the edit pencil open a drawer (type, date, time, duration, place, visio link, employees + external guests, agenda).
 
+Settings notes (`app/SettingsPage.tsx` + `SettingsView.tsx`):
+- **Needs the migration `backend/database/migrations/app_settings.sql`** (table `rh.app_settings`). Until then `/api/settings` returns the defaults (`stored: false`, the page says so) and saving answers 503.
+- `/api/settings` (GET for any signed-in user, PATCH for HR) stores company / prefs / leave / docs; `POST|DELETE /api/settings/assets/{logo|signature|stamp}` keeps small images (≤ 600 KB) as data URLs. Shared on the frontend through `lib/appSettings.ts` (`useAppSettings`).
+- What the values drive: the company profile fills the Generate letterhead (logo or initials, address, phone, RC / ICE / CNSS, "Fait à {city}", signature and stamp images) and the new `{{company…}}` variables of the backend generator; the leave rules (days per month, seniority bonus, cap) compute the default entitlement in `/leaves/balance` and `/leaves/balances` (defaults: Code du travail, 1.5 d/month → 18 d, instead of the previous invented 21 d); switched-off fixed holidays disappear from Time off / Absences; the lunar holidays are estimated (Umm al-Qura calendar) and saved to the `holidays` table when switched on (`POST|DELETE /leaves/holidays`), custom ones can be added; the default interface language applies on save; the default document language preselects Generate's language.
+- Removed rather than faked: the documents' numbering prefix and the "code de vérification" toggle (no numbering or online verification exists — the Generate footer no longer shows a wedy.ma/v/… URL), and the billing tab's plan, quotas and invoices (no billing data): it shows real usage (active employees, documents this month, active templates) and how to get invoices. The "Référentiels RH" tab keeps the existing contract-types editor, restyled.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -183,7 +189,7 @@ Meetings notes (`app/MeetingsPage.tsx` + `MeetingsView.tsx`):
 | 4 | Employee folder | Wedy Employee | `/app/employees/:id` | `app/EmployeeFolderPage.tsx` | ☑ |
 | 5 | Requests | Wedy Requests | `/app/requests` | `app/RequestsPage.tsx` | ☑ |
 | 6 | Copilot | Wedy Copilot | `/app/copilot` | `app/CopilotPage.tsx` | ☑ |
-| 7 | Generate | Wedy Generate | `/app/generate` | `app/GeneratePage.tsx` | ◐ |
+| 7 | Generate | Wedy Generate | `/app/generate` | `app/GeneratePage.tsx` | ☑ |
 | 8 | Templates | Wedy Templates | `/app/templates` | `app/TemplatesPage.tsx` + `TemplatesView.tsx` | ☑ |
 | 9 | History | Wedy History | `/app/history` | `app/HistoryPage.tsx` | ☑ |
 | 10 | Time off | Wedy Time Off | `/app/timeoff` | `app/TimeOffPage.tsx` | ☑ |
@@ -205,7 +211,7 @@ Meetings notes (`app/MeetingsPage.tsx` + `MeetingsView.tsx`):
 | 26 | Notifications | Wedy Notifications | `/app/notifications` | `app/NotificationsPage.tsx` | ◐ |
 | 27 | Integrations | Wedy Integrations | `/app/integrations` | `app/IntegrationsPage.tsx` | ◐ |
 | 28 | Users & roles | Wedy Users | `/app/users` | `app/UsersPage.tsx` | ◐ |
-| 29 | Settings | Wedy Settings | `/app/settings` | `app/SettingsPage.tsx` | ◐ |
+| 29 | Settings | Wedy Settings | `/app/settings` | `app/SettingsPage.tsx` | ☑ |
 | 30 | Security | Wedy Security | `/app/security` | `app/SecurityPage.tsx` | ◐ |
 | 31 | Help | Wedy Help | `/app/help` | `app/HelpPage.tsx` | ◐ |
 | 32 | Portal home | Wedy Portal | `/employee` | `employee/EmployeeDashboard.tsx` | ☑ |

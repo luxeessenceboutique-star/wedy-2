@@ -1,9 +1,13 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from supabase import Client
 
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.repositories import notification_repository
+from app.services import app_settings
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
@@ -40,6 +44,54 @@ def _format(row: dict) -> dict:
     }
 
 
+# Categories a user can mute (in-app channel). Types not listed belong to "other" and are always shown.
+CATEGORY = {
+    "leave_pending": "request", "document_request": "request", "employee_request": "request",
+    "contract_expiring": "contract", "cdd_risk": "contract",
+    "new_employee": "recruit", "candidate": "recruit",
+    "payroll": "payroll", "security": "security",
+    "document_generated": "ai",
+}
+PREF_KEYS = ("request", "contract", "recruit", "payroll", "security", "ai")
+
+
+def _prefs_key(user_id: str) -> str:
+    return f"notif:{user_id}"
+
+
+def _load_prefs(supabase: Client, user_id: str) -> dict:
+    prefs = {k: True for k in PREF_KEYS}
+    try:
+        rows = supabase.table("app_settings").select("value").eq("key", _prefs_key(user_id)).limit(1).execute().data or []
+        if rows and isinstance(rows[0].get("value"), dict):
+            prefs.update({k: bool(v) for k, v in rows[0]["value"].items() if k in PREF_KEYS})
+    except Exception:
+        pass  # table not created yet: everything on
+    return prefs
+
+
+class PrefsIn(BaseModel):
+    prefs: dict[str, bool]
+
+
+@router.get("/preferences")
+def get_preferences(supabase: Client = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    return {"prefs": _load_prefs(supabase, current_user["id"])}
+
+
+@router.put("/preferences")
+def put_preferences(body: PrefsIn, supabase: Client = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    prefs = {**_load_prefs(supabase, current_user["id"]), **{k: bool(v) for k, v in body.prefs.items() if k in PREF_KEYS}}
+    try:
+        supabase.table("app_settings").upsert({"key": _prefs_key(current_user["id"]), "value": prefs, "updated_by": current_user["id"],
+                                               "updated_at": datetime.utcnow().isoformat()}).execute()
+    except Exception as e:
+        if app_settings.missing_table(e):
+            raise HTTPException(status_code=503, detail="settings_table_missing")
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"prefs": prefs}
+
+
 @router.get("")
 def list_notifications(
     limit: int = 50,
@@ -47,7 +99,8 @@ def list_notifications(
     current_user: dict = Depends(get_current_user)
 ):
     res = notification_repository.list_for_user(supabase, current_user["id"], limit)
-    rows = res.data or []
+    prefs = _load_prefs(supabase, current_user["id"])
+    rows = [r for r in (res.data or []) if prefs.get(CATEGORY.get(r.get("type", ""), ""), True)]
     formatted = [_format(r) for r in rows]
     unread_count = sum(1 for n in formatted if n["unread"])
     return {"data": formatted, "unread_count": unread_count, "count": len(formatted)}

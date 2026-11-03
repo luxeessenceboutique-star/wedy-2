@@ -1,299 +1,153 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Bell, CheckCheck, Inbox, FileClock, Sparkles, UserPlus, ShieldAlert, Wallet,
-  UserCheck, BookOpen, Check, ArrowRight, BellOff, CircleCheck,
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { api } from '@/services/api';
-import { Page, PageHeader } from '../../components/layout/AppShell';
-import { Spinner } from '../../components/ui';
-import { toast } from 'sonner';
-import { useLang } from '../../lib/lang';
-import { RV } from '@/components/motion';
+import { useState, type MouseEvent } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { Bell, BookOpen, FileClock, Inbox, ShieldAlert, Sparkles, UserCheck, UserPlus, Wallet, type LucideIcon } from 'lucide-react';
+import { api, getApiError, reviewLeave } from '@/services/api';
+import { useLang, type TKey } from '@/lib/lang';
+import { useNotify } from '@/lib/notify';
+import { tf } from '@/lib/format';
+import { NotificationsView } from './NotificationsView';
 
-interface SmartNotif {
-  id: string; type: string; icon: string; color: string;
-  title: string; body: string; time: string; unread: boolean; priority: number;
-  link?: string | null;
-}
+type Notif = { id: string; type: string; title: string; body: string; time: string; unread: boolean; link?: string | null };
+type Pref = 'request' | 'contract' | 'recruit' | 'payroll' | 'security' | 'ai';
+type Action = { label: string; isBtn: boolean; isLink: boolean; href: string; busy: boolean; run: (e: MouseEvent) => void };
 
-const fetchNotifs = () =>
-  api.get<{ data: SmartNotif[]; unread_count: number; count: number }>('/notifications').then(r => r.data);
-const markAllRead = () => api.post('/notifications/mark-all-read').then(r => r.data);
-
-const TYPE_CFG: Record<string, { Icon: React.ElementType; bg: string; color: string }> = {
-  leave_pending:      { Icon: Inbox,       bg: 'var(--primary-soft)', color: 'var(--primary)' },
-  contract_expiring:  { Icon: FileClock,   bg: 'var(--danger-soft)',  color: 'var(--danger-ink)' },
-  cdd_risk:           { Icon: FileClock,   bg: 'var(--danger-soft)',  color: 'var(--danger-ink)' },
-  document_generated: { Icon: Sparkles,    bg: 'var(--ai-soft)',      color: 'var(--ai)' },
-  document_request:   { Icon: Inbox,       bg: 'var(--primary-soft)', color: 'var(--primary)' },
-  new_employee:       { Icon: UserPlus,    bg: 'var(--success-soft)', color: 'var(--success-ink)' },
-  employee_request:   { Icon: UserCheck,   bg: 'var(--primary-soft)', color: 'var(--primary)' },
-  security:           { Icon: ShieldAlert, bg: 'var(--danger-soft)',  color: 'var(--danger-ink)' },
-  payroll:            { Icon: Wallet,      bg: 'var(--warning-soft)', color: 'var(--warning-ink)' },
-  training:           { Icon: BookOpen,    bg: 'var(--ai-soft)',      color: 'var(--ai)' },
+export type NotificationsVals = {
+  loading: boolean; rtl: boolean;
+  subtitle: string; readAll: () => void; readAllOp: string;
+  tabs: { label: string; n: number; on: boolean; color: string; badgeBg: string; go: () => void }[];
+  groups: { label: string; items: { title: string; body: string; time: string; icon: LucideIcon; tint: string; color: string; unread: boolean; weight: string; bg: string; delay: string; read: () => void; hasActions: boolean; hasDone: boolean; done: string; actions: Action[] }[] }[];
+  empty: boolean;
+  prefs: { label: string; icon: LucideIcon; color: string; ch: { aria: string; track: string; knob: string; toggle: () => void }[] }[];
 };
 
-function notifTarget(n: SmartNotif): string | null {
-  const link = n.link || '';
-  if (link.startsWith('/app/')) return link;
+const LOCALE: Record<string, string> = { fr: 'fr-FR', en: 'en-GB', ar: 'ar-MA' };
+/** [icon, tint, ink, preference category] per notification type. */
+const TYPE: Record<string, [LucideIcon, string, string, Pref | null]> = {
+  leave_pending: [Inbox, '#e4f2f4', '#0e6f84', 'request'], document_request: [Inbox, '#e4f2f4', '#0e6f84', 'request'], employee_request: [UserCheck, '#e4f2f4', '#0e6f84', 'request'],
+  contract_expiring: [FileClock, '#fbe9e6', '#df5740', 'contract'], cdd_risk: [FileClock, '#fbe9e6', '#df5740', 'contract'],
+  new_employee: [UserPlus, '#e1f5ec', '#16a06b', 'recruit'], candidate: [UserPlus, '#e1f5ec', '#16a06b', 'recruit'],
+  payroll: [Wallet, '#fbefda', '#b06b0c', 'payroll'], security: [ShieldAlert, '#fbe9e6', '#df5740', 'security'],
+  document_generated: [Sparkles, '#ece9fb', '#6d5ad6', 'ai'], training: [BookOpen, '#ece9fb', '#6d5ad6', null],
+  warning: [Bell, '#fbefda', '#b06b0c', null], success: [Bell, '#e1f5ec', '#16a06b', null], error: [ShieldAlert, '#fbe9e6', '#df5740', null],
+};
+const typeOf = (t: string) => TYPE[t] ?? [Bell, '#eef2f4', '#33474f', null];
+const PREFS: [Pref, TKey, LucideIcon, string][] = [
+  ['request', 'ntf_p_request', Inbox, '#0e6f84'], ['contract', 'ntf_p_contract', FileClock, '#df5740'], ['recruit', 'ntf_p_recruit', UserPlus, '#16a06b'],
+  ['payroll', 'ntf_p_payroll', Wallet, '#b06b0c'], ['security', 'ntf_p_security', ShieldAlert, '#df5740'], ['ai', 'ntf_p_ai', Sparkles, '#6d5ad6'],
+];
+const NEEDS_ACTION = new Set(['leave_pending', 'document_request', 'employee_request']);
+
+/** Where a notification leads, and the actions it offers (an approve button when the leave id is known). */
+function actionsOf(n: Notif, t: (k: TKey) => string): { label: string; href?: string; approveLeave?: string }[] {
+  const link = n.link?.startsWith('/') ? n.link : null;
+  const leaveId = link?.includes('kind=leave') ? new URLSearchParams(link.split('?')[1] ?? '').get('id') : null;
   switch (n.type) {
-    case 'leave_pending':      return '/app/requests?kind=leave';
-    case 'document_request':   return '/app/requests?kind=document';
-    case 'employee_request':   return '/app/requests?kind=other';
-    case 'contract_expiring':
-    case 'cdd_risk':
-    case 'new_employee':       return '/app/employees';
-    case 'document_generated': return '/app/history';
+    case 'leave_pending': return [...(leaveId ? [{ label: t('ntf_approve'), approveLeave: leaveId }] : []), { label: t('ntf_see_request'), href: link ?? '/app/requests?kind=leave' }];
+    case 'document_request': return [{ label: t('ntf_generate'), href: '/app/generate' }, { label: t('ntf_see_request'), href: link ?? '/app/requests?kind=document' }];
+    case 'employee_request': return [{ label: t('ntf_see_request'), href: link ?? '/app/requests' }];
+    case 'contract_expiring': case 'cdd_risk': return [{ label: t('ntf_prepare_amendment'), href: '/app/generate' }, ...(link ? [{ label: t('ntf_open'), href: link }] : [])];
+    case 'document_generated': return [{ label: t('ntf_see_history'), href: link ?? '/app/history' }];
+    case 'new_employee': return [{ label: t('ntf_see_record'), href: link ?? '/app/employees' }];
+    default: return link ? [{ label: t('ntf_open'), href: link }] : [];
   }
-  const legacy: Record<string, string> = {
-    '/leaves': '/app/requests?kind=leave', '/documents': '/app/requests?kind=document', '/requests': '/app/requests',
-  };
-  return legacy[link] ?? null;
 }
 
-const PREF_ROWS = [
-  { key: 'request',  label: 'Demandes',             Icon: Inbox,       color: 'var(--primary)' },
-  { key: 'contract', label: 'Contrats et échéances', Icon: FileClock,   color: 'var(--danger-ink)' },
-  { key: 'recruit',  label: 'Recrutement',           Icon: UserPlus,    color: 'var(--success-ink)' },
-  { key: 'payroll',  label: 'Paie',                  Icon: Wallet,      color: 'var(--warning-ink)' },
-  { key: 'security', label: 'Sécurité',              Icon: ShieldAlert, color: 'var(--danger-ink)' },
-  { key: 'ai',       label: 'Wedy IA',               Icon: Sparkles,    color: 'var(--ai)' },
-];
-
 export default function NotificationsPage() {
-  const { t } = useLang() as any;
+  const { t, lang } = useLang();
+  const notify = useNotify();
   const qc = useQueryClient();
-  const navigate = useNavigate();
-  const [tab, setTab] = useState('all');
-  const [resolved, setResolved] = useState<string[]>([]);
-  const [prefs, setPrefs] = useState<Record<string, boolean[]>>(
-    Object.fromEntries(PREF_ROWS.map(r => [r.key, [true, true, false]]))
-  );
-  const [digest, setDigest] = useState(true);
+  const loc = LOCALE[lang] ?? 'fr-FR';
+  const [tab, setTab] = useState<'all' | 'unread' | 'action' | 'security'>('all');
+  const [done, setDone] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+  const [now] = useState(() => new Date());
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: fetchNotifs,
-    refetchInterval: 60_000,
+  const q = useQuery({ queryKey: ['notifications'], queryFn: () => api.get<{ data: Notif[]; unread_count: number }>('/notifications').then(r => r.data), refetchInterval: 60_000 });
+  const prefsQ = useQuery({ queryKey: ['notification-prefs'], queryFn: () => api.get<{ prefs: Record<Pref, boolean> }>('/notifications/preferences').then(r => r.data.prefs) });
+  const items = q.data?.data ?? [];
+  const unread = items.filter(n => n.unread).length;
+
+  const markRead = (n: Notif) => {
+    if (!n.unread) return;
+    qc.setQueryData<{ data: Notif[]; unread_count: number }>(['notifications'], old => (old ? { ...old, unread_count: Math.max(0, old.unread_count - 1), data: old.data.map(x => (x.id === n.id ? { ...x, unread: false } : x)) } : old));
+    api.patch(`/notifications/${n.id}/read`).catch(() => {}).finally(() => qc.invalidateQueries({ queryKey: ['notifications'] }));
+  };
+  const readAll = useMutation({
+    mutationFn: () => api.post('/notifications/mark-all-read'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['notifications'] }); notify.success(t('ntf_all_read')); },
+    onError: e => notify.error(getApiError(e, t('error'))),
+  });
+  const savePrefs = useMutation({
+    mutationFn: (prefs: Record<Pref, boolean>) => api.put<{ prefs: Record<Pref, boolean> }>('/notifications/preferences', { prefs }).then(r => r.data.prefs),
+    onMutate: prefs => { qc.setQueryData(['notification-prefs'], prefs); },
+    onSuccess: prefs => { qc.setQueryData(['notification-prefs'], prefs); qc.invalidateQueries({ queryKey: ['notifications'] }); },
+    onError: e => { qc.invalidateQueries({ queryKey: ['notification-prefs'] }); notify.error(axios.isAxiosError(e) && e.response?.status === 503 ? t('set_table_missing') : getApiError(e, t('error'))); },
   });
 
-  const markMut = useMutation({
-    mutationFn: markAllRead,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['notifications'] });
-      toast.success('Toutes les notifications sont marquées comme lues');
-    },
-  });
+  // ── grouping by day ───────────────────────────────────────────────────────────
+  const today = new Date(now); today.setHours(0, 0, 0, 0);
+  const dayOf = (iso: string) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return 3;
+    if (d >= today) return 0;
+    if (d.getTime() >= today.getTime() - 86400000) return 1;
+    if (d.getTime() >= today.getTime() - 6 * 86400000) return 2;
+    return 3;
+  };
+  const timeOf = (iso: string) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const mins = Math.round((now.getTime() - d.getTime()) / 60000);
+    if (mins < 60 && mins >= 0) return tf(t('ntf_min_ago'), { n: Math.max(1, mins) });
+    if (dayOf(iso) === 0) return tf(t('ntf_h_ago'), { n: Math.round(mins / 60) });
+    if (dayOf(iso) === 1) return tf(t('ntf_yesterday_at'), { time: d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' }) });
+    return new Intl.DateTimeFormat(loc, { weekday: 'short', day: 'numeric', month: 'short' }).format(d);
+  };
+  const needs = (n: Notif) => NEEDS_ACTION.has(n.type) && !done[n.id];
+  const pass = (n: Notif) => tab === 'all' || (tab === 'unread' && n.unread) || (tab === 'action' && needs(n)) || (tab === 'security' && n.type === 'security');
+  const DAY_KEYS: TKey[] = ['ntf_d_today', 'ntf_d_yesterday', 'ntf_d_week', 'ntf_d_older'];
+  const groups = DAY_KEYS.map((key, d) => ({ key, items: items.filter(n => dayOf(n.time) === d && pass(n)) })).filter(g => g.items.length);
 
-  const openNotif = (n: SmartNotif) => {
-    if (n.unread) {
-      qc.setQueryData<{ data: SmartNotif[]; unread_count: number; count: number }>(['notifications'], old =>
-        old ? { ...old, unread_count: Math.max(0, old.unread_count - 1), data: old.data.map(x => (x.id === n.id ? { ...x, unread: false } : x)) } : old);
-      api.patch(`/notifications/${n.id}/read`).catch(() => {}).finally(() => qc.invalidateQueries({ queryKey: ['notifications'] }));
-    }
-    const target = notifTarget(n);
-    if (target) navigate(target);
+  const approve = async (n: Notif, leaveId: string) => {
+    setBusy(n.id);
+    try {
+      await reviewLeave(leaveId, 'approved');
+      markRead(n);
+      setDone(d => ({ ...d, [n.id]: t('ntf_leave_approved') }));
+      qc.invalidateQueries({ queryKey: ['leaves'] });
+      notify.success(t('ntf_leave_approved'));
+    } catch (e) { notify.error(getApiError(e, t('error'))); } finally { setBusy(null); }
   };
 
-  const notifs = data?.data ?? [];
-  const unread = data?.unread_count ?? 0;
-
-  const needsAction = (n: SmartNotif) => ['leave_pending', 'document_request', 'employee_request'].includes(n.type);
-
-  const filtered = notifs.filter(n =>
-    tab === 'all' ? true :
-    tab === 'unread' ? n.unread :
-    tab === 'action' ? needsAction(n) :
-    tab === 'security' ? n.type === 'security' : true
-  );
-
-  const TABS = [
-    { key: 'all',      label: 'Toutes',    count: notifs.length },
-    { key: 'unread',   label: 'Non lues',  count: unread },
-    { key: 'action',   label: 'À traiter', count: notifs.filter(needsAction).length },
-    { key: 'security', label: 'Sécurité',  count: notifs.filter(n => n.type === 'security').length },
-  ];
-
-  return (
-    <Page>
-      <PageHeader
-        title={t('notifications')}
-        subtitle={unread > 0 ? `${unread} notification${unread > 1 ? 's' : ''} non lue${unread > 1 ? 's' : ''} · tout ce qui demande votre attention.` : 'Vous êtes à jour. Bravo !'}
-        action={
-          <button
-            className="btn btn-secondary"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 7, opacity: unread > 0 ? 1 : 0.5 }}
-            onClick={() => markMut.mutate()}
-          >
-            <CheckCheck size={15} strokeWidth={1.8} /> Tout marquer comme lu
-          </button>
-        }
-      />
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
-        {/* Main list */}
-        <div style={{ flex: '2 1 520px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Tabs */}
-          <RV>
-            <div style={{ display: 'flex', gap: 4, padding: 5, borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)', alignSelf: 'flex-start', flexWrap: 'wrap' }}>
-              {TABS.map(tb => (
-                <button
-                  key={tb.key}
-                  onClick={() => setTab(tb.key)}
-                  style={{
-                    position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 7,
-                    height: 36, padding: '0 13px', border: 'none', borderRadius: 10,
-                    background: tab === tb.key ? 'var(--ink-950)' : 'transparent',
-                    fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    color: tab === tb.key ? '#fff' : 'var(--text-2)', transition: 'color .15s',
-                  }}
-                >
-                  {tb.label}
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '1px 6px', borderRadius: 99, background: tab === tb.key ? 'rgba(255,255,255,.18)' : 'var(--subtle)' }}>
-                    {tb.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </RV>
-
-          {isLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spinner /></div>
-          ) : filtered.length === 0 ? (
-            <RV>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '48px 20px', borderRadius: 20, background: 'var(--surface)', border: '1px dashed var(--border)', textAlign: 'center' }}>
-                <span style={{ width: 52, height: 52, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--success-soft)', color: 'var(--success-ink)' }}>
-                  <BellOff size={22} strokeWidth={1.8} />
-                </span>
-                <div style={{ fontWeight: 700, fontSize: 16 }}>Tout est à jour</div>
-                <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Aucune notification dans cette vue.</div>
-              </div>
-            </RV>
-          ) : (
-            /* Group by day */
-            (['Aujourd\'hui', 'Hier', 'Cette semaine'] as const).map(dayLabel => {
-              const day = dayLabel === "Aujourd'hui" ? 0 : dayLabel === 'Hier' ? 1 : 2;
-              // If no API data, show all in first group
-              const items = data?.data?.length
-                ? filtered
-                : day === 0 ? filtered : [];
-              if (!items.length) return null;
-              return (
-                <RV key={dayLabel}>
-                  <div style={{ borderRadius: 20, background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                    <div style={{ padding: '12px 18px', background: 'var(--subtle)', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, borderBottom: '1px solid var(--border)' }}>
-                      {dayLabel}
-                    </div>
-                    {items.map((n, i) => {
-                      const cfg = TYPE_CFG[n.type] || { Icon: Bell, bg: 'var(--subtle)', color: 'var(--text-muted)' };
-                      const isResolved = resolved.includes(n.id);
-                      return (
-                        <div
-                          key={n.id}
-                          style={{ position: 'relative', display: 'flex', gap: 13, alignItems: 'flex-start', padding: '15px 18px', borderTop: i > 0 ? '1px solid var(--border)' : 'none', background: n.unread ? 'var(--primary-soft)' : 'var(--surface)', cursor: 'pointer', transition: 'background .15s' }}
-                          onClick={() => openNotif(n)}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--subtle)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = n.unread ? 'var(--primary-soft)' : 'var(--surface)')}
-                        >
-                          {n.unread && <span style={{ position: 'absolute', left: 0, top: 14, bottom: 14, width: 3, borderRadius: '0 3px 3px 0', background: 'var(--primary)' }} />}
-                          <span style={{ width: 40, height: 40, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: cfg.bg, color: cfg.color, flexShrink: 0 }}>
-                            <cfg.Icon size={18} strokeWidth={1.8} />
-                          </span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 14, fontWeight: n.unread ? 700 : 600, color: 'var(--text)' }}>{n.title}</span>
-                              <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{n.time}</span>
-                            </div>
-                            <div style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--text-2)', marginTop: 3 }}>{n.body}</div>
-                            {notifTarget(n) && !isResolved && (
-                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }} onClick={e => e.stopPropagation()}>
-                                {needsAction(n) && (
-                                  <button
-                                    className="btn btn-sm"
-                                    style={{ background: 'linear-gradient(135deg,#0f6f49,#16a06b)', color: '#fff', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                                    onClick={() => { setResolved(r => [...r, n.id]); toast.success('Approuvé'); }}
-                                  >
-                                    <Check size={13} strokeWidth={2.4} /> Approuver
-                                  </button>
-                                )}
-                                <button
-                                  className="btn btn-secondary btn-sm"
-                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                                  onClick={() => openNotif(n)}
-                                >
-                                  Voir <ArrowRight size={13} strokeWidth={1.8} />
-                                </button>
-                              </div>
-                            )}
-                            {isResolved && (
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 10, fontSize: 12.5, fontWeight: 700, color: 'var(--success-ink)' }}>
-                                <CircleCheck size={14} strokeWidth={1.8} /> Traité
-                              </span>
-                            )}
-                          </div>
-                          {n.unread && <span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--primary)', flexShrink: 0, marginTop: 6, boxShadow: '0 0 0 4px rgba(22,182,200,.15)' }} />}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </RV>
-              );
-            })
-          )}
-        </div>
-
-        {/* Sidebar: preferences */}
-        <RV delay={160} dir="left">
-          <div style={{ flex: '1 1 300px', minWidth: 0, position: 'sticky', top: 90, display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ padding: '18px 20px', borderRadius: 20, background: 'var(--surface)', border: '1px solid var(--border)' }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Préférences</div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 2 }}>Choisissez où recevoir chaque type d'alerte.</div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) repeat(3,44px)', gap: 6, alignItems: 'center', marginTop: 14, fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                <span />
-                {['App', 'Email', 'Slack'].map(ch => <span key={ch} style={{ textAlign: 'center' }}>{ch}</span>)}
-              </div>
-
-              {PREF_ROWS.map(row => (
-                <div key={row.key} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) repeat(3,44px)', gap: 6, alignItems: 'center', padding: '9px 0', borderTop: '1px solid var(--border)' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-2)', minWidth: 0 }}>
-                    <row.Icon size={14} strokeWidth={1.8} style={{ color: row.color, flexShrink: 0 }} />
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.label}</span>
-                  </span>
-                  {prefs[row.key].map((on, j) => (
-                    <button
-                      key={j}
-                      onClick={() => setPrefs(p => ({ ...p, [row.key]: p[row.key].map((v, m) => m === j ? !v : v) }))}
-                      style={{ justifySelf: 'center', position: 'relative', width: 34, height: 20, border: 'none', borderRadius: 99, background: on ? 'var(--primary)' : 'var(--track)', cursor: 'pointer', padding: 0, transition: 'background .2s' }}
-                    >
-                      <span style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(10,28,36,.3)', transition: 'left .2s cubic-bezier(.2,.8,.2,1)' }} />
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
-
-            {/* Daily digest */}
-            <button
-              onClick={() => { setDigest(v => !v); toast.success(digest ? 'Résumé quotidien désactivé' : 'Résumé quotidien activé · 08:30'); }}
-              style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '16px 18px', borderRadius: 18, border: `1px solid ${digest ? 'var(--primary-200,#b9dfe5)' : 'var(--border)'}`, background: digest ? 'var(--primary-soft)' : 'var(--surface)', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer', transition: 'background .2s,border-color .2s' }}
-            >
-              <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Bell size={18} strokeWidth={1.8} style={{ color: 'var(--primary)' }} />
-              </span>
-              <span style={{ flex: 1 }}>
-                <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>Résumé quotidien par Wedy</span>
-                <span style={{ display: 'block', fontSize: 12.5, lineHeight: 1.45, color: 'var(--text-muted)', marginTop: 2 }}>Chaque matin à 08:30, l'essentiel de la veille en 5 lignes.</span>
-              </span>
-              <span style={{ position: 'relative', width: 40, height: 24, borderRadius: 99, background: digest ? 'var(--primary)' : 'var(--track)', flexShrink: 0, transition: 'background .2s' }}>
-                <span style={{ position: 'absolute', top: 3, left: digest ? 19 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(10,28,36,.3)', transition: 'left .25s cubic-bezier(.2,.8,.2,1)' }} />
-              </span>
-            </button>
-          </div>
-        </RV>
-      </div>
-    </Page>
-  );
+  const prefs = prefsQ.data;
+  const v: NotificationsVals = {
+    loading: q.isLoading, rtl: lang === 'ar',
+    subtitle: unread ? tf(t(unread === 1 ? 'ntf_sub_one' : 'ntf_sub_n'), { n: unread }) : t('ntf_sub_none'),
+    readAll: () => { if (unread) readAll.mutate(); }, readAllOp: unread ? '1' : '.5',
+    tabs: ([['all', 'ntf_t_all', items.length], ['unread', 'ntf_t_unread', unread], ['action', 'ntf_t_action', items.filter(needs).length], ['security', 'ntf_t_security', items.filter(n => n.type === 'security').length]] as const)
+      .map(([k, key, n]) => ({ label: t(key), n, on: tab === k, color: tab === k ? '#ffffff' : '#52646d', badgeBg: tab === k ? 'rgba(255,255,255,.18)' : '#eef2f4', go: () => setTab(k) })),
+    groups: groups.map(g => ({
+      label: t(g.key),
+      items: g.items.map((n, i) => {
+        const [icon, tint, color] = typeOf(n.type);
+        const acts = actionsOf(n, t);
+        return {
+          title: n.title, body: n.body, time: timeOf(n.time), icon, tint, color, unread: n.unread, weight: n.unread ? '700' : '600', bg: n.unread ? '#f5fbfc' : '#ffffff', delay: String(Math.min(i, 10) * 50),
+          read: () => markRead(n),
+          hasActions: acts.length > 0 && !done[n.id], hasDone: !!done[n.id], done: done[n.id] ?? '',
+          actions: acts.map(a => ({
+            label: a.label, isBtn: !!a.approveLeave, isLink: !a.approveLeave, href: a.href ?? '#', busy: busy === n.id,
+            run: (e: MouseEvent) => { e.stopPropagation(); if (a.approveLeave) approve(n, a.approveLeave); else markRead(n); },
+          })),
+        };
+      }),
+    })),
+    empty: !q.isLoading && groups.length === 0,
+    prefs: PREFS.map(([k, key, icon, color]) => {
+      const on = prefs ? prefs[k] !== false : true;
+      return { label: t(key), icon, color, ch: [{ aria: `${t(key)} · ${t('ntf_in_app')}`, track: on ? '#0e6f84' : '#c3ced3', knob: on ? '16px' : '2px', toggle: () => prefs && savePrefs.mutate({ ...prefs, [k]: !on }) }] };
+    }),
+  };
+  return <NotificationsView v={v} />;
 }

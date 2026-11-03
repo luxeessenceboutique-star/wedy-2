@@ -184,6 +184,10 @@ Audit notes (`app/AuditPage.tsx` + `AuditView.tsx`):
 - Entries read as sentences (verb per action, noun per entity, FR/EN/AR), grouped into the reference's modules (+ "Autres"), with a severity computed from the action (deleting an employee or an account is critical; deletions, account / settings / payroll changes and imports are warnings). "En direct" refetches every 15 s and highlights new entries; the CSV export is the filtered list.
 - KPIs and alerts come from the log: events, active users, deletions, generated documents; alerts for ≥ 5 deletions by one user in 24 h and for account changes in the last 7 days ("Voir les événements" filters the list). The log stores no IP, device or field changes, and logins / failed logins / exports are not logged, so the reference's IP column, device, diff, SHA-256 fingerprint, refused-connections KPI and "24 mois" retention claim are replaced by what exists (reference, timestamp, author ID, "field detail not recorded").
 
+Notifications notes (`app/NotificationsPage.tsx` + `NotificationsView.tsx`):
+- The list is the user's real notifications, grouped by day (today / yesterday / this week / older), with tabs, read-on-click and "tout marquer comme lu". Actions are derived from the type and link: a leave request whose link carries the leave id gets a real "Approuver" (review endpoint, employee notified); others link to Requests, Generate, History or the employee list.
+- Preferences are real for the only channel that exists: `GET|PUT /notifications/preferences` stores, per user, which categories (requests, contracts, recruitment, payroll, security, Wedy AI) show up in Wedy (row `notif:<user id>` in `rh.app_settings`), and the list endpoint filters accordingly. The reference's Email / Slack columns and the 08:30 daily digest are not shown: nothing sends emails, Slack messages or digests.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -213,7 +217,7 @@ Audit notes (`app/AuditPage.tsx` + `AuditView.tsx`):
 | 23 | Tenders | Wedy Tenders | `/app/tenders` | `app/TendersPage.tsx` | ☑ |
 | 24 | Analytics | Wedy Analytics | `/app/analytics` | `app/AnalyticsPage.tsx` | ☑ |
 | 25 | Audit | Wedy Audit | `/app/audit` | `app/AuditPage.tsx` | ☑ |
-| 26 | Notifications | Wedy Notifications | `/app/notifications` | `app/NotificationsPage.tsx` | ◐ |
+| 26 | Notifications | Wedy Notifications | `/app/notifications` | `app/NotificationsPage.tsx` | ☑ |
 | 27 | Integrations | Wedy Integrations | `/app/integrations` | `app/IntegrationsPage.tsx` | ◐ |
 | 28 | Users & roles | Wedy Users | `/app/users` | `app/UsersPage.tsx` | ◐ |
 | 29 | Settings | Wedy Settings | `/app/settings` | `app/SettingsPage.tsx` | ☑ |

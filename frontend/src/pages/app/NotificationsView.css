@@ -1,0 +1,4 @@
+/* hover / focus rules of Wedy Notifications (style-hover / style-focus) */
+.ntf-h1:hover { border-color: #9fb4bb !important; }
+.ntf-h2:hover { background: #f6fafb !important; }
+.ntf-h3:hover { color: #0e6f84 !important; border-color: #b9dfe5 !important; }

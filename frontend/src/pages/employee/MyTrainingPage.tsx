@@ -1,132 +1,117 @@
-﻿import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Clock, CheckCircle } from 'lucide-react';
-import { api } from '@/services/api';
-import { Spinner } from '../../components/ui';
-import { format, isValid } from 'date-fns';
-import { useLang } from '../../lib/lang';
+﻿import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Award, BookOpen, CircleCheck, Clock, GraduationCap } from 'lucide-react';
+import { api, getApiError } from '@/services/api';
+import { RV } from '@/components/motion';
+import { Spinner } from '@/components/ui';
+import { useLang } from '@/lib/lang';
+import { useNotify } from '@/lib/notify';
+import { tf } from '@/lib/format';
+import './portal.css';
 
-const getMyTraining = () => api.get('/portal/me/training').then(r => r.data).catch(() => []);
-
-const safeFormat = (d: any, fmt = 'dd/MM/yyyy') => {
-  if (!d) return '—'; const dt = new Date(d);
-  return isValid(dt) ? format(dt, fmt) : d;
-};
+type Course = { id: string; title: string; category?: string; duration_hours?: number; provider?: string; description?: string };
+type Mine = { id: string; training_id?: string; status: string; assigned_at?: string; completed_at?: string; score?: number | null; training_catalog?: Course };
+type DocReq = { id: string; doc_type: string; comment?: string; status: string };
+const getMine = () => api.get<Mine[]>('/portal/me/training').then(r => r.data).catch(() => []);
+const getCatalog = () => api.get<Course[]>('/training/catalog').then(r => r.data).catch(() => []);
+const getReqs = () => api.get<DocReq[]>('/portal/me/document-requests').then(r => r.data).catch(() => []);
+const statLabel = { fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase' } as const;
+const statValue = { fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4 } as const;
+const TINTS = [['#ece9fb', '#5444b8', 'linear-gradient(90deg,#5444b8,#9a8bf0)'], ['#e4f2f4', '#0b5f72', 'linear-gradient(90deg,#0e6f84,#16b6c8)'], ['#fbefda', '#8a5207', 'linear-gradient(90deg,#a8650a,#e6a948)']];
 
 export default function MyTrainingPage() {
   const { t } = useLang();
-  const { data: training = [], isLoading } = useQuery({
-    queryKey: ['portal-training'], queryFn: getMyTraining, retry: false,
+  const notify = useNotify();
+  const qc = useQueryClient();
+  const [year] = useState(() => new Date().getFullYear());
+  const { data: mine = [], isLoading } = useQuery({ queryKey: ['portal-training'], queryFn: getMine });
+  const { data: catalog = [] } = useQuery({ queryKey: ['training', 'catalog'], queryFn: getCatalog });
+  const { data: reqs = [] } = useQuery({ queryKey: ['portal-doc-requests'], queryFn: getReqs });
+
+  const reqTitle = (c: Course) => tf(t('ptrn_req_title'), { title: c.title });
+  const ask = useMutation({
+    mutationFn: (c: Course) => api.post('/portal/me/document-requests', { doc_type: 'autre', comment: reqTitle(c) }).then(r => r.data),
+    onSuccess: (_, c) => { qc.invalidateQueries({ queryKey: ['portal-doc-requests'] }); notify.success(tf(t('ptrn_asked'), { title: c.title })); },
+    onError: e => notify.error(getApiError(e, t('error'))),
   });
 
-  const CATS: Record<string, { label: string; color: string; bg: string }> = {
-    technique:   { label: t('training_cat_technique'),   color: 'var(--primary)', bg: 'var(--primary-soft)' },
-    soft_skills: { label: t('training_cat_soft_skills'), color: 'var(--violet)', bg: 'var(--violet-soft)' },
-    compliance:  { label: t('training_cat_compliance'),  color: 'var(--danger)', bg: '#fef2f2' },
-    management:  { label: t('training_cat_management'),  color: 'var(--warn)', bg: 'var(--warn-soft)' },
-    langue:      { label: t('training_cat_langue'),      color: 'var(--success)', bg: 'var(--success-soft)' },
-    securite:    { label: t('training_cat_securite'),    color: 'var(--ink-2)', bg: 'var(--surface-2)' },
-  };
-
-  const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-    planned:     { label: t('training_status_planned'),   color: 'var(--warn)', bg: 'var(--warn-soft)' },
-    in_progress: { label: t('training_status_ongoing'),   color: 'var(--primary)', bg: 'var(--primary-soft)' },
-    completed:   { label: t('training_status_done'),      color: 'var(--success)', bg: 'var(--success-soft)' },
-    cancelled:   { label: t('training_status_cancelled'), color: 'var(--danger)', bg: '#fef2f2' },
-  };
-
-  const completed  = (training as any[]).filter((tr: any) => tr.status === 'completed').length;
-  const inProgress = (training as any[]).filter((tr: any) => tr.status === 'in_progress').length;
-
-  const totalHours = (training as any[])
-    .filter((tr: any) => tr.status === 'completed')
-    .reduce((sum: number, tr: any) => sum + (tr.training_catalog?.duration_hours ?? 0), 0);
+  const current = mine.filter(m => m.status === 'in_progress' || m.status === 'planned');
+  const done = mine.filter(m => m.status === 'completed');
+  const hours = done.filter(m => (m.completed_at ?? '').startsWith(String(year))).reduce((s, m) => s + (m.training_catalog?.duration_hours ?? 0), 0);
+  const mineIds = new Set(mine.map(m => m.training_id ?? m.training_catalog?.title));
+  const recos = catalog.filter(c => !mineIds.has(c.id) && !mineIds.has(c.title)).slice(0, 4);
+  const asked = (c: Course) => reqs.some(r => r.comment === reqTitle(c));
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 780, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>{t('mytrain_title')}</h1>
-      <p style={{ fontSize: 13, color: 'var(--ink-2)', marginBottom: 24 }}>{t('mytrain_subtitle')}</p>
-
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
-        {[
-          { label: t('mytrain_total'),           value: (training as any[]).length, color: 'var(--primary)', icon: <BookOpen size={16} /> },
-          { label: t('mytrain_in_progress'),     value: inProgress,                 color: 'var(--warn)', icon: <Clock size={16} /> },
-          { label: t('mytrain_completed_count'), value: completed,                  color: 'var(--success)', icon: <CheckCircle size={16} /> },
-          { label: t('mytrain_hours_done'),      value: `${totalHours}h`,           color: 'var(--violet)', icon: <Clock size={16} /> },
-        ].map(s => (
-          <div key={s.label} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 9, background: s.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color }}>
-              {s.icon}
-            </div>
-            <div>
-              <p style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{s.value}</p>
-              <p style={{ fontSize: 10, color: 'var(--ink-2)', margin: 0 }}>{s.label}</p>
-            </div>
-          </div>
-        ))}
+    <div style={{ maxWidth: 1180, margin: '0 auto', padding: '26px 24px 56px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div>
+        <RV as="h1" variant="up" style={{ margin: 0, fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 'clamp(28px,3vw,38px)', letterSpacing: '-.045em', lineHeight: 1.05 }}>{t('ptrn_title')}</RV>
+        <RV as="p" variant="up" delay={60} style={{ margin: '8px 0 0', fontSize: 15, color: '#52646d' }}>{t('ptrn_subtitle')}</RV>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12 }}>
+        <RV as="div" variant="up" delay={60} style={{ padding: '16px 18px', borderRadius: 18, background: 'linear-gradient(135deg,#5444b8,#6d5ad6)', color: '#ffffff' }}><div style={{ ...statLabel, opacity: 0.9 }}>{t('ptrn_k_now')}</div><div style={statValue}>{current.length}</div></RV>
+        <RV as="div" variant="up" delay={110} style={{ padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}><div style={{ ...statLabel, color: '#5f7079' }}>{t('ptrn_k_done')}</div><div style={statValue}>{done.length}</div></RV>
+        <RV as="div" variant="up" delay={160} style={{ padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}><div style={{ ...statLabel, color: '#5f7079' }}>{tf(t('ptrn_k_hours'), { year })}</div><div style={statValue}>{hours} h</div></RV>
       </div>
 
-      {/* List */}
-      {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
-      ) : (training as any[]).length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
-          <BookOpen size={40} style={{ opacity: 0.2, margin: '0 auto 16px' }} />
-          <p style={{ fontWeight: 500 }}>{t('mytrain_empty')}</p>
-          <p style={{ fontSize: 13 }}>{t('mytrain_empty_desc')}</p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {(training as any[]).map((tr: any) => {
-            const cat = CATS[tr.training_catalog?.category ?? ''] ?? CATS.technique;
-            const sm  = STATUS_META[tr.status] ?? STATUS_META.planned;
-            const tc  = tr.training_catalog ?? {};
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <RV as="div" variant="up" style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 18 }}>{t('ptrn_now')}</RV>
+        {isLoading && <div style={{ display: 'flex', justifyContent: 'center', padding: 20 }}><Spinner /></div>}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,340px),1fr))', gap: 14 }}>
+          {current.map((c, i) => {
+            const tint = TINTS[i % TINTS.length], pct = c.status === 'in_progress' ? 50 : 0;
             return (
-              <div key={tr.id} style={{
-                padding: '16px 18px', border: '1px solid var(--line)',
-                borderLeft: `4px solid ${cat.color}`,
-                borderRadius: 12, background: 'var(--surface)',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: cat.color, background: cat.bg, padding: '2px 8px', borderRadius: 5 }}>{cat.label}</span>
-                      <span style={{ fontWeight: 700, fontSize: 15 }}>{tc.title ?? '—'}</span>
-                    </div>
-                    {tc.provider    && <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{t('mytrain_provider_prefix')} {tc.provider}</p>}
-                    {tc.description && <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: '4px 0 0', lineHeight: 1.4 }}>{tc.description}</p>}
+              <RV key={c.id} as="div" variant="up" delay={i * 80} style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 20, borderRadius: 20, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <span style={{ width: 44, height: 44, borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', background: tint[0], color: tint[1], flexShrink: 0 }}><GraduationCap size={20} /></span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 600, fontSize: 16.5, letterSpacing: '-.02em', lineHeight: 1.25 }}>{c.training_catalog?.title ?? '—'}</div>
+                    <div style={{ fontSize: 12.5, color: '#5f7079', marginTop: 3 }}>{[c.training_catalog?.provider, c.training_catalog?.duration_hours ? `${c.training_catalog.duration_hours} h` : ''].filter(Boolean).join(' · ')}</div>
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: sm.color, background: sm.bg, padding: '4px 10px', borderRadius: 20, flexShrink: 0, marginLeft: 12 }}>
-                    {sm.label}
-                  </span>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: tint[0], color: tint[1], whiteSpace: 'nowrap' }}>{t(c.status === 'in_progress' ? 'trn_st_progress' : 'trn_st_planned')}</span>
                 </div>
-
-                <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--ink-2)', paddingTop: 8, borderTop: '1px solid var(--line)' }}>
-                  {tc.duration_hours && <span><Clock size={11} /> {tc.duration_hours}h</span>}
-                  <span>{t('mytrain_assigned_on')} {safeFormat(tr.assigned_at)}</span>
-                  {tr.completed_at && <span><CheckCircle size={11} /> {t('mytrain_completed_on')} {safeFormat(tr.completed_at)}</span>}
-                </div>
-
-                {tr.status === 'in_progress' && (
-                  <div style={{ marginTop: 10 }}>
-                    <div style={{ height: 4, background: 'var(--line)', borderRadius: 4 }}>
-                      <div style={{ height: 4, width: '40%', background: 'var(--primary)', borderRadius: 4 }} />
-                    </div>
-                  </div>
-                )}
-                {tr.status === 'completed' && (
-                  <div style={{ marginTop: 10 }}>
-                    <div style={{ height: 4, background: '#a7f3d0', borderRadius: 4 }}>
-                      <div style={{ height: 4, width: '100%', background: 'var(--success)', borderRadius: 4 }} />
-                    </div>
-                  </div>
-                )}
-              </div>
+                <div style={{ height: 8, borderRadius: 99, background: '#eef2f4', overflow: 'hidden' }}><div className={pct ? 'wedy-shimmer' : undefined} style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: tint[2], transition: 'width .8s cubic-bezier(.2,.8,.2,1)' }} /></div>
+                {c.training_catalog?.description && <div style={{ fontSize: 13, lineHeight: 1.5, color: '#33474f' }}>{c.training_catalog.description}</div>}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#33474f' }}><Clock size={14} style={{ color: '#7d8f97' }} />{tf(t('ptrn_since'), { date: c.assigned_at ? new Date(c.assigned_at).toLocaleDateString('fr-FR') : '—' })}</span>
+              </RV>
             );
           })}
         </div>
-      )}
+        {!isLoading && !current.length && <div style={{ padding: 26, borderRadius: 18, border: '1px dashed #d0dadf', textAlign: 'center', fontSize: 14, color: '#52646d' }}>{t('ptrn_none_now')}</div>}
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
+        <RV as="div" variant="up" delay={80} style={{ flex: '1.3 1 420px', minWidth: 0, padding: 20, borderRadius: 20, background: '#06141a', color: '#e8eff1' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="/wedy-avatar.png" alt="" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', background: '#0f262e', border: '2px solid rgba(95,227,240,.5)' }} />
+            <div><div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16 }}>{t('ptrn_recos')}</div><div style={{ fontSize: 12.5, color: '#9fb4bb' }}>{t('ptrn_recos_sub')}</div></div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
+            {!recos.length && <div style={{ fontSize: 13, color: '#b9cbd0' }}>{t('ptrn_no_recos')}</div>}
+            {recos.map((c, i) => (
+              <RV key={c.id} as="div" variant="up" delay={i * 80} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.08)', flexWrap: 'wrap' }}>
+                <span style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(95,227,240,.12)', color: '#5fe3f0', flexShrink: 0 }}><BookOpen size={16} /></span>
+                <div style={{ flex: 1, minWidth: 200 }}><div style={{ fontSize: 14, fontWeight: 600, color: '#ffffff' }}>{c.title}</div><div style={{ fontSize: 12.5, color: '#b9cbd0', marginTop: 2 }}>{c.provider || c.description || ''}</div></div>
+                <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11.5, color: '#9fb4bb' }}>{c.duration_hours ?? 0} h</span>
+                {asked(c) ? <RV as="span" variant="pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 600, color: '#4fd3a0' }}><CircleCheck size={14} />{t('ptrn_sent')}</RV>
+                  : <button type="button" disabled={ask.isPending} onClick={() => ask.mutate(c)} style={{ height: 34, padding: '0 12px', border: 'none', borderRadius: 10, background: '#effbfc', color: '#06141a', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>{t('ptrn_ask')}</button>}
+              </RV>
+            ))}
+          </div>
+        </RV>
+        <RV as="div" variant="up" delay={140} style={{ flex: '1 1 300px', minWidth: 0, padding: 20, borderRadius: 20, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+          <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16 }}>{t('ptrn_certs')}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+            {!done.length && <div style={{ fontSize: 13, color: '#52646d' }}>{t('ptrn_no_certs')}</div>}
+            {done.map(d => (
+              <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, borderRadius: 12, background: '#f8fafb' }}>
+                <span style={{ width: 32, height: 32, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e1f5ec', color: '#0f6f49' }}><Award size={15} /></span>
+                <span style={{ flex: 1, minWidth: 0 }}><span style={{ display: 'block', fontSize: 13.5, fontWeight: 600 }}>{d.training_catalog?.title ?? '—'}</span><span style={{ display: 'block', fontSize: 12, color: '#5f7079' }}>{d.completed_at ? new Date(d.completed_at).toLocaleDateString('fr-FR') : ''}{d.score ? ` · ${d.score}/100` : ''}</span></span>
+              </div>
+            ))}
+          </div>
+        </RV>
+      </div>
     </div>
   );
 }

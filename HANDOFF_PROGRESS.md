@@ -135,6 +135,12 @@ Portal notes (home + leave):
 - Home uses `/portal/me` (+ contract-end banner ≤ 45 days), the leave balance (`/leaves/balance/:id`), the latest leave + document requests, the current training, the next public holiday (`/leaves/holidays`, else the fixed Moroccan list) and the person's OKRs. The reference's payslip card, "Mon équipe aujourd'hui" and company announcements have no employee-side data/endpoint, so they are not shown.
 - Leave: real balance KPIs (available, pending, after approval, taken this year), request form (`POST /portal/me/leaves`) with working days counted client-side (weekends + holidays excluded) and an over-balance warning; history of the person's requests. There is no employee cancel endpoint, so "Annuler" is not offered; the team calendar has no data source.
 
+Portal notes (documents, training, profile):
+- New employee-scoped endpoints in `routers/portal.py`: `GET /portal/me/documents` and `GET /portal/me/documents/:id` (only the signed-in employee's generated documents — the HR route `GET /documents/generate/:id` accepts any signed-in user and should be restricted to HR), and `PATCH /portal/me` (phone / address / city only, HR notified).
+- Documents: the dark request card posts a real document request (type + language + purpose in the comment); the list shows pending requests, the person's generated documents (open/print) and handled requests. The reference's "Générer maintenant / immédiat" and payslip/contract sections have no employee-side data.
+- Training: current and upcoming enrolments, completed ones, and the company catalog; "Demander" sends an enrolment request to HR through the document-request channel (there is no training-request endpoint). No fake progress percentages.
+- Profile: editable contact fields (saved with `PATCH /portal/me`), locked administrative data (CIN, matricule, CNSS / RIB from `custom_fields`, masked RIB), language switch. Notification toggles and password change are not shown: no settings storage, and passwords are managed by the Tybot account.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -172,9 +178,9 @@ Portal notes (home + leave):
 | 31 | Help | Wedy Help | `/app/help` | `app/HelpPage.tsx` | ◐ |
 | 32 | Portal home | Wedy Portal | `/employee` | `employee/EmployeeDashboard.tsx` | ☑ |
 | 33 | Portal leave | Wedy Portal Leave | `/employee/conges` | `employee/MyLeavePage.tsx` | ☑ |
-| 34 | Portal documents | Wedy Portal Documents | `/employee/documents` | `employee/MyDocumentsPage.tsx` | ◐ |
-| 35 | Portal training | Wedy Portal Training | `/employee/formation` | `employee/MyTrainingPage.tsx` | ◐ |
-| 36 | Portal profile | Wedy Portal Profile | `/employee/profil` | `employee/MyProfilePage.tsx` | ◐ |
+| 34 | Portal documents | Wedy Portal Documents | `/employee/documents` | `employee/MyDocumentsPage.tsx` | ☑ |
+| 35 | Portal training | Wedy Portal Training | `/employee/formation` | `employee/MyTrainingPage.tsx` | ☑ |
+| 36 | Portal profile | Wedy Portal Profile | `/employee/profil` | `employee/MyProfilePage.tsx` | ☑ |
 | 37 | Apply (careers) | Wedy Apply | `/postuler/:id` | `public/PostulerPage.tsx` | ◐ |
 | 38 | Landing | Wedy Landing | `/` | `marketing/LandingPage.tsx` | ◐ |
 

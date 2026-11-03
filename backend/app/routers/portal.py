@@ -39,6 +39,61 @@ def get_my_profile(
     return _get_my_employee(supabase, current_user)
 
 
+# Contact fields an employee may update by themselves (HR is notified); everything else stays HR-only.
+SELF_EDITABLE = ("phone", "address", "city")
+
+
+@router.patch("/me")
+def update_my_contact(
+    payload: dict,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    emp = _get_my_employee(supabase, current_user)
+    data = {k: (str(v).strip() or None) if v is not None else None for k, v in payload.items() if k in SELF_EDITABLE}
+    if not data:
+        raise HTTPException(status_code=400, detail="Aucun champ modifiable")
+    try:
+        res = portal_repository.update_my_contact(supabase, emp["id"], data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    notify_hr(
+        supabase,
+        title=f"Coordonnées mises à jour — {emp['full_name']}",
+        body=f"{emp['full_name']} a modifié : {', '.join(data.keys())}",
+        notif_type="profile_update",
+        link=f"/app/employees/{emp['id']}",
+    )
+    return (res.data or [emp])[0]
+
+
+# ── My generated documents (only the signed-in employee's) ────────────────────
+
+@router.get("/me/documents")
+def get_my_documents(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    emp = _get_my_employee(supabase, current_user)
+    try:
+        return portal_repository.list_my_generated_documents(supabase, emp["id"]).data or []
+    except Exception:
+        return []
+
+
+@router.get("/me/documents/{doc_id}")
+def get_my_document(
+    doc_id: str,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    emp = _get_my_employee(supabase, current_user)
+    rows = portal_repository.get_my_generated_document(supabase, emp["id"], doc_id).data or []
+    if not rows:
+        raise HTTPException(status_code=404, detail="Document introuvable")
+    return rows[0]
+
+
 # ── Dashboard stats ────────────────────────────────────────────────────────────
 
 @router.get("/me/stats")

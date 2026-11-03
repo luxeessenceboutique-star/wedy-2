@@ -1,113 +1,113 @@
-﻿import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { User, Mail, Building2, Briefcase, Calendar, Phone, MapPin, Lock } from 'lucide-react';
-import { api } from '@/services/api';
-import { Avatar, Spinner } from '../../components/ui';
-import { format, isValid } from 'date-fns';
-import { useLang } from '../../lib/lang';
+﻿import { useState, type CSSProperties } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, Lock, ShieldCheck } from 'lucide-react';
+import { api, getApiError } from '@/services/api';
+import type { Employee } from '@/services/api';
+import { RV } from '@/components/motion';
+import { Spinner } from '@/components/ui';
+import { useLang, type Lang, type TKey } from '@/lib/lang';
+import { useNotify } from '@/lib/notify';
+import { tf } from '@/lib/format';
+import { avatarGradient, initialsOf } from '@/lib/visual';
+import './portal.css';
 
-const getMyProfile = () => api.get('/portal/me').then(r => r.data);
-
-const safeFormat = (d: any, fmt = 'dd MMMM yyyy') => {
-  if (!d) return '—'; const dt = new Date(d);
-  return isValid(dt) ? format(dt, fmt) : d;
-};
-
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
-      <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-2)', flexShrink: 0 }}>
-        {icon}
-      </div>
-      <div>
-        <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: '0 0 2px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</p>
-        <p style={{ fontSize: 14, fontWeight: 500, margin: 0, color: value ? 'var(--fg)' : 'var(--ink-2)' }}>{value || '—'}</p>
-      </div>
-    </div>
-  );
-}
+const getMe = () => api.get<Employee>('/portal/me').then(r => r.data);
+const EDITABLE: ['phone' | 'address' | 'city', TKey][] = [['phone', 'pprof_phone'], ['address', 'pprof_address'], ['city', 'pprof_city']];
+const mask = (v?: string) => (v ? `•••• •••• •••• ${v.replace(/\s/g, '').slice(-4)}` : '—');
+const fmtDate = (d?: string) => (d ? d.slice(0, 10).split('-').reverse().join('/') : '—');
+const input: CSSProperties = { height: 44, padding: '0 12px', borderRadius: 11, border: '1px solid #d6dfe3', fontFamily: 'inherit', fontSize: 14, fontWeight: 400, color: '#0a1c24', outline: 'none', background: '#ffffff' };
 
 export default function MyProfilePage() {
-  const { t } = useLang();
-  const { data: profile, isLoading, error } = useQuery({
-    queryKey: ['portal-me'],
-    queryFn: getMyProfile,
-    retry: false,
+  const { t, lang, setLang } = useLang();
+  const notify = useNotify();
+  const qc = useQueryClient();
+  const { data: me, isLoading } = useQuery({ queryKey: ['portal-me'], queryFn: getMe, retry: false });
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const value = (k: 'phone' | 'address' | 'city') => draft[k] ?? (me?.[k] as string | undefined) ?? '';
+  const dirty = Object.keys(draft).some(k => (draft[k] ?? '') !== ((me?.[k as keyof Employee] as string | undefined) ?? ''));
+  const save = useMutation({
+    mutationFn: () => api.patch('/portal/me', draft).then(r => r.data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['portal-me'] }); setDraft({}); notify.success(t('pprof_saved')); },
+    onError: e => notify.error(getApiError(e, t('error'))),
   });
 
-  const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-    active:     { label: t('myprofile_status_active'),     color: 'var(--success)', bg: 'var(--success-soft)' },
-    inactive:   { label: t('myprofile_status_inactive'),   color: 'var(--danger)', bg: '#fef2f2' },
-    on_leave:   { label: t('myprofile_status_on_leave'),   color: 'var(--warn)', bg: 'var(--warn-soft)' },
-    terminated: { label: t('myprofile_status_terminated'), color: 'var(--ink-2)', bg: 'var(--surface-2)' },
-  };
-
-  if (isLoading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}><Spinner /></div>;
-  }
-
-  if (error || !profile) {
-    return (
-      <div style={{ padding: '60px 28px', textAlign: 'center', color: 'var(--ink-2)', maxWidth: 600, margin: '0 auto' }}>
-        <Lock size={36} style={{ opacity: 0.3, margin: '0 auto 16px' }} />
-        <p style={{ fontWeight: 600 }}>{t('myprofile_unavailable')}</p>
-        <p style={{ fontSize: 13 }}>{t('myprofile_not_linked')}</p>
-      </div>
-    );
-  }
-
-  const statusMeta = STATUS_LABELS[profile.status ?? 'active'] ?? STATUS_LABELS.active;
-
-  const contractTypeLabel =
-    profile.contract_type === 'CDI' ? t('myprofile_cdi_full') :
-    profile.contract_type === 'CDD' ? t('myprofile_cdd_full') :
-    profile.contract_type;
+  if (isLoading || !me) return <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>;
+  const cf = (me.custom_fields ?? {}) as Record<string, string>;
+  const locked: [TKey, string, boolean][] = [
+    ['pprof_cin', me.cin || '—', false], ['pprof_matricule', me.matricule || '—', false], ['pprof_cnss', cf.cnss || cf.CNSS || cf['N° CNSS'] || '—', false],
+    ['pprof_rib', mask(cf.rib || cf.RIB), true], ['pprof_birth', fmtDate(me.birth_date), false], ['pprof_nationality', me.nationality || '—', false],
+  ];
+  const chip: CSSProperties = { fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 99, background: 'rgba(255,255,255,.08)', color: '#cfdde1' };
+  const LANGS: [Lang, string, string][] = [['fr', 'Français', 'inherit'], ['ar', 'العربية', "'Noto Kufi Arabic',system-ui,sans-serif"], ['en', 'English', 'inherit']];
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 680, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 24 }}>{t('myprofile_title')}</h1>
-
-      {/* Identity card */}
-      <div className="card card-pad" style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', gap: 18, alignItems: 'center', marginBottom: 20, paddingBottom: 20, borderBottom: '1px solid var(--line)' }}>
-          <Avatar name={profile.full_name} src={profile.photo_url} size={72} />
-          <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px' }}>{profile.full_name}</h2>
-            <p style={{ fontSize: 14, color: 'var(--primary)', fontWeight: 500, margin: '0 0 8px' }}>{profile.position ?? '—'}</p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: statusMeta.color, background: statusMeta.bg, padding: '3px 10px', borderRadius: 20 }}>
-                {statusMeta.label}
-              </span>
-              {profile.department && (
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-2)', background: 'var(--surface-2)', padding: '3px 10px', borderRadius: 20 }}>
-                  {profile.department}
-                </span>
-              )}
-            </div>
+    <div style={{ maxWidth: 1180, margin: '0 auto', padding: '26px 24px 100px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <RV as="section" variant="up" style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', padding: 24, borderRadius: 24, background: '#06141a', color: '#e8eff1', isolation: 'isolate' }}>
+        <div aria-hidden="true" className="wedy-drift" style={{ position: 'absolute', left: -60, top: -140, width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(closest-side,rgba(14,111,132,.6),transparent)', zIndex: -1 }} />
+        <span style={{ position: 'relative', width: 80, height: 80, flexShrink: 0 }}>
+          <span className="wedy-ping" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1.5px solid rgba(95,227,240,.6)' }} />
+          <span style={{ position: 'relative', width: 80, height: 80, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarGradient(me.full_name), fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontSize: 26, fontWeight: 700, color: '#ffffff', border: '2px solid rgba(255,255,255,.2)' }}>{initialsOf(me.full_name)}</span>
+        </span>
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 28, letterSpacing: '-.04em' }}>{me.full_name}</div>
+          <div style={{ fontSize: 14, color: '#9fb4bb', marginTop: 3 }}>{[me.position, me.department].filter(Boolean).join(' · ') || '—'}</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+            {me.contract_type && <span style={{ ...chip, fontWeight: 700, background: 'rgba(154,139,240,.18)', color: '#c9c0f8' }}>{me.contract_type}</span>}
+            {me.hire_date && <span style={chip}>{tf(t('pprof_since'), { date: fmtDate(me.hire_date) })}</span>}
+            {me.manager && <span style={chip}>{tf(t('onb_manager'), { name: me.manager })}</span>}
+            {me.email && <span style={chip}>{me.email}</span>}
           </div>
         </div>
+      </RV>
 
-        <InfoRow icon={<Mail size={16} />}      label={t('myprofile_email')}         value={profile.email} />
-        <InfoRow icon={<Building2 size={16} />} label={t('myprofile_dept')}          value={profile.department} />
-        <InfoRow icon={<Briefcase size={16} />} label={t('myprofile_position')}      value={profile.position} />
-        <InfoRow icon={<Calendar size={16} />}  label={t('ef_hire_date')}            value={safeFormat(profile.hire_date)} />
-        {profile.phone    && <InfoRow icon={<Phone size={16} />}   label={t('myprofile_phone')}   value={profile.phone} />}
-        {profile.address  && <InfoRow icon={<MapPin size={16} />}  label={t('myprofile_address')} value={profile.address} />}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
+        <RV as="div" variant="up" delay={80} style={{ flex: '1.4 1 440px', minWidth: 0, padding: 22, borderRadius: 22, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+          <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 17 }}>{t('pprof_contact')}</div>
+          <div style={{ fontSize: 13, color: '#52646d', marginTop: 2 }}>{t('pprof_contact_sub')}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,230px),1fr))', gap: 14, marginTop: 16 }}>
+            {EDITABLE.map(([k, l]) => (
+              <label key={k} style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>{t(l)}
+                <input value={value(k)} onChange={e => setDraft(d => ({ ...d, [k]: e.target.value }))} style={input} className="ptl-f1" />
+              </label>
+            ))}
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>Email
+              <input value={me.email ?? ''} readOnly style={{ ...input, background: '#f8fafb', color: '#52646d' }} />
+            </label>
+          </div>
+          {dirty && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 14 }}>
+              <button type="button" onClick={() => setDraft({})} className="btn btn-secondary">{t('cancel')}</button>
+              <button type="button" disabled={save.isPending} onClick={() => save.mutate()} className="btn btn-primary">{save.isPending ? <Spinner size={14} color="#fff" /> : <Check size={14} />} {t('save')}</button>
+            </div>
+          )}
+          <div style={{ marginTop: 22, fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16 }}>{t('pprof_admin')}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginTop: 10 }}>
+            {locked.map(([l, v]) => (
+              <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 0', borderTop: '1px solid #f0f3f4', flexWrap: 'wrap' }}>
+                <span style={{ width: 150, fontSize: 13, color: '#5f7079' }}>{t(l)}</span>
+                <span style={{ flex: 1, fontFamily: "'Geist Mono',monospace", fontSize: 13, fontWeight: 500 }}>{v}</span>
+                <Lock size={13} style={{ color: '#a3b1b7' }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12.5, color: '#7d8f97' }}>{t('pprof_admin_hint')}</div>
+        </RV>
 
-        {(profile.contract_type || profile.contract_end_date) && (
-          <>
-            {profile.contract_type && (
-              <InfoRow icon={<Briefcase size={16} />} label={t('myprofile_contract_type')} value={contractTypeLabel} />
-            )}
-            {profile.contract_end_date && (
-              <InfoRow icon={<Calendar size={16} />} label={t('myprofile_contract_end')} value={safeFormat(profile.contract_end_date)} />
-            )}
-          </>
-        )}
-      </div>
-
-      <div style={{ padding: '12px 16px', background: 'var(--warn-soft)', border: '1px solid #fde68a', borderRadius: 10, fontSize: 13, color: '#92400e' }}>
-        {t('myprofile_contact_hr')}
+        <div style={{ flex: '1 1 320px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <RV as="div" variant="up" delay={120} style={{ padding: 20, borderRadius: 20, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+            <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16 }}>{t('pprof_lang')}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6, marginTop: 12 }}>
+              {LANGS.map(([k, l, f]) => {
+                const on = lang === k;
+                return <button key={k} type="button" onClick={() => setLang(k)} style={{ height: 42, borderRadius: 11, border: `1px solid ${on ? '#0a1c24' : '#d6dfe3'}`, background: on ? '#0a1c24' : '#ffffff', color: on ? '#ffffff' : '#33474f', fontFamily: f, fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}>{l}</button>;
+              })}
+            </div>
+          </RV>
+          <RV as="div" variant="up" delay={160} style={{ padding: 20, borderRadius: 20, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16 }}><ShieldCheck size={17} style={{ color: '#0e6f84' }} />{t('pprof_security')}</div>
+            <div style={{ marginTop: 10, fontSize: 13.5, lineHeight: 1.55, color: '#33474f' }}>{t('pprof_security_text')}</div>
+          </RV>
+        </div>
       </div>
     </div>
   );

@@ -65,3 +65,28 @@ def list_my_okrs(supabase: Client, employee_id: str):
         .order("created_at", desc=True)
         .execute()
     )
+
+
+def list_my_generated_documents(supabase: Client, employee_id: str):
+    return (
+        supabase.table("generated_documents")
+        .select("id, name, document_type, language, created_at, template_id")
+        .eq("employee_id", employee_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+
+
+def get_my_generated_document(supabase: Client, employee_id: str, doc_id: str):
+    return (
+        supabase.table("generated_documents")
+        .select("id, name, document_type, language, content, created_at")
+        .eq("id", doc_id)
+        .eq("employee_id", employee_id)
+        .limit(1)
+        .execute()
+    )
+
+
+def update_my_contact(supabase: Client, employee_id: str, data: dict):
+    return supabase.table("employees").update(data).eq("id", employee_id).execute()

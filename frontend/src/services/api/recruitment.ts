@@ -19,6 +19,16 @@ export const listAnnonces = () => api.get<JobAd[]>('/annonces').then(r => r.data
 export const getAnnonce = (id: string) => api.get<JobAd>(`/annonces/${id}`).then(r => r.data);
 export const createAnnonce = (body: Partial<JobAd>) => api.post<JobAd>('/annonces', body).then(r => r.data);
 export const deleteAnnonce = (id: string) => api.delete(`/annonces/${id}`);
+export type SocialPosts = { linkedin: string; facebook: string; instagram: string; indeed: string; source: 'ai' | 'template' };
+/** Public link to post on the networks (Open Graph preview with the visual, then the careers page). */
+export const adShareUrl = (id: string) => `${window.location.origin}/api/annonces/${id}/share`;
+export const uploadAdVisual = (id: string, fmt: 'square' | 'linkedin' | 'story', png: Blob) => {
+  const fd = new FormData();
+  fd.append('file', png, `${fmt}.png`);
+  return api.post<{ url: string }>(`/annonces/${id}/visual`, fd, { params: { fmt }, timeout: 60000 }).then(r => r.data);
+};
+export const getSocialPosts = (id: string, body: { lang: string; company?: string; share_url: string }) =>
+  api.post<SocialPosts>(`/annonces/${id}/social`, body, { timeout: 90000 }).then(r => r.data);
 export const chatGenerateAnnonce = (messages: ChatMessage[], opts?: { mode?: 'direct'; language?: string; company?: string }) =>
   api.post<{ reply: string }>('/annonces/chat-generate', { messages, ...opts }, { timeout: 90000 }).then(r => r.data);
 export const updateAnnonce = (ad: JobAd, patch: Partial<JobAd>) =>

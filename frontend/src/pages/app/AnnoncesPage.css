@@ -6,3 +6,5 @@
 .ads-icon { width: 28px; height: 28px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: #7d8f97; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
 .ads-icon:hover { background: #f3f6f7; color: #0a1c24; }
 .ads-icon.ads-danger:hover { background: #fbe9e6; color: #a33a28; }
+.ads-share { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 9px; border: 1px solid #d7ecef; background: #f2f9fa; color: #0e6f84; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.ads-share:hover { background: #e4f2f4; border-color: #b9dfe5; }

@@ -1,7 +1,9 @@
 ﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowUpRight, Briefcase, Copy, Send, Sparkles, Trash2, Users } from 'lucide-react';
+import { ArrowUpRight, Briefcase, Copy, Megaphone, Send, Sparkles, Trash2, Users } from 'lucide-react';
+import { SocialKit } from '@/components/annonces/SocialKit';
+import { useAppSettings } from '@/lib/appSettings';
 import { listAnnonces, createAnnonce, updateAnnonce, deleteAnnonce, chatGenerateAnnonce, listCandidates, getApiError } from '@/services/api';
 import type { Employee, JobAd } from '@/services/api';
 import { RV } from '@/components/motion';
@@ -30,10 +32,12 @@ export default function AnnoncesPage() {
   const [notes, setNotes] = useState('');
   const [lang, setLang] = useState<'fr' | 'ar' | 'en'>('fr');
   const [draft, setDraft] = useState('');
+  const [kit, setKit] = useState<{ ad: JobAd; fresh: boolean } | null>(null);
+  const settingsQ = useAppSettings();
 
   const { data: ads = [], isLoading } = useQuery({ queryKey: ['annonces'], queryFn: listAnnonces });
   const { data: cands = [] } = useQuery<Employee[]>({ queryKey: ['candidates'], queryFn: listCandidates });
-  const company = typeof user?.profile?.company === 'string' ? user.profile.company : '';
+  const company = settingsQ.data?.company?.name || (typeof user?.profile?.company === 'string' ? user.profile.company : '');
 
   // applications of a post: candidates linked to it (custom_fields.ad_id) or applying for the same position
   const appsOf = (ad: JobAd) => cands.filter(c => c.custom_fields?.ad_id === ad.id || (!c.custom_fields?.ad_id && (c.position || '').trim().toLowerCase() === ad.poste.trim().toLowerCase())).length;
@@ -47,7 +51,7 @@ export default function AnnoncesPage() {
   });
   const publish = useMutation({
     mutationFn: () => createAnnonce({ poste: title.trim(), description: [contract, city.trim()].filter(Boolean).join(' · '), competences: notes.trim() || undefined, contenu: draft, is_active: true }),
-    onSuccess: ad => { qc.invalidateQueries({ queryKey: ['annonces'] }); setDraft(''); notify.success(tf(t('ads_published'), { title: ad.poste })); },
+    onSuccess: ad => { qc.invalidateQueries({ queryKey: ['annonces'] }); setDraft(''); notify.success(tf(t('ads_published'), { title: ad.poste })); setKit({ ad, fresh: true }); },
     onError: e => notify.error(getApiError(e, t('error'))),
   });
   const toggle = useMutation({
@@ -90,7 +94,9 @@ export default function AnnoncesPage() {
             return (
               <RV key={ad.id} as="div" variant="up" delay={Math.min(i, 10) * 60} style={{ padding: '18px 20px', borderRadius: 20, background: '#ffffff', border: '1px solid #e2e8eb', transition: 'border-color .2s,box-shadow .2s' }} className="ads-h1">
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                  <span style={{ width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e4f2f4', color: '#0e6f84', flexShrink: 0 }}><Briefcase size={19} /></span>
+                  {ad.image_url
+                    ? <button type="button" onClick={() => setKit({ ad, fresh: false })} title={t('sk_title')} style={{ width: 80, height: 42, borderRadius: 10, flexShrink: 0, border: '1px solid #e2e8eb', padding: 0, cursor: 'pointer', background: `#eaf0f2 center/cover url(${ad.image_url})` }} />
+                    : <span style={{ width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e4f2f4', color: '#0e6f84', flexShrink: 0 }}><Briefcase size={19} /></span>}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 600, fontSize: 17, letterSpacing: '-.02em' }}>{ad.poste}</div>
                     <div style={{ fontSize: 13, color: '#52646d', marginTop: 2 }}>{ad.description || '—'}</div>
@@ -101,6 +107,7 @@ export default function AnnoncesPage() {
                   <Link to="/app/candidats" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#52646d' }}><Users size={14} /><strong style={{ color: '#0a1c24' }}>{appsOf(ad)}</strong> {t('ads_applications')}</Link>
                   <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12 }}>{ad.created_at ? new Date(ad.created_at).toLocaleDateString('fr-FR') : ''}</span>
                   <span style={{ marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                    <button type="button" onClick={() => setKit({ ad, fresh: false })} className="ads-share"><Megaphone size={14} />{t('sk_open')}</button>
                     <button type="button" onClick={() => copyLink(ad)} aria-label={t('ads_copy_link')} title={t('ads_copy_link')} className="ads-icon"><Copy size={14} /></button>
                     <button type="button" onClick={() => { if (window.confirm(tf(t('ads_confirm_delete'), { title: ad.poste }))) remove.mutate(ad); }} aria-label={t('delete')} title={t('delete')} className="ads-icon ads-danger"><Trash2 size={14} /></button>
                     <a href={`/postuler/${ad.id}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontWeight: 600, color: '#0e6f84' }} className="ads-h2">{t('ads_public_page')}<ArrowUpRight size={14} /></a>
@@ -159,6 +166,7 @@ export default function AnnoncesPage() {
           </div>
         </RV>
       </div>
+      <SocialKit ad={kit?.ad ?? null} open={!!kit} fresh={kit?.fresh} lang={lang} onClose={() => setKit(null)} />
     </div>
   );
 }

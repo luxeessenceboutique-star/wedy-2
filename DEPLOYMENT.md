@@ -218,6 +218,15 @@ Guest invite links (candidates) are signed with `SECRET_KEY` and expire 24 h aft
 
 ---
 
+### 4.1c Job post visuals and social sharing
+
+Annonces › « Diffuser » draws the recruitment visual in the browser (square, LinkedIn, story) and stores the LinkedIn-size one in
+`uploads/annonces/` (keep the `uploads_data` volume). The public link `/api/annonces/{id}/share` carries the Open Graph tags
+(title, text, visual) that LinkedIn, Facebook and WhatsApp read, then sends visitors to `/postuler/{id}`. Absolute URLs come
+from the proxy headers; set `APP_PUBLIC_URL=https://your-domain` in `backend/.env` if the previews show the wrong address.
+
+---
+
 ### 4.2 Frontend — `frontend/.env`
 
 Copy `frontend/.env.example` to `frontend/.env`:

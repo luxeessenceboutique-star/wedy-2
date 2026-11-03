@@ -198,6 +198,8 @@ Security notes (`app/SecurityPage.tsx` + `SecurityView.tsx`):
 - Sign-in, passwords, 2FA and SSO belong to the Tybot account: the 2FA, password-policy, login-alert and SSO controls of the reference are replaced by an explanation, not by toggles that would do nothing. The sessions table (no session data exists) becomes the list of privileged accounts (admin / HR) with "Retirer le rôle".
 - The score and recommendations are computed from what is configured (timeout, allow-list, number of privileged accounts); the badges state facts about the app (role checks, audit log, timeout, 09-08 consent on applications) instead of infrastructure claims.
 
+Help notes (`app/HelpPage.tsx`): "Demandez à Wedy" opens the Copilot; the fake live chat ("réponse moyenne en 4 min") is gone (support is by email); the payroll FAQ describes what the payroll screen really does (no Sage / Cegid / Damancom export); a "Non" on an answer opens an email to support with the question; "Nouveautés" lists features that shipped. The page is still French-only and was not regenerated from the reference.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -232,7 +234,7 @@ Security notes (`app/SecurityPage.tsx` + `SecurityView.tsx`):
 | 28 | Users & roles | Wedy Users | `/app/users` | `app/UsersPage.tsx` | ◐ (data real; permissions matrix now truthful; layout not yet regenerated) |
 | 29 | Settings | Wedy Settings | `/app/settings` | `app/SettingsPage.tsx` | ☑ |
 | 30 | Security | Wedy Security | `/app/security` | `app/SecurityPage.tsx` | ☑ |
-| 31 | Help | Wedy Help | `/app/help` | `app/HelpPage.tsx` | ◐ |
+| 31 | Help | Wedy Help | `/app/help` | `app/HelpPage.tsx` | ◐ (content honest; still French-only, layout not regenerated) |
 | 32 | Portal home | Wedy Portal | `/employee` | `employee/EmployeeDashboard.tsx` | ☑ |
 | 33 | Portal leave | Wedy Portal Leave | `/employee/conges` | `employee/MyLeavePage.tsx` | ☑ |
 | 34 | Portal documents | Wedy Portal Documents | `/employee/documents` | `employee/MyDocumentsPage.tsx` | ☑ |

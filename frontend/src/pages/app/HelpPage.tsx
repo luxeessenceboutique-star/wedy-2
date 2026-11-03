@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Page } from '../../components/layout/AppShell';
 import {
   Search, Rocket, Users, FileText, Calendar, Wallet, ShieldCheck, Puzzle,
-  ChevronDown, MessageSquare, Mail, Clock, ArrowUpRight,
+  ChevronDown, Mail, Clock, ArrowUpRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 const CATS = [
@@ -26,23 +27,25 @@ const FAQ = [
   { cat: 'docs',   q: "Comment ajouter ma signature et le cachet de l'entreprise ?", a: "Dans Paramètres › Documents, téléversez une image de votre signature et de votre cachet. Ils sont apposés automatiquement sur chaque document généré." },
   { cat: 'leave',  q: "Comment Wedy calcule-t-il le solde de congés ?",        a: "Par défaut, 1,5 jour ouvrable par mois de service, plus 1,5 jour par période de 5 ans d'ancienneté, conformément au Code du travail. Vous pouvez ajuster ces règles dans Paramètres › Congés et temps." },
   { cat: 'leave',  q: "Les jours fériés religieux sont-ils pris en compte ?",  a: "Oui. Les fêtes religieuses suivent le calendrier lunaire : Wedy ajuste leurs dates chaque année, et vous pouvez les corriger manuellement si besoin." },
-  { cat: 'pay',    q: "Wedy calcule-t-il la CNSS et l'IR ?",                   a: "Wedy prépare les variables de paie (absences, primes, heures supplémentaires) et contrôle les anomalies. Le calcul final s'exporte vers Sage Paie ou Cegid, et le fichier Damancom est généré pour la CNSS." },
+  { cat: 'pay',    q: "Wedy calcule-t-il la CNSS et l'IR ?",                   a: "Oui : chaque bulletin calcule la CNSS, l'AMO, l'IR et le net à payer à partir du salaire de base, des primes et des retenues. Wedy signale les anomalies (bulletin manquant, prime sans motif, variation de plus de 20 %) et exporte le journal de paie en CSV pour votre logiciel de paie ou votre déclaration." },
   { cat: 'pay',    q: "Que vérifie le contrôle IA des bulletins ?",            a: "Les écarts inhabituels : heures supplémentaires élevées, primes sans justificatif, fins de contrat à intégrer, variations de salaire. Chaque alerte doit être vérifiée avant la validation de la paie." },
   { cat: 'sec',    q: "Comment mes données sont-elles protégées ?",            a: "Vos données sont chiffrées au repos (AES-256) et en transit (TLS 1.3), sauvegardées chaque jour et traitées conformément à la loi 09-08. Chaque action est tracée dans le journal d'audit." },
   { cat: 'int',    q: "Comment connecter Slack ou Teams ?",                    a: "Dans Intégrations, activez l'outil souhaité et autorisez l'accès. Les demandes de congé et les alertes arrivent alors dans vos canaux, avec des boutons d'approbation." },
   { cat: 'people', q: "Comment compléter un dossier incomplet ?",              a: "Ouvrez le dossier, onglet Fichiers, puis « Compléter avec l'IA ». Wedy lit les pièces (CV, diplômes, contrat) et propose les champs manquants ; rien n'est modifié sans votre validation." },
 ];
 
-const SUGG = ['Solde de congés', 'Modèle en arabe', 'Export Sage Paie', 'Importer des employés'];
+const SUGG = ['Solde de congés', 'Modèle en arabe', 'Export de la paie', 'Importer des employés'];
 
+// What actually shipped recently (keep in sync with the release notes).
 const NEWS = [
-  { tag: 'IA',       tint: '#ece9fb', color: '#5444b8', t: 'Rédaction IA des documents en arabe',    d: 'Octobre 2026' },
-  { tag: 'Nouveau',  tint: '#e1f5ec', color: '#0f6f49', t: 'Contrôle IA des bulletins de paie',      d: 'Septembre 2026' },
-  { tag: 'Amélioré', tint: '#e4f2f4', color: '#0b5f72', t: 'Organigramme interactif avec recherche', d: 'Août 2026' },
+  { tag: 'IA',       tint: '#ece9fb', color: '#5444b8', t: "Réunions : ordre du jour et compte rendu rédigés par Wedy", d: 'Novembre 2026' },
+  { tag: 'Nouveau',  tint: '#e1f5ec', color: '#0f6f49', t: 'Flux iCal des congés et webhooks Slack / Teams',          d: 'Novembre 2026' },
+  { tag: 'Amélioré', tint: '#e4f2f4', color: '#0b5f72', t: 'Paramètres : règles de congés et jours fériés lunaires',   d: 'Novembre 2026' },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function HelpPage() {
+  const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [catFilter, setCatFilter] = useState<string | null>(null);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
@@ -171,7 +174,7 @@ export default function HelpPage() {
                           Cette réponse vous a aidé ?
                           <button type="button" onClick={() => toast.success('Merci pour votre retour !')}
                             style={{ height: 28, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: 'var(--success-ink)', cursor: 'pointer' }}>Oui</button>
-                          <button type="button" onClick={() => toast.info('Merci · notre équipe va améliorer cet article')}
+                          <button type="button" onClick={() => { window.location.href = `mailto:support@wedy.ma?subject=${encodeURIComponent(`Aide · ${f.q}`)}`; }}
                             style={{ height: 28, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: '#fff', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: 'var(--danger-ink)', cursor: 'pointer' }}>Non</button>
                         </div>
                       </div>
@@ -186,7 +189,7 @@ export default function HelpPage() {
           <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Ask Wedy */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 18, borderRadius: 20, background: 'linear-gradient(140deg,#5444b8,#6d5ad6 55%,#0e7f96)', color: '#fff', cursor: 'pointer' }}
-              onClick={() => toast.info('Ouverture du Copilote…')}>
+              onClick={() => navigate('/app/copilot')}>
               <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
                 <img src="/wedy-avatar.png" alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
               </div>
@@ -201,15 +204,6 @@ export default function HelpPage() {
             <div style={{ padding: 18, borderRadius: 20, background: '#fff', border: '1px solid var(--border)' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Contacter le support</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
-                <button type="button" onClick={() => toast.info('Une conseillère vous répond dans un instant…')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', borderRadius: 12, border: '1px solid var(--border)', background: '#fff', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
-                  <MessageSquare size={17} style={{ color: 'var(--primary)', flexShrink: 0 }} />
-                  <span style={{ flex: 1 }}>
-                    <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>Chat en direct</span>
-                    <span style={{ display: 'block', fontSize: 12, color: 'var(--text-2)' }}>Réponse moyenne en 4 min</span>
-                  </span>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--success-ink)', flexShrink: 0 }} />
-                </button>
                 <a href="mailto:support@wedy.ma" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', borderRadius: 12, border: '1px solid var(--border)', background: '#fff', textDecoration: 'none' }}>
                   <Mail size={17} style={{ color: 'var(--primary)', flexShrink: 0 }} />
                   <span style={{ flex: 1 }}>

@@ -1,0 +1,10 @@
+/* hover / focus rules of Wedy Templates (style-hover / style-focus) */
+.tpl-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.tpl-h2:hover { border-color: #b9dfe5 !important; box-shadow: 0 22px 44px -28px rgba(10,28,36,.5) !important; transform: translateY(-3px) !important; }
+.tpl-h3:hover { border-color: #9fb4bb !important; }
+.tpl-h4:hover { color: #ffffff !important; }
+.tpl-f5:focus { border-color: #16b6c8 !important; }
+.tpl-h6:hover { background: #f3f6f7 !important; color: #0a1c24 !important; }
+.tpl-h7:hover { background: #eef5f7 !important; }
+.tpl-h8:hover { background: #fbe9e6 !important; }
+.tpl-h9:hover { background: #f3f6f7 !important; }

@@ -1,923 +1,394 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+﻿import { useEffect, useRef, useState, type ChangeEvent, type ComponentType, type FormEvent, type MouseEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  FileText, Search, Wand2, Plus, Upload, Pencil, Trash2,
-  X, Eye, FileUp, Tag, Save, ChevronDown, Sparkles,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Users, GraduationCap,
-} from 'lucide-react';
+import { FileText, FileUp, GraduationCap, Upload, Users, UsersRound } from 'lucide-react';
 import {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
-  importTemplateFromPdf, seedDefaultTemplates, getApiError,
+  importTemplateFromPdf, seedDefaultTemplates, listDocuments, getApiError,
 } from '@/services/api';
 import type { Template } from '@/services/api';
-import { Spinner, Button } from '../../components/ui';
-import { PageHeader } from '../../components/layout/AppShell';
-import { Link } from 'react-router-dom';
-import { toast } from 'sonner';
+import { Modal, Spinner } from '@/components/ui';
+import { useNotify } from '@/lib/notify';
+import { useLang, type TKey } from '@/lib/lang';
+import { useAuth } from '@/lib/auth';
+import { tf } from '@/lib/format';
+import { initialsOf } from '@/lib/visual';
+import { TemplatesView } from './TemplatesView';
 
-// ── Category config ────────────────────────────────────────────────────────────
+type Cat = 'attestation' | 'contrat' | 'lettre' | 'avenant' | 'autre';
+type Target = 'employee' | 'intern' | 'both';
 
-const CAT_META: Record<string, { color: string; bg: string; label: string }> = {
-  attestation: { color: '#059669', bg: 'var(--success-soft)', label: 'Attestation' },
-  contrat:     { color: 'var(--primary)', bg: 'var(--primary-soft)', label: 'Contrat' },
-  lettre:      { color: 'var(--warn)', bg: 'var(--warn-soft)', label: 'Lettre' },
-  avenant:     { color: '#7c3aed', bg: 'var(--violet-soft)', label: 'Avenant' },
-  autre:       { color: 'var(--ink-2)', bg: 'var(--surface-2)', label: 'Autre' },
+// [label key, tint, text color] — exact values of the reference
+const CAT: Record<Cat, [TKey, string, string]> = {
+  attestation: ['tpl_attestation', '#e1f5ec', '#0f6f49'],
+  contrat: ['tpl_contrat', '#e4f2f4', '#0b5f72'],
+  lettre: ['tpl_lettre', '#fbefda', '#8a5207'],
+  avenant: ['tpl_avenant', '#ece9fb', '#5444b8'],
+  autre: ['tpl_autre', '#eef2f4', '#33474f'],
 };
-const catMeta = (cat: string) => CAT_META[cat] ?? CAT_META.autre;
-const CATEGORIES = Object.keys(CAT_META);
+const catOf = (c?: string): Cat => (c && c in CAT ? (c as Cat) : 'autre');
+const TG: Record<Target, [TKey, ComponentType<{ size?: number; style?: React.CSSProperties }>]> = {
+  employee: ['tpl_employe', Users], intern: ['tpl_stagiaire', GraduationCap], both: ['tpl_les_deux', UsersRound],
+};
+const targetOf = (x?: string): Target => (x === 'intern' || x === 'both' ? x : 'employee');
 
-const TARGET_TYPES = [
-  { value: 'employee', label: 'Employé',   Icon: Users,          color: 'var(--primary)', bg: 'var(--primary-soft)' },
-  { value: 'intern',   label: 'Stagiaire', Icon: GraduationCap,  color: '#7c3aed', bg: 'var(--violet-soft)' },
-  { value: 'both',     label: 'Les deux',  Icon: null,           color: 'var(--ink-2)', bg: 'var(--surface-2)' },
-] as const;
-const targetMeta = (t?: string) => TARGET_TYPES.find(x => x.value === t) ?? TARGET_TYPES[0];
-
-// ── Variables ──────────────────────────────────────────────────────────────────
-
-const COMMON_VARS = [
-  { key: 'full_name',      label: 'Nom complet' },
-  { key: 'cin',            label: 'CIN' },
-  { key: 'position',       label: 'Poste' },
-  { key: 'department',     label: 'Département' },
-  { key: 'hire_date',      label: "Date d'embauche" },
-  { key: 'contract_start', label: 'Début contrat' },
-  { key: 'contract_end',   label: 'Fin contrat' },
-  { key: 'contract_type',  label: 'Type contrat' },
-  { key: 'salary',         label: 'Salaire' },
-  { key: 'email',          label: 'Email' },
-  { key: 'phone',          label: 'Téléphone' },
-  { key: 'address',        label: 'Adresse' },
-  { key: 'city',           label: 'Ville' },
-  { key: 'matricule',      label: 'Matricule' },
-  { key: 'manager',        label: 'Manager' },
-  { key: 'today',          label: 'Date du jour' },
-  { key: 'nationality',    label: 'Nationalité' },
+// Variables filled from the employee folder at generation time (same keys as the generator)
+const VARS: [string, TKey][] = [
+  ['full_name', 'tpl_v_full_name'], ['cin', 'tpl_v_cin'], ['position', 'tpl_v_position'], ['department', 'tpl_v_department'],
+  ['hire_date', 'tpl_v_hire_date'], ['contract_start', 'tpl_v_contract_start'], ['contract_end', 'tpl_v_contract_end'],
+  ['contract_type', 'tpl_v_contract_type'], ['salary', 'tpl_v_salary'], ['email', 'tpl_v_email'], ['phone', 'tpl_v_phone'],
+  ['address', 'tpl_v_address'], ['city', 'tpl_v_city'], ['matricule', 'tpl_v_matricule'], ['manager', 'tpl_v_manager'],
+  ['today', 'tpl_v_today'], ['nationality', 'tpl_v_nationality'],
 ];
 
-// ── HTML ↔ editor conversion ───────────────────────────────────────────────────
+// ── stored body ⇄ editor HTML ───────────────────────────────────────────────
+const CHIP = "display:inline-block;padding:0 6px;margin:0 1px;border-radius:6px;background:#e4f2f4;color:#0b5f72;font-family:'Geist Mono',monospace;font-size:.82em;font-weight:600;line-height:1.6;white-space:nowrap";
+const chip = (v: string) => `<span contenteditable="false" data-var="${v}" style="${CHIP}">{{${v}}}</span>`;
+const varsIn = (s: string) => [...new Set((s.match(/\{\{(\w+)\}\}/g) || []).map(m => m.slice(2, -2)))];
+const isImageTemplate = (html: string) => html.includes('<img ') && html.includes('data:image');
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function varChipHTML(v: string) {
-  return (
-    `<span class="tpl-var" contenteditable="false" data-var="${v}" ` +
-    `style="display:inline-block;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;` +
-    `border-radius:4px;padding:1px 8px;font-size:11px;font-weight:700;font-family:monospace;` +
-    `cursor:default;user-select:none;margin:0 2px;vertical-align:middle;">` +
-    `{{${v}}}</span>`
-  );
-}
-
-/**
- * Strip position:absolute / position:relative (and associated top/left/width/height)
- * so that fitz-extracted PDF HTML becomes normal flow text, editable in a contentEditable.
- */
+/** PDF-extracted HTML is absolutely positioned: make it normal flow so it can be edited. */
 function normalizeForEditing(html: string): string {
   const div = document.createElement('div');
   div.innerHTML = html;
   div.querySelectorAll<HTMLElement>('*').forEach(el => {
-    const pos = el.style.position;
-    if (pos === 'absolute' || pos === 'relative' || pos === 'fixed') {
-      el.style.position = '';
-      el.style.top = '';
-      el.style.left = '';
-      el.style.right = '';
-      el.style.bottom = '';
-      // keep width/height only on images, strip everywhere else
-      if (el.tagName !== 'IMG') {
-        el.style.width = '';
-        el.style.height = '';
-      }
+    if (['absolute', 'relative', 'fixed'].includes(el.style.position)) {
+      el.style.position = ''; el.style.top = ''; el.style.left = ''; el.style.right = ''; el.style.bottom = '';
+      if (el.tagName !== 'IMG') { el.style.width = ''; el.style.height = ''; }
     }
-    // Remove whitespace:pre which prevents normal editing/wrapping
-    if (el.style.whiteSpace === 'pre') {
-      el.style.whiteSpace = '';
-    }
+    if (el.style.whiteSpace === 'pre') el.style.whiteSpace = '';
   });
   return div.innerHTML;
 }
-
-function toEditorHTML(html: string): string {
-  const clean = normalizeForEditing(html);
-  return clean.replace(/\{\{(\w+)\}\}/g, (_, v) => varChipHTML(v));
+function toEditorHTML(body: string): string {
+  if (!body.trim()) return '';
+  if (isImageTemplate(body)) return body;
+  const html = /<[a-z][\s\S]*>/i.test(body)
+    ? normalizeForEditing(body)
+    : body.split(/\n\s*\n/).map(p => `<p style="margin:0 0 14px">${esc(p)}</p>`).join('');
+  return html.replace(/\{\{(\w+)\}\}/g, (_, v) => chip(v));
 }
-
 function fromEditorHTML(html: string): string {
+  if (isImageTemplate(html)) return html;
   const div = document.createElement('div');
   div.innerHTML = html;
-  div.querySelectorAll('[data-var]').forEach(el => {
-    const v = (el as HTMLElement).getAttribute('data-var') ?? '';
-    el.replaceWith(`{{${v}}}`);
-  });
+  div.querySelectorAll('[data-var]').forEach(el => el.replaceWith(`{{${el.getAttribute('data-var') ?? ''}}}`));
   return div.innerHTML;
 }
+const langsOf = (tp: Template) => {
+  const out = ['FR'];
+  if (tp.name_ar && tp.name_ar !== tp.name_fr) out.push('AR');
+  if (tp.name_en && tp.name_en !== tp.name_fr) out.push('EN');
+  return out.map(l => ({ t: l }));
+};
+const generateLink = (id: string) => `/app/generate?template_id=${encodeURIComponent(id)}`;
 
-// ── Toolbar button ─────────────────────────────────────────────────────────────
+type Run = (e?: MouseEvent) => void;
+export type TemplatesVals = {
+  q: string; onQ: (e: ChangeEvent<HTMLInputElement>) => void;
+  cats: { label: string; n: number; go: () => void; bg: string; color: string; border: string }[];
+  targets: { label: string; on: boolean; color: string; go: () => void }[];
+  tpls: {
+    fr: string; en: string; cat: string; tint: string; color: string; target: string;
+    tIcon: ComponentType<{ size?: number; style?: React.CSSProperties }>;
+    langs: { t: string }[]; nvars: number; used: number; delay: string; preview: () => void; edit: () => void; generate: string;
+  }[];
+  loading: boolean; noTpls: boolean; noneAtAll: boolean;
+  seed: () => void; seeding: boolean; openImport: () => void; addOpen: boolean; toggleAdd: () => void;
+  company: string; companyInitials: string; companyAddress: string;
+  previewOpen: boolean; closePreview: () => void;
+  pv: { fr: string; upper: string; cat: string; tint: string; color: string; langs: { t: string }[]; nvars: number; edit: () => void; remove: () => void; generate: string };
+  editorOpen: boolean; editorTitle: string; closeEditor: () => void; newTpl: () => void;
+  eName: string; onEName: (e: ChangeEvent<HTMLInputElement>) => void;
+  eNameEn: string; onENameEn: (e: ChangeEvent<HTMLInputElement>) => void;
+  eCat: string; onECat: (e: ChangeEvent<HTMLSelectElement>) => void;
+  eTarget: string; onETarget: (e: ChangeEvent<HTMLSelectElement>) => void;
+  eUpper: string;
+  tools: { label: string; title: string; weight: string; italic: string; deco: string; gap: string; font: string; run: Run }[];
+  onEdit: () => void; detLabel: string; dirtyDot: string;
+  evars: { code: string; label: string; used: boolean; bg: string; insert: Run }[];
+  save: () => void; saving: boolean;
+};
 
-function TB({
-  title, onClick, children,
-}: {
-  title?: string; onClick: () => void; children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      title={title}
-      onClick={onClick}
-      style={{
-        background: 'none', border: '1px solid transparent', borderRadius: 5,
-        padding: '3px 7px', cursor: 'pointer', color: 'var(--fg)', fontSize: 12,
-        fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3,
-        minWidth: 26, justifyContent: 'center', lineHeight: 1,
-        transition: 'background 0.1s',
-      }}
-      onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
-      onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-    >
-      {children}
-    </button>
-  );
-}
+export default function TemplatesPage() {
+  const qc = useQueryClient();
+  const { t } = useLang();
+  const notify = useNotify();
+  const { user } = useAuth();
 
-const Sep = () => (
-  <span style={{ width: 1, height: 16, background: 'var(--line)', margin: '0 4px', flexShrink: 0 }} />
-);
+  const [q, setQ] = useState('');
+  const [cat, setCat] = useState<'all' | Cat>('all');
+  const [target, setTarget] = useState<'all' | 'employee' | 'intern'>('all');
+  const [preview, setPreview] = useState<string | null>(null);
+  const [editor, setEditor] = useState<string | null>(null); // template id, 'new' or null
+  const [edKey, setEdKey] = useState(0);
+  const [eName, setEName] = useState('');
+  const [eNameEn, setENameEn] = useState('');
+  const [eCat, setECat] = useState<Cat>('attestation');
+  const [eTarget, setETarget] = useState<Target>('employee');
+  const [detected, setDetected] = useState<string[]>([]);
+  const [dirty, setDirty] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const edRef = useRef<HTMLDivElement | null>(null);
+  const pvRef = useRef<HTMLDivElement | null>(null);
+  const detectTimer = useRef<number | undefined>(undefined);
 
-// ── Rich WYSIWYG Editor ────────────────────────────────────────────────────────
+  const { data, isLoading } = useQuery({ queryKey: ['templates'], queryFn: () => listTemplates({ active_only: false }) });
+  const all = data?.data ?? [];
+  // how many times each template was used = generated documents that point to it
+  const { data: docs } = useQuery({ queryKey: ['documents', 'template-usage'], queryFn: () => listDocuments({ limit: 1000 }) });
+  const usage = (docs?.data ?? []).reduce<Record<string, number>>((m, d) => { if (d.template_id) m[d.template_id] = (m[d.template_id] ?? 0) + 1; return m; }, {});
 
-function RichEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const [showVars, setShowVars] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const dirtyRef = useRef(false); // true once user has made at least one keystroke/edit
+  const invalidate = () => qc.invalidateQueries({ queryKey: ['templates'] });
+  const createMut = useMutation({ mutationFn: createTemplate });
+  const updateMut = useMutation({ mutationFn: ({ id, body }: { id: string; body: Partial<Template> & { variables?: string[] } }) => updateTemplate(id, body) });
+  const deleteMut = useMutation({
+    mutationFn: deleteTemplate,
+    onSuccess: () => { invalidate(); notify.success(t('tpl_deleted')); },
+    onError: (e: unknown) => notify.error(getApiError(e, t('tpl_delete_error'))),
+  });
+  const seedMut = useMutation({
+    mutationFn: seedDefaultTemplates,
+    onSuccess: res => {
+      invalidate();
+      notify.success(tf(t('tpl_seeded'), { n: res.created.length }), res.skipped.length ? { description: tf(t('tpl_seeded_skipped'), { n: res.skipped.length }) } : undefined);
+    },
+    onError: (e: unknown) => notify.error(getApiError(e, t('tpl_seed_error'))),
+  });
 
-  // Detect image-based PDF templates — these must NOT have positions stripped
-  const isImageTemplate = value.includes('<img ') && value.includes('data:image');
+  const editing = editor && editor !== 'new' ? all.find(x => x.id === editor) : undefined;
+  const previewing = preview ? all.find(x => x.id === preview) : undefined;
 
-  // Set HTML once on mount — imperatively so React never resets the contentEditable
+  const detect = () => { const ed = edRef.current; if (ed) setDetected(varsIn(ed.innerText || '')); };
+
+  // fill the editor / the preview imperatively (contentEditable must not be re-rendered by React)
   useEffect(() => {
-    if (editorRef.current) {
-      // For image-based PDF templates, render as-is (no normalization)
-      editorRef.current.innerHTML = isImageTemplate
-        ? value
-        : toEditorHTML(value);
-    }
+    const ed = edRef.current;
+    if (!ed || !editor) return;
+    ed.innerHTML = editing?.body_template ? toEditorHTML(editing.body_template) : `<p style="margin:0 0 14px">${esc(t('tpl_editor_placeholder'))}</p>`;
+    detect();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [edKey]);
+  useEffect(() => {
+    const pv = pvRef.current;
+    if (pv && previewing) pv.innerHTML = previewing.body_template ? toEditorHTML(previewing.body_template) : `<p style="color:#7d8f97;font-style:italic;text-align:center">${esc(t('tpl_no_content'))}</p>`;
+  }, [previewing, t]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && preview) setPreview(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [preview]);
 
-  const emit = () => {
-    // Only propagate changes the user actually made; never on the initial mount/blur
-    if (editorRef.current && dirtyRef.current) {
-      onChange(isImageTemplate
-        ? editorRef.current.innerHTML          // image templates: preserve raw HTML
-        : fromEditorHTML(editorRef.current.innerHTML)
-      );
+  const openEditor = (tp?: Template) => {
+    setEditor(tp ? tp.id : 'new');
+    setEdKey(k => k + 1);
+    setPreview(null);
+    setEName(tp?.name_fr ?? '');
+    setENameEn(tp?.name_en && tp.name_en !== tp.name_fr ? tp.name_en : '');
+    setECat(catOf(tp?.category));
+    setETarget(targetOf(tp?.target_type));
+    setDirty(false);
+  };
+
+  const exec = (cmd: string, arg?: string): Run => e => {
+    e?.preventDefault();
+    const ed = edRef.current;
+    if (ed && !ed.contains(document.activeElement)) ed.focus();
+    try { document.execCommand(cmd, false, arg); } catch { /* unsupported command */ }
+    setDirty(true); detect();
+  };
+  const insert = (v: string) => {
+    const ed = edRef.current; if (!ed) return;
+    ed.focus();
+    const sel = window.getSelection();
+    if (sel && (!sel.rangeCount || !ed.contains(sel.anchorNode))) {
+      const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false); sel.removeAllRanges(); sel.addRange(r);
+    }
+    try { document.execCommand('insertHTML', false, chip(v) + '&nbsp;'); } catch { /* unsupported command */ }
+    setDirty(true); detect();
+  };
+
+  const save = async () => {
+    const ed = edRef.current;
+    if (!eName.trim()) { notify.error(t('tpl_name_required')); return; }
+    const body = ed ? fromEditorHTML(ed.innerHTML) : '';
+    const text = ed?.innerText.trim() ?? '';
+    if (!text && !isImageTemplate(body)) { notify.error(t('tpl_content_required')); return; }
+    const vars = varsIn(ed ? ed.innerText : '');
+    const fr = eName.trim(), en = eNameEn.trim() || fr;
+    try {
+      if (editor === 'new') {
+        const code = fr.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').slice(0, 50);
+        await createMut.mutateAsync({ code, name_fr: fr, name_en: en, name_ar: fr, category: eCat, body_template: body, variables: vars, is_active: true, ...({ target_type: eTarget } as object) });
+        setCat('all'); setTarget('all'); setQ('');
+      } else if (editor) {
+        await updateMut.mutateAsync({ id: editor, body: { name_fr: fr, name_en: en, category: eCat, target_type: eTarget, body_template: body, variables: vars } });
+      }
+      invalidate();
+      setEditor(null);
+      notify.success(tf(t('tpl_saved'), { name: fr, n: vars.length }));
+    } catch (e) {
+      notify.error(getApiError(e, t('tpl_save_error')));
     }
   };
 
-  const exec = (cmd: string, val?: string) => {
-    dirtyRef.current = true;
-    editorRef.current?.focus();
-    // eslint-disable-next-line no-restricted-globals
-    document.execCommand(cmd, false, val);
-    emit();
+  const remove = (tp: Template) => {
+    if (!window.confirm(tf(t('tpl_confirm_delete'), { name: tp.name_fr }))) return;
+    setPreview(null);
+    deleteMut.mutate(tp.id);
   };
 
-  const insertVar = (varKey: string) => {
-    dirtyRef.current = true;
-    editorRef.current?.focus();
-    // eslint-disable-next-line no-restricted-globals
-    document.execCommand('insertHTML', false, varChipHTML(varKey) + ' ');
-    setShowVars(false);
-    emit();
-  };
+  // ── derived values (the reference's renderVals) ──
+  const needle = q.trim().toLowerCase();
+  const base = all.filter(x => {
+    const tg = targetOf(x.target_type);
+    return (target === 'all' || tg === target || tg === 'both') && (!needle || `${x.name_fr} ${x.name_en ?? ''}`.toLowerCase().includes(needle));
+  });
+  const list = base.filter(x => cat === 'all' || catOf(x.category) === cat);
+  const company = typeof user?.profile?.company === 'string' && user.profile.company ? user.profile.company : t('tpl_company_fallback');
+  const companyAddress = typeof user?.profile?.company_address === 'string' ? user.profile.company_address : '';
+  const toolDefs: [string, string, string | undefined, TKey, number, string?, string?, number?][] = [
+    ['B', 'bold', undefined, 'tpl_tool_bold', 800], ['I', 'italic', undefined, 'tpl_tool_italic', 600, 'italic'],
+    ['U', 'underline', undefined, 'tpl_tool_underline', 600, 'normal', 'underline', 10],
+    ['H1', 'formatBlock', 'h2', 'tpl_tool_title', 800], ['H2', 'formatBlock', 'h3', 'tpl_tool_subtitle', 700],
+    ['¶', 'formatBlock', 'p', 'tpl_tool_paragraph', 600, 'normal', 'none', 10], ['•', 'insertUnorderedList', undefined, 'tpl_tool_list', 800, 'normal', 'none', 10],
+    ['↶', 'undo', undefined, 'tpl_tool_undo', 600], ['↷', 'redo', undefined, 'tpl_tool_redo', 600],
+  ];
+  const pvCat = previewing ? CAT[catOf(previewing.category)] : CAT.autre;
 
-  return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0,
-      border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden',
-    }}>
-      {/* ── Toolbar ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 2, padding: '5px 8px',
-        borderBottom: '1px solid var(--line)', background: 'var(--surface-2)',
-        flexWrap: 'wrap', flexShrink: 0,
-      }}>
-        {/* Bold / Italic / Underline */}
-        <TB title="Gras (Ctrl+B)" onClick={() => exec('bold')}>
-          <strong style={{ fontSize: 13 }}>B</strong>
-        </TB>
-        <TB title="Italique (Ctrl+I)" onClick={() => exec('italic')}>
-          <em style={{ fontSize: 13 }}>I</em>
-        </TB>
-        <TB title="Souligné (Ctrl+U)" onClick={() => exec('underline')}>
-          <span style={{ textDecoration: 'underline', fontSize: 13 }}>S</span>
-        </TB>
-
-        <Sep />
-
-        {/* Headings */}
-        <TB title="Titre 1" onClick={() => exec('formatBlock', 'H1')}>
-          <span style={{ fontSize: 11, fontWeight: 700 }}>H1</span>
-        </TB>
-        <TB title="Titre 2" onClick={() => exec('formatBlock', 'H2')}>
-          <span style={{ fontSize: 11, fontWeight: 700 }}>H2</span>
-        </TB>
-        <TB title="Titre 3" onClick={() => exec('formatBlock', 'H3')}>
-          <span style={{ fontSize: 11 }}>H3</span>
-        </TB>
-        <TB title="Paragraphe" onClick={() => exec('formatBlock', 'P')}>
-          <span style={{ fontSize: 11 }}>¶</span>
-        </TB>
-
-        <Sep />
-
-        {/* Alignment */}
-        <TB title="Gauche" onClick={() => exec('justifyLeft')}><AlignLeft size={12} /></TB>
-        <TB title="Centre" onClick={() => exec('justifyCenter')}><AlignCenter size={12} /></TB>
-        <TB title="Droite" onClick={() => exec('justifyRight')}><AlignRight size={12} /></TB>
-        <TB title="Justifier" onClick={() => exec('justifyFull')}><AlignJustify size={12} /></TB>
-
-        <Sep />
-
-        {/* Font size */}
-        <select
-          onChange={e => { exec('fontSize', e.target.value); (e.target as HTMLSelectElement).value = ''; }}
-          defaultValue=""
-          style={{
-            fontSize: 11, padding: '3px 5px', borderRadius: 4, cursor: 'pointer',
-            border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--fg)',
-          }}
-        >
-          <option value="" disabled>Taille</option>
-          <option value="1">8pt</option>
-          <option value="2">10pt</option>
-          <option value="3">12pt</option>
-          <option value="4">14pt</option>
-          <option value="5">18pt</option>
-          <option value="6">24pt</option>
-          <option value="7">36pt</option>
-        </select>
-
-        <Sep />
-
-        {/* Undo / Redo */}
-        <TB title="Annuler (Ctrl+Z)" onClick={() => exec('undo')}>
-          <span style={{ fontSize: 14 }}>↩</span>
-        </TB>
-        <TB title="Rétablir (Ctrl+Y)" onClick={() => exec('redo')}>
-          <span style={{ fontSize: 14 }}>↪</span>
-        </TB>
-
-        <div style={{ flex: 1 }} />
-
-        {/* Insert variable dropdown */}
-        <div style={{ position: 'relative' }}>
-          <button
-            type="button"
-            onClick={() => setShowVars(v => !v)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px',
-              background: 'var(--primary-soft)', border: '1px solid var(--primary)',
-              borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-              color: 'var(--primary)',
-            }}
-          >
-            <Tag size={11} />
-            Insérer variable
-            <ChevronDown size={10} />
-          </button>
-
-          {showVars && (
-            <>
-              <div
-                style={{ position: 'fixed', inset: 0, zIndex: 98 }}
-                onClick={() => setShowVars(false)}
-              />
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 99,
-                background: 'var(--surface)', border: '1px solid var(--line)',
-                borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-                padding: 4, minWidth: 220, maxHeight: 290, overflowY: 'auto',
-              }}>
-                {COMMON_VARS.map(v => (
-                  <button
-                    key={v.key}
-                    type="button"
-                    onMouseDown={e => { e.preventDefault(); insertVar(v.key); }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                      padding: '5px 8px', background: 'none', border: 'none',
-                      cursor: 'pointer', borderRadius: 5, textAlign: 'left',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                  >
-                    <span style={{
-                      fontFamily: 'monospace', fontSize: 10, color: '#1d4ed8',
-                      background: 'var(--primary-soft)', padding: '1px 5px', borderRadius: 3,
-                      border: '1px solid #bfdbfe', whiteSpace: 'nowrap',
-                    }}>
-                      {'{{'}{v.key}{'}}'}
-                    </span>
-                    <span style={{ fontSize: 11, color: 'var(--ink-2)' }}>{v.label}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── Document area ── */}
-      <div style={{
-        flex: 1, overflowY: 'auto', background: '#d1d5db',
-        padding: '28px 20px 28px', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', minHeight: 0,
-      }}>
-        <p style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 12, textAlign: 'center' }}>
-          Cliquez dans le document pour commencer à écrire · Les variables en bleu ne sont pas modifiables directement — utilisez "Insérer variable" pour en ajouter
-        </p>
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={() => { dirtyRef.current = true; emit(); }}
-          onFocus={() => setFocused(true)}
-          onBlur={() => { setFocused(false); emit(); }}
-          style={{
-            background: 'var(--surface)',
-            boxShadow: focused
-              ? '0 0 0 3px #3b82f6, 0 4px 28px rgba(0,0,0,0.18)'
-              : '0 4px 28px rgba(0,0,0,0.18)',
-            width: '100%',
-            maxWidth: 760,
-            minHeight: 1050,
-            padding: '60px 72px',
-            outline: 'none',
-            fontFamily: "'Times New Roman', Times, serif",
-            fontSize: '13px',
-            lineHeight: '1.8',
-            color: '#1a1a1a',
-            borderRadius: 2,
-            caretColor: 'var(--primary)',
-            cursor: 'text',
-            transition: 'box-shadow 0.15s',
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ── Variable pill (display only) ───────────────────────────────────────────────
-
-function VarPill({ v }: { v: string }) {
-  return (
-    <span style={{
-      fontSize: 10, fontWeight: 600, padding: '2px 7px',
-      background: 'var(--primary-soft)', color: 'var(--primary)',
-      border: '1px solid #bae6fd', borderRadius: 999, fontFamily: 'monospace',
-    }}>
-      {'{{'}{v}{'}}'}
-    </span>
-  );
-}
-
-// ── Preview modal ──────────────────────────────────────────────────────────────
-
-function PreviewModal({ tpl, onClose }: { tpl: Template; onClose: () => void }) {
-  const m = catMeta(tpl.category);
-  return (
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-      onClick={onClose}
-    >
-      <div
-        style={{ background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--line)', width: '100%', maxWidth: 760, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-        onClick={e => e.stopPropagation()}
-      >
-        <div style={{ padding: '13px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FileText size={15} style={{ color: m.color }} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>{tpl.name_fr}</p>
-            <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{tpl.category} · aperçu</p>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 4 }}>
-            <X size={16} />
-          </button>
-        </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: 'var(--surface-2)' }}>
-          <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--line)', padding: '20px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-            {tpl.body_template
-              ? <div dangerouslySetInnerHTML={{ __html: tpl.body_template }} />
-              : <p style={{ color: 'var(--ink-2)', fontStyle: 'italic', textAlign: 'center', padding: 40 }}>Aucun contenu</p>}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Full-screen template editor (Create / Edit) ────────────────────────────────
-
-function TemplateEditorModal({
-  initial, onClose, onSave, loading,
-}: {
-  initial?: Template;
-  onClose: () => void;
-  onSave: (data: Record<string, unknown>) => void;
-  loading: boolean;
-}) {
-  const [nameFr, setNameFr] = useState(initial?.name_fr ?? '');
-  const [nameEn, setNameEn] = useState(initial?.name_en ?? '');
-  const [category, setCategory] = useState(initial?.category ?? 'attestation');
-  const [targetType, setTargetType] = useState<'employee' | 'intern' | 'both'>(
-    (initial?.target_type as 'employee' | 'intern' | 'both') ?? 'employee'
-  );
-  const [body, setBody] = useState(initial?.body_template ?? '');
-
-  const handleSave = () => {
-    if (!nameFr.trim()) { toast.error('Nom requis'); return; }
-    if (!body.trim()) { toast.error('Contenu requis'); return; }
-    const vars = [...new Set((body.match(/\{\{(\w+)\}\}/g) ?? []).map(m => m.replace(/[{}]/g, '')))];
-    const code = nameFr.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').slice(0, 50);
-    onSave({ name_fr: nameFr, name_en: nameEn || nameFr, name_ar: nameEn || nameFr, category, target_type: targetType, body_template: body, code, variables: vars, is_active: true });
+  const v: TemplatesVals = {
+    q, onQ: e => setQ(e.target.value),
+    cats: (['all', ...Object.keys(CAT)] as ('all' | Cat)[]).map(k => ({
+      label: k === 'all' ? t('tpl_all') : t(CAT[k][0]),
+      n: k === 'all' ? base.length : base.filter(x => catOf(x.category) === k).length,
+      go: () => setCat(k),
+      bg: cat === k ? '#0a1c24' : '#ffffff', color: cat === k ? '#ffffff' : '#33474f', border: cat === k ? '#0a1c24' : '#e2e8eb',
+    })),
+    targets: ([['all', 'tpl_all'], ['employee', 'tpl_employees'], ['intern', 'tpl_interns']] as const).map(([k, label]) => ({
+      label: t(label), on: target === k, color: target === k ? '#ffffff' : '#52646d', go: () => setTarget(k),
+    })),
+    tpls: list.map((x, i) => {
+      const c = CAT[catOf(x.category)], tg = TG[targetOf(x.target_type)];
+      return {
+        fr: x.name_fr, en: x.name_en && x.name_en !== x.name_fr ? x.name_en : '', cat: t(c[0]), tint: c[1], color: c[2], target: t(tg[0]), tIcon: tg[1],
+        langs: langsOf(x), nvars: varsIn(x.body_template ?? '').length, used: usage[x.id] ?? 0, delay: String(Math.min(i, 12) * 45),
+        preview: () => setPreview(x.id), edit: () => openEditor(x), generate: generateLink(x.id),
+      };
+    }),
+    loading: isLoading, noTpls: !isLoading && list.length === 0, noneAtAll: all.length === 0,
+    seed: () => { setAddOpen(false); seedMut.mutate(); }, seeding: seedMut.isPending, openImport: () => { setAddOpen(false); setImportOpen(true); },
+    addOpen, toggleAdd: () => setAddOpen(o => !o),
+    company, companyInitials: initialsOf(company), companyAddress,
+    previewOpen: !!previewing, closePreview: () => setPreview(null),
+    pv: {
+      fr: previewing?.name_fr ?? '', upper: (previewing?.name_fr ?? '').toUpperCase(), cat: t(pvCat[0]), tint: pvCat[1], color: pvCat[2],
+      langs: previewing ? langsOf(previewing) : [], nvars: varsIn(previewing?.body_template ?? '').length,
+      edit: () => previewing && openEditor(previewing), remove: () => previewing && remove(previewing), generate: generateLink(previewing?.id ?? ''),
+    },
+    editorOpen: !!editor, editorTitle: editor === 'new' ? t('tpl_nouveau_modele') : t('tpl_edit_title'),
+    closeEditor: () => { if (!dirty || window.confirm(t('tpl_discard'))) setEditor(null); }, newTpl: () => openEditor(),
+    eName, onEName: e => { setEName(e.target.value); setDirty(true); },
+    eNameEn, onENameEn: e => { setENameEn(e.target.value); setDirty(true); },
+    eCat, onECat: e => { setECat(catOf(e.target.value)); setDirty(true); },
+    eTarget, onETarget: e => { setETarget(targetOf(e.target.value)); setDirty(true); },
+    eUpper: (eName || t('tpl_nouveau_modele')).toUpperCase(),
+    tools: toolDefs.map(([label, cmd, arg, title, weight, italic, deco, gap]) => ({
+      label, title: t(title), weight: String(weight), italic: italic || 'normal', deco: deco || 'none', gap: gap ? `${gap}px` : '0',
+      font: label.length > 1 ? "'Geist Mono',monospace" : 'inherit', run: exec(cmd, arg),
+    })),
+    onEdit: () => { if (!dirty) setDirty(true); window.clearTimeout(detectTimer.current); detectTimer.current = window.setTimeout(detect, 120); },
+    detLabel: tf(t(detected.length > 1 ? 'tpl_det_many' : 'tpl_det_one'), { n: detected.length, state: t(dirty ? 'tpl_unsaved' : 'tpl_up_to_date') }),
+    dirtyDot: dirty ? '#df9326' : '#16a06b',
+    evars: VARS.map(([k, label]) => {
+      const used = detected.includes(k);
+      return { code: `{{${k}}}`, label: t(label), used, bg: used ? '#f3fafb' : 'transparent', insert: (e?: MouseEvent) => { e?.preventDefault(); insert(k); } };
+    }),
+    save, saving: createMut.isPending || updateMut.isPending,
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'var(--surface)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      {/* Top bar */}
-      <div style={{
-        padding: '8px 16px', borderBottom: '1px solid var(--line)',
-        display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
-        background: 'var(--surface)',
-      }}>
-        <button
-          type="button"
-          onClick={onClose}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 4, display: 'flex', alignItems: 'center', borderRadius: 6 }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-          title="Fermer"
-        >
-          <X size={16} />
-        </button>
-
-        <div style={{ width: 1, height: 20, background: 'var(--line)' }} />
-
-        <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--fg)' }}>
-          {initial ? 'Modifier le template' : 'Nouveau template'}
-        </span>
-
-        <div style={{ display: 'flex', gap: 8, flex: 1, marginLeft: 8 }}>
-          <input
-            className="input"
-            style={{ fontSize: 13, maxWidth: 280 }}
-            value={nameFr}
-            onChange={e => setNameFr(e.target.value)}
-            placeholder="Nom (FR) *"
-          />
-          <input
-            className="input"
-            style={{ fontSize: 13, maxWidth: 220 }}
-            value={nameEn}
-            onChange={e => setNameEn(e.target.value)}
-            placeholder="Nom (EN)"
-          />
-          <select
-            className="select"
-            style={{ fontSize: 13, maxWidth: 150 }}
-            value={category}
-            onChange={e => setCategory(e.target.value)}
-          >
-            {CATEGORIES.map(c => <option key={c} value={c}>{catMeta(c).label}</option>)}
-          </select>
-
-          {/* Target type selector */}
-          <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', borderRadius: 8, padding: 3 }}>
-            {TARGET_TYPES.map(({ value, label, Icon }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setTargetType(value)}
-                title={label}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
-                  fontSize: 12, fontWeight: 600, border: 'none',
-                  background: targetType === value ? 'var(--surface)' : 'transparent',
-                  color: targetType === value ? 'var(--primary)' : 'var(--ink-2)',
-                  boxShadow: targetType === value ? 'var(--shadow-sm)' : 'none',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {Icon ? <Icon size={12} /> : '🔁'} {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <Button onClick={handleSave} loading={loading}>
-          <Save size={13} /> Enregistrer
-        </Button>
-      </div>
-
-      {/* Editor fills remaining height */}
-      <RichEditor value={body} onChange={setBody} />
-    </div>
+    <>
+      <TemplatesView v={v} edRef={edRef} pvRef={pvRef} />
+      <ImportModal open={importOpen} onClose={() => setImportOpen(false)} onImported={invalidate} />
+    </>
   );
 }
 
-// ── Import modal ───────────────────────────────────────────────────────────────
+// ── Import a PDF / DOCX as a template ─────────────────────────────────────────
+const inputStyle: React.CSSProperties = { width: '100%', height: 40, padding: '0 12px', borderRadius: 11, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' };
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12.5, fontWeight: 600, color: '#33474f', marginBottom: 6 };
 
-function ImportModal({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
+function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: () => void; onImported: () => void }) {
+  const { t } = useLang();
+  const notify = useNotify();
   const [file, setFile] = useState<File | null>(null);
-  const [nameFr, setNameFr] = useState('');
-  const [category, setCategory] = useState('attestation');
-  const [targetType, setTargetType] = useState<'employee' | 'intern' | 'both'>('employee');
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState<Cat>('attestation');
+  const [targetType, setTargetType] = useState<Target>('employee');
   const [loading, setLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const close = () => { if (loading) return; setFile(null); setName(''); onClose(); };
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!file || !nameFr.trim()) { toast.error('Fichier et nom requis'); return; }
+    if (!file || !name.trim()) { notify.error(t('tpl_import_required')); return; }
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.append('file', file);
-      fd.append('name_fr', nameFr.trim());
-      fd.append('name_en', nameFr.trim());
-      fd.append('category', category);
-      fd.append('target_type', targetType);
+      fd.append('file', file); fd.append('name_fr', name.trim()); fd.append('name_en', name.trim());
+      fd.append('category', category); fd.append('target_type', targetType);
       await importTemplateFromPdf(fd);
-      toast.success('Template importé avec succès');
+      notify.success(t('tpl_imported'));
       onImported();
-      onClose();
-    } catch (err: any) {
-      toast.error(getApiError(err, "Erreur lors de l'import"));
-    } finally {
+      setLoading(false);
+      setFile(null); setName(''); onClose();
+    } catch (err) {
+      notify.error(getApiError(err, t('tpl_import_error')));
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: 'var(--surface)', borderRadius: 14, border: '1px solid var(--line)', width: '100%', maxWidth: 480 }}>
-        <div style={{ padding: '13px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileUp size={14} style={{ color: 'var(--primary)' }} />
-            </div>
-            <p style={{ fontWeight: 700, fontSize: 14, margin: 0 }}>Importer un document</p>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-2)', padding: 4 }}><X size={16} /></button>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ padding: '18px' }}>
-          <div
-            onClick={() => fileRef.current?.click()}
-            onDragOver={e => e.preventDefault()}
-            onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f); }}
-            style={{
-              border: `2px dashed ${file ? 'var(--primary)' : 'var(--line)'}`,
-              borderRadius: 10, padding: '28px 20px', textAlign: 'center',
-              cursor: 'pointer', marginBottom: 16,
-              background: file ? 'var(--primary-soft)' : 'var(--surface-2)',
-              transition: 'all 0.15s',
-            }}
-          >
-            <FileText size={28} style={{ color: file ? 'var(--primary)' : 'var(--ink-3)', margin: '0 auto 10px', display: 'block' }} />
-            {file
-              ? <><p style={{ fontWeight: 600, color: 'var(--primary)', margin: '0 0 4px' }}>{file.name}</p><p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>Cliquez pour changer</p></>
-              : <><p style={{ fontWeight: 600, margin: '0 0 4px' }}>Déposer un PDF ou DOCX ici</p><p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>ou cliquer pour sélectionner</p></>
-            }
-            <input
-              ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt"
-              style={{ display: 'none' }}
-              onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Nom du template *</label>
-              <input className="input" style={{ fontSize: 13 }} value={nameFr} onChange={e => setNameFr(e.target.value)} required placeholder="ex: Attestation de travail" />
-            </div>
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 6 }}>Pour qui est ce modèle ? *</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {TARGET_TYPES.map(({ value, label, Icon }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setTargetType(value)}
-                    style={{
-                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      padding: '9px 0', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                      border: targetType === value ? `2px solid var(--primary)` : '1px solid var(--line)',
-                      background: targetType === value ? 'var(--primary-soft)' : 'var(--surface)',
-                      color: targetType === value ? 'var(--primary)' : 'var(--ink-2)',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {Icon && <Icon size={13} />} {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-2)', display: 'block', marginBottom: 4 }}>Catégorie</label>
-              <select className="select" style={{ fontSize: 13 }} value={category} onChange={e => setCategory(e.target.value)}>
-                {CATEGORIES.map(c => <option key={c} value={c}>{catMeta(c).label}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div style={{ background: 'var(--surface-2)', borderRadius: 8, padding: '9px 12px', marginBottom: 16, fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.6 }}>
-            Les champs <code>[Nom et prénom]</code>, <code>[CIN]</code>, <code>[poste]</code>, <code>[Date]</code>… seront automatiquement convertis en variables <code>{'{{full_name}}'}</code>, etc.
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <Button variant="ghost" type="button" onClick={onClose}>Annuler</Button>
-            <Button type="submit" loading={loading} disabled={!file}>
-              <Upload size={13} /> Importer
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ── Template card ──────────────────────────────────────────────────────────────
-
-function TemplateCard({
-  tpl, onEdit, onDelete, onPreview,
-}: {
-  tpl: Template; onEdit: () => void; onDelete: () => void; onPreview: () => void;
-}) {
-  const m = catMeta(tpl.category);
-  const vars = tpl.body_template
-    ? [...new Set((tpl.body_template.match(/\{\{(\w+)\}\}/g) ?? []).map(v => v.replace(/[{}]/g, '')))]
-    : [];
-
-  return (
-    <div
-      style={{
-        background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12,
-        overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        transition: 'box-shadow 0.15s, transform 0.15s',
-      }}
-      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}
-    >
-      <div style={{ height: 3, background: m.color }} />
-      <div style={{ padding: '14px 16px', flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 8, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <FileText size={15} style={{ color: m.color }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontWeight: 700, fontSize: 13, margin: '0 0 2px', lineHeight: 1.3 }}>{tpl.name_fr}</p>
-            {tpl.name_en && tpl.name_en !== tpl.name_fr && (
-              <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{tpl.name_en}</p>
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', background: m.bg, color: m.color, borderRadius: 5 }}>
-              {m.label}
-            </span>
-            {(() => { const tm = targetMeta(tpl.target_type); return (
-              <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', background: tm.bg, color: tm.color, borderRadius: 5, display: 'flex', alignItems: 'center', gap: 3 }}>
-                {tm.Icon ? <tm.Icon size={9} /> : '🔁'} {tm.label}
-              </span>
-            ); })()}
-          </div>
-        </div>
-        {vars.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 4 }}>
-            {vars.slice(0, 5).map(v => <VarPill key={v} v={v} />)}
-            {vars.length > 5 && <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>+{vars.length - 5}</span>}
-          </div>
-        )}
-      </div>
-      <div style={{ padding: '10px 16px', borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 6 }}>
-        <button
-          onClick={onPreview}
-          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-        >
-          <Eye size={11} /> Aperçu
+    <Modal open={open} onClose={close} title={t('tpl_import_title')} subtitle={t('tpl_import_sub')} icon={<FileUp size={17} />} width={500}
+      footer={<>
+        <button type="button" className="btn btn-secondary" onClick={close}>{t('cancel')}</button>
+        <button type="submit" form="tpl-import" className="btn btn-primary" disabled={!file || loading}>
+          {loading ? <Spinner size={14} color="#fff" /> : <Upload size={14} />} {t('tpl_import')}
         </button>
-        <button
-          onClick={onEdit}
-          style={{ background: 'none', border: '1px solid var(--line)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: 'var(--ink-2)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+      </>}>
+      <form id="tpl-import" onSubmit={submit} style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div
+          onClick={() => fileRef.current?.click()}
+          onDragOver={e => e.preventDefault()}
+          onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f); }}
+          style={{ border: `1.5px dashed ${file ? '#16b6c8' : '#d0dadf'}`, borderRadius: 14, padding: '24px 16px', textAlign: 'center', cursor: 'pointer', background: file ? '#f3fafb' : '#f8fafb', transition: 'all .2s' }}
         >
-          <Pencil size={11} /> Modifier
-        </button>
-        <div style={{ flex: 1 }} />
-        <Link to={`/app/generate?template_id=${tpl.id}`}>
-          <button style={{ background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-            <Wand2 size={11} /> Utiliser
-          </button>
-        </Link>
-        <button
-          onClick={onDelete}
-          title="Supprimer"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: '5px 6px', borderRadius: 6, display: 'flex' }}
-          onMouseEnter={e => (e.currentTarget.style.background = '#fef2f2')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-        >
-          <Trash2 size={13} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Main page ──────────────────────────────────────────────────────────────────
-
-export default function TemplatesPage() {
-  const qc = useQueryClient();
-  const [search, setSearch]           = useState('');
-  const [catFilter, setCatFilter]     = useState('');
-  const [typeFilter, setTypeFilter]   = useState('');
-  const [showImport, setShowImport]   = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
-  const [editing, setEditing]       = useState<Template | null>(null);
-  const [previewing, setPreviewing] = useState<Template | null>(null);
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['templates'],
-    queryFn: () => listTemplates({ active_only: false }),
-  });
-
-  const allTemplates = data?.data ?? [];
-  const templates = allTemplates.filter(t => {
-    const q = search.toLowerCase();
-    return (
-      (!q || t.name_fr.toLowerCase().includes(q) || (t.name_en ?? '').toLowerCase().includes(q)) &&
-      (!catFilter  || t.category === catFilter) &&
-      (!typeFilter || t.target_type === typeFilter || t.target_type === 'both')
-    );
-  });
-  const categories = [...new Set(allTemplates.map(t => t.category))].sort();
-  const invalidate = () => qc.invalidateQueries({ queryKey: ['templates'] });
-
-  const createMut = useMutation({
-    mutationFn: createTemplate,
-    onSuccess: () => { invalidate(); setShowCreate(false); toast.success('Template créé'); },
-    onError: (e: any) => toast.error(getApiError(e, 'Erreur création')),
-  });
-
-  const updateMut = useMutation({
-    mutationFn: ({ id, body }: { id: string; body: any }) => updateTemplate(id, body),
-    onSuccess: () => { invalidate(); setEditing(null); toast.success('Template mis à jour'); },
-    onError: (e: any) => toast.error(getApiError(e, 'Erreur mise à jour')),
-  });
-
-  const deleteMut = useMutation({
-    mutationFn: deleteTemplate,
-    onSuccess: () => { invalidate(); toast.success('Template supprimé'); },
-    onError: () => toast.error('Erreur suppression'),
-  });
-
-  return (
-    <div style={{ padding: '24px 28px' }}>
-      <PageHeader
-        title="Templates"
-        subtitle={`${allTemplates.length} template${allTemplates.length !== 1 ? 's' : ''} disponibles`}
-        action={
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="soft" onClick={async () => {
-              try {
-                const res = await seedDefaultTemplates();
-                qc.invalidateQueries({ queryKey: ['templates'] });
-                toast.success(`${res.created.length} modèle(s) officiel(s) chargé(s)${res.skipped.length ? ` (${res.skipped.length} déjà présent(s))` : ''}`);
-              } catch (e: any) {
-                toast.error(getApiError(e, 'Erreur lors du chargement des modèles'));
-              }
-            }}>
-              <Sparkles size={14} /> Modèles officiels
-            </Button>
-            <Button variant="soft" onClick={() => setShowImport(true)}>
-              <FileUp size={14} /> Importer PDF
-            </Button>
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus size={14} /> Nouveau template
-            </Button>
+          <span style={{ width: 40, height: 40, borderRadius: 12, margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e4f2f4', color: '#0e6f84' }}><FileText size={19} /></span>
+          <div style={{ fontSize: 14, fontWeight: 600, color: file ? '#0b5f72' : '#0a1c24' }}>{file ? file.name : t('tpl_import_drop')}</div>
+          <div style={{ fontSize: 12.5, color: '#5f7079', marginTop: 3 }}>{file ? t('tpl_import_change') : t('tpl_import_formats')}</div>
+          <input ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); }} />
+        </div>
+        <div>
+          <label style={labelStyle}>{t('tpl_import_name')}</label>
+          <input value={name} onChange={e => setName(e.target.value)} required placeholder={t('tpl_import_name_ph')} style={inputStyle} className="tpl-f5" />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={labelStyle}>{t('tpl_import_cat')}</label>
+            <select value={category} onChange={e => setCategory(catOf(e.target.value))} style={inputStyle}>
+              {(Object.keys(CAT) as Cat[]).map(c => <option key={c} value={c}>{t(CAT[c][0])}</option>)}
+            </select>
           </div>
-        }
-      />
-
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
-          <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)', pointerEvents: 'none' }} />
-          <input
-            className="input" style={{ paddingLeft: 32, fontSize: 13 }}
-            placeholder="Rechercher un template…"
-            value={search} onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-
-        {/* Type filter */}
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={() => setTypeFilter('')}
-            style={{ padding: '6px 12px', borderRadius: 7, border: '1px solid var(--line)', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: !typeFilter ? 'var(--primary)' : 'var(--surface)', color: !typeFilter ? '#fff' : 'var(--fg)' }}
-          >
-            Tous
-          </button>
-          {TARGET_TYPES.filter(t => t.value !== 'both').map(({ value, label, Icon, color, bg }) => (
-            <button
-              key={value}
-              onClick={() => setTypeFilter(typeFilter === value ? '' : value)}
-              style={{
-                padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                border: `1px solid ${typeFilter === value ? color : 'var(--line)'}`,
-                background: typeFilter === value ? bg : 'var(--surface)',
-                color: typeFilter === value ? color : 'var(--fg)',
-                display: 'flex', alignItems: 'center', gap: 5,
-              }}
-            >
-              <Icon size={12} /> {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Category filter */}
-        <div style={{ display: 'flex', gap: 6 }}>
-          {categories.map(cat => {
-            const m = catMeta(cat);
-            return (
-              <button
-                key={cat}
-                onClick={() => setCatFilter(cat === catFilter ? '' : cat)}
-                style={{ padding: '6px 12px', borderRadius: 7, border: `1px solid ${catFilter === cat ? m.color : 'var(--line)'}`, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: catFilter === cat ? m.bg : 'var(--surface)', color: catFilter === cat ? m.color : 'var(--fg)' }}
-              >
-                {m.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Grid */}
-      {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
-      ) : templates.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
-          <FileText size={40} style={{ margin: '0 auto 16px', opacity: 0.2 }} />
-          <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 6 }}>Aucun template trouvé</p>
-          <p style={{ fontSize: 13, marginBottom: 20 }}>Créez un template ou importez un PDF/DOCX.</p>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-            <Button variant="soft" onClick={() => setShowImport(true)}><FileUp size={13} /> Importer</Button>
-            <Button onClick={() => setShowCreate(true)}><Plus size={13} /> Créer</Button>
+          <div>
+            <label style={labelStyle}>{t('tpl_import_for')}</label>
+            <select value={targetType} onChange={e => setTargetType(targetOf(e.target.value))} style={inputStyle}>
+              {(Object.keys(TG) as Target[]).map(k => <option key={k} value={k}>{t(TG[k][0])}</option>)}
+            </select>
           </div>
         </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
-          {templates.map(tpl => (
-            <TemplateCard
-              key={tpl.id}
-              tpl={tpl}
-              onPreview={() => setPreviewing(tpl)}
-              onEdit={() => setEditing(tpl)}
-              onDelete={() => { if (!confirm(`Supprimer "${tpl.name_fr}" ?`)) return; deleteMut.mutate(tpl.id); }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Modals */}
-      {showImport && <ImportModal onClose={() => setShowImport(false)} onImported={invalidate} />}
-
-      {showCreate && (
-        <TemplateEditorModal
-          onClose={() => setShowCreate(false)}
-          onSave={d => createMut.mutate(d as any)}
-          loading={createMut.isPending}
-        />
-      )}
-
-      {editing && (
-        <TemplateEditorModal
-          initial={editing}
-          onClose={() => setEditing(null)}
-          onSave={d => updateMut.mutate({ id: editing.id, body: d })}
-          loading={updateMut.isPending}
-        />
-      )}
-
-      {previewing && <PreviewModal tpl={previewing} onClose={() => setPreviewing(null)} />}
-    </div>
+        <div style={{ padding: '10px 12px', borderRadius: 12, background: '#f3f6f7', fontSize: 12.5, color: '#52646d', lineHeight: 1.55 }}>{t('tpl_import_hint')}</div>
+      </form>
+    </Modal>
   );
 }

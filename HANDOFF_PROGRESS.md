@@ -64,6 +64,12 @@ Copilot notes (`CopilotPage.tsx`, hand-written, not generated — full rewrite o
 - The greeting uses the real signed-in user's first name (`useAuth()`, same derivation as the Dashboard), not the mock's hardcoded "Salma".
 - `<document titre="…" langue="…">` parsing (for the document-card bubble) is implemented client-side exactly like the reference, but the live backend's system prompt doesn't yet instruct the model to use that tag, so it won't normally trigger — ready for when/if that's added server-side, not left half-built.
 
+Templates notes (`TemplatesPage.tsx` + `TemplatesView.tsx`, generated from `Wedy Templates.dc.html`):
+- The "N×" usage count is real: generated documents grouped by `template_id`. Language chips show FR plus AR/EN only when the template has a distinct name in that language.
+- Kept the existing "official templates" (`/templates/seed-defaults`) and PDF/DOCX import (`/templates/import`) behind an "Importer ▾" menu next to "Nouveau modèle" (the reference has no room for two more buttons). Delete lives in the preview footer.
+- Letterhead shows `user.profile.company` (fallback "Votre entreprise"), not the reference's hard-coded Tython SARL.
+- `scripts/dedupe-i18n.mjs` removes earlier duplicates after re-running `apply-i18n.mjs` (it appends).
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -75,7 +81,7 @@ Copilot notes (`CopilotPage.tsx`, hand-written, not generated — full rewrite o
 | 5 | Requests | Wedy Requests | `/app/requests` | `app/RequestsPage.tsx` | ☑ |
 | 6 | Copilot | Wedy Copilot | `/app/copilot` | `app/CopilotPage.tsx` | ☑ |
 | 7 | Generate | Wedy Generate | `/app/generate` | `app/GeneratePage.tsx` | ◐ |
-| 8 | Templates | Wedy Templates | `/app/templates` | `app/TemplatesPage.tsx` | ◐ |
+| 8 | Templates | Wedy Templates | `/app/templates` | `app/TemplatesPage.tsx` + `TemplatesView.tsx` | ☑ |
 | 9 | History | Wedy History | `/app/history` | `app/HistoryPage.tsx` | ◐ |
 | 10 | Time off | Wedy Time Off | `/app/timeoff` | `app/TimeOffPage.tsx` | ◐ |
 | 11 | Absences | Wedy Absences | `/app/absences` | `app/AbsencesPage.tsx` | ◐ |

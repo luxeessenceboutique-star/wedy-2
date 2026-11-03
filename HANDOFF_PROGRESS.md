@@ -90,6 +90,11 @@ Job posts notes (`AnnoncesPage.tsx`):
 - Real posts (`/annonces`): status Publiée / Clôturée = `is_active`, toggled by clicking the chip (new `updateAnnonce` → `PATCH /annonces/:id`); delete + copy-application-link added. There is no draft state nor view counter in the backend, so "Brouillon" and "N vues" are not shown. Applications = candidates linked by `custom_fields.ad_id`, or applying for the same position.
 - The studio calls `/annonces/chat-generate` with a new `mode: "direct"` (+ `language`, `company`): the backend then writes the ad at once in FR / AR / EN with the reference's structure instead of the chat flow (which asked questions and always answered in French). The draft is editable before "Publier l'annonce" (`createAnnonce`). `AnnonceStudioPage.tsx` is not routed (left as is).
 
+Payroll notes (`PayrollPage.tsx`):
+- The 5-step cycle is derived from the month's real payslips: no payslip → "Générer les bulletins" (`generate-bulk`); open checks → Contrôle IA; drafts → "Valider la paie" (draft → validated); validated → "Virements effectués" (→ paid); all paid → clôturée. Month navigation added.
+- The "Contrôle IA" items are real rule-based checks: active employee without payslip (→ create it), bonus without a justification note, gross ±20 % vs last month, contract ending this month. "Marquer vérifié" is stored on the payslip (`notes` gets an `[ok:<kind>]` tag) so it is shared by the team.
+- KPIs, employer cost and the 6-month chart come from `/payroll`; employer charges are an estimate with the Moroccan rates (labelled so). "Exporter vers Sage Paie" became the existing CSV export (no Sage connector). Deadlines are the legal ones (salary at month end, CNSS on the 10th, IR at the end of next month). Rows keep PDF download and delete.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -109,7 +114,7 @@ Job posts notes (`AnnoncesPage.tsx`):
 | 13 | Recruitment | Wedy Recruitment | `/app/recruitment` | `app/RecruitmentPage.tsx` (+ `lib/recruitment.ts`) | ☑ |
 | 14 | Candidates | Wedy Candidates | `/app/candidats` | `app/CandidatsPage.tsx` | ☑ |
 | 15 | Job posts | Wedy Job Posts | `/app/annonces` | `app/AnnoncesPage.tsx` | ☑ |
-| 16 | Payroll | Wedy Payroll | `/app/payroll` | `app/PayrollPage.tsx` | ◐ |
+| 16 | Payroll | Wedy Payroll | `/app/payroll` | `app/PayrollPage.tsx` | ☑ |
 | 17 | Performance | Wedy Performance | `/app/performance` | `app/PerformancePage.tsx` | ◐ |
 | 18 | Org chart | Wedy Org Chart | `/app/orgchart`, `/employee/orgchart` | `app/OrgChartPage.tsx` | ◐ |
 | 19 | Meetings | Wedy Meetings | `/app/meetings`, `/employee/meetings` | `app/MeetingsPage.tsx` | ◐ |

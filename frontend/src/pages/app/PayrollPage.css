@@ -1,0 +1,11 @@
+/* hover rules of Wedy Payroll */
+.pay-h1:hover { border-color: #9fb4bb !important; }
+.pay-h2:hover { background: #f8fbfb !important; }
+.pay-check { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid #d6dfe3; background: #ffffff; color: #0a1c24; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.pay-check:hover { border-color: #16b6c8; color: #0e6f84; }
+.pay-check:disabled { opacity: .6; cursor: default; }
+.pay-nav { width: 28px; height: 28px; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #cfdde1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.pay-nav:hover { background: rgba(255,255,255,.12); color: #ffffff; }
+.pay-icon { width: 28px; height: 28px; border-radius: 8px; border: none; background: transparent; color: #7d8f97; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.pay-icon:hover { background: #f3f6f7; color: #0a1c24; }
+.pay-icon.pay-danger:hover { background: #fbe9e6; color: #a33a28; }

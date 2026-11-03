@@ -251,6 +251,8 @@
 
 @media (max-width: 1360px) {
   .room-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+  /* two columns + the side panel below them: pinned columns would slide over that panel */
+  .room-col { position: relative; top: auto; }
   .room-side { grid-column: 1 / -1; height: auto; min-height: 0; position: static; }
   .room-side .room-scroll { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); overflow: visible; }
 }

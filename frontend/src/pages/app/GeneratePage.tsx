@@ -41,11 +41,17 @@ const LANGS = [
 const isInternTemplate = (tpl: Template) => {
   if (tpl.target_type === 'intern') return true;
   if (tpl.target_type === 'both' || tpl.target_type === 'employee') return false;
-  return ['stage', 'stagiaire', 'convention'].some(kw => tpl.name_fr.toLowerCase().includes(kw) || (tpl.name_en ?? '').toLowerCase().includes(kw));
+  return ['stage', 'stagiaire', 'convention'].some(kw => (tpl.name_fr ?? '').toLowerCase().includes(kw) || (tpl.name_en ?? '').toLowerCase().includes(kw));
 };
 const isEmployeeTemplate = (tpl: Template) => tpl.target_type === 'both' || !isInternTemplate(tpl);
 const extractVars = (body = ''): string[] => [...new Set((body.match(/\{\{(\w+)\}\}/g) ?? []).map(m => m.replace(/[{}]/g, '')))];
-const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString() : '');
+// Same formats as the backend's generator (routers/generate.py): dd/mm/YYYY and "18,500.00 MAD".
+const ddmmyyyy = (d: Date) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+const fmt = (d?: string | null) => {
+  if (!d) return '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : ddmmyyyy(new Date(d));
+};
 const resolveVar = (name: string, emp: Employee): string => {
   const MAP: Record<string, () => string> = {
     full_name: () => emp.full_name || '', cin: () => emp.cin || '', email: () => emp.email || '', phone: () => emp.phone || '',
@@ -54,7 +60,7 @@ const resolveVar = (name: string, emp: Employee): string => {
     matricule: () => emp.matricule || '', contract_type: () => emp.contract_type || '', hire_date: () => fmt(emp.hire_date),
     contract_start: () => fmt(emp.contract_start || emp.hire_date), contract_end: () => (emp.contract_end ? fmt(emp.contract_end) : ''),
     internship_start: () => fmt(emp.internship_start), internship_end: () => (emp.internship_end ? fmt(emp.internship_end) : ''),
-    salary: () => (emp.salary ? `${Number(emp.salary).toLocaleString()} MAD` : ''), today: () => new Date().toLocaleDateString(), company: () => 'Tython SARL',
+    salary: () => (emp.salary ? `${Number(emp.salary).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD` : ''), today: () => ddmmyyyy(new Date()), company: () => 'Tython SARL',
   };
   return MAP[name]?.() ?? '';
 };
@@ -249,7 +255,8 @@ export default function GeneratePage() {
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', width: '100%' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: cat.bg, color: cat.color }}>{cat.label}</span>
-                    <span style={{ marginLeft: 'auto', fontSize: 11.5, color: '#7d8f97' }}>{tf(t('gen_nvars'), { n: nvars })}</span>
+                    {(['FR', x.name_ar && 'AR', x.name_en && 'EN'].filter(Boolean) as string[]).map(l => <span key={l} style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10.5, fontWeight: 600, padding: '2px 6px', borderRadius: 6, background: '#f3f6f7', color: '#33474f' }}>{l}</span>)}
+                    <span style={{ marginInlineStart: 'auto', fontSize: 11.5, color: '#7d8f97' }}>{tf(t('gen_nvars'), { n: nvars })}</span>
                   </span>
                 </RV>
               );
@@ -395,7 +402,7 @@ export default function GeneratePage() {
                   ) : (
                     <textarea value={body.replace(/<[^>]+>/g, '')} onChange={e => { setBody(e.target.value); setModified(true); }} dir={rtl ? 'rtl' : 'ltr'} style={{ width: '100%', minHeight: 300, resize: 'vertical', padding: 12, borderRadius: 8, border: '1.5px dashed #9fd6df', background: '#f8fdfd', fontFamily: 'inherit', fontSize: 14.5, lineHeight: 1.8, color: '#1d2a30', outline: 'none' }} />
                   )}
-                  <div style={{ marginTop: 28, fontSize: 14, textAlign: rtl ? 'left' : 'right' }}>{tf(t('gen_place_date'), { date: new Date().toLocaleDateString() })}</div>
+                  <div style={{ marginTop: 28, fontSize: 14, textAlign: rtl ? 'left' : 'right' }}>{tf(t('gen_place_date'), { date: ddmmyyyy(new Date()) })}</div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 22 }}>
                     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: 220 }}>
                       <span style={{ fontFamily: "'Geist',system-ui,sans-serif", fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>{t('gen_signature_dept')}</span>

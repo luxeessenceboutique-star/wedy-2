@@ -168,6 +168,11 @@ Performance notes (`app/PerformancePage.tsx` + `PerformanceView.tsx`):
 - The 9-box comes from the talent profiles (performance × potential, ≥ 4 high, ≤ 2 low); a box filters the list. The goals card shows real indicators instead of the reference's invented company goals: average OKR progress, OKRs reached, self-assessments handed in, talent profiles assessed. "Ce que disent les entretiens" counts themes (career, management, training, workload, remote, recognition, pay, communication) in the period's write-ups.
 - A row opens a review drawer (stage, 1–5 rating, write-up, next goals); "Nouvelle campagne" opens a period drawer. Ratings are whole stars (the table stores an integer 1–5), so no 4,6-style decimals.
 
+Meetings notes (`app/MeetingsPage.tsx` + `MeetingsView.tsx`):
+- **Needs the migration `backend/database/migrations/meetings.sql`** (table `rh.meetings`, run once in the Supabase SQL editor). Until it exists the API answers 503 and the page says so.
+- New router `/api/meetings`: list (HR: all; an employee: the meetings they take part in, read-only on `/employee/meetings`), create / update / delete, `POST /:id/suggest-agenda` (Wedy adds 3 items), `POST /:id/minutes` (Wedy writes summary, decisions and actions from the agenda and the notes, never inventing), `POST /:id/send-report` (in-app notification to participants who have an account). AI calls go through the new `ai_service.complete()` (Claude, else the OpenAI-compatible router).
+- Agenda ticks, added items, notes and action ticks are saved as you go. "Ajouter à mon agenda" downloads an .ics, "Rejoindre la visio" opens the meeting link, "Partager" copies the minutes, "PDF" prints them. "Planifier une réunion" and the edit pencil open a drawer (type, date, time, duration, place, visio link, employees + external guests, agenda).
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -190,7 +195,7 @@ Performance notes (`app/PerformancePage.tsx` + `PerformanceView.tsx`):
 | 16 | Payroll | Wedy Payroll | `/app/payroll` | `app/PayrollPage.tsx` | ☑ |
 | 17 | Performance | Wedy Performance | `/app/performance` | `app/PerformancePage.tsx` | ☑ |
 | 18 | Org chart | Wedy Org Chart | `/app/orgchart`, `/employee/orgchart` | `app/OrgChartPage.tsx` | ☑ |
-| 19 | Meetings | Wedy Meetings | `/app/meetings`, `/employee/meetings` | `app/MeetingsPage.tsx` | ◐ |
+| 19 | Meetings | Wedy Meetings | `/app/meetings`, `/employee/meetings` | `app/MeetingsPage.tsx` | ☑ |
 | 20 | Onboarding | Wedy Onboarding | `/app/onboarding` | `app/EmployeeOnboardingPage.tsx` | ☑ |
 | 21 | Training | Wedy Training | `/app/training` | `app/TrainingPage.tsx` | ☑ |
 | 22 | Talents | Wedy Talents | `/app/talents` | `app/TalentsPage.tsx` | ☑ |

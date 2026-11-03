@@ -576,3 +576,24 @@ def clean_template_html(styled_html: str) -> str:
     except Exception:
         return styled_html
 
+def complete(system: str, user: str, max_tokens: int = 800) -> str:
+    """One short completion with whichever provider is configured (Claude first, then the
+    OpenAI-compatible router) — the same fallback as enhance_document."""
+    if settings.ANTHROPIC_API_KEY:
+        message = get_client().messages.create(
+            model="claude-sonnet-4-6", max_tokens=max_tokens, system=system,
+            messages=[{"role": "user", "content": user}],
+        )
+        return message.content[0].text
+    if settings.OPENAI_API_KEY:
+        from openai import OpenAI
+        base = settings.OPENAI_BASE_URL or None
+        if base and not base.rstrip("/").endswith("/v1"):
+            base = base.rstrip("/") + "/v1"
+        oa = OpenAI(api_key=settings.OPENAI_API_KEY, base_url=base, timeout=60)
+        resp = oa.chat.completions.create(
+            model=settings.OPENAI_MODEL, max_tokens=max_tokens,
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+        )
+        return resp.choices[0].message.content or ""
+    raise RuntimeError("No AI API key configured")

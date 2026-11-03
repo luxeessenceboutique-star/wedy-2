@@ -1,553 +1,353 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import {
-  Video, Copy, ExternalLink, Plus, MapPin, Clock, Sparkles,
-  CheckCircle2, Send, Download, CalendarPlus,
-} from 'lucide-react';
-import { Page, PageHeader } from '../../components/layout/AppShell';
-import { Avatar, Modal } from '../../components/ui';
-import { getOrgChart } from '@/services/api';
-import { useAuth } from '../../lib/auth';
-import { useLang } from '../../lib/lang';
-import { toast } from 'sonner';
+import { useMemo, useState, type ChangeEvent, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { CalendarPlus, Check, Database, MapPin, Pencil, Share2, Sparkles, Trash2, Video, X, type LucideIcon } from 'lucide-react';
+import { api, getApiError, listEmployees } from '@/services/api';
+import { Drawer, Spinner } from '@/components/ui';
+import { useAuth, isHRRole } from '@/lib/auth';
+import { useLang, type TKey } from '@/lib/lang';
+import { useNotify } from '@/lib/notify';
+import { tf } from '@/lib/format';
+import { avatarGradient, initialsOf } from '@/lib/visual';
+import { MeetingsView } from './MeetingsView';
 
-// ── Static data ───────────────────────────────────────────────────────────────
+type Kind = 'meet' | 'onb' | 'int' | 'train' | 'review';
+type Person = { employee_id?: string | null; name: string };
+type Agenda = { t: string; done: boolean; ai: boolean };
+type Action = { t: string; owner: string; due: string; done: boolean };
+export type Meeting = {
+  id: string; title: string; kind: Kind; starts_at: string; duration_min: number; place?: string | null; visio_url?: string | null;
+  participants: Person[]; agenda: Agenda[]; prep_notes?: string | null; summary?: string | null; decisions: string[]; actions: Action[];
+};
+type Face = { name: string; ini: string; av: string };
 
-const AV_GRADS = [
-  'linear-gradient(135deg,#0e6f84,#16b6c8)',
-  'linear-gradient(135deg,#5444b8,#9a8bf0)',
-  'linear-gradient(135deg,#0f6f49,#2bbd86)',
-  'linear-gradient(135deg,#a8650a,#e6a948)',
-  'linear-gradient(135deg,#b8402c,#ef6b54)',
-  'linear-gradient(135deg,#2f4bb0,#4a69d8)',
-];
-
-const KIND: Record<string, [string, string, string]> = {
-  onb:    ['Onboarding',  '#e4f2f4', '#0b5f72'],
-  int:    ['Entretien',   '#ece9fb', '#5444b8'],
-  meet:   ['Réunion',     '#e1f5ec', '#0f6f49'],
-  train:  ['Formation',   '#fbefda', '#8a5207'],
-  review: ['Revue',       '#eef2f4', '#33474f'],
+export type MeetingsVals = {
+  rtl: boolean; canEdit: boolean;
+  plan: () => void;
+  tabs: { label: string; n: number; on: boolean; color: string; go: () => void }[];
+  listNote: ReactNode;
+  groups: { label: string; items: { id: string; on: boolean; bg: string; kBg: string; kColor: string; time: string; dur: string; title: string; next: boolean; placeIcon: LucideIcon; place: string; faces: Face[]; hasExtra: boolean; extra: string; delay: string; pick: () => void }[] }[];
+  cur: null | {
+    kind: string; title: string; when: string; place: string; placeIcon: LucideIcon; faces: Face[]; peopleLabel: string;
+    upcoming: boolean; past: boolean; summary: string; hasSummary: boolean;
+    decisions: { t: string; delay: string }[];
+    actions: { t: string; owner: string; due: string; ini: string; av: string; done: boolean; color: string; deco: string; delay: string; toggle: () => void }[];
+    actionLabel: string; actionIcon: LucideIcon; action: () => void; tools: ReactNode;
+  };
+  emptyPanel: ReactNode;
+  agenda: { t: string; done: boolean; ai: boolean; n: string; bg: string; color: string; deco: string; toggle: () => void }[];
+  agendaDone: string; actionsDone: string;
+  newItem: string; onNewItem: (e: ChangeEvent<HTMLInputElement>) => void; addItem: (e: FormEvent) => void;
+  busy: boolean; idle: boolean; suggest: () => void;
+  notes: string; onNotes: (e: ChangeEvent<HTMLTextAreaElement>) => void; saveNotes: () => void; notesLabel: string;
+  minutesTool: ReactNode;
+  sendReport: () => void; pdf: () => void;
+  drawer: ReactNode;
 };
 
-interface MeetingAction {
-  t: string; owner: string; due: string;
+const LOCALE: Record<string, string> = { fr: 'fr-FR', en: 'en-GB', ar: 'ar-MA' };
+const KIND: Record<Kind, [TKey, string, string]> = {
+  onb: ['mtg_kind_onb', '#e4f2f4', '#0b5f72'], int: ['mtg_kind_int', '#ece9fb', '#5444b8'], meet: ['mtg_kind_meet', '#e1f5ec', '#0f6f49'],
+  train: ['mtg_kind_train', '#fbefda', '#8a5207'], review: ['mtg_kind_review', '#eef2f4', '#33474f'],
+};
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const face = (name: string): Face => ({ name, ini: initialsOf(name), av: avatarGradient(name) });
+const listMeetings = () => api.get<{ data: Meeting[] }>('/meetings').then(r => r.data.data);
+const patchMeeting = (id: string, body: Partial<Meeting>) => api.patch<Meeting>(`/meetings/${id}`, body).then(r => r.data);
+const missingTable = (e: unknown) => axios.isAxiosError(e) && e.response?.status === 503;
+
+/** "Add to my calendar": a one-event .ics file. */
+function downloadIcs(m: Meeting) {
+  const s = new Date(m.starts_at), e = new Date(s.getTime() + m.duration_min * 60000);
+  const z = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const esc = (x: string) => x.replace(/[\\,;]/g, c => `\\${c}`).replace(/\n/g, '\\n');
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Wedy//Meetings//FR', 'BEGIN:VEVENT', `UID:${m.id}@wedy`, `DTSTAMP:${z(new Date())}`, `DTSTART:${z(s)}`, `DTEND:${z(e)}`,
+    `SUMMARY:${esc(m.title)}`, m.place ? `LOCATION:${esc(m.place)}` : '', m.agenda.length ? `DESCRIPTION:${esc(m.agenda.map((a, i) => `${i + 1}. ${a.t}`).join('\n'))}` : '', 'END:VEVENT', 'END:VCALENDAR'].filter(Boolean).join('\r\n');
+  const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = `${m.title.replace(/[^\w\- ]+/g, '').trim() || 'reunion'}.ics`; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
-
-interface Meeting {
-  id: string; group: string; time: string; dur: string; kind: string;
-  title: string; place: string; visio: boolean; people: string[];
-  agenda?: string[];
-  summary?: string;
-  decisions?: string[];
-  actions?: MeetingAction[];
-}
-
-const UPCOMING: Meeting[] = [
-  { id: 'm1', group: 'Lundi 2 novembre', time: '09:00', dur: '1 h', kind: 'onb', title: 'Bilan 30 jours · Mehdi Rami', place: 'Salle Ourika', visio: false, people: ['Mehdi Rami', 'Salma Idrissi', 'Adil Mernissi'], agenda: ['Retour sur le premier mois', 'Prise en main du CRM et des outils', 'Premiers résultats commerciaux', 'Objectifs des 60 prochains jours'] },
-  { id: 'm2', group: 'Lundi 2 novembre', time: '10:30', dur: '1 h', kind: 'int', title: 'Entretien · Zineb Haddad', place: 'Google Meet', visio: true, people: ['Zineb Haddad', 'Imane Kettani', 'Driss Lahlou'], agenda: ["Présentation du parcours", "Cas pratique : conception d'une API", 'Questions de la candidate', 'Prochaines étapes'] },
-  { id: 'm3', group: 'Mardi 3 novembre', time: '09:30', dur: '1 h 30', kind: 'meet', title: 'Réunion RH hebdomadaire', place: 'Salle Ourika', visio: false, people: ['Salma Idrissi', 'Sara El Fassi', 'Nadia Berrada'], agenda: ['Recrutements en cours : 4 postes', 'Demandes de congés de novembre', 'Préparation de la paie'] },
-  { id: 'm4', group: 'Mardi 3 novembre', time: '15:00', dur: '2 h', kind: 'train', title: 'Formation · Code du travail', place: 'Salle Toubkal', visio: false, people: ['Sara El Fassi', 'Youssef Amrani', 'Adil Mernissi', 'Driss Lahlou', 'Hajar Benjelloun', 'Karim Lahlou'], agenda: ['Durée du travail et heures supplémentaires', 'Congés et absences', 'Rupture du contrat et préavis'] },
-  { id: 'm5', group: 'Jeudi 5 novembre', time: '16:00', dur: '1 h', kind: 'meet', title: 'Comité de direction', place: 'Salle du conseil', visio: false, people: ['Hassan Bennis', 'Salma Idrissi', 'Fatima Zahra Alami', 'Youssef Amrani'], agenda: ['Résultats du T3', 'Budget 2027 : masse salariale', 'Plan de recrutement du T1'] },
-];
-
-const PAST: Meeting[] = [
-  { id: 'p1', group: 'Jeudi 29 octobre', time: '14:00', dur: '1 h', kind: 'review', title: 'Revue des effectifs T4', place: 'Salle du conseil', visio: false, people: ['Salma Idrissi', 'Hassan Bennis', 'Fatima Zahra Alami'],
-    summary: "Le plan d'embauche du T4 est validé : 4 postes ouverts, pour une masse salariale en hausse de 1,5 %. L'absentéisme aux Opérations reste le principal point d'attention.",
-    decisions: ["Ouvrir le poste de Comptable senior à Rabat", "Renouveler 2 des 3 CDD arrivant à échéance en novembre", "Lancer un plan d'action sur l'absentéisme avec les Opérations"],
-    actions: [{ t: "Publier l'annonce Comptable senior", owner: 'Salma Idrissi', due: '05/11' }, { t: 'Préparer les avenants de renouvellement', owner: 'Sara El Fassi', due: '08/11' }, { t: 'Analyser les absences du lundi', owner: 'Youssef Amrani', due: '15/11' }] },
-  { id: 'p2', group: 'Lundi 26 octobre', time: '10:00', dur: '30 min', kind: 'meet', title: "Point paie d'octobre", place: 'Google Meet', visio: true, people: ['Nadia Berrada', 'Salma Idrissi'],
-    summary: "La paie d'octobre est validée sans écart. Deux primes de projet ont été intégrées, et l'export vers Sage Paie est désormais automatique.",
-    decisions: ["Valider la paie d'octobre", "Automatiser l'export Sage Paie chaque mois"],
-    actions: [{ t: 'Envoyer les bulletins aux employés', owner: 'Nadia Berrada', due: '28/10' }, { t: 'Documenter la procédure de clôture', owner: 'Salma Idrissi', due: '06/11' }] },
-  { id: 'p3', group: 'Mercredi 9 septembre', time: '11:00', dur: '45 min', kind: 'int', title: 'Entretien final · Mehdi Rami', place: 'Salle Rif', visio: false, people: ['Mehdi Rami', 'Adil Mernissi', 'Salma Idrissi'],
-    summary: "Très bon entretien : excellente connaissance du marché PME casablancais et forte motivation. Prétentions salariales alignées sur la grille.",
-    decisions: ["Faire une offre en CDI", "Démarrage le 1er octobre"],
-    actions: [{ t: "Envoyer la promesse d'embauche", owner: 'Salma Idrissi', due: '10/09' }, { t: "Préparer l'onboarding", owner: 'Sara El Fassi', due: '30/09' }] },
-];
-
-const ALL_MEETINGS = [...UPCOMING, ...PAST];
-
-function avOf(name: string) {
-  return AV_GRADS[(name.charCodeAt(0) + name.length) % AV_GRADS.length];
-}
-function ini(name: string) {
-  return name.split(' ').map(w => w[0]).slice(0, 2).join('');
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function FaceStack({ names, size = 24, border = '#fff', limit = 3 }: { names: string[]; size?: number; border?: string; limit?: number }) {
-  const shown = names.slice(0, limit);
-  const extra = names.length - shown.length;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center' }}>
-      <div style={{ display: 'flex', paddingLeft: 6 }}>
-        {shown.map((name, i) => (
-          <span key={i} title={name} style={{
-            width: size, height: size, borderRadius: '50%', marginLeft: i === 0 ? -6 : -6,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: avOf(name), color: '#fff',
-            fontSize: size * 0.375, fontWeight: 700,
-            border: `2px solid ${border}`, flexShrink: 0,
-          }}>
-            {ini(name)}
-          </span>
-        ))}
-      </div>
-      {extra > 0 && (
-        <span style={{ marginLeft: 4, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-2)' }}>+{extra}</span>
-      )}
-    </div>
-  );
-}
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function MeetingsPage() {
+  const { t, lang } = useLang();
   const { user } = useAuth();
-  const { t } = useLang();
-
+  const canEdit = isHRRole(user?.role_name ?? user?.role);
+  const notify = useNotify();
+  const qc = useQueryClient();
+  const loc = LOCALE[lang] ?? 'fr-FR';
+  const [now] = useState(() => Date.now());
   const [tab, setTab] = useState<'up' | 'past'>('up');
-  const [curId, setCurId] = useState<string>('m1');
-  const [agenda, setAgenda] = useState<Record<string, { text: string; done: boolean; ai: boolean }[]>>(
-    () => Object.fromEntries(UPCOMING.map(m => [m.id, (m.agenda || []).map(text => ({ text, done: false, ai: false }))]))
-  );
+  const [sel, setSel] = useState<string | null>(null);
   const [newItem, setNewItem] = useState('');
-  const [actions, setActions] = useState<Record<string, boolean>>({});
-  const [suggestBusy, setSuggestBusy] = useState(false);
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const [planModal, setPlanModal] = useState(false);
-  const [planForm, setPlanForm] = useState({ title: '', date: '', time: '', place: '', kind: 'meet' });
+  const [notesDraft, setNotesDraft] = useState<{ id: string; v: string } | null>(null);
+  const [planOpen, setPlanOpen] = useState(false);
+  const [editing, setEditing] = useState<Meeting | null>(null);
 
-  const { data: orgData } = useQuery({ queryKey: ['orgchart'], queryFn: getOrgChart });
+  const q = useQuery({ queryKey: ['meetings'], queryFn: listMeetings, retry: (n, e) => !missingTable(e) && n < 2 });
+  const all = useMemo(() => q.data ?? [], [q.data]);
+  const up = all.filter(m => new Date(m.starts_at).getTime() + m.duration_min * 60000 >= now).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const past = all.filter(m => new Date(m.starts_at).getTime() + m.duration_min * 60000 < now).sort((a, b) => b.starts_at.localeCompare(a.starts_at));
+  const src = tab === 'up' ? up : past;
+  const cur = all.find(m => m.id === sel) ?? src[0] ?? null;
+  const isPast = !!cur && past.some(m => m.id === cur.id);
 
-  const src = tab === 'up' ? UPCOMING : PAST;
-
-  // group meetings
-  const groups: { label: string; items: Meeting[] }[] = [];
-  src.forEach(m => {
-    let g = groups.find(x => x.label === m.group);
-    if (!g) { g = { label: m.group, items: [] }; groups.push(g); }
-    g.items.push(m);
+  const save = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Partial<Meeting> }) => patchMeeting(id, body),
+    onMutate: async ({ id, body }) => {
+      await qc.cancelQueries({ queryKey: ['meetings'] });
+      const prev = qc.getQueryData<Meeting[]>(['meetings']);
+      qc.setQueryData<Meeting[]>(['meetings'], list => list?.map(m => (m.id === id ? { ...m, ...body } : m)));
+      return { prev };
+    },
+    onError: (e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['meetings'], ctx.prev); notify.error(getApiError(e, t('error'))); },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['meetings'] }),
+  });
+  const suggest = useMutation({
+    mutationFn: (m: Meeting) => api.post<{ items: string[] }>(`/meetings/${m.id}/suggest-agenda`, null, { params: { lang }, timeout: 90000 }).then(r => r.data.items),
+    onSuccess: (items, m) => { save.mutate({ id: m.id, body: { agenda: [...m.agenda, ...items.map(x => ({ t: x, done: false, ai: true }))] } }); notify.success(tf(t('mtg_added_by_wedy'), { n: items.length })); },
+    onError: e => notify.error(getApiError(e, t('mtg_ai_failed'))),
+  });
+  const minutes = useMutation({
+    mutationFn: (m: Meeting) => api.post<Meeting>(`/meetings/${m.id}/minutes`, null, { params: { lang }, timeout: 120000 }).then(r => r.data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['meetings'] }); notify.success(t('mtg_minutes_ready')); },
+    onError: e => notify.error(axios.isAxiosError(e) && e.response?.status === 422 ? t('mtg_minutes_need_notes') : getApiError(e, t('mtg_ai_failed'))),
+  });
+  const report = useMutation({
+    mutationFn: (m: Meeting) => api.post<{ sent: number; participants: number }>(`/meetings/${m.id}/send-report`).then(r => r.data),
+    onSuccess: r => (r.sent ? notify.success(tf(t('mtg_report_sent'), { n: r.sent })) : notify.info(t('mtg_report_nobody'))),
+    onError: e => notify.error(getApiError(e, t('error'))),
+  });
+  const del = useMutation({
+    mutationFn: (id: string) => api.delete(`/meetings/${id}`),
+    onSuccess: () => { setSel(null); qc.invalidateQueries({ queryKey: ['meetings'] }); notify.success(t('mtg_deleted')); },
+    onError: e => notify.error(getApiError(e, t('error'))),
   });
 
-  const cur = ALL_MEETINGS.find(x => x.id === curId) || UPCOMING[0];
-  const isPast = cur.id.startsWith('p');
-  const curAgenda = agenda[cur.id] || [];
-  const agendaDone = curAgenda.filter(a => a.done).length;
+  // ── formatting ────────────────────────────────────────────────────────────────
+  const dayFmt = new Intl.DateTimeFormat(loc, { weekday: 'long', day: 'numeric', month: 'long' });
+  const timeFmt = new Intl.DateTimeFormat(loc, { hour: '2-digit', minute: '2-digit' });
+  const durOf = (min: number) => (min < 60 ? tf(t('mtg_min'), { n: min }) : min % 60 ? tf(t('mtg_h_min'), { h: Math.floor(min / 60), m: String(min % 60).padStart(2, '0') }) : tf(t('mtg_h'), { h: min / 60 }));
+  const placeOf = (m: Meeting) => m.place || (m.visio_url ? t('mtg_visio') : t('mtg_no_place'));
+  const names = (m: Meeting) => m.participants.map(p => p.name);
+  const peopleLabel = (ps: string[]) => (ps.length === 0 ? t('mtg_nobody') : ps.length <= 3 ? ps.join(', ') : tf(t('mtg_and_others'), { names: ps.slice(0, 2).join(', '), n: ps.length - 2 }));
 
-  const toggleAgenda = (meetingId: string, idx: number) => {
-    setAgenda(prev => ({
-      ...prev,
-      [meetingId]: prev[meetingId].map((a, i) => i === idx ? { ...a, done: !a.done } : a),
-    }));
+  const groups: MeetingsVals['groups'] = [];
+  src.forEach((m, i) => {
+    const label = cap(dayFmt.format(new Date(m.starts_at)));
+    let g = groups.find(x => x.label === label);
+    if (!g) { g = { label, items: [] }; groups.push(g); }
+    const ps = names(m), [, kBg, kColor] = KIND[m.kind] ?? KIND.meet;
+    g.items.push({
+      id: m.id, on: m.id === cur?.id, bg: m.id === cur?.id ? '#f3fafb' : '#ffffff', kBg, kColor,
+      time: timeFmt.format(new Date(m.starts_at)), dur: durOf(m.duration_min), title: m.title, next: tab === 'up' && i === 0,
+      placeIcon: m.visio_url && !m.place ? Video : MapPin, place: placeOf(m), faces: ps.slice(0, 3).map(face), hasExtra: ps.length > 3, extra: `+${ps.length - 3}`,
+      delay: String(Math.min(i, 10) * 50), pick: () => { setSel(m.id); setNewItem(''); },
+    });
+  });
+
+  // ── selected meeting ─────────────────────────────────────────────────────────
+  const notes = cur && notesDraft?.id === cur.id ? notesDraft.v : cur?.prep_notes ?? '';
+  const shareText = (m: Meeting) => [m.title, `${cap(dayFmt.format(new Date(m.starts_at)))} · ${timeFmt.format(new Date(m.starts_at))}`, '', m.summary ?? '',
+    ...(m.decisions.length ? ['', `${t('mtg_decisions')} :`, ...m.decisions.map(d => `• ${d}`)] : []),
+    ...(m.actions.length ? ['', `${t('mtg_actions')} :`, ...m.actions.map(a => `• ${a.t}${a.owner ? ` — ${a.owner}` : ''}${a.due ? ` (${a.due})` : ''}`)] : [])].join('\n');
+  const printMinutes = (m: Meeting) => {
+    const w = window.open('', '_blank');
+    if (!w) return;
+    const e = (x: string) => x.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]!));
+    w.document.write(`<!doctype html><html dir="${lang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${e(m.title)}</title><style>body{font-family:system-ui,sans-serif;max-width:720px;margin:40px auto;color:#0a1c24;line-height:1.55}h1{font-size:24px;margin:0}small{color:#52646d}h2{font-size:16px;margin:24px 0 8px}li{margin:4px 0}</style></head><body>`
+      + `<h1>${e(m.title)}</h1><small>${e(cap(dayFmt.format(new Date(m.starts_at))))} · ${e(timeFmt.format(new Date(m.starts_at)))} · ${e(placeOf(m))}<br>${e(names(m).join(', '))}</small>`
+      + (m.summary ? `<h2>${e(t('mtg_compte_rendu_redige_par_wedy'))}</h2><p>${e(m.summary)}</p>` : '')
+      + (m.decisions.length ? `<h2>${e(t('mtg_decisions'))}</h2><ul>${m.decisions.map(d => `<li>${e(d)}</li>`).join('')}</ul>` : '')
+      + (m.actions.length ? `<h2>${e(t('mtg_actions'))}</h2><ul>${m.actions.map(a => `<li>${a.done ? '☑' : '☐'} ${e(a.t)}${a.owner ? ` — ${e(a.owner)}` : ''}${a.due ? ` (${e(a.due)})` : ''}</li>`).join('')}</ul>` : '')
+      + '</body></html>');
+    w.document.close(); w.focus(); w.print();
   };
 
-  const addAgendaItem = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newItem.trim()) return;
-    setAgenda(prev => ({
-      ...prev,
-      [cur.id]: [...(prev[cur.id] || []), { text: newItem.trim(), done: false, ai: false }],
-    }));
-    setNewItem('');
+  const toolBtn: CSSProperties = { width: 40, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 11, border: '1px solid rgba(255,255,255,.16)', background: 'rgba(255,255,255,.06)', color: '#cfdde1', cursor: 'pointer' };
+  const curVals: MeetingsVals['cur'] = cur && {
+    kind: t((KIND[cur.kind] ?? KIND.meet)[0]), title: cur.title,
+    when: `${cap(dayFmt.format(new Date(cur.starts_at)))} · ${timeFmt.format(new Date(cur.starts_at))} · ${durOf(cur.duration_min)}`,
+    place: placeOf(cur), placeIcon: cur.visio_url && !cur.place ? Video : MapPin,
+    faces: names(cur).slice(0, 5).map(face), peopleLabel: peopleLabel(names(cur)),
+    upcoming: !isPast, past: isPast, summary: cur.summary ?? '', hasSummary: !!cur.summary?.trim(),
+    decisions: cur.decisions.map((d, i) => ({ t: d, delay: String(i * 70) })),
+    actions: cur.actions.map((a, i) => ({
+      ...a, ini: initialsOf(a.owner || '?'), av: avatarGradient(a.owner || '?'), color: a.done ? '#7d8f97' : '#1d3540', deco: a.done ? 'line-through' : 'none', delay: String(i * 70),
+      toggle: () => canEdit && save.mutate({ id: cur.id, body: { actions: cur.actions.map((x, k) => (k === i ? { ...x, done: !x.done } : x)) } }),
+    })),
+    actionLabel: isPast ? t('mtg_share') : cur.visio_url ? t('mtg_join') : t('mtg_add_calendar'),
+    actionIcon: isPast ? Share2 : cur.visio_url ? Video : CalendarPlus,
+    action: () => {
+      if (isPast) { navigator.clipboard?.writeText(shareText(cur)).then(() => notify.success(t('mtg_copied')), () => notify.error(t('error'))); return; }
+      if (cur.visio_url) window.open(cur.visio_url, '_blank', 'noopener'); else downloadIcs(cur);
+    },
+    tools: canEdit ? (
+      <span style={{ display: 'inline-flex', gap: 6 }}>
+        <button type="button" aria-label={t('edit')} title={t('edit')} onClick={() => setEditing(cur)} style={toolBtn}><Pencil size={15} /></button>
+        <button type="button" aria-label={t('delete')} title={t('delete')} onClick={() => { if (window.confirm(tf(t('mtg_confirm_delete'), { title: cur.title }))) del.mutate(cur.id); }} style={toolBtn}><Trash2 size={15} /></button>
+      </span>
+    ) : null,
   };
 
-  const suggestAgenda = async () => {
-    if (suggestBusy) return;
-    setSuggestBusy(true);
-    await new Promise(r => setTimeout(r, 1400));
-    const fallback = ['Points bloquants et risques', 'Décisions attendues', 'Prochaines étapes et responsables'];
-    setAgenda(prev => ({
-      ...prev,
-      [cur.id]: [...(prev[cur.id] || []), ...fallback.map(text => ({ text, done: false, ai: true }))],
-    }));
-    setSuggestBusy(false);
-    toast.success('3 points ajoutés par Wedy ✨');
-  };
+  const agenda = cur?.agenda ?? [];
+  const tableMissing = missingTable(q.error);
+  const listNote = q.isLoading ? <div style={{ display: 'flex', justifyContent: 'center', padding: '26px 0' }}><Spinner /></div>
+    : tableMissing ? (
+      <div style={{ display: 'flex', gap: 10, margin: '4px 12px 12px', padding: 14, borderRadius: 14, background: '#fbefda', color: '#8a5207', fontSize: 13, lineHeight: 1.5 }}>
+        <Database size={16} style={{ flexShrink: 0, marginTop: 2 }} /><span>{canEdit ? t('mtg_table_missing') : t('mtg_none_up')}</span>
+      </div>
+    ) : src.length === 0 ? <div style={{ padding: '26px 16px', textAlign: 'center', fontSize: 13.5, color: '#5f7079' }}>{t(tab === 'up' ? 'mtg_none_up' : 'mtg_none_past')}</div> : null;
 
-  const toggleAction = (key: string) => {
-    setActions(prev => ({ ...prev, [key]: !prev[key] }));
+  const saveNotes = () => { if (cur && canEdit && notesDraft?.id === cur.id && notesDraft.v !== (cur.prep_notes ?? '')) save.mutate({ id: cur.id, body: { prep_notes: notesDraft.v } }); };
+  const panelBox: CSSProperties = { flex: '1.6 1 520px', minWidth: 0, borderRadius: 22, background: '#ffffff', border: '1px solid #e2e8eb', padding: '40px 28px', textAlign: 'center', color: '#52646d', fontSize: 14 };
+  const v: MeetingsVals = {
+    rtl: lang === 'ar', canEdit,
+    plan: () => setPlanOpen(true),
+    tabs: ([['up', 'mtg_tab_up', up.length], ['past', 'mtg_tab_past', past.length]] as const).map(([k, key, n]) => ({ label: t(key), n, on: tab === k, color: tab === k ? '#0a1c24' : '#52646d', go: () => { setTab(k); setSel(null); } })),
+    listNote, groups, cur: curVals,
+    emptyPanel: (
+      <div style={panelBox}>
+        <img src="/wedy-avatar.png" alt="" style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', background: '#e4f2f4' }} />
+        <div style={{ marginTop: 12, fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 18, color: '#0a1c24' }}>{t('mtg_empty_title')}</div>
+        <div style={{ marginTop: 6, lineHeight: 1.55 }}>{t(canEdit ? 'mtg_empty_hr' : 'mtg_empty_emp')}</div>
+        {canEdit && !tableMissing && <button type="button" className="btn btn-primary" onClick={() => setPlanOpen(true)} style={{ marginTop: 16 }}><CalendarPlus size={15} /> {t('mtg_planifier_une_reunion')}</button>}
+      </div>
+    ),
+    agenda: agenda.map((a, i) => ({
+      ...a, ai: !!a.ai, n: String(i + 1).padStart(2, '0'), bg: a.done ? '#f8fafb' : '#ffffff', color: a.done ? '#7d8f97' : '#1d3540', deco: a.done ? 'line-through' : 'none',
+      toggle: () => cur && canEdit && save.mutate({ id: cur.id, body: { agenda: agenda.map((x, k) => (k === i ? { ...x, done: !x.done } : x)) } }),
+    })),
+    agendaDone: tf(t('mtg_agenda_done'), { d: agenda.filter(a => a.done).length, n: agenda.length }),
+    actionsDone: tf(t('mtg_actions_done'), { d: (cur?.actions ?? []).filter(a => a.done).length, n: cur?.actions.length ?? 0 }),
+    newItem, onNewItem: e => setNewItem(e.target.value),
+    addItem: e => { e.preventDefault(); const x = newItem.trim(); if (!x || !cur) return; setNewItem(''); save.mutate({ id: cur.id, body: { agenda: [...agenda, { t: x, done: false, ai: false }] } }); },
+    busy: suggest.isPending, idle: !suggest.isPending, suggest: () => cur && suggest.mutate(cur),
+    notes, onNotes: e => cur && setNotesDraft({ id: cur.id, v: e.target.value }),
+    saveNotes,
+    notesLabel: t(isPast ? 'mtg_meeting_notes' : 'mtg_notes_de_preparation'),
+    minutesTool: cur && isPast ? (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {(canEdit || notes) && (
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>
+            {t('mtg_meeting_notes')}
+            <textarea rows={3} value={notes} readOnly={!canEdit} onChange={e => setNotesDraft({ id: cur.id, v: e.target.value })} onBlur={saveNotes} placeholder={t('mtg_notes_ph')}
+              style={{ resize: 'vertical', padding: '10px 12px', borderRadius: 11, border: '1px solid #d6dfe3', fontFamily: 'inherit', fontSize: 14, fontWeight: 400, color: '#0a1c24', outline: 'none' }} className="mtg-f3" />
+          </label>
+        )}
+        {canEdit && (
+          <button type="button" disabled={minutes.isPending} onClick={() => { saveNotes(); minutes.mutate({ ...cur, prep_notes: notes }); }}
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 42, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#5444b8,#6d5ad6)', color: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}>
+            {minutes.isPending ? <Spinner size={14} color="#fff" /> : <Sparkles size={15} />}{t(cur.summary ? 'mtg_redraft' : 'mtg_draft_minutes')}
+          </button>
+        )}
+        {!cur.summary && !canEdit && <div style={{ fontSize: 13.5, color: '#5f7079' }}>{t('mtg_no_minutes')}</div>}
+      </div>
+    ) : null,
+    sendReport: () => cur && report.mutate(cur),
+    pdf: () => cur && printMinutes(cur),
+    drawer: canEdit ? <MeetingDrawer open={planOpen || !!editing} meeting={editing} onClose={() => { setPlanOpen(false); setEditing(null); }} onSaved={m => { setTab(new Date(m.starts_at).getTime() >= Date.now() ? 'up' : 'past'); setSel(m.id); }} /> : null,
   };
+  return <MeetingsView v={v} />;
+}
 
-  const kBg = (kind: string) => KIND[kind]?.[1] ?? '#f3f6f7';
-  const kColor = (kind: string) => KIND[kind]?.[2] ?? '#33474f';
+// ── plan / edit a meeting ────────────────────────────────────────────────────────
+const inputStyle: CSSProperties = { width: '100%', height: 40, padding: '0 12px', borderRadius: 11, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' };
+const labelStyle: CSSProperties = { display: 'block', fontSize: 12.5, fontWeight: 600, color: '#33474f', marginBottom: 6 };
+const pad = (n: number) => String(n).padStart(2, '0');
+
+function MeetingDrawer({ open, meeting, onClose, onSaved }: { open: boolean; meeting: Meeting | null; onClose: () => void; onSaved: (m: Meeting) => void }) {
+  const { t } = useLang();
+  const notify = useNotify();
+  const qc = useQueryClient();
+  const empQ = useQuery({ queryKey: ['employees', 'staff-list'], queryFn: () => listEmployees({ limit: 1000 }), enabled: open });
+  const staff = (empQ.data?.data ?? []).filter(e => e.status !== 'candidate' && e.status !== 'terminated');
+  const init = () => {
+    const d = meeting ? new Date(meeting.starts_at) : (() => { const x = new Date(); x.setDate(x.getDate() + 1); x.setHours(10, 0, 0, 0); return x; })();
+    return {
+      title: meeting?.title ?? '', kind: (meeting?.kind ?? 'meet') as Kind, date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+      duration: String(meeting?.duration_min ?? 60), place: meeting?.place ?? '', visio: meeting?.visio_url ?? '',
+      people: (meeting?.participants ?? []) as Person[], agenda: (meeting?.agenda ?? []).map(a => a.t).join('\n'), pick: '', guest: '',
+    };
+  };
+  const [f, setF] = useState(init);
+  const [key, setKey] = useState<string | null>(null);
+  const k = open ? meeting?.id ?? 'new' : null;
+  if (k !== key) { setKey(k); if (open) setF(init()); }
+
+  const mut = useMutation({
+    mutationFn: () => {
+      const old = new Map((meeting?.agenda ?? []).map(a => [a.t, a]));
+      const body = {
+        title: f.title.trim(), kind: f.kind, starts_at: new Date(`${f.date}T${f.time || '09:00'}`).toISOString(), duration_min: Math.max(5, Number(f.duration) || 60),
+        place: f.place.trim() || null, visio_url: f.visio.trim() || null, participants: f.people,
+        agenda: f.agenda.split('\n').map(x => x.trim()).filter(Boolean).map(x => old.get(x) ?? { t: x, done: false, ai: false }),
+      };
+      return meeting ? api.patch<Meeting>(`/meetings/${meeting.id}`, body).then(r => r.data) : api.post<Meeting>('/meetings', body).then(r => r.data);
+    },
+    onSuccess: m => { qc.invalidateQueries({ queryKey: ['meetings'] }); notify.success(t(meeting ? 'mtg_updated' : 'mtg_created')); onSaved(m); onClose(); },
+    onError: e => notify.error(missingTable(e) ? t('mtg_table_missing') : getApiError(e, t('error'))),
+  });
+  const addPerson = (p: Person) => setF(x => (x.people.some(y => (p.employee_id && y.employee_id === p.employee_id) || y.name === p.name) ? x : { ...x, people: [...x.people, p], pick: '', guest: '' }));
+  const ok = !!f.title.trim() && !!f.date;
 
   return (
-    <Page>
-      <PageHeader
-        title="Réunions"
-        subtitle="Préparez l'ordre du jour avec Wedy, qui rédige aussi le compte rendu."
-        action={
-          <button
-            onClick={() => setPlanModal(true)}
-            className="btn-primary"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 42, padding: '0 16px', borderRadius: 12, fontSize: 14 }}
-          >
-            <CalendarPlus size={16} strokeWidth={1.8} /> Planifier une réunion
-          </button>
-        }
-      />
-
-      <div style={{ padding: '0 32px 56px', display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
-
-        {/* ── Left: meeting list ── */}
-        <div style={{ flex: '1 1 360px', minWidth: 0, borderRadius: 20, background: '#fff', border: '1px solid var(--border)', overflow: 'hidden' }}>
-
-          {/* Tab bar */}
-          <div style={{ display: 'flex', gap: 4, padding: 5, margin: 12, borderRadius: 13, background: 'var(--subtle)' }}>
-            {([['up', 'À venir', UPCOMING.length], ['past', 'Passées', PAST.length]] as const).map(([key, label, count]) => (
-              <button
-                key={key}
-                onClick={() => { setTab(key as 'up' | 'past'); setCurId((key === 'up' ? UPCOMING : PAST)[0].id); }}
-                style={{
-                  position: 'relative', flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  gap: 7, height: 36, border: 'none', borderRadius: 10,
-                  background: 'transparent', fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
-                  cursor: 'pointer', color: tab === key ? 'var(--text)' : 'var(--text-2)',
-                }}
-              >
-                {tab === key && (
-                  <span style={{ position: 'absolute', inset: 0, borderRadius: 10, background: '#fff', boxShadow: '0 1px 3px rgba(10,28,36,.14)' }} />
-                )}
-                <span style={{ position: 'relative' }}>{label}</span>
-                <span style={{ position: 'relative', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)' }}>{count}</span>
-              </button>
+    <Drawer open={open} onClose={onClose} title={t(meeting ? 'mtg_edit' : 'mtg_planifier_une_reunion')} subtitle={t('mtg_drawer_sub')} icon={<CalendarPlus size={17} />} width={540}
+      footer={<>
+        <button type="button" className="btn btn-secondary" onClick={onClose}>{t('cancel')}</button>
+        <button type="button" className="btn btn-primary" disabled={!ok || mut.isPending} onClick={() => mut.mutate()}>{mut.isPending ? <Spinner size={14} color="#fff" /> : <Check size={14} />} {t('save')}</button>
+      </>}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div><label style={labelStyle}>{t('mtg_title')}</label><input value={f.title} onChange={e => setF(x => ({ ...x, title: e.target.value }))} placeholder={t('mtg_title_ph')} style={inputStyle} /></div>
+        <div>
+          <label style={labelStyle}>{t('mtg_kind')}</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {(Object.keys(KIND) as Kind[]).map(kd => {
+              const [key2, bg, color] = KIND[kd], on = f.kind === kd;
+              return <button key={kd} type="button" onClick={() => setF(x => ({ ...x, kind: kd }))} style={{ height: 34, padding: '0 12px', borderRadius: 99, border: `1px solid ${on ? color : '#d6dfe3'}`, background: on ? bg : '#ffffff', color: on ? color : '#33474f', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>{t(key2)}</button>;
+            })}
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr 1fr', gap: 10 }}>
+          <div><label style={labelStyle}>{t('mtg_date')}</label><input type="date" value={f.date} onChange={e => setF(x => ({ ...x, date: e.target.value }))} style={inputStyle} /></div>
+          <div><label style={labelStyle}>{t('mtg_time')}</label><input type="time" value={f.time} onChange={e => setF(x => ({ ...x, time: e.target.value }))} style={inputStyle} /></div>
+          <div><label style={labelStyle}>{t('mtg_duration')}</label>
+            <select value={f.duration} onChange={e => setF(x => ({ ...x, duration: e.target.value }))} style={inputStyle}>
+              {[15, 30, 45, 60, 90, 120, 180, 240].map(n => <option key={n} value={n}>{n < 60 ? tf(t('mtg_min'), { n }) : n % 60 ? tf(t('mtg_h_min'), { h: Math.floor(n / 60), m: String(n % 60).padStart(2, '0') }) : tf(t('mtg_h'), { h: n / 60 })}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div><label style={labelStyle}>{t('mtg_place')}</label><input value={f.place} onChange={e => setF(x => ({ ...x, place: e.target.value }))} placeholder={t('mtg_place_ph')} style={inputStyle} /></div>
+          <div><label style={labelStyle}>{t('mtg_visio_link')}</label><input value={f.visio} onChange={e => setF(x => ({ ...x, visio: e.target.value }))} placeholder="https://meet.google.com/…" style={inputStyle} dir="ltr" /></div>
+        </div>
+        <div>
+          <label style={labelStyle}>{t('mtg_participants')}</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: f.people.length ? 8 : 0 }}>
+            {f.people.map(p => (
+              <span key={p.employee_id ?? p.name} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 6px 4px 4px', borderRadius: 99, background: '#f3f6f7', fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: avatarGradient(p.name), color: '#fff', fontSize: 9, fontWeight: 700 }}>{initialsOf(p.name)}</span>
+                {p.name}
+                <button type="button" aria-label={t('delete')} onClick={() => setF(x => ({ ...x, people: x.people.filter(y => y !== p) }))} style={{ display: 'inline-flex', padding: 2, border: 'none', background: 'none', color: '#7d8f97', cursor: 'pointer' }}><X size={12} /></button>
+              </span>
             ))}
           </div>
-
-          {/* Groups */}
-          {groups.map(g => (
-            <div key={g.label}>
-              <div style={{ padding: '12px 16px 6px', fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--text-2)' }}>
-                {g.label}
-              </div>
-              {g.items.map((m, idx) => {
-                const isFirst = tab === 'up' && m === UPCOMING[0];
-                const isActive = m.id === curId;
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => setCurId(m.id)}
-                    style={{
-                      position: 'relative', width: '100%', display: 'flex', gap: 12, alignItems: 'flex-start',
-                      padding: '12px 16px', border: 'none', borderTop: '1px solid var(--border)',
-                      background: isActive ? '#f3fafb' : '#fff', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer',
-                    }}
-                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#f6fafb'; }}
-                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = '#fff'; }}
-                  >
-                    {isActive && (
-                      <span style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: '0 3px 3px 0', background: '#16b6c8' }} />
-                    )}
-                    {/* Time bubble */}
-                    <span style={{ width: 60, flexShrink: 0, padding: '7px 0', borderRadius: 11, background: kBg(m.kind), textAlign: 'center' }}>
-                      <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: kColor(m.kind) }}>{m.time}</span>
-                      <span style={{ display: 'block', fontSize: 10.5, color: 'var(--text-2)' }}>{m.dur}</span>
-                    </span>
-                    {/* Info */}
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</span>
-                        {isFirst && (
-                          <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: '#e1f5ec', color: '#0f6f49' }}>
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16a06b' }} className="wedy-pulse" />
-                            Prochaine
-                          </span>
-                        )}
-                      </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 7 }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-2)', minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {m.visio ? <Video size={13} strokeWidth={1.8} /> : <MapPin size={13} strokeWidth={1.8} />}
-                          {m.place}
-                        </span>
-                        <span style={{ marginLeft: 'auto', flexShrink: 0 }}>
-                          <FaceStack names={m.people} size={24} limit={3} />
-                        </span>
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-
-        {/* ── Right: detail panel ── */}
-        <div style={{ flex: '1.6 1 520px', minWidth: 0, position: 'sticky', top: 90, borderRadius: 22, background: '#fff', border: '1px solid var(--border)', overflow: 'hidden' }}>
-
-          {/* Dark header */}
-          <div style={{ position: 'relative', overflow: 'hidden', padding: '22px 24px', background: 'var(--ink-950)', color: '#e8eff1', isolation: 'isolate' }}>
-            <div aria-hidden className="wedy-drift" style={{ position: 'absolute', right: -80, top: -130, width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(closest-side,rgba(14,111,132,.6),transparent)', zIndex: -1 }} />
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: 240 }}>
-                <span style={{ display: 'inline-flex', fontSize: 11.5, fontWeight: 700, padding: '3px 10px', borderRadius: 99, background: 'rgba(255,255,255,.08)', color: '#b9cbd0' }}>
-                  {KIND[cur.kind]?.[0] ?? 'Réunion'}
-                </span>
-                <div style={{ marginTop: 10, fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 24, letterSpacing: '-.03em', lineHeight: 1.15 }}>
-                  {cur.title}
-                </div>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 10, fontSize: 13, color: '#b9cbd0' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <Clock size={14} strokeWidth={1.8} /> {cur.group} · {cur.time} · {cur.dur}
-                  </span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    {cur.visio ? <Video size={14} strokeWidth={1.8} /> : <MapPin size={14} strokeWidth={1.8} />}
-                    {cur.place}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => toast.success(isPast ? 'Compte rendu envoyé aux participants ✓' : 'Ouverture de la réunion…')}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 40, padding: '0 14px', border: 'none', borderRadius: 11, background: '#effbfc', color: '#06141a', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-              >
-                {cur.visio ? <ExternalLink size={15} strokeWidth={1.8} /> : <Video size={15} strokeWidth={1.8} />}
-                {isPast ? 'Voir CR' : cur.visio ? 'Rejoindre' : 'Démarrer'}
-              </button>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,.08)' }}>
-              <FaceStack names={cur.people} size={30} border="var(--ink-950)" limit={5} />
-              <span style={{ fontSize: 13, color: '#b9cbd0' }}>
-                {cur.people.length <= 3
-                  ? cur.people.join(', ')
-                  : `${cur.people.slice(0, 2).join(', ')} et ${cur.people.length - 2} autres`}
-              </span>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <select value={f.pick} onChange={e => { const emp = staff.find(x => x.id === e.target.value); if (emp) addPerson({ employee_id: emp.id, name: emp.full_name }); }} style={inputStyle}>
+              <option value="">{empQ.isLoading ? t('loading') : t('mtg_add_employee')}</option>
+              {staff.filter(e => !f.people.some(p => p.employee_id === e.id)).map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
+            </select>
+            <form onSubmit={e => { e.preventDefault(); if (f.guest.trim()) addPerson({ employee_id: null, name: f.guest.trim() }); }} style={{ display: 'flex', gap: 6 }}>
+              <input value={f.guest} onChange={e => setF(x => ({ ...x, guest: e.target.value }))} placeholder={t('mtg_guest_ph')} style={inputStyle} />
+              <button type="submit" className="btn btn-secondary" style={{ height: 40 }}>{t('mtg_add')}</button>
+            </form>
           </div>
-
-          {/* Body: upcoming = agenda, past = summary + decisions + actions */}
-          {!isPast ? (
-            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {/* Agenda header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Ordre du jour</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-muted)' }}>
-                  {agendaDone}/{curAgenda.length}
-                </span>
-              </div>
-
-              {/* Agenda items */}
-              {curAgenda.map((item, i) => (
-                <button
-                  key={i}
-                  onClick={() => toggleAgenda(cur.id, i)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 11, width: '100%',
-                    padding: '10px 12px', borderRadius: 12, border: '1px solid var(--border)',
-                    background: item.done ? '#f9fafb' : '#fff', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#b9dfe5'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-                >
-                  <span style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: item.done ? 'none' : '1.5px solid #c3ced3', background: item.done ? '#0e6f84' : '#fff', color: '#fff' }}>
-                    {item.done && <span style={{ fontSize: 11, fontWeight: 900 }}>✓</span>}
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--text-muted)', width: 18, flexShrink: 0 }}>{i + 1}.</span>
-                  <span style={{ flex: 1, fontSize: 14, color: item.done ? 'var(--text-muted)' : 'var(--text)', textDecoration: item.done ? 'line-through' : 'none' }}>
-                    {item.text}
-                  </span>
-                  {item.ai && (
-                    <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 99, background: '#ece9fb', color: '#5444b8' }}>IA</span>
-                  )}
-                </button>
-              ))}
-
-              {/* Add item form */}
-              <form onSubmit={addAgendaItem} style={{ display: 'flex', gap: 8 }}>
-                <input
-                  value={newItem}
-                  onChange={e => setNewItem(e.target.value)}
-                  placeholder="Ajouter un point à l'ordre du jour…"
-                  className="input"
-                  style={{ flex: 1, minWidth: 0, height: 42, padding: '0 12px', borderRadius: 11, fontSize: 14 }}
-                />
-                <button type="submit" style={{ height: 42, padding: '0 14px', borderRadius: 11, border: '1px solid var(--border)', background: '#fff', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, color: 'var(--text)', cursor: 'pointer' }}>
-                  Ajouter
-                </button>
-              </form>
-
-              {/* AI button */}
-              <button
-                onClick={suggestAgenda}
-                disabled={suggestBusy}
-                style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 46, border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#5444b8,#16b6c8)', color: '#fff', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: suggestBusy ? 'default' : 'pointer', boxShadow: '0 14px 30px -14px rgba(109,90,214,.8)', opacity: suggestBusy ? 0.85 : 1 }}
-              >
-                <span className="wedy-shine" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '40%', background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)', pointerEvents: 'none' }} />
-                {suggestBusy ? (
-                  <>
-                    <span className="wedy-spin" style={{ position: 'relative', width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,.35)', borderTopColor: '#fff' }} />
-                    <span style={{ position: 'relative' }}>Wedy prépare des points…</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={16} strokeWidth={1.8} style={{ position: 'relative' }} />
-                    <span style={{ position: 'relative' }}>Compléter l'ordre du jour avec Wedy</span>
-                  </>
-                )}
-              </button>
-
-              {/* Notes */}
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4, fontSize: 12.5, fontWeight: 600, color: 'var(--text)' }}>
-                Notes de préparation
-                <textarea
-                  rows={3}
-                  value={notes[cur.id] || ''}
-                  onChange={e => setNotes(prev => ({ ...prev, [cur.id]: e.target.value }))}
-                  placeholder="Points à aborder, documents à apporter…"
-                  style={{ resize: 'vertical', padding: '10px 12px', borderRadius: 11, border: '1px solid var(--border)', fontFamily: 'inherit', fontSize: 14, fontWeight: 400, color: 'var(--text)', outline: 'none', background: '#fff' }}
-                  onFocus={e => { e.target.style.borderColor = '#16b6c8'; e.target.style.boxShadow = '0 0 0 4px rgba(22,182,200,.14)'; }}
-                  onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
-                />
-              </label>
-            </div>
-          ) : (
-            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* AI Summary */}
-              <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: 14, borderRadius: 14, background: 'linear-gradient(135deg,rgba(22,182,200,.08),rgba(109,90,214,.08))', border: '1px solid rgba(109,90,214,.18)' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#e4f2f4', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles size={15} strokeWidth={1.8} style={{ color: '#0b5f72' }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#5444b8' }}>Compte rendu rédigé par Wedy</div>
-                  <div style={{ marginTop: 4, fontSize: 14, lineHeight: 1.6, color: 'var(--text)' }}>{cur.summary}</div>
-                </div>
-              </div>
-
-              {/* Decisions */}
-              {cur.decisions && cur.decisions.length > 0 && (
-                <div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, marginBottom: 10 }}>Décisions</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {cur.decisions.map((d, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 14, color: 'var(--text)' }}>
-                        <CheckCircle2 size={17} strokeWidth={1.8} style={{ color: '#16a06b', flexShrink: 0, marginTop: 1 }} />
-                        {d}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              {cur.actions && cur.actions.length > 0 && (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15 }}>Actions</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-muted)' }}>
-                      {cur.actions.filter((_, i) => actions[`${cur.id}-${i}`]).length}/{cur.actions.length}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {cur.actions.map((action, i) => {
-                      const key = `${cur.id}-${i}`;
-                      const done = !!actions[key];
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => toggleAction(key)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 11, flexWrap: 'wrap', width: '100%',
-                            padding: '10px 12px', borderRadius: 12, border: '1px solid var(--border)',
-                            background: '#fff', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer',
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = '#b9dfe5'; }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-                        >
-                          <span style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: done ? 'none' : '1.5px solid #c3ced3', background: done ? '#16a06b' : '#fff', color: '#fff' }}>
-                            {done && <span style={{ fontSize: 11, fontWeight: 900 }}>✓</span>}
-                          </span>
-                          <span style={{ flex: '1 1 200px', fontSize: 14, color: done ? 'var(--text-muted)' : 'var(--text)', textDecoration: done ? 'line-through' : 'none' }}>
-                            {action.t}
-                          </span>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: 'var(--text)' }}>
-                            <span style={{ width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avOf(action.owner), color: '#fff', fontSize: 9, fontWeight: 700 }}>
-                              {ini(action.owner)}
-                            </span>
-                            {action.owner}
-                          </span>
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, padding: '2px 8px', borderRadius: 7, background: 'var(--subtle)', color: 'var(--text)' }}>
-                            {action.due}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Footer actions */}
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => toast.success('Compte rendu envoyé aux participants ✓')}
-                  style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 44, padding: '0 14px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#fff', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                >
-                  <Send size={15} strokeWidth={1.8} /> Envoyer aux participants
-                </button>
-                <button
-                  onClick={() => toast.success('Export PDF en cours…')}
-                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 44, padding: '0 14px', borderRadius: 12, border: '1px solid var(--border)', background: '#fff', color: 'var(--text)', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                >
-                  <Download size={15} strokeWidth={1.8} /> PDF
-                </button>
-              </div>
-            </div>
-          )}
+        </div>
+        <div>
+          <label style={labelStyle}>{t('mtg_ordre_du_jour')}</label>
+          <textarea rows={4} value={f.agenda} onChange={e => setF(x => ({ ...x, agenda: e.target.value }))} placeholder={t('mtg_agenda_ph')} style={{ ...inputStyle, height: 'auto', padding: '10px 12px', resize: 'vertical', lineHeight: 1.5 }} />
         </div>
       </div>
-
-      {/* ── Plan meeting modal ── */}
-      {planModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10,28,36,.45)', backdropFilter: 'blur(4px)' }}
-          onClick={e => { if (e.target === e.currentTarget) setPlanModal(false); }}
-        >
-          <div style={{ width: '100%', maxWidth: 480, background: '#fff', borderRadius: 20, padding: '28px 28px 24px', boxShadow: '0 32px 64px rgba(0,0,0,.18)', margin: '0 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18 }}>Planifier une réunion</span>
-              <button onClick={() => setPlanModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 20, lineHeight: 1 }}>×</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <span className="label">Titre</span>
-                <input className="input" value={planForm.title} onChange={e => setPlanForm(p => ({ ...p, title: e.target.value }))} placeholder="Ex: Réunion RH hebdomadaire" />
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <span className="label">Date</span>
-                  <input type="date" className="input" value={planForm.date} onChange={e => setPlanForm(p => ({ ...p, date: e.target.value }))} />
-                </label>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <span className="label">Heure</span>
-                  <input type="time" className="input" value={planForm.time} onChange={e => setPlanForm(p => ({ ...p, time: e.target.value }))} />
-                </label>
-              </div>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <span className="label">Lieu / Lien</span>
-                <input className="input" value={planForm.place} onChange={e => setPlanForm(p => ({ ...p, place: e.target.value }))} placeholder="Salle Ourika, Google Meet…" />
-              </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                <span className="label">Type</span>
-                <select className="select" value={planForm.kind} onChange={e => setPlanForm(p => ({ ...p, kind: e.target.value }))}>
-                  {Object.entries(KIND).map(([k, [label]]) => (
-                    <option key={k} value={k}>{label}</option>
-                  ))}
-                </select>
-              </label>
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
-                <button onClick={() => setPlanModal(false)} className="btn-ghost" style={{ height: 40, padding: '0 16px', borderRadius: 10 }}>Annuler</button>
-                <button
-                  onClick={() => { toast.success('Réunion planifiée ✓'); setPlanModal(false); setPlanForm({ title: '', date: '', time: '', place: '', kind: 'meet' }); }}
-                  className="btn-primary"
-                  disabled={!planForm.title.trim()}
-                  style={{ height: 40, padding: '0 18px', borderRadius: 10 }}
-                >
-                  Planifier
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </Page>
+    </Drawer>
   );
 }

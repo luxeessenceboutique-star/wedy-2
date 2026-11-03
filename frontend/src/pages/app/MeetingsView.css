@@ -1,0 +1,5 @@
+/* hover / focus rules of Wedy Meetings (style-hover / style-focus) */
+.mtg-h1:hover { background: #f6fafb !important; }
+.mtg-h2:hover { border-color: #b9dfe5 !important; }
+.mtg-f3:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.mtg-h4:hover { border-color: #9fb4bb !important; }

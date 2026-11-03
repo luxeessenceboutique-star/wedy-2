@@ -3344,7 +3344,7 @@ export const ar = {
     stg_ob_tasks: '{done}/{n} مهام منجزة',
     stg_ob_days: 'تدريب لمدة {n} يومًا',
     stg_ob_migration: 'الإدماج غير مفعّل',
-    stg_ob_migration_s: 'الجداول intern_onboarding و intern_evaluations غير موجودة: نفّذ ملف الترحيل interns_advanced_migration.sql في Supabase.',
+    stg_ob_migration_s: 'الجداول intern_onboarding و intern_evaluations غير موجودة: نفّذ ملف الترحيل rh_schema_fixes.sql في Supabase.',
     stg_ob_error: 'الإدماج غير متاح',
     stg_ob_error_s: 'تعذر تحميل بيانات الإدماج.',
     stg_ph_pre: 'ما قبل الإدماج',

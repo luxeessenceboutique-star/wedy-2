@@ -114,8 +114,43 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     logger.warning(f"[422] {request.method} {request.url.path} | errors={exc.errors()} | body={body}")
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
 
+# Supabase migrations that were not run: name the missing column / table and the file that adds it.
+_MIGRATION_FOR = {
+    ("employees", "custom_fields"): "rh_schema_fixes.sql", ("employees", "remuneration"): "rh_schema_fixes.sql",
+    ("interviews", "scorecard"): "interviews_scorecard.sql", ("interviews", "meeting_id"): "interviews_scorecard.sql",
+    ("interviews", "interviewers"): "interviews_scorecard.sql", ("interviews", "started_at"): "interviews_scorecard.sql",
+    ("interviews", "ended_at"): "interviews_scorecard.sql", ("interviews", "overall_score"): "interviews_scorecard.sql",
+    ("interviews", "recommendation"): "interviews_scorecard.sql", ("interviews", "summary"): "interviews_scorecard.sql",
+}
+
+
+def _schema_drift_detail(exc: Exception) -> str | None:
+    import re as _re
+    msg = str(getattr(exc, "message", "") or exc)
+    code = str(getattr(exc, "code", "") or "")
+    m = _re.search(r"Could not find the '([^']+)' column of '([^']+)'", msg)
+    if code == "PGRST204" or m:
+        if not m:
+            return None
+        col, table = m.group(1), m.group(2)
+        mig = _MIGRATION_FOR.get((table, col))
+        return (f"La colonne « {col} » manque dans la table {table} de Supabase. "
+                + (f"Exécutez la migration backend/database/migrations/{mig} dans l'éditeur SQL de Supabase." if mig
+                   else "Une migration de la base n'a pas été exécutée."))
+    t = _re.search(r"Could not find the table '(?:[^'.]+\.)?([^']+)'", msg)
+    if code == "PGRST205" or t:
+        name = t.group(1) if t else '?'
+        hint = " Exécutez backend/database/migrations/rh_schema_fixes.sql dans l'éditeur SQL de Supabase." if name in ("intern_onboarding", "intern_evaluations", "import_logs") else " Une migration n'a pas été exécutée."
+        return f"La table « {name} » n'existe pas dans Supabase.{hint}"
+    return None
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    drift = _schema_drift_detail(exc)
+    if drift:
+        logger.error(f"Schema drift on {request.method} {request.url.path}: {exc}")
+        return JSONResponse(status_code=503, content={"detail": drift, "type": "schema_drift"})
     tb = traceback.format_exc()
     logger.error(f"Unhandled exception on {request.method} {request.url.path}:\n{tb}")
     return JSONResponse(

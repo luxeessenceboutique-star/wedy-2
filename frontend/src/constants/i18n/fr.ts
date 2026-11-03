@@ -3398,7 +3398,7 @@ export const fr = {
     stg_ob_tasks: '{done}/{n} tâches terminées',
     stg_ob_days: 'stage de {n} jours',
     stg_ob_migration: 'Onboarding non activé',
-    stg_ob_migration_s: 'Les tables intern_onboarding et intern_evaluations n\'existent pas : exécutez la migration interns_advanced_migration.sql dans Supabase.',
+    stg_ob_migration_s: 'Les tables intern_onboarding et intern_evaluations n\'existent pas : exécutez la migration rh_schema_fixes.sql dans Supabase.',
     stg_ob_error: 'Onboarding indisponible',
     stg_ob_error_s: 'Les données d\'onboarding n\'ont pas pu être chargées.',
     stg_ph_pre: 'Pré-onboarding',

@@ -1,0 +1,14 @@
+/* hover / focus rules of Wedy Training */
+.trn-f1:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.trn-h1:hover { border-color: #b9dfe5 !important; box-shadow: 0 20px 40px -26px rgba(10,28,36,.45) !important; transform: translateY(-3px) !important; }
+.trn-h2:hover { border-color: #16b6c8 !important; color: #0e6f84 !important; }
+.trn-h3:hover { background: #f8fbfb !important; }
+.trn-h4:hover { transform: scale(1.05) !important; }
+.trn-h5:hover { background: #16323c !important; }
+.trn-h6:hover:not(:disabled) { background: #f6f9fa !important; }
+.trn-act { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px; border-radius: 9px; border: 1px solid #d6dfe3; background: #ffffff; font-family: inherit; font-size: 12.5px; font-weight: 600; color: #0a1c24; cursor: pointer; white-space: nowrap; }
+.trn-act:hover { border-color: #16b6c8; color: #0e6f84; }
+.trn-act.trn-ok:hover { border-color: #16a06b; color: #0f6f49; }
+.trn-del { position: relative; width: 26px; height: 26px; border-radius: 8px; border: none; background: rgba(255,255,255,.75); color: #7d8f97; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; margin-inline-start: auto; opacity: 0; transition: opacity .15s; }
+.trn-h1:hover .trn-del, .trn-h3:hover .trn-del, .trn-del:focus-visible { opacity: 1; }
+.trn-del:hover { color: #a33a28; background: #fbe9e6; }

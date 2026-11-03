@@ -105,6 +105,12 @@ Onboarding notes (`EmployeeOnboardingPage.tsx`):
 - The 30-60-90 tasks are the backend's `plan_30/60/90` (labels from the backend defaults, not the reference's demo list); ticking saves them (`PATCH /employee-onboarding/:id`). Buddy = `buddy_name` (saved on blur, suggestions from employees). The contract button records the signature (`/sign-contract`) — there is no e-signature service, so it says "Marquer le contrat signé".
 - Pulses: `/employee-onboarding/:id/pulse` (score → `satisfaction_score`, week from the day). "Analyse de Wedy" is computed from the real file (pulse average, missing buddy, unsigned contract, late tasks, arrival countdown). KPIs from all newcomers' plans and pulses. "Démarrer un onboarding" creates the plan for a chosen employee.
 
+Training notes (`TrainingPage.tsx`):
+- Catalog / enrolments / skills all come from `/training/*` (catalog, assignments, skills, employee-skills). The reference's "Présentiel / Hybride / En ligne" chip has no field, so it is not shown; course delete appears on hover.
+- KPIs are real: enrolments, completion rate, amount committed this year (sum of course costs — there is no budget setting, so no "/ 250 000 DH" target), hours of completed courses and hours per trained person.
+- Enrolments: start / mark completed / unenrol (`PATCH`/`DELETE /training/assignments`). Status-only progress (0 / … / 100 %), no fake percentages.
+- Skills matrix: the 6 most-assessed skills × assessed people; clicking cycles non évalué → débutant → intermédiaire → expert (upsert / delete). "Écarts détectés" lists people below intermediate and suggests a catalog course whose title/description/category matches the skill, with one-click enrolment.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -129,7 +135,7 @@ Onboarding notes (`EmployeeOnboardingPage.tsx`):
 | 18 | Org chart | Wedy Org Chart | `/app/orgchart`, `/employee/orgchart` | `app/OrgChartPage.tsx` | ☑ |
 | 19 | Meetings | Wedy Meetings | `/app/meetings`, `/employee/meetings` | `app/MeetingsPage.tsx` | ◐ |
 | 20 | Onboarding | Wedy Onboarding | `/app/onboarding` | `app/EmployeeOnboardingPage.tsx` | ☑ |
-| 21 | Training | Wedy Training | `/app/training` | `app/TrainingPage.tsx` | ◐ |
+| 21 | Training | Wedy Training | `/app/training` | `app/TrainingPage.tsx` | ☑ |
 | 22 | Talents | Wedy Talents | `/app/talents` | `app/TalentsPage.tsx` | ◐ |
 | 23 | Tenders | Wedy Tenders | `/app/tenders` | `app/TendersPage.tsx` | ◐ |
 | 24 | Analytics | Wedy Analytics | `/app/analytics` | `app/AnalyticsPage.tsx` | ◐ |

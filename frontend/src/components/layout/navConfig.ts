@@ -1,5 +1,5 @@
 import {
-  Bell, BookOpen, Bot, Briefcase, Calendar, ChartColumn, CircleHelp, ClipboardList, Clock, FileText, GraduationCap,
+  Bell, BookOpen, Bot, Briefcase, Calendar, ChartColumn, CircleHelp, ClipboardCheck, ClipboardList, Clock, FileText, GraduationCap,
   History, House, Inbox, LayoutDashboard, Megaphone, Network, Puzzle, Settings, ShieldCheck, Star, Target, TrendingUp,
   User, UserCheck, UserCog, UserPlus, Users, UserX, Video, Wallet, WandSparkles, type LucideIcon,
 } from 'lucide-react';
@@ -24,6 +24,7 @@ export const NAV_SECTIONS: NavSectionDef[] = [
     { labelKey: 'requests', icon: Inbox, to: '/app/requests', badge: 'requests' },
     { labelKey: 'recruitment', icon: Target, to: '/app/recruitment' },
     { labelKey: 'candidats', icon: UserPlus, to: '/app/candidats' },
+    { labelKey: 'entretiens', icon: ClipboardCheck, to: '/app/entretiens' },
     { labelKey: 'annonces', icon: Megaphone, to: '/app/annonces', badge: 'ai' },
     { labelKey: 'planning_rh', icon: Calendar, to: '/app/planning-rh' },
     { labelKey: 'performance', icon: TrendingUp, to: '/app/performance' },

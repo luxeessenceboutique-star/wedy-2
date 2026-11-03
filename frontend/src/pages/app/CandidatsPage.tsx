@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarPlus, GraduationCap, Plus, Search, Sparkles, Trash2, UserPlus, X, Mail, Phone } from 'lucide-react';
+import { CalendarPlus, ClipboardCheck, GraduationCap, Plus, Search, Sparkles, Trash2, UserPlus, X, Mail, Phone } from 'lucide-react';
 import { listCandidates, listInterviews, createCandidate, updateEmployee, promoteToEmployee, promoteToIntern, deleteCandidate, getApiError } from '@/services/api';
 import type { Employee } from '@/services/api';
 import { RV } from '@/components/motion';
@@ -185,9 +185,15 @@ export default function CandidatsPage() {
                 </div>
               ) : null}
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <button type="button" onClick={() => setSchedFor(cur.id)} style={{ flex: 1.4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 46, border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  <CalendarPlus size={16} />{t('pl_new_interview')}
-                </button>
+                {upcoming.get(cur.id) ? (
+                  <Link to={`/app/entretiens/${upcoming.get(cur.id)!.id}`} style={{ flex: 1.4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 46, borderRadius: 12, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontSize: 14, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                    <ClipboardCheck size={16} />{t('itv_open_room')}
+                  </Link>
+                ) : (
+                  <button type="button" onClick={() => setSchedFor(cur.id)} style={{ flex: 1.4, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 46, border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    <CalendarPlus size={16} />{t('pl_new_interview')}
+                  </button>
+                )}
                 {curStage === 'rejected' ? (
                   <button type="button" onClick={() => setStageMut.mutate({ c: cur, s: 'new' })} style={{ flex: 1, height: 46, borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', color: '#33474f', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }} className="cand-h3">{t('cand_reconsider')}</button>
                 ) : (

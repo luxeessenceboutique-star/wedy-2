@@ -137,12 +137,24 @@ async def public_extract_cv(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'analyse du CV: {str(e)}")
 
 
+PUBLIC_CV_DIR = os.path.join("backend", "data", "cvs")
+
+
+def find_public_cv(cv_id: str) -> str | None:
+    """Path of a CV sent from the careers page (`/api/cv/download/{cv_id}`), or None."""
+    if not cv_id or not os.path.isdir(PUBLIC_CV_DIR) or "/" in cv_id or "\\" in cv_id:
+        return None
+    for f in os.listdir(PUBLIC_CV_DIR):
+        if f.startswith(cv_id):
+            return os.path.join(PUBLIC_CV_DIR, f)
+    return None
+
+
 @router.get("/download/{cv_id}")
 async def download_cv(cv_id: str):
     """Download a CV from the local simulation storage."""
-    history_dir = os.path.join("backend", "data", "cvs")
-    for f in os.listdir(history_dir):
-        if f.startswith(cv_id):
-            from fastapi.responses import FileResponse
-            return FileResponse(os.path.join(history_dir, f))
+    path = find_public_cv(cv_id)
+    if path:
+        from fastapi.responses import FileResponse
+        return FileResponse(path)
     raise HTTPException(status_code=404, detail="Fichier introuvable")

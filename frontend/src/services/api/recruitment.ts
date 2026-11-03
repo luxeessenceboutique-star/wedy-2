@@ -75,7 +75,51 @@ export type Interview = {
 };
 
 export const listInterviews = () => api.get<Interview[]>('/entretiens').then(r => r.data);
-export const scheduleInterview = (body: Partial<Interview> & { slot_id?: string }) =>
+export type InterviewPerson = { employee_id?: string | null; name: string };
+export type MeetingSpec = { starts_at: string; duration_min: number; place?: string; visio_url?: string };
+export const scheduleInterview = (body: Partial<Interview> & { slot_id?: string; interviewers?: InterviewPerson[]; meeting?: MeetingSpec }) =>
   api.post<Interview>('/entretiens', body).then(r => r.data);
 export const updateInterviewStatus = (id: string, status: string) =>
   api.patch<Interview>(`/entretiens/${id}/status`, null, { params: { status } }).then(r => r.data);
+
+// ── Interview room (Entretiens) ──────────────────────────────────────────────
+export type Recommendation = 'strong_yes' | 'yes' | 'maybe' | 'no';
+export type ScQuestion = { id: string; q: string; hint: string; note: string; asked: boolean };
+export type ScSection = { id: string; title: string; done: boolean; questions: ScQuestion[] };
+export type ScCriterion = { id: string; label: string; desc: string; weight: number; score: number; note: string };
+export type Scorecard = {
+  source: 'ai' | 'template'; lang: string; generated_at?: string | null;
+  sections: ScSection[]; criteria: ScCriterion[]; strengths: string[]; concerns: string[]; notes: string;
+};
+export type InterviewFull = Interview & {
+  meeting_id?: string | null; interviewers?: InterviewPerson[]; scorecard?: Scorecard | null; overall_score?: number | null;
+  recommendation?: Recommendation | null; summary?: string | null; started_at?: string | null; ended_at?: string | null; created_at?: string;
+};
+export type BoardInterview = InterviewFull & {
+  has_fiche: boolean; fiche_source?: string | null; rated: number; criteria: number; has_cv: boolean; stage?: string | null;
+  candidate: { id?: string; full_name?: string; position?: string; photo_url?: string; status?: string; email?: string };
+};
+export type RoomMeeting = { id: string; title: string; starts_at: string; duration_min: number; place?: string | null; visio_url?: string | null; participants: InterviewPerson[]; agenda: { t: string; done: boolean; ai: boolean }[] };
+export type InterviewRoom = {
+  interview: InterviewFull; candidate: Employee; ad: JobAd | null; meeting: RoomMeeting | null;
+  cv: { name: string; source: 'folder' | 'application'; mime?: string | null } | null;
+  history: { id: string; date: string; start_time: string; type: string; status: string; overall_score?: number | null; recommendation?: Recommendation | null; summary?: string | null }[];
+  migrated: boolean;
+};
+export type InterviewDecision = 'next' | 'offer' | 'reject' | 'hire_employee' | 'hire_intern' | 'later';
+
+export const interviewsBoard = () => api.get<{ data: BoardInterview[]; migrated: boolean }>('/entretiens/board').then(r => r.data);
+export const getInterviewRoom = (id: string) => api.get<InterviewRoom>(`/entretiens/${id}`).then(r => r.data);
+export const getInterviewCv = (id: string) => api.get<Blob>(`/entretiens/${id}/cv`, { responseType: 'blob', timeout: 0 }).then(r => r.data);
+export const getInterviewCvText = (id: string) => api.get<string>(`/entretiens/${id}/cv`, { params: { format: 'text' }, responseType: 'text', timeout: 60000 }).then(r => r.data);
+export const generateFiche = (id: string, lang: string, mode: 'ai' | 'template' = 'ai') =>
+  api.post<{ interview: InterviewFull; fallback: string | null }>(`/entretiens/${id}/fiche`, null, { params: { lang, mode }, timeout: 120000 }).then(r => r.data);
+export const saveFiche = (id: string, body: { scorecard?: Scorecard; summary?: string; recommendation?: Recommendation; interviewers?: InterviewPerson[] }) =>
+  api.patch<InterviewFull>(`/entretiens/${id}/fiche`, body).then(r => r.data);
+export const startInterview = (id: string) => api.post<InterviewFull>(`/entretiens/${id}/start`).then(r => r.data);
+export const linkInterviewMeeting = (id: string, spec: MeetingSpec) =>
+  api.post<{ interview: InterviewFull; meeting: RoomMeeting }>(`/entretiens/${id}/meeting`, spec).then(r => r.data);
+export const draftSynthesis = (id: string, lang: string) =>
+  api.post<{ summary: string; recommendation: Recommendation | null }>(`/entretiens/${id}/synthese`, null, { params: { lang }, timeout: 90000 }).then(r => r.data);
+export const finishInterview = (id: string, body: { summary?: string; recommendation?: Recommendation; decision: InterviewDecision }) =>
+  api.post<{ interview: InterviewFull; decision: InterviewDecision; overall_score: number | null }>(`/entretiens/${id}/finish`, body).then(r => r.data);

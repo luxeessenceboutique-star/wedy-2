@@ -39,6 +39,8 @@ import TendersPage from '@/pages/app/TendersPage';
 import AnnoncesPage from '@/pages/app/AnnoncesPage';
 import PlanningRHPage from '@/pages/app/PlanningRHPage';
 import CandidatsPage from '@/pages/app/CandidatsPage';
+import EntretiensPage from '@/pages/app/EntretiensPage';
+import InterviewRoomPage from '@/pages/app/InterviewRoomPage';
 import PostulerPage from '@/pages/public/PostulerPage';
 
 // Employee portal pages
@@ -119,6 +121,8 @@ export function AppRoutes() {
       <Route path="/app/calendrier-rh" element={<Navigate to="/app/planning-rh" replace />} />
       <Route path="/app/creneaux-rh"   element={<Navigate to="/app/planning-rh" replace />} />
       <Route path="/app/candidats" element={<RequireHR><CandidatsPage /></RequireHR>} />
+      <Route path="/app/entretiens" element={<RequireHR><EntretiensPage /></RequireHR>} />
+      <Route path="/app/entretiens/:id" element={<RequireHR><InterviewRoomPage /></RequireHR>} />
 
       {/* ── Employee Portal ── */}
       <Route path="/employee" element={<RequireEmployee><EmployeeDashboard /></RequireEmployee>} />

@@ -206,6 +206,45 @@ def review_leave(
     return leave
 
 
+def _user_id_for_email(supabase: Client, email: Optional[str]) -> Optional[str]:
+    """The auth user behind an employee's email, if the employee has an account."""
+    if not email:
+        return None
+    for u in (leave_repository.list_auth_users(supabase) or []):
+        if (getattr(u, "email", None) or "").lower() == email.lower():
+            return u.id
+    return None
+
+
+@router.post("/{leave_id}/remind")
+def remind_justification(
+    leave_id: str,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """Ask the employee for the missing justification of an absence (in-app notification)."""
+    res = supabase.table("leave_requests").select("id, employee_id, start_date, end_date").eq("id", leave_id).limit(1).execute()
+    leave = (res.data or [None])[0]
+    if not leave:
+        raise HTTPException(status_code=404, detail="Leave request not found")
+    emp = leave_repository.get_employee_email(supabase, leave["employee_id"])
+    user_id = _user_id_for_email(supabase, (emp.data or {}).get("email"))
+    if not user_id:
+        raise HTTPException(status_code=409, detail="no_account")
+    start, end = leave.get("start_date", ""), leave.get("end_date") or leave.get("start_date", "")
+    period = f"du {start}" if start == end else f"du {start} au {end}"
+    create_notification(
+        supabase,
+        user_id=user_id,
+        title="Justificatif d'absence demandé",
+        message=f"Merci de transmettre aux RH le justificatif de votre absence {period}.",
+        notif_type="warning",
+        link="/employee/documents",
+    )
+    log_action(supabase, current_user["id"], "REMIND", "leave_request", leave_id)
+    return {"sent": True}
+
+
 def _notify_employee_leave_decision(supabase: Client, leave: dict, status: str) -> None:
     """Find the user linked to the employee's email and send them a notification."""
     emp_id = leave.get("employee_id")
@@ -219,13 +258,7 @@ def _notify_employee_leave_decision(supabase: Client, leave: dict, status: str) 
         if not emp_email:
             return
 
-        # Look up user_id by email via Supabase admin API
-        users = leave_repository.list_auth_users(supabase)
-        target_user_id = None
-        for u in (users or []):
-            if getattr(u, "email", None) == emp_email:
-                target_user_id = u.id
-                break
+        target_user_id = _user_id_for_email(supabase, emp_email)
 
         if not target_user_id:
             print(f"[leaves] no auth user found for email {emp_email!r}")

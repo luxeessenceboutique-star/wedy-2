@@ -1,0 +1,5 @@
+/* hover / focus rules of Wedy Absences (style-hover / style-focus) */
+.abs-h1:hover { background: #fbe9e6 !important; }
+.abs-h2:hover { color: #0a1c24 !important; border-color: #9fb4bb !important; }
+.abs-h3:hover { background: #f3fafb !important; color: #0b5f72 !important; }
+.abs-h4:hover { color: #b8402c !important; background: #fbe9e6 !important; }

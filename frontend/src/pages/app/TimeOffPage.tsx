@@ -7,7 +7,7 @@ import { useLang, type TKey } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { tf } from '@/lib/format';
 import { avatarGradient, initialsOf } from '@/lib/visual';
-import { holidayAt, mergeHolidays, upcomingHolidays, type Holiday } from '@/lib/holidays';
+import { holidayAt, mergeHolidays, upcomingHolidays, workingDays, type Holiday } from '@/lib/holidays';
 import { TimeOffView } from './TimeOffView';
 
 export type TimeOffVals = {
@@ -32,7 +32,6 @@ const LOCALE: Record<string, string> = { fr: 'fr-FR', en: 'en-GB', ar: 'ar-MA' }
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const parse = (s: string) => { const [y, m, d] = s.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
-const DAY = 86400000;
 const BAL_ROWS = 8;
 
 /** The reference shows three families of leave; every backend type falls in one of them. */
@@ -40,12 +39,6 @@ const FAMILY: Record<string, 'a' | 'e' | 'm'> = { annual: 'a', sick: 'm', unjust
 const COLORS = { a: ['#16b6c8', 'rgba(22,182,200,.8)'], e: ['#6d5ad6', 'rgba(109,90,214,.8)'], m: ['#df5740', 'rgba(223,87,64,.8)'] } as const;
 const TYPE_KEYS: [string, TKey][] = [['annual', 'tof_type_annual'], ['sick', 'tof_type_sick'], ['personal', 'tof_type_personal'], ['maternity', 'tof_type_maternity'], ['paternity', 'tof_type_paternity'], ['unpaid', 'tof_type_unpaid'], ['unjustified', 'tof_type_unjustified']];
 
-/** Leave days counted as "jours ouvrables": every day but Sunday and public holidays. */
-function workingDays(from: Date, to: Date, hols: Holiday[]) {
-  let n = 0;
-  for (let d = new Date(from); d <= to; d = new Date(d.getTime() + DAY)) if (d.getDay() !== 0 && !holidayAt(hols, d)) n++;
-  return n;
-}
 
 export default function TimeOffPage() {
   const { t, lang } = useLang();

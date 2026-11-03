@@ -1,294 +1,247 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, FileCheck, Bell, Send, Sparkles, Trash2, Check } from 'lucide-react';
-import { toast } from 'sonner';
-import { Page, PageHeader } from '../../components/layout/AppShell';
-import { Avatar, Badge, Modal, Spinner } from '../../components/ui';
-import { listLeaves, createLeave, reviewLeave, updateLeave, deleteLeave, listEmployees, getApiError, type LeaveRequest } from '@/services/api';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { Check, PenLine, Trash2, UserX } from 'lucide-react';
+import { api, createLeave, deleteLeave, getApiError, listEmployees, listHolidays, listLeaves, reviewLeave, updateLeave, type LeaveRequest } from '@/services/api';
+import { Drawer, Spinner } from '@/components/ui';
+import { useLang, type TKey } from '@/lib/lang';
+import { useNotify } from '@/lib/notify';
+import { tf } from '@/lib/format';
+import { avatarGradient, initialsOf } from '@/lib/visual';
+import { mergeHolidays, workingDays, type Holiday } from '@/lib/holidays';
+import { AbsencesView } from './AbsencesView';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const iso = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-const fmt = (s?: string) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
-const dayCount = (a: string, b: string) => Math.max(1, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000) + 1);
-
-const ABSENCE_TYPES: Record<string, { label: string; tint: string; color: string }> = {
-  sick:        { label: 'Maladie',              tint: '#fbe9e6', color: '#a33a28' },
-  unjustified: { label: 'Non justifiée',        tint: '#fbefda', color: '#8a5207' },
-  accident:    { label: 'Accident du travail',  tint: '#ece9fb', color: '#5444b8' },
+export type AbsencesVals = {
+  loading: boolean; rtl: boolean;
+  declare: () => void;
+  today: number; rateLabel: string; rate: string; missing: number; lost: number;
+  rows: { id: string; name: string; dates: string; ini: string; av: string; type: string; tBg: string; tColor: string; ok: boolean; okTitle?: string; ko: boolean; sent: boolean; delay: string; remind: () => void; tools: ReactNode; editor: ReactNode }[];
+  more: number; toggleAll: () => void; toggleLabel: string;
+  deptTitle: string;
+  depts: { name: string; title: string; v: string; w: string; bar: string; delay: string }[];
+  insight: string;
+  drawer: ReactNode;
 };
 
-const DEPT_DATA = [
-  { name: 'Opérations',  v: '6,2 %', w: 82, bar: '#df5740' },
-  { name: 'Commercial',  v: '4,1 %', w: 54, bar: '#df9326' },
-  { name: 'Tech',        v: '3,4 %', w: 45, bar: 'linear-gradient(90deg,#0e6f84,#16b6c8)' },
-  { name: 'RH',          v: '2,8 %', w: 37, bar: 'linear-gradient(90deg,#0e6f84,#16b6c8)' },
-  { name: 'Finance',     v: '1,5 %', w: 20, bar: 'linear-gradient(90deg,#0e6f84,#16b6c8)' },
-];
+const LOCALE: Record<string, string> = { fr: 'fr-FR', en: 'en-GB', ar: 'ar-MA' };
+const parse = (s: string) => { const [y, m, d] = s.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const ROWS = 8;
+const STAFF = new Set(['active', 'on-leave']);
 
-const AVS = ['linear-gradient(135deg,#0e6f84,#16b6c8)', 'linear-gradient(135deg,#5444b8,#9a8bf0)', 'linear-gradient(135deg,#0f6f49,#2bbd86)', 'linear-gradient(135deg,#a8650a,#e6a948)', 'linear-gradient(135deg,#b8402c,#ef6b54)', 'linear-gradient(135deg,#2f4bb0,#4a69d8)'];
-const avOf = (n: string) => AVS[(n.charCodeAt(0) + n.length) % AVS.length];
-const ini = (n: string) => n.split(/[\s.@]/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+/** Absence kinds (the rest of leave_requests are time off). Sickness and work accidents are justified by nature. */
+const TYPES: Record<string, { key: TKey; bg: string; color: string; justified: boolean }> = {
+  sick: { key: 'abs_type_sick', bg: '#fbe9e6', color: '#a33a28', justified: true },
+  unjustified: { key: 'abs_type_unjustified', bg: '#fbefda', color: '#8a5207', justified: false },
+  accident: { key: 'abs_type_accident', bg: '#ece9fb', color: '#5444b8', justified: true },
+};
+const DOW_KEYS: TKey[] = ['abs_dow_0', 'abs_dow_1', 'abs_dow_2', 'abs_dow_3', 'abs_dow_4', 'abs_dow_5', 'abs_dow_6'];
 
-// ── Declare Modal ─────────────────────────────────────────────────────────────
-function DeclareModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+const smallBtn: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 5, height: 32, padding: '0 10px', borderRadius: 9, border: '1px solid #d6dfe3', background: '#ffffff', color: '#52646d', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' };
+
+export default function AbsencesPage() {
+  const { t, lang } = useLang();
+  const notify = useNotify();
   const qc = useQueryClient();
-  const today = iso(new Date());
-  const { data: emps } = useQuery({ queryKey: ['employees', 'absence-form'], queryFn: () => listEmployees({ limit: 200 }), enabled: open });
-  const [form, setForm] = useState({ employee_id: '', type: 'sick', start_date: today, end_date: today, reason: '' });
-  React.useEffect(() => { if (open) setForm(f => ({ ...f, start_date: today, end_date: today })); }, [open]);
+  const loc = LOCALE[lang] ?? 'fr-FR';
+  const [now] = useState(() => new Date());
+  const [open, setOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const [sent, setSent] = useState<Set<string>>(() => new Set());
+  const [editing, setEditing] = useState<string | null>(null);
 
+  const leavesQ = useQuery({ queryKey: ['absences-all'], queryFn: () => listLeaves({ limit: 1000 }), refetchInterval: 60_000 });
+  const empQ = useQuery({ queryKey: ['employees', 'staff-list'], queryFn: () => listEmployees({ limit: 1000 }) });
+  const holQ = useQuery({ queryKey: ['holidays'], queryFn: listHolidays, staleTime: 3600_000 });
+  const hols = useMemo(() => mergeHolidays(t, holQ.data?.data), [t, holQ.data]);
+  const staff = useMemo(() => (empQ.data?.data ?? []).filter(e => STAFF.has(e.status ?? 'active')), [empQ.data]);
+
+  const refresh = () => ['absences-all', 'leaves', 'leave-balances', 'dashboard-kpis'].forEach(k => qc.invalidateQueries({ queryKey: [k] }));
+  const del = useMutation({
+    mutationFn: (id: string) => deleteLeave(id),
+    onSuccess: () => { refresh(); notify.success(t('abs_deleted')); },
+    onError: e => notify.error(getApiError(e, t('error'))),
+  });
+  const remind = useMutation({
+    mutationFn: (l: LeaveRequest) => api.post(`/leaves/${l.id}/remind`),
+    onSuccess: (_, l) => { setSent(s => new Set(s).add(l.id)); notify.success(tf(t('abs_reminded'), { name: l.employees?.full_name ?? '' })); },
+    onError: e => notify.error(axios.isAxiosError(e) && e.response?.status === 409 ? t('abs_no_account') : getApiError(e, t('error'))),
+  });
+
+  const absences = (leavesQ.data?.data ?? []).filter(l => l.status === 'approved' && TYPES[l.type] && l.start_date);
+  const todayIso = iso(now);
+  const covers = (l: LeaveRequest, d: string) => l.start_date.slice(0, 10) <= d && d <= (l.end_date || l.start_date).slice(0, 10);
+  const overlap = (l: LeaveRequest, from: Date, to: Date) => {
+    const s = parse(l.start_date), e = parse(l.end_date || l.start_date);
+    const a = s > from ? s : from, b = e < to ? e : to;
+    return a <= b ? workingDays(a, b, hols) : 0;
+  };
+
+  // ── KPIs ─────────────────────────────────────────────────────────────────────
+  const today = new Set(absences.filter(l => covers(l, todayIso)).map(l => l.employee_id)).size;
+  const missingList = absences.filter(l => !TYPES[l.type].justified && !l.justification?.trim());
+  const mStart = new Date(now.getFullYear(), now.getMonth(), 1), mEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const lost = absences.reduce((s, l) => s + overlap(l, mStart, mEnd), 0);
+
+  // Absenteeism this quarter = absence working days / (headcount × working days elapsed).
+  const q = Math.floor(now.getMonth() / 3);
+  const qStart = new Date(now.getFullYear(), q * 3, 1);
+  const elapsed = workingDays(qStart, now, hols);
+  const deptOf = new Map(staff.map(e => [e.id, e.department || t('abs_no_dept')]));
+  const lostBy = new Map<string, number>();
+  const byDow = Array(7).fill(0) as number[];
+  let lostQ = 0;
+  for (const l of absences) {
+    const n = overlap(l, qStart, now);
+    if (!n || !deptOf.has(l.employee_id)) continue;
+    lostQ += n;
+    const d = deptOf.get(l.employee_id)!;
+    lostBy.set(d, (lostBy.get(d) ?? 0) + n);
+    const s = parse(l.start_date), e = parse(l.end_date || l.start_date);
+    for (let x = s < qStart ? qStart : s; x <= e && x <= now; x = new Date(x.getFullYear(), x.getMonth(), x.getDate() + 1)) byDow[x.getDay()]++;
+  }
+  const pct = (n: number) => `${n.toLocaleString(loc, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
+  const rateOf = (days: number, heads: number) => (heads && elapsed ? days / (heads * elapsed) * 100 : 0);
+  const overall = rateOf(lostQ, staff.length);
+  const heads = new Map<string, number>();
+  staff.forEach(e => { const d = deptOf.get(e.id)!; heads.set(d, (heads.get(d) ?? 0) + 1); });
+  const deptRates = [...heads.entries()].map(([name, h]) => ({ name, h, r: rateOf(lostBy.get(name) ?? 0, h) })).sort((a, b) => b.r - a.r).slice(0, 5);
+  const maxR = Math.max(...deptRates.map(d => d.r), 0.0001);
+  const qLabel = tf(t('abs_quarter'), { q: q + 1 });
+
+  let insight = t('abs_insight_none');
+  if (lostQ > 0 && deptRates.length) {
+    const top = deptRates[0];
+    const ratio = overall ? top.r / overall : 0;
+    const dow = byDow.indexOf(Math.max(...byDow));
+    const dowShare = byDow[dow] / byDow.reduce((a, b) => a + b, 0);
+    if (ratio >= 1.5 && heads.size > 1) {
+      insight = tf(t('abs_insight_top'), { dept: top.name, x: ratio.toLocaleString(loc, { maximumFractionDigits: 1 }), avg: pct(overall) });
+      if (dowShare >= 0.3) insight += ' ' + tf(t('abs_insight_dow'), { day: t(DOW_KEYS[dow]) });
+      insight += ' ' + t('abs_insight_advice');
+    } else insight = tf(t('abs_insight_even'), { avg: pct(overall) });
+  }
+
+  // ── rows: the last 30 days, and anything still running ─────────────────────────
+  const cutoff = iso(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30));
+  const recent = absences.filter(l => (l.end_date || l.start_date).slice(0, 10) >= cutoff).sort((a, b) => b.start_date.localeCompare(a.start_date));
+  const shown = showAll ? recent : recent.slice(0, ROWS);
+  const dfm = new Intl.DateTimeFormat(loc, { day: 'numeric', month: 'short' });
+  const datesOf = (l: LeaveRequest) => {
+    const s = parse(l.start_date), e = parse(l.end_date || l.start_date);
+    const n = l.days || workingDays(s, e, hols) || 1;
+    const span = covers(l, todayIso) && s.getTime() === e.getTime() ? t('abs_today') : s.getTime() === e.getTime() ? dfm.format(s) : `${dfm.format(s)} → ${dfm.format(e)}`;
+    return `${span} · ${tf(t(n === 1 ? 'abs_day_one' : 'abs_days_n'), { n })}`;
+  };
+  const rows = shown.map((l, i) => {
+    const ty = TYPES[l.type], name = l.employees?.full_name || '—';
+    const ok = ty.justified || !!l.justification?.trim();
+    const wasSent = sent.has(l.id);
+    return {
+      id: l.id, name, dates: datesOf(l), ini: initialsOf(name), av: avatarGradient(name),
+      type: t(ty.key), tBg: ty.bg, tColor: ty.color,
+      ok, okTitle: l.justification || undefined, ko: !ok && !wasSent, sent: !ok && wasSent, delay: String(i * 50),
+      remind: () => remind.mutate(l),
+      tools: (
+        <span style={{ display: 'inline-flex', gap: 4, marginInlineStart: 'auto' }}>
+          {!ty.justified && <button type="button" onClick={() => setEditing(editing === l.id ? null : l.id)} title={t('abs_justify')} style={smallBtn} className="abs-h2"><PenLine size={13} />{l.justification ? t('edit') : t('abs_justify')}</button>}
+          <button type="button" aria-label={t('delete')} title={t('delete')} onClick={() => { if (window.confirm(tf(t('abs_confirm_delete'), { name }))) del.mutate(l.id); }} style={{ ...smallBtn, width: 32, padding: 0, justifyContent: 'center', color: '#7d8f97' }} className="abs-h4"><Trash2 size={13} /></button>
+        </span>
+      ),
+      editor: editing === l.id ? <JustifyEditor leave={l} onDone={() => setEditing(null)} /> : null,
+    };
+  });
+
+  const v: AbsencesVals = {
+    loading: leavesQ.isLoading || empQ.isLoading, rtl: lang === 'ar',
+    declare: () => setOpen(true),
+    today, rateLabel: tf(t('abs_rate_label'), { q: qLabel }), rate: staff.length ? pct(overall) : '—', missing: missingList.length, lost,
+    rows, more: recent.length > ROWS ? recent.length - ROWS : 0, toggleAll: () => setShowAll(x => !x),
+    toggleLabel: showAll ? t('tof_show_less') : tf(t('abs_show_all'), { n: recent.length }),
+    deptTitle: tf(t('abs_dept_title'), { q: qLabel }),
+    depts: deptRates.map((d, i) => ({ name: d.name, title: tf(t('abs_dept_tip'), { n: d.h }), v: pct(d.r), w: String(Math.max(2, Math.round(d.r / maxR * 100))), bar: d.r > 4 ? 'linear-gradient(90deg,#df9326,#df5740)' : 'linear-gradient(90deg,#0e6f84,#16b6c8)', delay: String(i * 80) })),
+    insight,
+    drawer: <DeclareDrawer open={open} onClose={() => setOpen(false)} staff={staff} hols={hols} onDone={refresh} />,
+  };
+  return <AbsencesView v={v} />;
+}
+
+// ── inline justification (an unjustified absence becomes "justificatif reçu") ──────
+function JustifyEditor({ leave, onDone }: { leave: LeaveRequest; onDone: () => void }) {
+  const { t } = useLang();
+  const notify = useNotify();
+  const qc = useQueryClient();
+  const [value, setValue] = useState(leave.justification ?? '');
+  const mut = useMutation({
+    mutationFn: () => updateLeave(leave.id, { justification: value.trim() }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['absences-all'] }); notify.success(t('abs_justif_saved')); onDone(); },
+    onError: e => notify.error(getApiError(e, t('error'))),
+  });
+  return (
+    <form onSubmit={e => { e.preventDefault(); mut.mutate(); }} style={{ flexBasis: '100%', display: 'flex', gap: 8, paddingInlineStart: 50 }}>
+      <input autoFocus value={value} onChange={e => setValue(e.target.value)} onKeyDown={e => { if (e.key === 'Escape') onDone(); }} placeholder={t('abs_justif_ph')}
+        style={{ flex: 1, minWidth: 0, height: 36, padding: '0 12px', borderRadius: 10, border: '1px solid #d6dfe3', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' }} />
+      <button type="submit" disabled={mut.isPending} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 36, padding: '0 12px', border: 'none', borderRadius: 10, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+        {mut.isPending ? <Spinner size={13} color="#fff" /> : <Check size={14} />}{t('save')}
+      </button>
+    </form>
+  );
+}
+
+// ── "Déclarer une absence" ──────────────────────────────────────────────────────
+const inputStyle: CSSProperties = { width: '100%', height: 40, padding: '0 12px', borderRadius: 11, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' };
+const labelStyle: CSSProperties = { display: 'block', fontSize: 12.5, fontWeight: 600, color: '#33474f', marginBottom: 6 };
+
+function DeclareDrawer({ open, onClose, staff, hols, onDone }: { open: boolean; onClose: () => void; staff: { id: string; full_name: string }[]; hols: Holiday[]; onDone: () => void }) {
+  const { t } = useLang();
+  const notify = useNotify();
+  const [today] = useState(() => iso(new Date()));
+  const empty = { employee_id: '', type: 'sick', start_date: today, end_date: today, reason: '', justification: '' };
+  const [f, setF] = useState(empty);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) { setWasOpen(open); if (open) setF(empty); }
+  const days = f.start_date && f.end_date >= f.start_date ? Math.max(1, workingDays(parse(f.start_date), parse(f.end_date), hols)) : 0;
   const mut = useMutation({
     mutationFn: async () => {
-      const days = dayCount(form.start_date, form.end_date);
-      const leave = await createLeave({ ...form, days });
-      return reviewLeave(leave.id, 'approved');
+      const leave = await createLeave({ employee_id: f.employee_id, type: f.type, start_date: f.start_date, end_date: f.end_date, days, reason: f.reason || undefined });
+      await reviewLeave(leave.id, 'approved');
+      if (f.type === 'unjustified' && f.justification.trim()) await updateLeave(leave.id, { justification: f.justification.trim() });
     },
-    onSuccess: () => {
-      ['absences-all', 'leaves', 'leaves-all', 'dashboard-kpis'].forEach(k => qc.invalidateQueries({ queryKey: [k] }));
-      toast.success('Absence enregistrée');
-      onClose();
-    },
-    onError: (e: unknown) => toast.error(getApiError(e, "Impossible d'enregistrer l'absence")),
+    onSuccess: () => { onDone(); notify.success(t('abs_saved')); onClose(); },
+    onError: e => notify.error(getApiError(e, t('error'))),
   });
-
-  const valid = form.employee_id && form.start_date && form.end_date >= form.start_date;
+  const ok = !!f.employee_id && days > 0;
   return (
-    <Modal open={open} onClose={onClose} title="Déclarer une absence" width={480}>
-      <form onSubmit={e => { e.preventDefault(); if (valid) mut.mutate(); }} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <label className="label">Employé *</label>
-        <select className="input" style={{ width: '100%' }} value={form.employee_id} onChange={e => setForm(f => ({ ...f, employee_id: e.target.value }))} required>
-          <option value="">— Sélectionner —</option>
-          {(emps?.data ?? []).map((e: any) => <option key={e.id} value={e.id}>{e.full_name}</option>)}
-        </select>
-        <label className="label">Type</label>
-        <select className="input" style={{ width: '100%' }} value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
-          {Object.entries(ABSENCE_TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-        </select>
+    <Drawer open={open} onClose={onClose} title={t('abs_declarer_une_absence')} subtitle={t('abs_drawer_sub')} icon={<UserX size={17} />} width={480}
+      footer={<>
+        <button type="button" className="btn btn-secondary" onClick={onClose}>{t('cancel')}</button>
+        <button type="button" className="btn btn-primary" disabled={!ok || mut.isPending} onClick={() => mut.mutate()}>{mut.isPending ? <Spinner size={14} color="#fff" /> : <Check size={14} />} {t('save')}</button>
+      </>}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div>
+          <label style={labelStyle}>{t('tof_employee')}</label>
+          <select value={f.employee_id} onChange={e => setF(x => ({ ...x, employee_id: e.target.value }))} style={inputStyle}>
+            <option value="">{t('tof_pick_employee')}</option>
+            {staff.map(e => <option key={e.id} value={e.id}>{e.full_name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={labelStyle}>{t('abs_kind')}</label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6 }}>
+            {Object.entries(TYPES).map(([k, ty]) => {
+              const on = f.type === k;
+              return <button key={k} type="button" onClick={() => setF(x => ({ ...x, type: k }))} style={{ minHeight: 36, padding: '6px 8px', borderRadius: 10, border: `1px solid ${on ? ty.color : '#d6dfe3'}`, background: on ? ty.bg : '#ffffff', color: on ? ty.color : '#33474f', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>{t(ty.key)}</button>;
+            })}
+          </div>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div>
-            <label className="label" style={{ display: 'block', marginBottom: 6 }}>Du</label>
-            <input className="input" type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} style={{ width: '100%' }} />
-          </div>
-          <div>
-            <label className="label" style={{ display: 'block', marginBottom: 6 }}>Au</label>
-            <input className="input" type="date" value={form.end_date} min={form.start_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} style={{ width: '100%' }} />
-          </div>
+          <div><label style={labelStyle}>{t('abs_from')}</label><input type="date" value={f.start_date} onChange={e => setF(x => ({ ...x, start_date: e.target.value, end_date: x.end_date < e.target.value ? e.target.value : x.end_date }))} style={inputStyle} /></div>
+          <div><label style={labelStyle}>{t('abs_to')}</label><input type="date" value={f.end_date} min={f.start_date} onChange={e => setF(x => ({ ...x, end_date: e.target.value }))} style={inputStyle} /></div>
         </div>
-        <label className="label">Motif (facultatif)</label>
-        <input className="input" value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))} placeholder="Certificat médical, …" style={{ width: '100%' }} />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 6 }}>
-          <button className="btn btn-secondary" type="button" onClick={onClose}>Annuler</button>
-          <button className="btn btn-primary" type="submit" disabled={mut.isPending || !valid}>
-            {mut.isPending ? 'Enregistrement…' : 'Enregistrer'}
-          </button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
-
-// ── Justification cell (inline edit) ─────────────────────────────────────────
-function JustifCell({ leave }: { leave: LeaveRequest }) {
-  const qc = useQueryClient();
-  const saved = leave.justification ?? '';
-  const [value, setValue] = useState(saved);
-  useEffect(() => setValue(saved), [saved]);
-  const mut = useMutation({
-    mutationFn: (v: string) => updateLeave(leave.id, { justification: v.trim() }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['absences-all'] }); toast.success('Justification enregistrée'); },
-    onError: (e: unknown) => toast.error(getApiError(e, 'Impossible d\'enregistrer')),
-  });
-  const dirty = value.trim() !== saved.trim();
-  const save = () => { if (dirty && !mut.isPending) mut.mutate(value); };
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <input className="input" value={value} placeholder="Ajouter…" onChange={e => setValue(e.target.value)}
-        onBlur={save} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') setValue(saved); }}
-        style={{ width: 160, fontSize: 12, padding: '4px 8px' }} />
-      {dirty && <button className="btn btn-soft btn-sm" disabled={mut.isPending} onMouseDown={e => e.preventDefault()} onClick={save}><Check size={12} /></button>}
-    </div>
-  );
-}
-
-// ── Main Page ──────────────────────────────────────────────────────────────────
-export default function AbsencesPage() {
-  const today = iso(new Date());
-  const [showForm, setShowForm] = useState(false);
-  const [reminded, setReminded] = useState<Set<string>>(new Set());
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['absences-all'],
-    queryFn: () => listLeaves({ limit: 1000 }),
-    refetchInterval: 60_000,
-  });
-
-  const qc = useQueryClient();
-  const delMut = useMutation({
-    mutationFn: (id: string) => deleteLeave(id),
-    onSuccess: () => {
-      ['absences-all', 'leaves', 'leaves-all', 'dashboard-kpis'].forEach(k => qc.invalidateQueries({ queryKey: [k] }));
-      toast.success('Absence supprimée');
-    },
-    onError: (e: unknown) => toast.error(getApiError(e, 'Suppression impossible')),
-  });
-
-  const absences = useMemo(() =>
-    (data?.data ?? []).filter((l: LeaveRequest) => l.status === 'approved' && ABSENCE_TYPES[l.type]),
-    [data],
-  );
-
-  const covers = (l: LeaveRequest, d: string) => l.start_date <= d && d <= (l.end_date || l.start_date);
-
-  const onToday = absences.filter(l => covers(l, today));
-  const sickToday = onToday.filter(l => l.type === 'sick');
-  const unjustToday = onToday.filter(l => l.type === 'unjustified');
-  const missing = unjustToday.filter(l => !l.justification).length;
-
-  // Days lost this month
-  const currentMonth = today.slice(0, 7);
-  const daysLost = absences.filter(l => l.start_date?.startsWith(currentMonth) || l.end_date?.startsWith(currentMonth))
-    .reduce((s, l) => s + (l.days || 0), 0);
-
-  // Recent absences (last 30 days)
-  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
-  const cutoffStr = iso(cutoff);
-  const recent = [...absences]
-    .filter(l => l.start_date >= cutoffStr || covers(l, today))
-    .sort((a, b) => b.start_date.localeCompare(a.start_date))
-    .slice(0, 20);
-
-  return (
-    <Page>
-      <PageHeader
-        title="Absences"
-        subtitle="Maladies, absences non justifiées et justificatifs à suivre."
-        action={
-          <button className="btn btn-primary" onClick={() => setShowForm(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'linear-gradient(135deg,#b8402c,#df5740)', boxShadow: '0 12px 26px -12px rgba(223,87,64,.8)' }}>
-            <Plus size={16} strokeWidth={2.2} /> Déclarer une absence
-          </button>
-        }
-      />
-
-      {/* KPI cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12 }}>
-        <div style={{ padding: '16px 18px', borderRadius: 18, background: 'linear-gradient(135deg,#b8402c,#d1503a)', color: '#fff' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', opacity: .9 }}>Absences du jour</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4 }}>{onToday.length}</div>
-        </div>
-        <div style={{ padding: '16px 18px', borderRadius: 18, background: '#fff', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-2)' }}>Taux d'absentéisme · T4</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4 }}>3,4 %</div>
-        </div>
-        <div style={{ padding: '16px 18px', borderRadius: 18, background: '#fff', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-2)' }}>Justificatifs manquants</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4, color: missing > 0 ? '#b8402c' : 'var(--text)' }}>{missing}</div>
-        </div>
-        <div style={{ padding: '16px 18px', borderRadius: 18, background: '#fff', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-2)' }}>Jours perdus ce mois</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-.04em', marginTop: 4 }}>{daysLost}</div>
-        </div>
+        {days > 0 && <div style={{ padding: '10px 12px', borderRadius: 12, background: '#f3fafb', fontSize: 13, color: '#33474f' }}>{tf(t(days === 1 ? 'abs_day_one' : 'abs_days_n'), { n: days })} · {t('abs_days_hint')}</div>}
+        <div><label style={labelStyle}>{t('tof_reason')}</label><input value={f.reason} onChange={e => setF(x => ({ ...x, reason: e.target.value }))} placeholder={t('abs_reason_ph')} style={inputStyle} /></div>
+        {f.type === 'unjustified' && <div><label style={labelStyle}>{t('abs_justification')}</label><input value={f.justification} onChange={e => setF(x => ({ ...x, justification: e.target.value }))} placeholder={t('abs_justif_ph')} style={inputStyle} /></div>}
       </div>
-
-      {/* Main content */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
-        {/* Recent absences */}
-        <div style={{ flex: '1.4 1 460px', minWidth: 0, borderRadius: 20, background: '#fff', border: '1px solid var(--border)', overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Absences récentes</div>
-
-          {isLoading ? (
-            <div style={{ padding: 48, textAlign: 'center' }}><Spinner /></div>
-          ) : recent.length === 0 ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-2)', fontSize: 13 }}>
-              Aucune absence enregistrée.
-            </div>
-          ) : (
-            recent.map((l, i) => {
-              const cfg = ABSENCE_TYPES[l.type] || { label: l.type, tint: '#eef2f4', color: '#33474f' };
-              const name = l.employees?.full_name || '?';
-              const justOk = l.type === 'sick' || !!l.justification;
-              const sentReminder = reminded.has(l.id);
-              const dateStr = l.start_date === l.end_date
-                ? `${fmt(l.start_date)} · 1 jour`
-                : `${fmt(l.start_date)} → ${fmt(l.end_date)} · ${l.days || dayCount(l.start_date, l.end_date || l.start_date)} jours`;
-              return (
-                <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderTop: '1px solid #eef2f4', flexWrap: 'wrap' }}>
-                  <span style={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avOf(name), color: '#fff', fontSize: 12.5, fontWeight: 700, flexShrink: 0 }}>
-                    {ini(name)}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 160 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{name}</div>
-                    <div style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{dateStr}</div>
-                  </div>
-                  <span style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: cfg.tint, color: cfg.color }}>
-                    {cfg.label}
-                  </span>
-                  {justOk ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 600, color: '#0f6f49' }}>
-                      <FileCheck size={14} /> Justificatif reçu
-                    </span>
-                  ) : sentReminder ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 600, color: '#8a5207' }}>
-                      <Send size={13} /> Relance envoyée
-                    </span>
-                  ) : (
-                    <button type="button"
-                      onClick={() => { setReminded(r => new Set(r).add(l.id)); toast.success(`Relance envoyée à ${name}`); }}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 9, border: '1px solid #f0c9c0', background: '#fff', color: '#a33a28', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
-                      <Bell size={13} /> Relancer
-                    </button>
-                  )}
-                  <button type="button" title="Supprimer" onClick={() => { if (window.confirm(`Supprimer l'absence de ${name} ?`)) delMut.mutate(l.id); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Right panel */}
-        <div style={{ flex: '1 1 320px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Absenteeism by dept */}
-          <div style={{ padding: 20, borderRadius: 20, background: '#fff', border: '1px solid var(--border)' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Absentéisme par service · T4</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
-              {DEPT_DATA.map(d => (
-                <div key={d.name} style={{ display: 'grid', gridTemplateColumns: '100px minmax(0,1fr) 44px', alignItems: 'center', gap: 10, fontSize: 13 }}>
-                  <span style={{ color: '#33474f' }}>{d.name}</span>
-                  <span style={{ height: 9, borderRadius: 99, background: '#eef2f4', overflow: 'hidden' }}>
-                    <span style={{ display: 'block', height: '100%', width: `${d.w}%`, borderRadius: 99, background: d.bar }} />
-                  </span>
-                  <span style={{ fontWeight: 700, textAlign: 'right', color: d.w > 70 ? '#b8402c' : 'var(--text)' }}>{d.v}</span>
-                </div>
-              ))}
-            </div>
-            {/* AI insight */}
-            <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start', marginTop: 16, padding: 12, borderRadius: 12, background: '#ece9fb', color: '#3d2f99', fontSize: 13, lineHeight: 1.5 }}>
-              <Sparkles size={15} style={{ flexShrink: 0, marginTop: 2 }} />
-              Opérations est à près de 2× la moyenne (3,4 %), surtout les lundis. Un point avec le manager est conseillé.
-            </div>
-          </div>
-
-          {/* Today's breakdown */}
-          <div style={{ padding: 20, borderRadius: 20, background: '#fff', border: '1px solid var(--border)' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>Aujourd'hui</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-              {[
-                { label: 'Maladie', count: sickToday.length, tint: '#fbe9e6', color: '#a33a28' },
-                { label: 'Non justifiée', count: unjustToday.length, tint: '#fbefda', color: '#8a5207' },
-              ].map(row => (
-                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 500, padding: '2px 8px', borderRadius: 99, background: row.tint, color: row.color }}>{row.label}</span>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800 }}>{row.count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <DeclareModal open={showForm} onClose={() => setShowForm(false)} />
-    </Page>
+    </Drawer>
   );
 }

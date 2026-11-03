@@ -157,6 +157,11 @@ Time off notes (`app/TimeOffPage.tsx` + `TimeOffView.tsx`):
 - "Enregistrer un congé" opens a drawer: employee, type, dates, days counted in working days (no Sundays, no holidays, editable), balance check, and "approve now" (goes through the review endpoint, so the balance and the employee notification follow). Balances list shows 8 rows with a "show all" toggle.
 - Grow reveals (bars) now watch their parent: at scale 0 they have no width and the observer never saw them enter, which left the reference's balance bars empty.
 
+Absences notes (`app/AbsencesPage.tsx` + `AbsencesView.tsx`):
+- Absences are the approved `leave_requests` of type sick / unjustified / accident. Following the earlier rule, sickness and work accidents count as justified; an unjustified absence needs a justification (inline "Justifier", saved in `leave_requests.justification`), and each row can be deleted (balance restored by the backend).
+- Absenteeism rate of the quarter = absence working days / (active headcount × working days elapsed), overall and per department (top 5); the insight is computed (top department vs average, the weekday absences concentrate on when ≥ 30 %). Days lost this month and absent today come from the same data.
+- "Relancer" calls the new `POST /leaves/:id/remind`: an in-app notification to the employee's account (409 when the employee has no account, shown as such) and an audit entry. "Déclarer une absence" is a drawer (records it approved, optional justification).
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -171,7 +176,7 @@ Time off notes (`app/TimeOffPage.tsx` + `TimeOffView.tsx`):
 | 8 | Templates | Wedy Templates | `/app/templates` | `app/TemplatesPage.tsx` + `TemplatesView.tsx` | ☑ |
 | 9 | History | Wedy History | `/app/history` | `app/HistoryPage.tsx` | ☑ |
 | 10 | Time off | Wedy Time Off | `/app/timeoff` | `app/TimeOffPage.tsx` | ☑ |
-| 11 | Absences | Wedy Absences | `/app/absences` | `app/AbsencesPage.tsx` | ◐ |
+| 11 | Absences | Wedy Absences | `/app/absences` | `app/AbsencesPage.tsx` | ☑ |
 | 12 | Planning | Wedy Planning | `/app/planning-rh` | `app/PlanningRHPage.tsx` (+ `CreneauxRHPage.tsx` in a drawer) | ☑ |
 | 13 | Recruitment | Wedy Recruitment | `/app/recruitment` | `app/RecruitmentPage.tsx` (+ `lib/recruitment.ts`) | ☑ |
 | 14 | Candidates | Wedy Candidates | `/app/candidats` | `app/CandidatsPage.tsx` | ☑ |

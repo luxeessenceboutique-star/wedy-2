@@ -65,3 +65,12 @@ export function upcomingHolidays(list: Holiday[], from: Date, n = 3): { date: Da
   }
   return all.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, n);
 }
+
+/** Days counted as "jours ouvrables" between two dates (inclusive): every day but Sunday and public holidays. */
+export function workingDays(from: Date, to: Date, list: Holiday[]): number {
+  let n = 0;
+  for (let d = new Date(from.getFullYear(), from.getMonth(), from.getDate()); d <= to; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+    if (d.getDay() !== 0 && !holidayAt(list, d)) n++;
+  }
+  return n;
+}

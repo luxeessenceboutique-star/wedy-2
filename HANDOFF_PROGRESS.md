@@ -111,6 +111,12 @@ Training notes (`TrainingPage.tsx`):
 - Enrolments: start / mark completed / unenrol (`PATCH`/`DELETE /training/assignments`). Status-only progress (0 / … / 100 %), no fake percentages.
 - Skills matrix: the 6 most-assessed skills × assessed people; clicking cycles non évalué → débutant → intermédiaire → expert (upsert / delete). "Écarts détectés" lists people below intermediate and suggests a catalog course whose title/description/category matches the skill, with one-click enrolment.
 
+Talents notes (`TalentsPage.tsx`):
+- Real `/talents` profiles (categories = backend 9-box classes star / solid / potential / key_player / needs_improvement). Performance & potential are editable (5-step bars), risk and "poste critique" toggle on the chips, the risk explanation / target role / career path are inline fields, successors add/remove — all saved with `PATCH /talents/:id`.
+- Backend fix: a partial PATCH (e.g. only the risk) used to reclassify the profile with the default 3/3 scores; it now completes with the stored scores.
+- OKR tab (`/okrs`, progress slider saved on release) and PDI tab (`/pdi`, add + status cycle) are real. "Profiler avec l'IA" became "Initialiser les profils" (`/talents/bulk-profile` creates missing default profiles — it is not AI).
+- Mobility = profiles with a target role different from the current position; match % = (performance + potential) / 10. "Proposer" adds a "Mobilité interne : <rôle>" item to the person's PDI (so it persists and shows as proposed).
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -136,7 +142,7 @@ Training notes (`TrainingPage.tsx`):
 | 19 | Meetings | Wedy Meetings | `/app/meetings`, `/employee/meetings` | `app/MeetingsPage.tsx` | ◐ |
 | 20 | Onboarding | Wedy Onboarding | `/app/onboarding` | `app/EmployeeOnboardingPage.tsx` | ☑ |
 | 21 | Training | Wedy Training | `/app/training` | `app/TrainingPage.tsx` | ☑ |
-| 22 | Talents | Wedy Talents | `/app/talents` | `app/TalentsPage.tsx` | ◐ |
+| 22 | Talents | Wedy Talents | `/app/talents` | `app/TalentsPage.tsx` | ☑ |
 | 23 | Tenders | Wedy Tenders | `/app/tenders` | `app/TendersPage.tsx` | ◐ |
 | 24 | Analytics | Wedy Analytics | `/app/analytics` | `app/AnalyticsPage.tsx` | ◐ |
 | 25 | Audit | Wedy Audit | `/app/audit` | `app/AuditPage.tsx` | ◐ |

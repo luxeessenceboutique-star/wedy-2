@@ -1,784 +1,368 @@
-﻿import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Star, TrendingUp, AlertTriangle, Users, Plus, X, Target,
-  Zap, Shield, Flame, BookOpen, ChevronRight, Pencil, Trash2,
-  LayoutGrid, List, Award, ArrowRight, CheckCircle2, Circle, Clock,
-} from 'lucide-react';
-import { api } from '@/services/api';
-import { Button, Spinner, Input, Avatar } from '../../components/ui';
-import { PageHeader } from '../../components/layout/AppShell';
-import { useLang } from '../../lib/lang';
-import { toast } from 'sonner';
-import { format, isValid } from 'date-fns';
+﻿import { useMemo, useState, type CSSProperties, type FormEvent } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowRight, CircleAlert, CircleCheck, Circle, Clock, Shield, ShieldCheck, Shuffle, Sparkles, TrendingUp, TriangleAlert, Users, X } from 'lucide-react';
+import { api, getApiError } from '@/services/api';
+import { RV } from '@/components/motion';
+import { Spinner } from '@/components/ui';
+import { useLang, type TKey } from '@/lib/lang';
+import { useNotify } from '@/lib/notify';
+import { tf } from '@/lib/format';
+import { avatarGradient, initialsOf } from '@/lib/visual';
+import './TalentsPage.css';
 
-const safeFormat = (d: any, fmt = 'dd/MM/yyyy') => {
-  if (!d) return '—'; const dt = new Date(d); return isValid(dt) ? format(dt, fmt) : '—';
+type Risk = 'low' | 'medium' | 'high';
+type Profile = {
+  employee_id: string; performance_score: number; potential_score: number; talent_category: string; flight_risk: Risk;
+  amana_score?: number; itkan_score?: number; iltizam_score?: number; ibdaa_score?: number; nama_score?: number;
+  is_critical_position?: boolean; successor_names?: string[]; career_path?: string | null; next_role?: string | null; notes?: string | null;
+  employees?: { id: string; full_name: string; position?: string; department?: string };
 };
+type Okr = { id: string; title: string; quarter?: string; progress: number; status: string };
+type Pdi = { id: string; title: string; action_type?: string; target_date?: string | null; status: 'pending' | 'in_progress' | 'completed' };
 
-// ── API ────────────────────────────────────────────────────────────────────────
-const getTalents   = () => api.get('/talents').then(r => r.data);
-const patchTalent  = (id: string, body: any) => api.patch(`/talents/${id}`, body).then(r => r.data);
-const bulkProfile  = () => api.post('/talents/bulk-profile', {}).then(r => r.data);
-const getOKRs      = (id: string) => api.get(`/talents/${id}/okrs`).then(r => r.data);
-const createOKR    = (id: string, body: any) => api.post(`/talents/${id}/okrs`, body).then(r => r.data);
-const updateOKR    = (eid: string, oid: string, body: any) => api.patch(`/talents/${eid}/okrs/${oid}`, body).then(r => r.data);
-const deleteOKR    = (eid: string, oid: string) => api.delete(`/talents/${eid}/okrs/${oid}`);
-const getStats     = () => api.get('/talents/stats/summary').then(r => r.data);
-const getMobility  = () => api.get('/talents/mobility/candidates').then(r => r.data);
-const getPDI       = (id: string) => api.get(`/talents/${id}/pdi`).then(r => r.data);
-const createPDI    = (id: string, body: any) => api.post(`/talents/${id}/pdi`, body).then(r => r.data);
-const updatePDI    = (eid: string, iid: string, body: any) => api.patch(`/talents/${eid}/pdi/${iid}`, body).then(r => r.data);
-const deletePDI    = (eid: string, iid: string) => api.delete(`/talents/${eid}/pdi/${iid}`);
+const listTalents = () => api.get<Profile[]>('/talents').then(r => r.data);
+const bulkProfile = () => api.post<{ created: number; skipped: number }>('/talents/bulk-profile', {}).then(r => r.data);
+const patchTalent = (id: string, b: Partial<Profile>) => api.patch<Profile>(`/talents/${id}`, b).then(r => r.data);
+const getOkrs = (id: string) => api.get<Okr[]>(`/talents/${id}/okrs`).then(r => r.data);
+const addOkr = (id: string, b: Partial<Okr>) => api.post<Okr>(`/talents/${id}/okrs`, b).then(r => r.data);
+const patchOkr = (id: string, okr: string, b: Partial<Okr>) => api.patch<Okr>(`/talents/${id}/okrs/${okr}`, b).then(r => r.data);
+const getPdi = (id: string) => api.get<Pdi[]>(`/talents/${id}/pdi`).then(r => r.data);
+const addPdi = (id: string, b: Partial<Pdi>) => api.post<Pdi>(`/talents/${id}/pdi`, b).then(r => r.data);
+const patchPdi = (id: string, item: string, b: Partial<Pdi>) => api.patch<Pdi>(`/talents/${id}/pdi/${item}`, b).then(r => r.data);
 
-// ── Config ─────────────────────────────────────────────────────────────────────
-const TALENT_CATS: Record<string, { label: string; color: string; bg: string; desc: string }> = {
-  star:              { label: 'Star',            color: 'var(--warn)', bg: 'var(--warn-soft)', desc: 'Haut potentiel + haute perf.' },
-  solid:             { label: 'Solid Performer', color: 'var(--success)', bg: 'var(--success-soft)', desc: 'Fiable, haute perf.' },
-  potential:         { label: 'Haut Potentiel',  color: 'var(--violet)', bg: 'var(--violet-soft)', desc: 'Potentiel élevé, perf. en cours' },
-  key_player:        { label: 'Joueur Clé',      color: 'var(--primary)', bg: 'var(--primary-soft)', desc: 'Profil équilibré' },
-  needs_improvement: { label: 'À développer',    color: 'var(--danger)', bg: '#fef2f2', desc: 'Accompagnement requis' },
+// [label key, tint, text, dot] — the reference's palette, keyed by the backend categories
+const CAT: Record<string, [TKey, string, string, string]> = {
+  star: ['tal_cat_star', '#fbefda', '#8a5207', '#df9326'], solid: ['tal_cat_solid', '#e1f5ec', '#0f6f49', '#16a06b'],
+  potential: ['tal_cat_potential', '#ece9fb', '#5444b8', '#6d5ad6'], key_player: ['tal_cat_key', '#e4f2f4', '#0b5f72', '#16b6c8'],
+  needs_improvement: ['tal_cat_develop', '#fbe9e6', '#a33a28', '#df5740'],
 };
-const catMeta = (c: string) => TALENT_CATS[c] ?? TALENT_CATS.key_player;
-
-const RISK_COLORS: Record<string, string> = { low: 'var(--success)', medium: 'var(--warn)', high: 'var(--danger)' };
-const RISK_LABELS: Record<string, string> = { low: 'Faible',  medium: 'Moyen',   high: 'Élevé' };
-
-const MOOVWIN = [
-  { key: 'amana_score',   label: 'Amana',   icon: <Shield size={12} />,     desc: 'Confiance' },
-  { key: 'itkan_score',   label: 'Itkan',   icon: <Star size={12} />,       desc: 'Excellence' },
-  { key: 'iltizam_score', label: 'Iltizam', icon: <Flame size={12} />,      desc: 'Engagement' },
-  { key: 'ibdaa_score',   label: 'Ibdaa',   icon: <Zap size={12} />,        desc: 'Innovation' },
-  { key: 'nama_score',    label: 'Nama',    icon: <TrendingUp size={12} />, desc: 'Croissance' },
+const catOf = (c?: string) => CAT[c || ''] ?? CAT.key_player;
+const RISK: Record<Risk, [TKey, string, string, string, string, typeof Shield]> = {
+  high: ['tal_risk_high', '#a33a28', '#fbe9e6', 'rgba(223,87,64,.3)', '#df5740', TriangleAlert],
+  medium: ['tal_risk_medium', '#8a5207', '#fbefda', 'rgba(230,169,72,.4)', '#df9326', CircleAlert],
+  low: ['tal_risk_low', '#0f6f49', '#e1f5ec', 'rgba(22,160,107,.3)', '#16a06b', ShieldCheck],
+};
+const NEXT_RISK: Record<Risk, Risk> = { low: 'medium', medium: 'high', high: 'low' };
+const PDIT: Record<string, [TKey, string, string]> = {
+  formation: ['tal_pdi_formation', '#e4f2f4', '#0b5f72'], coaching: ['tal_pdi_coaching', '#ece9fb', '#5444b8'], mentorat: ['tal_pdi_mentorat', '#e1f5ec', '#0f6f49'],
+  projet: ['tal_pdi_projet', '#fbefda', '#8a5207'], lecture: ['tal_pdi_lecture', '#eef2f4', '#33474f'], conference: ['tal_pdi_conference', '#ece9fb', '#3d2f99'],
+};
+const PST: Record<Pdi['status'], [TKey, string, string, string, typeof Circle]> = {
+  pending: ['tal_pst_todo', '#ffffff', '#52646d', '#d6dfe3', Circle], in_progress: ['tal_pst_doing', '#e4f2f4', '#0b5f72', '#b9dfe5', Clock], completed: ['tal_pst_done', '#e1f5ec', '#0f6f49', '#bfe6d2', CircleCheck],
+};
+const NEXT_PST: Record<Pdi['status'], Pdi['status']> = { pending: 'in_progress', in_progress: 'completed', completed: 'pending' };
+const VALUES: [keyof Profile, string, TKey, string, string][] = [
+  ['amana_score', 'Amana', 'tal_v_trust', '50%', '8.3%'], ['itkan_score', 'Itkan', 'tal_v_excellence', '84%', '37.1%'], ['iltizam_score', 'Iltizam', 'tal_v_commitment', '71%', '83.7%'],
+  ['ibdaa_score', 'Ibdaa', 'tal_v_innovation', '29%', '83.7%'], ['nama_score', 'Nama', 'tal_v_growth', '16%', '37.1%'],
 ];
+const ANG = [-90, -18, 54, 126, 198].map(a => a * Math.PI / 180);
+const dec = (v: number) => String(Math.round(v * 10) / 10).replace('.', ',');
+const quarter = () => { const d = new Date(); return `T${Math.floor(d.getMonth() / 3) + 1} ${d.getFullYear()}`; };
 
-const ACTION_TYPES: Record<string, { label: string; color: string; bg: string }> = {
-  formation:   { label: 'Formation',   color: 'var(--primary)', bg: 'var(--primary-soft)' },
-  coaching:    { label: 'Coaching',    color: 'var(--violet)', bg: 'var(--violet-soft)' },
-  mentorat:    { label: 'Mentorat',    color: 'var(--success)', bg: 'var(--success-soft)' },
-  projet:      { label: 'Projet',      color: 'var(--warn)', bg: 'var(--warn-soft)' },
-  lecture:     { label: 'Lecture',     color: 'var(--ink-2)', bg: 'var(--surface-2)' },
-  conference:  { label: 'Conférence',  color: 'var(--violet)', bg: '#fdf2f8' },
-};
+export default function TalentsPage() {
+  const { t } = useLang();
+  const notify = useNotify();
+  const qc = useQueryClient();
+  const [cat, setCat] = useState('all');
+  const [curId, setCurId] = useState<string | null>(null);
+  const [tab, setTab] = useState<'profile' | 'okr' | 'pdi'>('profile');
+  const [okrIn, setOkrIn] = useState('');
+  const [succIn, setSuccIn] = useState('');
+  const [pdiIn, setPdiIn] = useState('');
+  const [pdiType, setPdiType] = useState('formation');
 
-const PDI_STATUS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  pending:     { label: 'À faire',  color: 'var(--ink-2)', icon: <Circle size={13} /> },
-  in_progress: { label: 'En cours', color: 'var(--primary)', icon: <Clock size={13} /> },
-  completed:   { label: 'Terminé',  color: 'var(--success)', icon: <CheckCircle2 size={13} /> },
-};
+  const { data: profiles = [], isLoading } = useQuery({ queryKey: ['talents'], queryFn: listTalents });
+  const sorted = useMemo(() => [...profiles].sort((a, b) => (b.performance_score + b.potential_score) - (a.performance_score + a.potential_score)), [profiles]);
+  const cur = sorted.find(p => p.employee_id === curId) ?? sorted[0];
+  const id = cur?.employee_id ?? '';
+  const { data: okrs = [] } = useQuery({ queryKey: ['talents', 'okrs', id], queryFn: () => getOkrs(id), enabled: !!id });
+  const { data: pdi = [] } = useQuery({ queryKey: ['talents', 'pdi', id], queryFn: () => getPdi(id), enabled: !!id });
+  const [okrDraft, setOkrDraft] = useState<Record<string, number>>({});
 
-const READINESS: Record<string, string> = {
-  ready_now:    'Prêt maintenant',
-  ready_1year:  'Prêt dans 1 an',
-  ready_2years: 'Prêt dans 2 ans',
-};
+  const fail = (e: unknown) => notify.error(getApiError(e, t('error')));
+  const bulk = useMutation({ mutationFn: bulkProfile, onSuccess: r => { qc.invalidateQueries({ queryKey: ['talents'] }); notify.success(tf(t('tal_bulk_done'), { n: r.created })); }, onError: fail });
+  const patch = useMutation({
+    mutationFn: ({ emp, body }: { emp: string; body: Partial<Profile> }) => patchTalent(emp, body),
+    onMutate: async ({ emp, body }) => {
+      await qc.cancelQueries({ queryKey: ['talents'] });
+      const prev = qc.getQueryData<Profile[]>(['talents']);
+      qc.setQueryData<Profile[]>(['talents'], l => (l ?? []).map(p => (p.employee_id === emp ? { ...p, ...body } : p)));
+      return { prev };
+    },
+    onError: (e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['talents'], ctx.prev); fail(e); },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['talents'] }),
+  });
+  const okrAdd = useMutation({ mutationFn: (title: string) => addOkr(id, { title, quarter: quarter() }), onSuccess: () => { setOkrIn(''); qc.invalidateQueries({ queryKey: ['talents', 'okrs', id] }); notify.success(t('tal_okr_added')); }, onError: fail });
+  const okrSet = useMutation({ mutationFn: ({ okr, progress }: { okr: string; progress: number }) => patchOkr(id, okr, { progress, ...(progress >= 100 ? { status: 'completed' } : {}) }), onSettled: () => qc.invalidateQueries({ queryKey: ['talents', 'okrs', id] }), onError: fail });
+  const pdiAdd = useMutation({ mutationFn: (b: Partial<Pdi>) => addPdi(id, b), onSuccess: () => { setPdiIn(''); qc.invalidateQueries({ queryKey: ['talents', 'pdi'] }); }, onError: fail });
+  const pdiCycle = useMutation({ mutationFn: (p: Pdi) => patchPdi(id, p.id, { status: NEXT_PST[p.status] }), onSettled: () => qc.invalidateQueries({ queryKey: ['talents', 'pdi', id] }), onError: fail });
 
-// ── 9-box grid ─────────────────────────────────────────────────────────────────
-const NINE_BOX = [
-  ['needs_improvement', 'key_player', 'potential'],
-  ['key_player',        'key_player', 'potential'],
-  ['solid',             'solid',      'star'],
-];
+  // mobility: profiles with a target role; "Proposer" records the move in the person's development plan
+  const mobility = sorted.filter(p => (p.next_role ?? '').trim() && (p.next_role ?? '').trim() !== (p.employees?.position ?? '').trim())
+    .map(p => ({ p, match: Math.round((p.performance_score + p.potential_score) / 10 * 100) })).sort((a, b) => b.match - a.match).slice(0, 4);
+  const { data: mobPdi = {} } = useQuery({
+    queryKey: ['talents', 'pdi', 'mobility', mobility.map(m => m.p.employee_id).join(',')],
+    queryFn: async () => Object.fromEntries(await Promise.all(mobility.map(async m => [m.p.employee_id, await getPdi(m.p.employee_id)] as const))),
+    enabled: mobility.length > 0,
+  });
+  const mobTitle = (role: string) => tf(t('tal_mob_pdi'), { role });
+  const proposed = (emp: string, role: string) => ((mobPdi as Record<string, Pdi[]>)[emp] ?? []).some(x => x.title === mobTitle(role));
 
-function NineBoxGrid({ talents }: { talents: any[] }) {
-  return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 16, padding: 20, marginBottom: 24 }}>
-      <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Matrice 9-box : Performance × Potentiel</p>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: 24, paddingTop: 4 }}>
-          {['Haut', 'Moyen', 'Faible'].map(l => (
-            <span key={l} style={{ fontSize: 11, color: 'var(--ink-2)', fontWeight: 600 }}>{l}</span>
-          ))}
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
-            {NINE_BOX.flatMap((row, ri) => row.map((cat, ci) => {
-              const cm = catMeta(cat);
-              const perfMin = ci + 1; const perfMax = ci + 2;
-              const potMin  = 3 - ri; const potMax  = 4 - ri;
-              const here = talents.filter(t => {
-                const p = t.performance_score ?? 3; const q = t.potential_score ?? 3;
-                return p >= perfMin && p < perfMax && q >= potMin && q < potMax;
-              });
-              return (
-                <div key={`${ri}-${ci}`} style={{
-                  minHeight: 90, padding: '10px 12px', borderRadius: 10,
-                  background: cm.bg, border: `1px solid ${cm.color}44`,
-                  display: 'flex', flexDirection: 'column', gap: 4,
-                }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: cm.color }}>{cm.label}</span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, flex: 1 }}>
-                    {here.map((t: any) => (
-                      <div key={t.id} title={t.employees?.full_name}>
-                        <Avatar name={t.employees?.full_name ?? '?'} src={t.employees?.photo_url} size={28} />
-                      </div>
-                    ))}
-                  </div>
-                  {here.length > 0 && <span style={{ fontSize: 10, color: cm.color }}>{here.length} pers.</span>}
-                </div>
-              );
-            }))}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6, marginTop: 6 }}>
-            {['Perf. Faible', 'Perf. Moyenne', 'Perf. Élevée'].map(l => (
-              <span key={l} style={{ fontSize: 10, color: 'var(--ink-2)', fontWeight: 600, textAlign: 'center' }}>{l}</span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+  const shown = sorted.filter(p => cat === 'all' || (p.talent_category || 'key_player') === cat);
+  const high = profiles.filter(p => p.flight_risk === 'high').length;
+  const critical = profiles.filter(p => p.is_critical_position).length;
+  const avgPerf = profiles.length ? profiles.reduce((s, p) => s + p.performance_score, 0) / profiles.length : 0;
+  const pdiDone = pdi.filter(p => p.status === 'completed').length;
+  const liveOkrs = okrs.filter(o => o.status !== 'cancelled');
+  const okrAvg = liveOkrs.length ? Math.round(liveOkrs.reduce((s, o) => s + (okrDraft[o.id] ?? o.progress), 0) / liveOkrs.length) : 0;
+  const curRisk = RISK[cur?.flight_risk ?? 'low'];
+  const RiskIcon = curRisk[5];
+  const radar = cur ? VALUES.map(([k], i) => { const r = Math.max(0, Math.min(5, Number(cur[k] ?? 0))) / 5 * 80; return `${(110 + r * Math.cos(ANG[i])).toFixed(1)},${(110 + r * Math.sin(ANG[i])).toFixed(1)}`; }).join(' ') : '';
+  const name = cur?.employees?.full_name ?? '—';
+
+  const addSucc = (e: FormEvent) => {
+    e.preventDefault();
+    const v = succIn.trim();
+    if (!v || !cur) return;
+    patch.mutate({ emp: id, body: { successor_names: [...(cur.successor_names ?? []), v] } }, { onSuccess: () => notify.success(tf(t('tal_succ_added'), { name: v })) });
+    setSuccIn('');
+  };
+  const setScore = (k: 'performance_score' | 'potential_score', v: number) => cur && patch.mutate({ emp: id, body: { [k]: v, ...(k === 'performance_score' ? { potential_score: cur.potential_score } : { performance_score: cur.performance_score }) } });
+  const saveText = (k: 'next_role' | 'career_path' | 'notes', v: string) => { if (cur && (cur[k] ?? '') !== v.trim()) patch.mutate({ emp: id, body: { [k]: v.trim() || null } }); };
+
+  const cats: [string, string, number, string][] = [['all', t('tal_all'), profiles.length, '#0a1c24'], ...Object.keys(CAT).map(k => [k, t(CAT[k][0]), profiles.filter(p => (p.talent_category || 'key_player') === k).length, CAT[k][3]] as [string, string, number, string])];
+  const kpi = (Icon: typeof Users, bg: string, color: string, value: React.ReactNode, label: string, delay: number, valueColor?: string) => (
+    <RV as="div" variant="up" delay={delay} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+      <span style={{ width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: bg, color }}><Icon size={19} /></span>
+      <div><div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: '-.04em', lineHeight: 1.05, color: valueColor }}>{value}</div><div style={{ fontSize: 12.5, color: '#52646d' }}>{label}</div></div>
+    </RV>
   );
-}
-
-// ── Mobility view ──────────────────────────────────────────────────────────────
-function MobilityView({ mobility, onOpenTalent }: { mobility: any[]; onOpenTalent: (t: any) => void }) {
-  if (mobility.length === 0) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
-        <ArrowRight size={40} style={{ opacity: 0.3, margin: '0 auto 16px' }} />
-        <p style={{ fontWeight: 500, marginBottom: 8 }}>Aucun candidat à la mobilité interne.</p>
-        <p style={{ fontSize: 13 }}>Définissez un "Prochain rôle visé" dans le profil talent d'un collaborateur pour qu'il apparaisse ici.</p>
-      </div>
-    );
-  }
-
-  const byCategory = mobility.reduce((acc: any, t: any) => {
-    const cat = t.talent_category ?? 'key_player';
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(t);
-    return acc;
-  }, {});
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {Object.entries(byCategory).map(([cat, items]: [string, any]) => {
-        const cm = catMeta(cat);
-        return (
-          <div key={cat}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: cm.color, background: cm.bg, padding: '3px 10px', borderRadius: 20 }}>
-                {cm.label}
-              </span>
-              <span style={{ fontSize: 12, color: 'var(--ink-2)' }}>{(items as any[]).length} candidat(s)</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
-              {(items as any[]).map((t: any) => {
-                const emp = t.employees ?? {};
-                const rc = RISK_COLORS[t.flight_risk ?? 'low'];
+    <div style={{ padding: '28px 32px 56px', display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 1440, width: '100%' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <RV as="h1" variant="up" style={{ margin: 0, fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3vw,40px)', letterSpacing: '-.045em', lineHeight: 1.05 }}>{t('tal_title')}</RV>
+          <RV as="p" variant="up" delay={60} style={{ margin: '8px 0 0', fontSize: 15, color: '#52646d' }}>{t('tal_subtitle')}</RV>
+        </div>
+        <RV as="button" variant="up" delay={100} type="button" disabled={bulk.isPending} onClick={() => bulk.mutate()} style={{ position: 'relative', overflow: 'hidden', display: 'inline-flex', alignItems: 'center', gap: 8, height: 42, padding: '0 16px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#5444b8,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 12px 26px -12px rgba(109,90,214,.85)' }}>
+          {bulk.isPending ? <span className="wedy-spin" style={{ position: 'relative', width: 15, height: 15, borderRadius: '50%', border: '2px solid rgba(255,255,255,.35)', borderTopColor: '#ffffff' }} /> : <Sparkles size={16} style={{ position: 'relative' }} />}
+          <span style={{ position: 'relative' }}>{t('tal_bulk')}</span>
+        </RV>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 12 }}>
+        {kpi(Users, '#e4f2f4', '#0e6f84', profiles.length, t('tal_k_profiles'), 60)}
+        {kpi(TriangleAlert, '#fbe9e6', '#df5740', high, t('tal_k_risk'), 110, high ? '#a33a28' : undefined)}
+        {kpi(Shield, '#fbefda', '#b06b0c', critical, t('tal_k_critical'), 160)}
+        {kpi(TrendingUp, '#e1f5ec', '#16a06b', <>{profiles.length ? dec(avgPerf) : '—'}<span style={{ fontSize: 15, color: '#5f7079', fontWeight: 600 }}> / 5</span></>, t('tal_k_perf'), 210)}
+      </div>
+
+      <RV as="div" variant="up" delay={120} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {cats.map(([k, label, n, dot]) => {
+          const on = cat === k;
+          return (
+            <button key={k} type="button" onClick={() => setCat(k)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 38, padding: '0 14px', borderRadius: 99, border: `1px solid ${on ? '#0a1c24' : '#e2e8eb'}`, background: on ? '#0a1c24' : '#ffffff', color: on ? '#ffffff' : '#33474f', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: on && k === 'all' ? '#ffffff' : dot }} />{label}<span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11, opacity: 0.75 }}>{n}</span>
+            </button>
+          );
+        })}
+      </RV>
+
+      {isLoading ? <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner /></div> : !profiles.length ? (
+        <div style={{ padding: '40px 20px', borderRadius: 18, border: '1px dashed #d0dadf', textAlign: 'center', fontSize: 14, color: '#52646d' }}>{t('tal_none')}</div>
+      ) : (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
+          <div style={{ flex: '1.2 1 440px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12 }}>
+              {shown.map((p, k) => {
+                const c = catOf(p.talent_category), r = RISK[p.flight_risk ?? 'low'], on = p.employee_id === cur?.employee_id;
+                const n = p.employees?.full_name ?? '—';
                 return (
-                  <div key={t.id} className="card card-pad hover-scale" style={{ cursor: 'pointer' }} onClick={() => onOpenTalent(t)}>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
-                      <Avatar name={emp.full_name} src={emp.photo_url} size={42} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: 700, fontSize: 14, margin: '0 0 2px' }}>{emp.full_name}</p>
-                        <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{emp.department}</p>
-                      </div>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: rc, background: rc + '22', padding: '2px 7px', borderRadius: 5 }}>
-                        {RISK_LABELS[t.flight_risk ?? 'low']}
+                  <RV key={p.employee_id} as="button" variant="up" delay={Math.min(k, 12) * 50} type="button" onClick={() => { setCurId(p.employee_id); setSuccIn(''); setOkrIn(''); }}
+                    style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: 18, border: `1px solid ${on ? '#16b6c8' : '#e2e8eb'}`, background: '#ffffff', fontFamily: 'inherit', textAlign: 'start', cursor: 'pointer', boxShadow: on ? '0 0 0 3px rgba(22,182,200,.18)' : 'none', transition: 'transform .2s,box-shadow .2s,border-color .2s' }} className="tal-h1">
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 11, width: '100%' }}>
+                      <span style={{ width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarGradient(n), color: '#ffffff', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>{initialsOf(n)}</span>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ display: 'block', fontSize: 14.5, fontWeight: 600, color: '#0a1c24', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n}</span>
+                        <span style={{ display: 'block', fontSize: 12.5, color: '#5f7079', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.employees?.position || '—'}</span>
                       </span>
-                    </div>
-                    {/* Career arrow */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'var(--surface-2)', borderRadius: 8, fontSize: 13 }}>
-                      <span style={{ color: 'var(--ink-2)', flex: 1, fontSize: 12 }}>{emp.position ?? '—'}</span>
-                      <ArrowRight size={16} style={{ color: 'var(--primary)', flexShrink: 0 }} />
-                      <span style={{ fontWeight: 700, color: 'var(--primary)', flex: 1, textAlign: 'right' }}>{t.next_role}</span>
-                    </div>
-                    {t.career_path && (
-                      <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: '8px 0 0' }}>
-                        Trajectoire: {t.career_path}
-                      </p>
-                    )}
-                    <div style={{ display: 'flex', gap: 12, marginTop: 10, fontSize: 12, color: 'var(--ink-2)' }}>
-                      <span>Perf. <strong style={{ color: 'var(--success)' }}>{t.performance_score}/5</strong></span>
-                      <span>Pot. <strong style={{ color: 'var(--violet)' }}>{t.potential_score}/5</strong></span>
-                    </div>
-                  </div>
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: c[1], color: c[2], whiteSpace: 'nowrap' }}>{t(c[0])}</span>
+                      <span style={{ marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: r[1], whiteSpace: 'nowrap' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: r[4] }} />{tf(t('tal_risk_short'), { level: t(r[0]) })}</span>
+                    </span>
+                    <span style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 10, width: '100%' }}>
+                      {([['tal_perf', p.performance_score, '#16a06b'], ['tal_pot', p.potential_score, '#6d5ad6']] as [TKey, number, string][]).map(([l, v, col]) => (
+                        <span key={l}>
+                          <span style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#5f7079' }}><span>{t(l)}</span><span style={{ fontFamily: "'Geist Mono',monospace", color: '#0a1c24' }}>{dec(v)}</span></span>
+                          <span style={{ display: 'block', height: 5, borderRadius: 99, background: '#eef2f4', overflow: 'hidden', marginTop: 5 }}><RV as="span" variant="growx" style={{ display: 'block', height: '100%', width: `${v * 20}%`, borderRadius: 99, background: col, transformOrigin: 'left' }} /></span>
+                        </span>
+                      ))}
+                    </span>
+                  </RV>
                 );
               })}
             </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+            {!shown.length && <div style={{ padding: '36px 20px', borderRadius: 18, border: '1px dashed #d0dadf', textAlign: 'center', fontSize: 14, color: '#52646d' }}>{t('tal_none_cat')}</div>}
 
-// ── Talent drawer ──────────────────────────────────────────────────────────────
-function TalentDrawer({ talent, onClose }: { talent: any; onClose: () => void }) {
-  const qc = useQueryClient();
-  const emp = talent.employees ?? {};
-  const [tab, setTab] = useState<'profile' | 'okrs' | 'pdi'>('profile');
-
-  // OKR form
-  const [showOKRForm, setShowOKRForm] = useState(false);
-  const [okrForm, setOKRForm] = useState({ title: '', description: '', quarter: 'Q2 2026', progress: 0 });
-
-  // PDI form
-  const [showPDIForm, setShowPDIForm] = useState(false);
-  const [pdiForm, setPDIForm] = useState({ title: '', action_type: 'formation', target_date: '', notes: '' });
-
-  // Successor management
-  const [newSuccessorName, setNewSuccessorName] = useState('');
-  const [newSuccessorReadiness, setNewSuccessorReadiness] = useState('ready_1year');
-
-  const [localScores, setLocalScores] = useState<any>({
-    performance_score:    talent.performance_score ?? 3,
-    potential_score:      talent.potential_score ?? 3,
-    amana_score:          talent.amana_score ?? 0,
-    itkan_score:          talent.itkan_score ?? 0,
-    iltizam_score:        talent.iltizam_score ?? 0,
-    ibdaa_score:          talent.ibdaa_score ?? 0,
-    nama_score:           talent.nama_score ?? 0,
-    flight_risk:          talent.flight_risk ?? 'low',
-    is_critical_position: talent.is_critical_position ?? false,
-    career_path:          talent.career_path ?? '',
-    next_role:            talent.next_role ?? '',
-    notes:                talent.notes ?? '',
-    successor_names:      Array.isArray(talent.successor_names) ? talent.successor_names : [],
-  });
-
-  const { data: okrs = [] } = useQuery({
-    queryKey: ['okrs', emp.id],
-    queryFn: () => getOKRs(emp.id),
-    enabled: !!emp.id,
-    retry: false,
-  });
-
-  const { data: pdiItems = [] } = useQuery({
-    queryKey: ['pdi', emp.id],
-    queryFn: () => getPDI(emp.id),
-    enabled: !!emp.id,
-    retry: false,
-  });
-
-  const patchMut = useMutation({
-    mutationFn: (body: any) => patchTalent(emp.id, body),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['talents'] }); qc.invalidateQueries({ queryKey: ['talent-mobility'] }); toast.success('Profil mis à jour'); },
-  });
-  const createOKRMut = useMutation({
-    mutationFn: () => createOKR(emp.id, okrForm),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['okrs', emp.id] }); setShowOKRForm(false); toast.success('OKR ajouté'); },
-  });
-  const updateOKRMut = useMutation({
-    mutationFn: ({ id, body }: any) => updateOKR(emp.id, id, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['okrs', emp.id] }),
-  });
-  const deleteOKRMut = useMutation({
-    mutationFn: (id: string) => deleteOKR(emp.id, id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['okrs', emp.id] }),
-  });
-  const createPDIMut = useMutation({
-    mutationFn: () => createPDI(emp.id, pdiForm),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['pdi', emp.id] }); setShowPDIForm(false); setPDIForm({ title: '', action_type: 'formation', target_date: '', notes: '' }); toast.success('Action ajoutée'); },
-  });
-  const updatePDIMut = useMutation({
-    mutationFn: ({ id, body }: any) => updatePDI(emp.id, id, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['pdi', emp.id] }),
-  });
-  const deletePDIMut = useMutation({
-    mutationFn: (id: string) => deletePDI(emp.id, id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['pdi', emp.id] }),
-  });
-
-  const set  = (k: string, v: any) => setLocalScores((f: any) => ({ ...f, [k]: v }));
-  const save = () => patchMut.mutate(localScores);
-
-  const addSuccessor = () => {
-    if (!newSuccessorName.trim()) return;
-    const updated = [...localScores.successor_names, { name: newSuccessorName.trim(), readiness: newSuccessorReadiness }];
-    setLocalScores((f: any) => ({ ...f, successor_names: updated }));
-    setNewSuccessorName('');
-  };
-  const removeSuccessor = (idx: number) => {
-    setLocalScores((f: any) => ({ ...f, successor_names: f.successor_names.filter((_: any, i: number) => i !== idx) }));
-  };
-
-  const cat = catMeta(talent.talent_category ?? 'key_player');
-  const moovwinAvg = MOOVWIN.reduce((s, m) => s + (localScores[m.key] ?? 0), 0) / 5;
-
-  const completedPDI = pdiItems.filter((p: any) => p.status === 'completed').length;
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }}>
-      <div style={{ flex: 1, background: 'rgba(0,0,0,0.4)' }} onClick={onClose} />
-      <div style={{ width: 660, background: 'var(--bg)', borderLeft: '1px solid var(--line)', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-        {/* Header */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--line)', display: 'flex', gap: 14, alignItems: 'center' }}>
-          <Avatar name={emp.full_name} src={emp.photo_url} size={56} />
-          <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>{emp.full_name}</h2>
-            <p style={{ fontSize: 13, color: 'var(--primary)', margin: '2px 0' }}>{emp.position}</p>
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: cat.color, background: cat.bg, padding: '2px 8px', borderRadius: 6 }}>{cat.label}</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: RISK_COLORS[localScores.flight_risk], background: RISK_COLORS[localScores.flight_risk] + '22', padding: '2px 8px', borderRadius: 6 }}>
-                Risque: {RISK_LABELS[localScores.flight_risk]}
-              </span>
-              {localScores.is_critical_position && (
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--danger)', background: '#fef2f2', padding: '2px 8px', borderRadius: 6 }}>⚠ Critique</span>
-              )}
-            </div>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
-        </div>
-
-        <div style={{ padding: '0 24px' }}>
-          {/* Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', gap: 20, paddingTop: 4 }}>
-            {[
-              { id: 'profile', label: 'Profil Talent' },
-              { id: 'okrs',    label: `OKRs (${okrs.length})` },
-              { id: 'pdi',     label: `PDI (${completedPDI}/${pdiItems.length})` },
-            ].map(t => (
-              <button key={t.id} onClick={() => setTab(t.id as any)} style={{
-                padding: '10px 0', fontWeight: 600, fontSize: 13,
-                borderBottom: tab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-                color: tab === t.id ? 'var(--primary)' : 'var(--ink-2)',
-                background: 'none', border: 'none', cursor: 'pointer',
-              }}>{t.label}</button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ padding: '20px 24px', flex: 1, overflow: 'auto' }}>
-
-          {/* ── PROFIL TAB ── */}
-          {tab === 'profile' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-              {/* Performance & Potential */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                {[
-                  { key: 'performance_score', label: 'Performance', color: 'var(--success)' },
-                  { key: 'potential_score',   label: 'Potentiel',   color: 'var(--violet)' },
-                ].map(s => (
-                  <div key={s.key} style={{ padding: '14px 16px', border: `1px solid ${s.color}44`, borderRadius: 12, background: s.color + '0a' }}>
-                    <p style={{ fontWeight: 700, fontSize: 13, color: s.color, marginBottom: 10 }}>{s.label}</p>
-                    <div style={{ display: 'flex', gap: 4 }}>
-                      {[1,2,3,4,5].map(n => (
-                        <button key={n} onClick={() => set(s.key, n)}
-                          style={{ width: 32, height: 32, borderRadius: 8,
-                            border: `2px solid ${n <= localScores[s.key] ? s.color : 'var(--line)'}`,
-                            background: n <= localScores[s.key] ? s.color : 'transparent',
-                            color: n <= localScores[s.key] ? '#fff' : 'var(--ink-2)',
-                            fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-                          {n}
-                        </button>
-                      ))}
+            <RV as="div" variant="up" style={{ padding: '18px 20px', borderRadius: 20, background: '#ffffff', border: '1px solid #e2e8eb' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ece9fb', color: '#6d5ad6' }}><Shuffle size={17} /></span>
+                <span style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16 }}>{t('tal_mobility')}</span>
+              </div>
+              {!mobility.length && <div style={{ marginTop: 10, fontSize: 13.5, color: '#52646d' }}>{t('tal_mob_none')}</div>}
+              {mobility.map(({ p, match }) => {
+                const n = p.employees?.full_name ?? '—', role = (p.next_role ?? '').trim(), sent = proposed(p.employee_id, role);
+                return (
+                  <div key={p.employee_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderTop: '1px solid #f0f3f4', marginTop: 12, flexWrap: 'wrap' }}>
+                    <span style={{ width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarGradient(n), color: '#ffffff', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{initialsOf(n)}</span>
+                    <div style={{ flex: 1, minWidth: 200 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', fontSize: 14, fontWeight: 600 }}>{n}<ArrowRight size={14} className="wy-flip" style={{ color: '#7d8f97' }} /><span style={{ color: '#0e6f84' }}>{role}</span></div>
+                      <div style={{ fontSize: 12.5, color: '#5f7079', marginTop: 2 }}>{p.career_path || tf(t('tal_mob_why'), { perf: dec(p.performance_score), pot: dec(p.potential_score) })}</div>
                     </div>
+                    <span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, fontWeight: 600, padding: '3px 9px', borderRadius: 99, background: '#e1f5ec', color: '#0f6f49' }}>{match}%</span>
+                    {sent ? <RV as="span" variant="pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 600, color: '#0f6f49' }}><CircleCheck size={14} />{t('tal_mob_sent')}</RV> : (
+                      <button type="button" onClick={() => addPdi(p.employee_id, { title: mobTitle(role), action_type: 'projet' }).then(() => { qc.invalidateQueries({ queryKey: ['talents', 'pdi'] }); notify.success(tf(t('tal_mob_toast'), { name: n, role })); }).catch(fail)} className="tal-btn">{t('tal_mob_propose')}</button>
+                    )}
                   </div>
+                );
+              })}
+            </RV>
+          </div>
+
+          {cur && (
+            <RV as="div" variant="left" delay={160} style={{ flex: '1 1 400px', minWidth: 0, position: 'sticky', top: 90, borderRadius: 22, background: '#ffffff', border: '1px solid #e2e8eb', overflow: 'hidden' }}>
+              <div style={{ position: 'relative', overflow: 'hidden', padding: '20px 22px', background: '#06141a', color: '#e8eff1', isolation: 'isolate' }}>
+                <div aria-hidden="true" className="wedy-drift" style={{ position: 'absolute', right: -90, top: -120, width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(closest-side,rgba(109,90,214,.5),transparent)', zIndex: -1 }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <span style={{ width: 56, height: 56, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarGradient(name), color: '#ffffff', fontSize: 18, fontWeight: 700, border: '2px solid rgba(255,255,255,.2)', flexShrink: 0 }}>{initialsOf(name)}</span>
+                  <div style={{ minWidth: 0 }}><div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em' }}>{name}</div><div style={{ fontSize: 13, color: '#9fb4bb' }}>{[cur.employees?.position, cur.employees?.department].filter(Boolean).join(' · ') || '—'}</div></div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 99, background: 'rgba(255,255,255,.08)', color: '#ffffff' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: catOf(cur.talent_category)[3] }} />{t(catOf(cur.talent_category)[0])}</span>
+                  <button type="button" title={t('tal_change_risk')} onClick={() => patch.mutate({ emp: id, body: { flight_risk: NEXT_RISK[cur.flight_risk ?? 'low'] } })} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 99, border: 'none', background: 'rgba(255,255,255,.08)', color: '#cfdde1', fontFamily: 'inherit', cursor: 'pointer' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: curRisk[4] }} />{tf(t('tal_risk_long'), { level: t(curRisk[0]) })}</button>
+                  <button type="button" onClick={() => patch.mutate({ emp: id, body: { is_critical_position: !cur.is_critical_position } })} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 99, border: 'none', background: cur.is_critical_position ? 'rgba(230,169,72,.22)' : 'rgba(255,255,255,.08)', color: cur.is_critical_position ? '#f0bd6a' : '#9fb4bb', fontFamily: 'inherit', cursor: 'pointer' }}><Shield size={12} />{t(cur.is_critical_position ? 'tal_critical_on' : 'tal_critical_off')}</button>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 4, padding: 6, margin: '12px 16px 0', borderRadius: 13, background: '#f3f6f7' }}>
+                {([['profile', t('tal_tab_profile')], ['okr', tf(t('tal_tab_okr'), { n: liveOkrs.length })], ['pdi', tf(t('tal_tab_pdi'), { n: pdi.length })]] as const).map(([k, label]) => (
+                  <button key={k} type="button" onClick={() => setTab(k)} style={{ position: 'relative', flex: 1, height: 34, border: 'none', borderRadius: 9, background: 'transparent', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: tab === k ? '#0a1c24' : '#52646d' }}>
+                    {tab === k && <RV as="span" variant="pill" style={{ position: 'absolute', inset: 0, borderRadius: 9, background: '#ffffff', boxShadow: '0 1px 3px rgba(10,28,36,.14)' }} />}<span style={{ position: 'relative' }}>{label}</span>
+                  </button>
                 ))}
               </div>
-
-              {/* Moovwin */}
-              <div style={{ padding: '14px 16px', border: '1px solid #f59e0b44', borderRadius: 12, background: 'var(--warn-soft)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--warn)', margin: 0 }}>Scoring Moovwin</p>
-                  <span style={{ fontWeight: 800, color: 'var(--warn)' }}>★ {moovwinAvg.toFixed(1)}/5</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8 }}>
-                  {MOOVWIN.map(m => (
-                    <div key={m.key} style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4, color: 'var(--warn)' }}>{m.icon}</div>
-                      <p style={{ fontSize: 10, fontWeight: 700, margin: '0 0 6px', color: 'var(--ink-2)' }}>{m.label}</p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {[5,4,3,2,1].map(n => (
-                          <button key={n} onClick={() => set(m.key, n)}
-                            style={{ width: '100%', height: 14, borderRadius: 3, cursor: 'pointer', border: 'none',
-                              background: n <= localScores[m.key] ? 'var(--warn)' : 'var(--line)' }} />
-                        ))}
-                      </div>
-                      <p style={{ fontSize: 12, fontWeight: 700, marginTop: 4 }}>{localScores[m.key]}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Risk + Critical */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label className="label">Risque de départ</label>
-                  <select className="input" value={localScores.flight_risk} onChange={e => set('flight_risk', e.target.value)}>
-                    {Object.entries(RISK_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                  </select>
-                </div>
-                <div style={{ padding: '10px 14px', border: '1px solid var(--line)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10, marginTop: 20 }}>
-                  <input type="checkbox" checked={localScores.is_critical_position}
-                    onChange={e => set('is_critical_position', e.target.checked)}
-                    style={{ width: 16, height: 16, accentColor: 'var(--danger)' }} />
-                  <span style={{ fontSize: 13, fontWeight: 600 }}>Poste critique</span>
-                </div>
-              </div>
-
-              {/* Career path */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <Input label="Trajectoire de carrière" value={localScores.career_path}
-                  onChange={e => set('career_path', e.target.value)} placeholder="Expert technique..." />
-                <Input label="Prochain rôle visé" value={localScores.next_role}
-                  onChange={e => set('next_role', e.target.value)} placeholder="Lead développeur..." />
-              </div>
-
-              {/* Succession planning */}
-              <div style={{ padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 12 }}>
-                <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Target size={14} /> Successeurs identifiés ({localScores.successor_names.length})
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                  {localScores.successor_names.length === 0 && (
-                    <p style={{ fontSize: 12, color: 'var(--ink-2)', textAlign: 'center', padding: '8px 0' }}>Aucun successeur défini.</p>
-                  )}
-                  {localScores.successor_names.map((s: any, i: number) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'var(--surface-2)', borderRadius: 8 }}>
-                      <span style={{ flex: 1, fontWeight: 500, fontSize: 13 }}>{s.name}</span>
-                      <span style={{ fontSize: 11, color: 'var(--violet)', background: 'var(--violet-soft)', padding: '2px 7px', borderRadius: 5, fontWeight: 600 }}>
-                        {READINESS[s.readiness] ?? s.readiness}
-                      </span>
-                      <button onClick={() => removeSuccessor(i)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)' }}><X size={12} /></button>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 8, alignItems: 'center' }}>
-                  <input className="input" placeholder="Nom du successeur..." value={newSuccessorName}
-                    onChange={e => setNewSuccessorName(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && addSuccessor()} />
-                  <select className="input" value={newSuccessorReadiness} onChange={e => setNewSuccessorReadiness(e.target.value)} style={{ fontSize: 12 }}>
-                    {Object.entries(READINESS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                  </select>
-                  <Button size="sm" variant="soft" onClick={addSuccessor}><Plus size={13} /></Button>
-                </div>
-              </div>
-
-              <div>
-                <label className="label">Notes RH</label>
-                <textarea className="input" rows={3} style={{ resize: 'none', padding: '8px 12px' }}
-                  value={localScores.notes} onChange={e => set('notes', e.target.value)} placeholder="Observations..." />
-              </div>
-
-              <Button onClick={save} loading={patchMut.isPending}>Enregistrer le profil</Button>
-            </div>
-          )}
-
-          {/* ── OKRs TAB ── */}
-          {tab === 'okrs' && (
-            <div>
-              {showOKRForm ? (
-                <div style={{ padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 16 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <Input label="Objectif *" value={okrForm.title} onChange={e => setOKRForm(f => ({ ...f, title: e.target.value }))} placeholder="Améliorer la couverture de tests à 80%" />
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div>
-                        <label className="label">Trimestre</label>
-                        <select className="input" value={okrForm.quarter} onChange={e => setOKRForm(f => ({ ...f, quarter: e.target.value }))}>
-                          {['Q1 2026','Q2 2026','Q3 2026','Q4 2026'].map(q => <option key={q}>{q}</option>)}
-                        </select>
-                      </div>
-                      <Input label="Progression (%)" type="number" value={okrForm.progress}
-                        onChange={e => setOKRForm(f => ({ ...f, progress: +e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className="label">Description</label>
-                      <textarea className="input" rows={2} style={{ resize: 'none', padding: '8px 12px' }}
-                        value={okrForm.description} onChange={e => setOKRForm(f => ({ ...f, description: e.target.value }))} />
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                      <Button variant="ghost" onClick={() => setShowOKRForm(false)}>Annuler</Button>
-                      <Button onClick={() => createOKRMut.mutate()} loading={createOKRMut.isPending}>Ajouter</Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <Button variant="soft" onClick={() => setShowOKRForm(true)} style={{ marginBottom: 16 }}>
-                  <Plus size={13} /> Nouvel OKR
-                </Button>
-              )}
-
-              {okrs.length === 0 ? (
-                <p style={{ color: 'var(--ink-2)', fontSize: 13, textAlign: 'center', padding: 20 }}>Aucun OKR défini.</p>
-              ) : okrs.map((okr: any) => (
-                <div key={okr.id} style={{ padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 10 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 2 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--violet)', background: 'var(--violet-soft)', padding: '1px 6px', borderRadius: 4 }}>{okr.quarter}</span>
-                        <span style={{ fontWeight: 600, fontSize: 13 }}>{okr.title}</span>
-                      </div>
-                      {okr.description && <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{okr.description}</p>}
-                    </div>
-                    <button onClick={() => deleteOKRMut.mutate(okr.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', marginLeft: 8 }}>
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ flex: 1, height: 6, background: 'var(--line)', borderRadius: 6 }}>
-                      <div style={{ height: 6, width: `${okr.progress}%`, background: okr.progress >= 100 ? 'var(--success)' : 'var(--violet)', borderRadius: 6, transition: 'width 0.3s' }} />
-                    </div>
-                    <input type="range" min={0} max={100} value={okr.progress}
-                      onChange={e => updateOKRMut.mutate({ id: okr.id, body: { progress: +e.target.value } })}
-                      style={{ width: 80, accentColor: 'var(--violet)' }} />
-                    <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--violet)', minWidth: 36 }}>{okr.progress}%</span>
-                    {okr.progress >= 100 && <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* ── PDI TAB ── */}
-          {tab === 'pdi' && (
-            <div>
-              {/* Progress summary */}
-              {pdiItems.length > 0 && (
-                <div style={{ padding: '12px 14px', background: 'var(--surface-2)', borderRadius: 10, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ flex: 1, height: 6, background: 'var(--line)', borderRadius: 6 }}>
-                    <div style={{ height: 6, width: `${Math.round(completedPDI / pdiItems.length * 100)}%`, background: 'var(--success)', borderRadius: 6, transition: 'width 0.3s' }} />
-                  </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--success)' }}>{completedPDI}/{pdiItems.length} actions</span>
-                </div>
-              )}
-
-              {showPDIForm ? (
-                <div style={{ padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 16 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <Input label="Action de développement *" value={pdiForm.title}
-                      onChange={e => setPDIForm(f => ({ ...f, title: e.target.value }))} placeholder="Maîtriser Python pour l'analyse de données" />
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                      <div>
-                        <label className="label">Type d'action</label>
-                        <select className="input" value={pdiForm.action_type} onChange={e => setPDIForm(f => ({ ...f, action_type: e.target.value }))}>
-                          {Object.entries(ACTION_TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="label">Échéance</label>
-                        <input type="date" className="input" value={pdiForm.target_date}
-                          onChange={e => setPDIForm(f => ({ ...f, target_date: e.target.value }))} />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="label">Notes</label>
-                      <textarea className="input" rows={2} style={{ resize: 'none', padding: '8px 12px' }}
-                        value={pdiForm.notes} onChange={e => setPDIForm(f => ({ ...f, notes: e.target.value }))}
-                        placeholder="Objectifs, ressources..." />
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                      <Button variant="ghost" onClick={() => setShowPDIForm(false)}>Annuler</Button>
-                      <Button onClick={() => pdiForm.title && createPDIMut.mutate()} loading={createPDIMut.isPending}>Ajouter</Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <Button variant="soft" onClick={() => setShowPDIForm(true)} style={{ marginBottom: 16 }}>
-                  <Plus size={13} /> Ajouter une action de développement
-                </Button>
-              )}
-
-              {pdiItems.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '30px 20px', color: 'var(--ink-2)' }}>
-                  <BookOpen size={32} style={{ opacity: 0.3, margin: '0 auto 10px' }} />
-                  <p style={{ fontSize: 13 }}>Aucune action de développement définie.</p>
-                </div>
-              ) : pdiItems.map((item: any) => {
-                const at = ACTION_TYPES[item.action_type] ?? ACTION_TYPES.formation;
-                const st = PDI_STATUS[item.status] ?? PDI_STATUS.pending;
-                return (
-                  <div key={item.id} style={{ padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 10, marginBottom: 10 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: at.color, background: at.bg, padding: '1px 7px', borderRadius: 5 }}>
-                            {at.label}
-                          </span>
-                          <span style={{ fontWeight: 600, fontSize: 13 }}>{item.title}</span>
+              <div style={{ padding: '16px 22px 22px' }}>
+                {tab === 'profile' && (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 10 }}>
+                      {([['performance_score', 'tal_perf', '#16a06b'], ['potential_score', 'tal_pot', '#6d5ad6']] as ['performance_score' | 'potential_score', TKey, string][]).map(([k, l, col]) => (
+                        <div key={k} style={{ padding: '12px 14px', borderRadius: 14, background: '#f3f6f7' }}>
+                          <div style={{ fontSize: 11.5, color: '#5f7079' }}>{t(l)}</div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}><span style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-.04em' }}>{dec(cur[k])}</span><span style={{ fontSize: 12, color: '#5f7079' }}>/ 5</span></div>
+                          <div style={{ display: 'flex', gap: 3, marginTop: 6 }}>
+                            {[1, 2, 3, 4, 5].map(n => <button key={n} type="button" aria-label={`${t(l)} ${n}/5`} onClick={() => setScore(k, n)} style={{ flex: 1, height: 6, padding: 0, border: 'none', borderRadius: 99, background: n <= cur[k] ? col : '#e2e8eb', cursor: 'pointer', transition: 'background .3s' }} />)}
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--ink-2)' }}>
-                          {item.target_date && <span><Clock size={10} /> {safeFormat(item.target_date)}</span>}
-                          {item.notes && <span style={{ fontStyle: 'italic' }}>{item.notes.slice(0, 50)}{item.notes.length > 50 ? '…' : ''}</span>}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <select value={item.status}
-                          onChange={e => updatePDIMut.mutate({ id: item.id, body: { status: e.target.value } })}
-                          style={{ fontSize: 11, padding: '3px 6px', borderRadius: 6, border: `1px solid ${st.color}44`,
-                            background: st.color + '22', color: st.color, fontWeight: 700, cursor: 'pointer' }}>
-                          {Object.entries(PDI_STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                        </select>
-                        <button onClick={() => deletePDIMut.mutate(item.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)' }}><Trash2 size={12} /></button>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: 18, fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 15 }}>{t('tal_values')}</div>
+                    <div style={{ position: 'relative', width: '100%', maxWidth: 300, aspectRatio: '280 / 240', margin: '6px auto 0' }}>
+                      <svg viewBox="-30 -10 280 240" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}>
+                        {['110,30 186.09,85.28 157.02,174.72 62.98,174.72 33.91,85.28', '110,50 167.07,91.46 145.27,158.54 74.73,158.54 52.93,91.46', '110,70 148.04,97.64 133.51,142.36 86.49,142.36 71.96,97.64', '110,90 129.02,103.82 121.76,126.18 98.24,126.18 90.98,103.82'].map((pts, i) => <polygon key={i} points={pts} style={{ fill: i === 0 ? '#f8fafb' : 'none', stroke: '#e2e8eb', strokeWidth: 1 }} />)}
+                        {[[110, 30], [186.09, 85.28], [157.02, 174.72], [62.98, 174.72], [33.91, 85.28]].map(([x, y], i) => <line key={i} x1="110" y1="110" x2={x} y2={y} style={{ stroke: '#e2e8eb', strokeWidth: 1 }} />)}
+                        <RV as="g" key={id} variant="scale" style={{ transformOrigin: '110px 110px' }}><polygon points={radar} style={{ fill: 'rgba(22,182,200,.22)', stroke: '#16b6c8', strokeWidth: 2, strokeLinejoin: 'round' }} /></RV>
+                      </svg>
+                      {VALUES.map(([k, label, tip, left, top]) => (
+                        <span key={k} title={t(tip)} style={{ position: 'absolute', left, top, transform: 'translate(-50%,-50%)', textAlign: 'center', lineHeight: 1.2 }}>
+                          <span style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#33474f' }}>{label}</span>
+                          <span style={{ display: 'block', fontFamily: "'Geist Mono',monospace", fontSize: 11, color: '#0e6f84' }}>{cur[k] ? dec(Number(cur[k])) : '—'}</span>
+                        </span>
+                      ))}
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 14, padding: '12px 14px', borderRadius: 14, background: curRisk[2], border: `1px solid ${curRisk[3]}` }}>
+                      <RiskIcon size={17} style={{ color: curRisk[1], flexShrink: 0, marginTop: 1 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: curRisk[1] }}>{tf(t('tal_risk_long'), { level: t(curRisk[0]) })}</div>
+                        <textarea key={`notes-${id}`} defaultValue={cur.notes ?? ''} onBlur={e => saveText('notes', e.target.value)} placeholder={t('tal_why_ph')} rows={2}
+                          style={{ width: '100%', marginTop: 2, padding: 0, border: 'none', background: 'transparent', resize: 'vertical', fontFamily: 'inherit', fontSize: 13, lineHeight: 1.5, color: '#33474f', outline: 'none' }} />
                       </div>
                     </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', marginTop: 14, fontSize: 13.5 }}>
+                      {([['next_role', 'tal_next'], ['career_path', 'tal_path']] as ['next_role' | 'career_path', TKey][]).map(([k, l]) => (
+                        <label key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 0', borderTop: '1px solid #f0f3f4' }}>
+                          <span style={{ color: '#5f7079', whiteSpace: 'nowrap' }}>{t(l)}</span>
+                          <input key={`${k}-${id}`} defaultValue={cur[k] ?? ''} onBlur={e => saveText(k, e.target.value)} placeholder="—" style={{ flex: 1, minWidth: 0, border: 'none', background: 'transparent', textAlign: 'end', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, color: '#0a1c24', outline: 'none' }} className="tal-inline" />
+                        </label>
+                      ))}
+                      <div style={{ padding: '10px 0', borderTop: '1px solid #f0f3f4' }}>
+                        <div style={{ color: '#5f7079' }}>{t('tal_succ')}</div>
+                        <form onSubmit={addSucc} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', marginTop: 8 }}>
+                          {(cur.successor_names ?? []).map(s => (
+                            <span key={s} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 8px 0 4px', borderRadius: 99, background: '#e4f2f4', fontSize: 12.5, fontWeight: 600, color: '#0b5f72' }}>
+                              <span style={{ width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: avatarGradient(s), color: '#ffffff', fontSize: 9, fontWeight: 700 }}>{initialsOf(s)}</span>{s}
+                              <button type="button" aria-label={t('delete')} onClick={() => patch.mutate({ emp: id, body: { successor_names: (cur.successor_names ?? []).filter(x => x !== s) } })} style={{ border: 'none', background: 'none', padding: 0, color: '#5f9aa6', cursor: 'pointer', display: 'inline-flex' }}><X size={12} /></button>
+                            </span>
+                          ))}
+                          <input value={succIn} onChange={e => setSuccIn(e.target.value)} placeholder={t('tal_succ_add')} style={{ width: 120, height: 30, padding: '0 11px', borderRadius: 99, border: '1px dashed #c3ced3', background: 'transparent', fontFamily: 'inherit', fontSize: 12.5, color: '#0a1c24', outline: 'none' }} className="tal-f1" />
+                        </form>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {tab === 'okr' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}><span style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 15 }}>{tf(t('tal_okr_title'), { q: quarter() })}</span><span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: '#52646d' }}>{tf(t('tal_okr_avg'), { n: okrAvg })}</span></div>
+                    {!liveOkrs.length && <div style={{ fontSize: 13.5, color: '#52646d' }}>{t('tal_okr_none')}</div>}
+                    {liveOkrs.map(o => {
+                      const p = okrDraft[o.id] ?? o.progress;
+                      return (
+                        <RV key={o.id} as="div" variant="up" style={{ padding: 14, borderRadius: 14, border: '1px solid #e2e8eb' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}><span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.4 }}>{o.title}</span><span style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 800, fontSize: 19, color: p >= 70 ? '#0f6f49' : p >= 40 ? '#0b5f72' : '#8a5207' }}>{p}%</span></div>
+                          <input type="range" min={0} max={100} step={5} value={p} aria-label={t('tal_okr_progress')} onChange={e => setOkrDraft(d => ({ ...d, [o.id]: +e.target.value }))}
+                            onPointerUp={() => { if (okrDraft[o.id] !== undefined && okrDraft[o.id] !== o.progress) okrSet.mutate({ okr: o.id, progress: okrDraft[o.id] }); }}
+                            onKeyUp={() => { if (okrDraft[o.id] !== undefined && okrDraft[o.id] !== o.progress) okrSet.mutate({ okr: o.id, progress: okrDraft[o.id] }); }}
+                            style={{ width: '100%', margin: '10px 0 0', accentColor: '#0e6f84', cursor: 'pointer' }} />
+                        </RV>
+                      );
+                    })}
+                    <form onSubmit={e => { e.preventDefault(); if (okrIn.trim()) okrAdd.mutate(okrIn.trim()); }} style={{ display: 'flex', gap: 8 }}>
+                      <input value={okrIn} onChange={e => setOkrIn(e.target.value)} placeholder={t('tal_okr_ph')} style={{ flex: 1, minWidth: 0, height: 40, padding: '0 12px', borderRadius: 11, border: '1px solid #d6dfe3', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' }} className="tal-f2" />
+                      <button type="submit" disabled={okrAdd.isPending} style={{ height: 40, padding: '0 14px', border: 'none', borderRadius: 11, background: '#0a1c24', color: '#ffffff', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('tal_add')}</button>
+                    </form>
                   </div>
-                );
-              })}
-            </div>
+                )}
+                {tab === 'pdi' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}><span style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 15 }}>{t('tal_pdi_title')}</span><span style={{ fontFamily: "'Geist Mono',monospace", fontSize: 12, color: '#52646d' }}>{tf(t('tal_pdi_done'), { n: pdiDone, total: pdi.length })}</span></div>
+                    <div style={{ height: 6, borderRadius: 99, background: '#eef2f4', overflow: 'hidden' }}><div style={{ height: '100%', width: `${pdi.length ? Math.round(pdiDone / pdi.length * 100) : 0}%`, borderRadius: 99, background: 'linear-gradient(90deg,#0f6f49,#2bbd86)', transition: 'width .6s' }} /></div>
+                    {pdi.map(d => {
+                      const ty = PDIT[d.action_type || 'formation'] ?? PDIT.formation, st = PST[d.status] ?? PST.pending, StIcon = st[4];
+                      return (
+                        <RV key={d.id} as="div" variant="up" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14, border: '1px solid #e2e8eb', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: ty[1], color: ty[2] }}>{t(ty[0])}</span>
+                          <div style={{ flex: 1, minWidth: 150 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: d.status === 'completed' ? '#7d8f97' : '#0a1c24', textDecoration: d.status === 'completed' ? 'line-through' : 'none' }}>{d.title}</div>
+                            {d.target_date && <div style={{ fontSize: 12, color: '#5f7079', marginTop: 2 }}>{tf(t('tal_pdi_due'), { date: d.target_date.slice(0, 10).split('-').reverse().join('/') })}</div>}
+                          </div>
+                          <button type="button" onClick={() => pdiCycle.mutate(d)} title={t('tal_pdi_change')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 32, padding: '0 11px', borderRadius: 99, border: `1px solid ${st[3]}`, background: st[1], color: st[2], fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}><StIcon size={13} />{t(st[0])}</button>
+                        </RV>
+                      );
+                    })}
+                    <form onSubmit={e => { e.preventDefault(); if (pdiIn.trim()) pdiAdd.mutate({ title: pdiIn.trim(), action_type: pdiType }); }} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <select value={pdiType} onChange={e => setPdiType(e.target.value)} style={{ height: 40, padding: '0 10px', borderRadius: 11, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 13, color: '#33474f', outline: 'none' } as CSSProperties}>
+                        {Object.keys(PDIT).map(k => <option key={k} value={k}>{t(PDIT[k][0])}</option>)}
+                      </select>
+                      <input value={pdiIn} onChange={e => setPdiIn(e.target.value)} placeholder={t('tal_pdi_ph')} style={{ flex: 1, minWidth: 140, height: 40, padding: '0 12px', borderRadius: 11, border: '1px solid #d6dfe3', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' }} className="tal-f2" />
+                      <button type="submit" disabled={pdiAdd.isPending} style={{ height: 40, padding: '0 14px', border: 'none', borderRadius: 11, background: '#0a1c24', color: '#ffffff', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{t('tal_add')}</button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            </RV>
           )}
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Page ───────────────────────────────────────────────────────────────────────
-export default function TalentsPage() {
-  const qc = useQueryClient();
-  const { t } = useLang();
-  const [pageTab, setPageTab] = useState<'profiles' | 'mobility'>('profiles');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  const [selectedTalent, setSelectedTalent] = useState<any>(null);
-  const [catFilter, setCatFilter] = useState('');
-  const [riskFilter, setRiskFilter] = useState('');
-
-  const { data: talents = [], isLoading } = useQuery({ queryKey: ['talents'], queryFn: getTalents });
-  const { data: stats }    = useQuery({ queryKey: ['talent-stats'],    queryFn: getStats });
-  const { data: mobility = [] } = useQuery({ queryKey: ['talent-mobility'], queryFn: getMobility });
-
-  const bulkMut = useMutation({
-    mutationFn: bulkProfile,
-    onSuccess: (r: any) => { qc.invalidateQueries({ queryKey: ['talents'] }); toast.success(`${r.created} profils créés`); },
-  });
-
-  const filtered = talents.filter((t: any) =>
-    (!catFilter || t.talent_category === catFilter) &&
-    (!riskFilter || t.flight_risk === riskFilter)
-  );
-
-  return (
-    <div style={{ padding: '24px 28px' }}>
-      <PageHeader
-        title={t('talents_title')}
-        subtitle={`${talents.length} profil${talents.length !== 1 ? 's' : ''} · ${mobility.length} candidats mobilité`}
-        action={
-          <Button variant="soft" onClick={() => bulkMut.mutate()} loading={bulkMut.isPending}>
-            <Users size={14} /> Initialiser profils
-          </Button>
-        }
-      />
-
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
-        {[
-          { label: 'Profils totaux',      value: stats?.total ?? 0,              color: 'var(--primary)', icon: <Users size={16} /> },
-          { label: 'Risque départ élevé', value: stats?.high_flight_risk ?? 0,   color: 'var(--danger)', icon: <AlertTriangle size={16} /> },
-          { label: 'Postes critiques',    value: stats?.critical_positions ?? 0, color: 'var(--warn)', icon: <Shield size={16} /> },
-          { label: 'Perf. moyenne',       value: `${stats?.avg_performance ?? 0}/5`, color: 'var(--success)', icon: <TrendingUp size={16} /> },
-        ].map(s => (
-          <div key={s.label} className="card card-pad" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: s.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color }}>{s.icon}</div>
-            <div>
-              <p style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>{s.value}</p>
-              <p style={{ fontSize: 11, color: 'var(--ink-2)', margin: 0 }}>{s.label}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Page tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', gap: 24, marginBottom: 20 }}>
-        {[
-          { id: 'profiles', label: `Profils Talent (${talents.length})` },
-          { id: 'mobility', label: `Mobilité Interne (${mobility.length})` },
-        ].map(t => (
-          <button key={t.id} onClick={() => setPageTab(t.id as any)} style={{
-            padding: '10px 0', fontWeight: 600, fontSize: 14,
-            borderBottom: pageTab === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-            color: pageTab === t.id ? 'var(--primary)' : 'var(--ink-2)',
-            background: 'none', border: 'none', cursor: 'pointer',
-          }}>{t.label}</button>
-        ))}
-      </div>
-
-      {/* ── PROFILES TAB ── */}
-      {pageTab === 'profiles' && (
-        <>
-          {viewMode === 'grid' && <NineBoxGrid talents={filtered} />}
-
-          <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: 4, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: 3 }}>
-              <button onClick={() => setViewMode('list')} style={{ padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: viewMode === 'list' ? 'var(--primary)' : 'transparent', color: viewMode === 'list' ? '#fff' : 'var(--ink-2)' }}><List size={14} /></button>
-              <button onClick={() => setViewMode('grid')} style={{ padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', background: viewMode === 'grid' ? 'var(--primary)' : 'transparent', color: viewMode === 'grid' ? '#fff' : 'var(--ink-2)' }}><LayoutGrid size={14} /></button>
-            </div>
-            <button onClick={() => setCatFilter('')}
-              style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid var(--line)', background: !catFilter ? 'var(--primary)' : 'transparent', color: !catFilter ? '#fff' : 'var(--fg)' }}>
-              Tous
-            </button>
-            {Object.entries(TALENT_CATS).map(([k, v]) => (
-              <button key={k} onClick={() => setCatFilter(catFilter === k ? '' : k)}
-                style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                  border: `1px solid ${v.color}44`, background: catFilter === k ? v.color : v.bg, color: catFilter === k ? '#fff' : v.color }}>
-                {v.label} {stats?.by_category?.[k] ? `(${stats.by_category[k]})` : ''}
-              </button>
-            ))}
-            <select value={riskFilter} onChange={e => setRiskFilter(e.target.value)}
-              style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 12, cursor: 'pointer' }}>
-              <option value="">Risque: Tous</option>
-              <option value="low">Faible</option>
-              <option value="medium">Moyen</option>
-              <option value="high">Élevé</option>
-            </select>
-          </div>
-
-          {isLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner /></div>
-          ) : filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-2)' }}>
-              <Award size={40} style={{ opacity: 0.3, margin: '0 auto 16px' }} />
-              <p style={{ fontWeight: 500 }}>Aucun profil talent.</p>
-              <p style={{ fontSize: 13, marginBottom: 16 }}>Cliquez "Initialiser profils" pour créer des profils pour tous les employés actifs.</p>
-              <Button onClick={() => bulkMut.mutate()} loading={bulkMut.isPending}><Users size={13} /> Initialiser profils</Button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {filtered.map((t: any) => {
-                const emp = t.employees ?? {};
-                const cm  = catMeta(t.talent_category ?? 'key_player');
-                const rc  = RISK_COLORS[t.flight_risk ?? 'low'];
-                const moovAvg = (MOOVWIN.reduce((s, m) => s + (t[m.key] ?? 0), 0) / 5).toFixed(1);
-                const pdiCount = 0;
-                return (
-                  <div key={t.id} className="card card-pad hover-scale"
-                    style={{ display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }}
-                    onClick={() => setSelectedTalent(t)}>
-                    <Avatar name={emp.full_name} src={emp.photo_url} size={44} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3 }}>
-                        <span style={{ fontWeight: 700, fontSize: 14 }}>{emp.full_name}</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: cm.color, background: cm.bg, padding: '1px 7px', borderRadius: 5 }}>{cm.label}</span>
-                        {t.is_critical_position && <span style={{ fontSize: 10, color: 'var(--danger)', fontWeight: 700 }}>⚠ Critique</span>}
-                        {t.next_role && <span style={{ fontSize: 11, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 3 }}><ArrowRight size={10} />{t.next_role}</span>}
-                      </div>
-                      <p style={{ fontSize: 12, color: 'var(--ink-2)', margin: 0 }}>{emp.position} — {emp.department}</p>
-                    </div>
-                    <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 12 }}>
-                      <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--success)', margin: 0 }}>{t.performance_score ?? '—'}</p>
-                        <p style={{ color: 'var(--ink-2)', margin: 0 }}>Perf.</p>
-                      </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--violet)', margin: 0 }}>{t.potential_score ?? '—'}</p>
-                        <p style={{ color: 'var(--ink-2)', margin: 0 }}>Pot.</p>
-                      </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <p style={{ fontWeight: 700, fontSize: 16, color: 'var(--warn)', margin: 0 }}>★{moovAvg}</p>
-                        <p style={{ color: 'var(--ink-2)', margin: 0 }}>Moovwin</p>
-                      </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: rc, background: rc + '22', padding: '3px 8px', borderRadius: 6 }}>
-                        {RISK_LABELS[t.flight_risk ?? 'low']}
-                      </span>
-                      <ChevronRight size={14} style={{ color: 'var(--ink-2)' }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </>
       )}
-
-      {/* ── MOBILITY TAB ── */}
-      {pageTab === 'mobility' && (
-        <MobilityView mobility={mobility} onOpenTalent={setSelectedTalent} />
-      )}
-
-      {selectedTalent && <TalentDrawer talent={selectedTalent} onClose={() => setSelectedTalent(null)} />}
     </div>
   );
 }

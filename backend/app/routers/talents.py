@@ -141,9 +141,18 @@ def update_talent(
     payload.pop("id", None)
     payload.pop("employee_id", None)
     payload["updated_at"] = datetime.utcnow().isoformat()
-    perf = payload.get("performance_score", 3)
-    pot  = payload.get("potential_score", 3)
-    payload["talent_category"] = _classify(int(perf), int(pot))
+    # Re-classify only when a score changes, completing it with the stored one (a partial update — risk, notes,
+    # successors… — must not reset the category to the 3/3 default).
+    if "performance_score" in payload or "potential_score" in payload:
+        current = {}
+        try:
+            rows = talent_repository.get_talent_profile(supabase, employee_id).data or []
+            current = rows[0] if rows else {}
+        except Exception:
+            pass
+        perf = payload.get("performance_score", current.get("performance_score", 3))
+        pot  = payload.get("potential_score", current.get("potential_score", 3))
+        payload["talent_category"] = _classify(int(perf), int(pot))
     try:
         res = talent_repository.get_talent_profile_id(supabase, employee_id)
         if res.data:

@@ -179,6 +179,11 @@ Settings notes (`app/SettingsPage.tsx` + `SettingsView.tsx`):
 - What the values drive: the company profile fills the Generate letterhead (logo or initials, address, phone, RC / ICE / CNSS, "Fait à {city}", signature and stamp images) and the new `{{company…}}` variables of the backend generator; the leave rules (days per month, seniority bonus, cap) compute the default entitlement in `/leaves/balance` and `/leaves/balances` (defaults: Code du travail, 1.5 d/month → 18 d, instead of the previous invented 21 d); switched-off fixed holidays disappear from Time off / Absences; the lunar holidays are estimated (Umm al-Qura calendar) and saved to the `holidays` table when switched on (`POST|DELETE /leaves/holidays`), custom ones can be added; the default interface language applies on save; the default document language preselects Generate's language.
 - Removed rather than faked: the documents' numbering prefix and the "code de vérification" toggle (no numbering or online verification exists — the Generate footer no longer shows a wedy.ma/v/… URL), and the billing tab's plan, quotas and invoices (no billing data): it shows real usage (active employees, documents this month, active templates) and how to get invoices. The "Référentiels RH" tab keeps the existing contract-types editor, restyled.
 
+Audit notes (`app/AuditPage.tsx` + `AuditView.tsx`):
+- New read-only `GET /audit-logs/feed` (HR): the last 30 days of `audit_logs` with the author's name and a target label resolved in batches (employee names behind leave requests, reviews and payslips, document types, meeting titles…); a target that no longer exists is flagged as deleted.
+- Entries read as sentences (verb per action, noun per entity, FR/EN/AR), grouped into the reference's modules (+ "Autres"), with a severity computed from the action (deleting an employee or an account is critical; deletions, account / settings / payroll changes and imports are warnings). "En direct" refetches every 15 s and highlights new entries; the CSV export is the filtered list.
+- KPIs and alerts come from the log: events, active users, deletions, generated documents; alerts for ≥ 5 deletions by one user in 24 h and for account changes in the last 7 days ("Voir les événements" filters the list). The log stores no IP, device or field changes, and logins / failed logins / exports are not logged, so the reference's IP column, device, diff, SHA-256 fingerprint, refused-connections KPI and "24 mois" retention claim are replaced by what exists (reference, timestamp, author ID, "field detail not recorded").
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |
@@ -207,7 +212,7 @@ Settings notes (`app/SettingsPage.tsx` + `SettingsView.tsx`):
 | 22 | Talents | Wedy Talents | `/app/talents` | `app/TalentsPage.tsx` | ☑ |
 | 23 | Tenders | Wedy Tenders | `/app/tenders` | `app/TendersPage.tsx` | ☑ |
 | 24 | Analytics | Wedy Analytics | `/app/analytics` | `app/AnalyticsPage.tsx` | ☑ |
-| 25 | Audit | Wedy Audit | `/app/audit` | `app/AuditPage.tsx` | ◐ |
+| 25 | Audit | Wedy Audit | `/app/audit` | `app/AuditPage.tsx` | ☑ |
 | 26 | Notifications | Wedy Notifications | `/app/notifications` | `app/NotificationsPage.tsx` | ◐ |
 | 27 | Integrations | Wedy Integrations | `/app/integrations` | `app/IntegrationsPage.tsx` | ◐ |
 | 28 | Users & roles | Wedy Users | `/app/users` | `app/UsersPage.tsx` | ◐ |

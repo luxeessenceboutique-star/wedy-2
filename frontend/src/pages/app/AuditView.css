@@ -1,0 +1,4 @@
+/* hover / focus rules of Wedy Audit (style-hover / style-focus) */
+.aud-h1:hover { background: #16323c !important; }
+.aud-f2:focus { border-color: #16b6c8 !important; box-shadow: 0 0 0 4px rgba(22,182,200,.14) !important; }
+.aud-h3:hover { background: #f6fafb !important; }

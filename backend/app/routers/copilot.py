@@ -3,12 +3,13 @@ import os
 from datetime import date, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from supabase import Client
 
 from app.database import get_db
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_hr_or_admin
 from app.config import settings
 from app.repositories import copilot_repository
 
@@ -181,7 +182,7 @@ def _call_ai(system: str, messages: list) -> str:
 async def chat(
     body: ChatRequest,
     supabase: Client = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(require_hr_or_admin),  # the context below holds every employee's file and salary
 ):
     messages = [{"role": m.role, "content": m.content} for m in body.messages]
 
@@ -244,3 +245,41 @@ async def tybot_flow_proxy(payload: dict, current_user: dict = Depends(get_curre
             return response.json()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"TyBotFlow Proxy error: {str(e)}")
+
+
+# ── Multi-agent Copilot (LangGraph) ──────────────────────────────────────────────
+
+class AgentRun(BaseModel):
+    thread_id: str
+    message: Optional[str] = None
+    resume: Optional[dict] = None          # {"approve": true | false}: the user's answer to a confirmation card
+    lang: str = "fr"
+    auto_approve: bool = False             # run changes without asking (deletions always ask)
+    history: Optional[List[Message]] = None  # what the browser shows, used when the server no longer has the conversation
+
+
+@router.post("/agent")
+async def agent_run(body: AgentRun, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
+    """One turn of the multi-agent Copilot, streamed as Server-Sent Events."""
+    from app.agents import service
+    if not body.resume and not (body.message or "").strip():
+        raise HTTPException(status_code=422, detail="message or resume required")
+    if len(body.thread_id) > 80:
+        raise HTTPException(status_code=422, detail="thread_id too long")
+    gen = service.stream(thread_id=body.thread_id, user=current_user, db=supabase, lang=body.lang, message=body.message, resume=body.resume,
+                         auto_approve=body.auto_approve, history=[m.model_dump() for m in (body.history or [])])
+    return StreamingResponse(gen, media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
+
+
+@router.get("/agents")
+def agents_info(lang: str = Query("fr"), current_user: dict = Depends(require_hr_or_admin)):
+    """The specialists and what they can do (shown in the Copilot page)."""
+    from app.agents import graph as _g  # noqa: F401  (registers the tools)
+    from app.agents.catalog import AGENTS
+    from app.agents.runtime import AGENT_TOOLS, SPECS
+    idx = {"fr": 0, "en": 1, "ar": 2}.get(lang, 0)
+    out = []
+    for name, a in AGENTS.items():
+        tools = [{"name": t.name, "label": SPECS[t.name].label[idx], "write": SPECS[t.name].write, "danger": SPECS[t.name].danger} for t in AGENT_TOOLS.get(name, [])]
+        out.append({"name": name, "label": a["label"][idx], "examples": [e[idx] for e in a["examples"]], "tools": tools})
+    return {"agents": out}

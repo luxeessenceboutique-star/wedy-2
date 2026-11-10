@@ -1,3 +1,89 @@
-.cop-sugg { transition: border-color .2s, box-shadow .2s, transform .2s; }
-.cop-sugg:hover { border-color: #b9dfe5; box-shadow: 0 16px 30px -18px rgba(10,28,36,.35); transform: translateY(-2px); }
 .cop-cmd:hover { background: #eef6f7 !important; }
+
+/* capability cards in the empty state */
+.cop-card { padding: 16px; border-radius: 18px; background: #ffffff; border: 1px solid #e2e8eb; transition: border-color .2s, box-shadow .2s, transform .2s; }
+.cop-card:hover { border-color: #b9dfe5; box-shadow: 0 16px 30px -18px rgba(10,28,36,.35); transform: translateY(-2px); }
+.cop-n { margin-inline-start: auto; font-family: 'Geist Mono', monospace; font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 6px; background: #eef2f4; color: #52646d; }
+.cop-n:empty { display: none; }
+.cop-ex { text-align: start; border: 1px solid #e8eef0; background: #f8fafb; border-radius: 11px; padding: 8px 11px; font-family: inherit; font-size: 13px; line-height: 1.4; color: #33474f; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+.cop-ex:hover { background: #e4f2f4; border-color: #b9dfe5; color: #0b5f72; }
+
+/* buttons */
+.cop-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 11px; border: 1px solid #d6dfe3; background: #ffffff; font-family: inherit; font-size: 13px; font-weight: 600; color: #33474f; cursor: pointer; transition: background .15s, border-color .15s, transform .15s; }
+.cop-btn:hover { background: #f3f6f7; border-color: #c4d0d5; }
+.cop-btn:active { transform: translateY(1px); }
+.cop-btn-go { background: linear-gradient(135deg, #0e6f84, #16b6c8); border-color: transparent; color: #ffffff; box-shadow: 0 8px 18px -10px rgba(14,111,132,.8); }
+.cop-btn-go:hover { background: linear-gradient(135deg, #0b5f72, #12a5b6); border-color: transparent; }
+
+/* auto-approve switch */
+.cop-auto { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 11px; border: 1px solid #d6dfe3; background: #ffffff; font-family: inherit; font-size: 13px; font-weight: 600; color: #52646d; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+.cop-auto:hover { background: #f3f6f7; }
+.cop-auto.on { background: #e4f2f4; border-color: #b9dfe5; color: #0b5f72; }
+.cop-switch { position: relative; width: 28px; height: 16px; border-radius: 99px; background: #c9d5da; transition: background .2s; flex-shrink: 0; }
+.cop-switch > span { position: absolute; top: 2px; inset-inline-start: 2px; width: 12px; height: 12px; border-radius: 50%; background: #ffffff; box-shadow: 0 1px 2px rgba(10,28,36,.3); transition: inset-inline-start .2s; }
+.cop-auto.on .cop-switch { background: #16a06b; }
+.cop-auto.on .cop-switch > span { inset-inline-start: 14px; }
+
+/* which agent is working */
+.cop-route { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; background: #ece9fb; color: #5846c0; font-family: 'Geist Mono', monospace; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
+.cop-agent-chip { align-self: flex-start; padding: 2px 9px; border-radius: 99px; background: #e4f2f4; color: #0b5f72; font-family: 'Geist Mono', monospace; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
+
+/* tool steps */
+.cop-steps { list-style: none; margin: 0; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; border-radius: 14px; background: rgba(255,255,255,.75); border: 1px dashed #cfdce1; }
+.cop-steps li { display: flex; align-items: center; gap: 9px; font-size: 13px; color: #52646d; min-width: 0; }
+.cop-step-ic { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #eef2f4; color: #52646d; flex-shrink: 0; }
+.cop-steps li.ok .cop-step-ic { background: #e1f5ec; color: #16a06b; }
+.cop-steps li.error .cop-step-ic { background: #fbe9e6; color: #df5740; }
+.cop-steps li.running .cop-step-ic { background: #e4f2f4; color: #0e6f84; }
+.cop-step-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cop-step-w { padding: 1px 7px; border-radius: 6px; background: #fbefda; color: #b06b0c; font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; flex-shrink: 0; }
+.cop-step-s { margin-inline-start: auto; padding-inline-start: 8px; font-family: 'Geist Mono', monospace; font-size: 11.5px; color: #16a06b; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cop-step-s.err { color: #c64a35; }
+.cop-spin { animation: cop-spin 0.9s linear infinite; }
+@keyframes cop-spin { to { transform: rotate(360deg); } }
+
+/* confirmation card */
+.cop-confirm { padding: 14px 16px; border-radius: 16px; border: 1px solid #cfe8ec; box-shadow: 0 14px 30px -22px rgba(10,28,36,.4); }
+.cop-details { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.8); border: 1px solid #e8eef0; display: grid; gap: 6px; }
+.cop-details > div { display: flex; gap: 12px; justify-content: space-between; font-size: 13px; }
+.cop-details dt { color: #52646d; margin: 0; }
+.cop-details dd { margin: 0; font-weight: 600; color: #0a1c24; text-align: end; overflow-wrap: anywhere; }
+
+/* other states */
+.cop-await { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 8px 14px; border-radius: 12px; background: #fbefda; border: 1px solid #f1d9ad; color: #8a5409; font-size: 13px; }
+.cop-working { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; padding: 10px 14px; border-radius: 14px; background: #ffffff; border: 1px solid #e5ebee; font-size: 13.5px; color: #52646d; }
+.cop-error { display: flex; align-items: flex-start; gap: 8px; padding: 11px 14px; border-radius: 14px; background: #fbe9e6; border: 1px solid #f0c9c0; color: #8f3524; font-size: 14px; line-height: 1.5; }
+.cop-error svg { flex-shrink: 0; margin-top: 2px; }
+.cop-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; background: #e4f2f4; color: #0b5f72; font-size: 13px; font-weight: 600; text-decoration: none; transition: background .15s; }
+.cop-link:hover { background: #cfe8ec; }
+.cop-caret { display: inline-block; width: 7px; height: 15px; margin-inline-start: 3px; vertical-align: -2px; border-radius: 2px; background: #16b6c8; animation: cop-blink 1s steps(2, start) infinite; }
+@keyframes cop-blink { to { visibility: hidden; } }
+
+/* capabilities drawer */
+.cop-tool { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 8px; background: #f3f6f7; border: 1px solid #e8eef0; color: #33474f; font-size: 12px; }
+.cop-tool.w { background: #fbf6ea; border-color: #f1e1bd; color: #8a5409; }
+.cop-tool.d { background: #fbe9e6; border-color: #f0c9c0; color: #8f3524; }
+
+/* markdown inside answers */
+.cop-p { margin: 0; }
+.cop-p + .cop-p, .cop-p + .cop-ul, .cop-ul + .cop-p, .cop-h + .cop-p, .cop-p + .cop-table-wrap, .cop-table-wrap + .cop-p { margin-top: 8px; }
+.cop-h { margin: 12px 0 4px; font-weight: 700; color: #0a1c24; }
+.cop-h:first-child { margin-top: 0; }
+.cop-ul { margin: 6px 0; padding-inline-start: 22px; display: grid; gap: 3px; list-style: disc; }
+ol.cop-ul { list-style: decimal; }
+.cop-ul li::marker { color: #16b6c8; }
+.cop-code { padding: 1px 6px; border-radius: 6px; background: #eef2f4; font-family: 'Geist Mono', monospace; font-size: .9em; }
+.cop-a { color: #0e6f84; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.cop-table-wrap { margin: 8px 0; overflow-x: auto; border-radius: 12px; border: 1px solid #e5ebee; }
+.cop-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.cop-table th { text-align: start; padding: 8px 12px; background: #f3f6f7; font-weight: 600; color: #33474f; white-space: nowrap; }
+.cop-table td { padding: 8px 12px; border-top: 1px solid #eef2f4; }
+@media (prefers-reduced-motion: reduce) { .cop-spin, .cop-caret { animation: none; } }
+
+@media (max-width: 640px) {
+  .cop-head { padding: 10px 14px !important; gap: 8px !important; }
+  .cop-head .cop-lbl { display: none; }
+  .cop-head .cop-btn { padding: 8px 10px; }
+  .cop-auto { padding: 6px 10px 6px 8px; font-size: 12px; }
+  .cop-steps li { flex-wrap: wrap; }
+}

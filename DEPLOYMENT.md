@@ -143,6 +143,8 @@ cp backend/.env.example backend/.env
 | `OPENAI_API_KEY` | **Yes** | — | OpenAI API key |
 | `OPENAI_BASE_URL` | No | — | Custom OpenAI-compatible endpoint (if using a proxy) |
 | `OPENAI_MODEL` | No | `gpt-4o-mini` | OpenAI model name |
+| `COPILOT_MODEL` | No | provider default | Model used by the multi-agent Copilot (LangGraph). With `ANTHROPIC_API_KEY` it runs on Claude, otherwise on the OpenAI-compatible endpoint above |
+| `COPILOT_PROVIDER` | No | auto | Force `anthropic` or `openai` for the Copilot |
 | `TYBOTFLOW_API_KEY` | No | — | TybotFlow integration key |
 | `MAIL_SERVER` | No | `smtp.gmail.com` | SMTP server hostname |
 | `MAIL_PORT` | No | `587` | SMTP port |

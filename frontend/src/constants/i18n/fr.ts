@@ -3648,4 +3648,8 @@ export const fr = {
     ask_p_mtg_1: 'Planifie une réunion RH jeudi à 10h',
     ask_p_mtg_2: 'Quelles réunions ont lieu cette semaine ?',
     ask_p_mtg_3: 'Préviens l\'équipe RH de la prochaine réunion',
+    // Ask Wedy — employee folder
+    ask_emp_1: 'Fais-moi un résumé du dossier de {name}',
+    ask_emp_2: 'Quel est le solde de congés de {name} ?',
+    ask_emp_3: 'Génère une attestation de travail pour {name}',
 } as const;

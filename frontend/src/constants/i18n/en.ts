@@ -3594,4 +3594,8 @@ export const en = {
     ask_p_mtg_1: 'Schedule an HR meeting on Thursday at 10:00',
     ask_p_mtg_2: 'Which meetings are this week?',
     ask_p_mtg_3: 'Notify the HR team about the next meeting',
+    // Ask Wedy — employee folder
+    ask_emp_1: 'Give me a summary of {name}\'s file',
+    ask_emp_2: 'What is {name}\'s leave balance?',
+    ask_emp_3: 'Generate an employment certificate for {name}',
 } as const;

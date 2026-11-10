@@ -19,6 +19,8 @@ import { EmployeeFolderView } from './EmployeeFolderView';
 import { avatarGradient, initialsOf } from '@/lib/visual';
 import { toast } from 'sonner';
 import { useLang } from '@/lib/lang';
+import { tf } from '@/lib/format';
+import { useProvideAskPrompts } from '@/lib/askContext';
 
 const CONTRACT_TYPES = ['CDI', 'CDD', 'Stage', 'ANAPEC', 'Consultant', 'Freelance'];
 const FILE_TYPES: { value: EmployeeFile['file_type']; label: string; bg: string; color: string }[] = [
@@ -181,6 +183,9 @@ export default function EmployeeFolderPage() {
     queryFn: () => getEmployee(id!),
     enabled: !!id,
   });
+  // the floating « Ask Wedy » launcher suggests questions about this very employee
+  const askName = employee?.full_name;
+  useProvideAskPrompts(askName ? [tf(t('ask_emp_1'), { name: askName }), tf(t('ask_emp_2'), { name: askName }), tf(t('ask_emp_3'), { name: askName })] : null);
 
   const { data: departments = [] } = useQuery({ queryKey: ['departments'], queryFn: listDepartments });
 

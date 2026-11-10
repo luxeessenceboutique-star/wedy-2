@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowUp, Sparkles, X, Zap } from 'lucide-react';
 import { useLang, type TKey } from '@/lib/lang';
 import { copilotUrl } from '@/lib/copilotAsk';
+import { useAskPrompts } from '@/lib/askContext';
 import './AskWedy.css';
 
 type Group = 'dash' | 'emp' | 'req' | 'leave' | 'rec' | 'int' | 'pay' | 'perf' | 'ana' | 'doc' | 'mtg';
@@ -43,6 +44,7 @@ export function AskWedy() {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const box = useRef<HTMLDivElement>(null);
+  const pagePrompts = useAskPrompts();
 
   useEffect(() => {
     if (!open) return;
@@ -63,6 +65,7 @@ export function AskWedy() {
   if (hidden) return null;
 
   const group = GROUPS.find(([re]) => re.test(pathname))?.[1] ?? 'dash';
+  const prompts = pagePrompts ?? PROMPTS[group].map(k => t(k));
   const send = (q: string) => { const v = q.trim(); setOpen(false); setText(''); navigate(copilotUrl(v)); };
 
   return (
@@ -78,8 +81,8 @@ export function AskWedy() {
             <button type="button" className="askw-x" onClick={() => setOpen(false)} aria-label={t('close')}><X size={15} /></button>
           </div>
           <div className="askw-list">
-            {PROMPTS[group].map(k => (
-              <button key={k} type="button" className="askw-item" onClick={() => send(t(k))}><Zap size={13} />{t(k)}</button>
+            {prompts.map(p => (
+              <button key={p} type="button" className="askw-item" onClick={() => send(p)}><Zap size={13} />{p}</button>
             ))}
           </div>
           <form className="askw-form" onSubmit={e => { e.preventDefault(); send(text); }}>

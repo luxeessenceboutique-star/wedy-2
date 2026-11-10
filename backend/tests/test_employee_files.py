@@ -10,11 +10,13 @@ from fakedb import FakeDB  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.config import settings  # noqa: E402
+from app.services import storage  # noqa: E402
 from app.database import get_db  # noqa: E402
 from app.dependencies import get_current_user, require_hr_or_admin  # noqa: E402
 from app.main import app  # noqa: E402
 
 settings.UPLOAD_DIR = tempfile.mkdtemp(prefix="wedy-test-uploads-")
+settings.DURABLE_STORAGE = False  # tests must never write to the real Supabase Storage; the durable tests below use an in-memory bucket
 EMP = "00000000-0000-4000-8000-0000000000e1"
 USER = {"id": "11111111-2222-3333-4444-555555555555", "role_name": "hr", "email": "hr@t.ma"}
 
@@ -91,6 +93,116 @@ def test_uploads_endpoint_serves_files_and_never_leaves_the_folder():
             assert c.get(f"/api/uploads/{evil}").status_code == 404, evil
     finally:
         os.remove(secret)
+
+
+class FakeBucket:
+    """In-memory stand-in for a Supabase Storage bucket (same method names and argument order as storage3)."""
+    def __init__(self):
+        self.objects: dict = {}
+
+    def upload(self, path, file, file_options=None):
+        self.objects[path] = (bytes(file), (file_options or {}).get("content-type"))
+
+    def download(self, path):
+        if path not in self.objects:
+            raise RuntimeError("Object not found")
+        return self.objects[path][0]
+
+    def remove(self, paths):
+        for p in paths:
+            self.objects.pop(p, None)
+
+    def list(self, path, options=None):
+        prefix = path.rstrip("/") + "/"
+        return [{"name": k[len(prefix):]} for k in self.objects if k.startswith(prefix) and "/" not in k[len(prefix):]]
+
+
+def with_bucket(bucket):
+    """Turn durable storage on for one test, backed by `bucket` (None = Storage unreachable)."""
+    saved_flag, saved_fn = settings.DURABLE_STORAGE, storage._durable_bucket
+    settings.DURABLE_STORAGE = True
+    storage._durable_bucket = lambda: bucket
+    return lambda: (setattr(settings, "DURABLE_STORAGE", saved_flag), setattr(storage, "_durable_bucket", saved_fn))
+
+
+def wipe_disk(rel_path: str):
+    os.remove(os.path.join(settings.UPLOAD_DIR, rel_path))  # what a redeploy without a persistent volume does
+
+
+def test_upload_keeps_a_durable_copy():
+    bucket = FakeBucket(); restore = with_bucket(bucket)
+    try:
+        c, _ = client()
+        created = upload(c, "CV.pdf", "CV Hiba").json()
+        data, ctype = bucket.objects[created["file_path"]]
+        assert data.startswith(b"%PDF") and ctype == "application/pdf"
+    finally:
+        restore()
+
+
+def test_a_redeploy_that_wipes_the_disk_loses_nothing():
+    bucket = FakeBucket(); restore = with_bucket(bucket)
+    try:
+        c, _ = client()
+        created = upload(c, "CV.pdf", None).json()
+        wipe_disk(created["file_path"])
+        listed = c.get(f"/api/employees/{EMP}/files").json()
+        assert listed[0]["available"] is True                       # still retrievable
+        got = c.get(f"/api/uploads/{created['file_path']}")
+        assert got.status_code == 200 and got.content.startswith(b"%PDF")
+        assert os.path.isfile(os.path.join(settings.UPLOAD_DIR, created["file_path"]))  # the disk cache is refilled
+    finally:
+        restore()
+
+
+def test_deleting_a_file_deletes_its_durable_copy():
+    bucket = FakeBucket(); restore = with_bucket(bucket)
+    try:
+        c, _ = client()
+        created = upload(c, "CV.pdf", None).json()
+        assert c.delete(f"/api/employees/{EMP}/files/{created['id']}").status_code == 204
+        assert bucket.objects == {}
+    finally:
+        restore()
+
+
+def test_unreachable_storage_degrades_to_the_disk_only_behaviour():
+    restore = with_bucket(None)
+    try:
+        c, _ = client()
+        created = upload(c, "CV.pdf", None)
+        assert created.status_code == 201                            # an upload never fails because of Storage
+        path = created.json()["file_path"]
+        wipe_disk(path)
+        assert c.get(f"/api/employees/{EMP}/files").json()[0]["available"] is False
+        assert c.get(f"/api/uploads/{path}").status_code == 404
+    finally:
+        restore()
+
+
+def test_files_already_on_disk_are_copied_once_at_startup():
+    c, db = client()
+    upload(c, "A.pdf", None); upload(c, "B.pdf", None)               # uploaded while durable storage did not exist
+    bucket = FakeBucket(); restore = with_bucket(bucket)
+    try:
+        rows = db.tables["employee_files"]
+        assert storage.backfill_durable(rows) == 2 and len(bucket.objects) == 2
+        assert storage.backfill_durable(rows) == 0                   # nothing to copy the second time
+    finally:
+        restore()
+
+
+def test_ensure_local_restores_only_what_exists_somewhere():
+    bucket = FakeBucket(); restore = with_bucket(bucket)
+    try:
+        c, _ = client()
+        created = upload(c, "CV.pdf", None).json()
+        wipe_disk(created["file_path"])
+        assert storage.ensure_local(created["file_path"]) and storage.read_upload(created["file_path"]).startswith(b"%PDF")
+        assert storage.ensure_local("employees/nobody/none.pdf") is None
+        assert storage.ensure_local("../outside.pdf") is None
+    finally:
+        restore()
 
 
 if __name__ == "__main__":

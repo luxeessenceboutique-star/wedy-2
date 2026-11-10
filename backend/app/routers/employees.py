@@ -1,5 +1,7 @@
 """Employees router — /api/employees"""
+import asyncio
 import os
+import re
 import uuid
 from datetime import date, datetime
 from typing import Optional
@@ -15,6 +17,7 @@ from app.database import get_db
 from app.dependencies import get_current_user, require_role, require_hr_or_admin
 from app.schemas import EmployeeCreate, EmployeeUpdate, EmployeeOut
 from app.services.audit import log_action
+from app.services import storage as file_storage
 from app.services.storage import upload_exists
 from app.services import import_service
 from app.config import settings
@@ -190,8 +193,10 @@ def list_employee_files(
     current_user: dict = Depends(get_current_user),
 ):
     res = employee_repository.list_employee_files(supabase, str(employee_id))
-    # `available` is false when the record exists but the file is no longer on the server's disk (e.g. a redeploy without a persistent volume)
-    return [{**r, "available": upload_exists(r.get("file_path") or "")} for r in (res.data or [])]
+    # `available` is false when the record exists but the file is neither on the disk nor in the durable copy
+    rows = res.data or []
+    ok = file_storage.availability([r.get("file_path") or "" for r in rows])
+    return [{**r, "available": ok.get(r.get("file_path") or "", False)} for r in rows]
 
 
 def _file_display_name(requested: str, original: str, ext: str) -> str:
@@ -222,7 +227,7 @@ async def upload_employee_file(
 
     content = await file.read()
     original_name = file.filename or "fichier"
-    ext = original_name.rsplit(".", 1)[-1] if "." in original_name else ""
+    ext = re.sub(r"[^A-Za-z0-9]", "", original_name.rsplit(".", 1)[-1])[:8] if "." in original_name else ""
     safe_name = f"{uuid.uuid4().hex}.{ext}" if ext else uuid.uuid4().hex
 
     emp_dir = os.path.join(settings.UPLOAD_DIR, "employees", str(employee_id))
@@ -248,6 +253,8 @@ async def upload_employee_file(
         os.remove(full_path)
         raise HTTPException(status_code=400, detail=f"Erreur base de données : {e}")
 
+    # durable copy (Supabase Storage): survives a redeploy that wipes the disk; never blocks or fails the upload
+    await asyncio.to_thread(file_storage.durable_put, record["file_path"], content, record["mime_type"] or "application/octet-stream")
     log_action(supabase, current_user["id"], "UPLOAD_FILE", "employee_file", res.data[0]["id"])
     return res.data[0]
 
@@ -269,8 +276,8 @@ async def analyze_employee_folder(
 
     file_contents = []
     for f in files:
-        file_path_abs = os.path.join(settings.UPLOAD_DIR, f["file_path"])
-        if not os.path.exists(file_path_abs):
+        file_path_abs = file_storage.ensure_local(f["file_path"])  # restored from the durable copy if the disk lost it
+        if not file_path_abs:
             continue
 
         ext = (f["name"].lower().rsplit(".", 1)[-1]) if "." in f["name"] else ""
@@ -374,6 +381,7 @@ def delete_employee_file(
     file_path = os.path.join(settings.UPLOAD_DIR, res.data[0]["file_path"])
     if os.path.exists(file_path):
         os.remove(file_path)
+    file_storage.durable_delete(res.data[0]["file_path"])
 
     employee_repository.delete_employee_file(supabase, str(file_id))
 

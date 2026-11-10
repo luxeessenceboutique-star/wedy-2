@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from loguru import logger
 import traceback
 import os
+import threading
 import json
 from datetime import date, datetime
 
@@ -99,9 +100,11 @@ async def get_protected_upload(
     _current_user: dict = Depends(get_current_user)
 ):
     """Serve files only to authenticated users"""
+    import asyncio
     from fastapi import HTTPException
-    from app.services.storage import resolve_upload
-    full_path = resolve_upload(file_path)  # never outside UPLOAD_DIR (`..` in the URL)
+    from app.services.storage import ensure_local
+    # never outside UPLOAD_DIR (`..` in the URL); a file the disk lost is restored from its durable copy (Supabase Storage)
+    full_path = await asyncio.to_thread(ensure_local, file_path)
     if not full_path or not os.path.isfile(full_path):
         raise HTTPException(status_code=404, detail="Fichier introuvable sur le serveur")
     return FileResponse(full_path)
@@ -167,16 +170,19 @@ async def global_exception_handler(request: Request, exc: Exception):
 def health_check():
     return {"status": "healthy", "service": "backend", "db_mode": "supabase_sdk"}
 
-def _warn_if_uploads_are_gone() -> None:
-    """Files live on disk (UPLOAD_DIR) and only their records live in the database: when the folder is not on a persistent volume,
-    a redeploy wipes the files and every download then answers 404. Say so in the logs."""
+def _check_file_storage() -> None:
+    """Employee files are written to UPLOAD_DIR (wiped by a redeploy unless it is a persistent volume) and copied to a private Supabase
+    Storage bucket, which is what keeps them. Existing files are copied at startup; say in the logs if the bucket is not available."""
     try:
         from app.database import get_supabase
-        from app.services.storage import upload_exists
-        rows = get_supabase().table("employee_files").select("file_path").limit(20).execute().data or []
-        if rows and not any(upload_exists(r["file_path"]) for r in rows):
-            logger.warning(f"UPLOADS MISSING: the database lists employee files but none of the sampled ones exist under '{settings.UPLOAD_DIR}'. "
-                           "Mount a persistent volume on that folder (see DEPLOYMENT.md), otherwise uploads vanish at every redeploy.")
+        from app.services import storage
+        if not storage._durable_bucket():
+            logger.warning("DURABLE FILE STORAGE OFF: employee files live only on the disk of this container. Without a persistent volume on "
+                           f"'{settings.UPLOAD_DIR}' they vanish at every redeploy (see DEPLOYMENT.md).")
+            return
+        rows = get_supabase().table("employee_files").select("file_path, mime_type").limit(5000).execute().data or []
+        copied = storage.backfill_durable(rows)  # files uploaded before the durable copy existed
+        logger.info(f"Durable file storage ready (bucket '{settings.DURABLE_STORAGE_BUCKET}'); {copied} existing file(s) copied")
     except Exception as e:  # never block startup for a diagnostic
         logger.debug(f"uploads check skipped: {e}")
 
@@ -185,4 +191,4 @@ def _warn_if_uploads_are_gone() -> None:
 async def on_startup():
     logger.info(f"WEDY RH Platform started (SDK Mode)")
     logger.info(f"   URL: {settings.SUPABASE_URL}")
-    _warn_if_uploads_are_gone()
+    threading.Thread(target=_check_file_storage, daemon=True).start()  # network calls: never delay startup

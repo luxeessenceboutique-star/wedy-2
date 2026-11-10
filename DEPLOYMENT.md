@@ -638,16 +638,16 @@ The Copilot (`/app/copilot`) streams from `POST /api/copilot/agent`. The page no
 
 ### Uploaded files answer 404 after a redeploy ("Fichier introuvable")
 
-**Symptom:** a file is still listed in an employee / intern folder but downloading it fails with 404 (the UI shows it in red as « Fichier introuvable »).
+**Symptom:** a file is still listed in an employee / intern folder but cannot be opened or downloaded (the UI shows it in red as « Fichier introuvable »).
 
-**Cause:** the files themselves (employee folder, intern scans, job-post visuals, generated documents) are written to the backend's `UPLOAD_DIR` (default `uploads/`, i.e. `/app/uploads` in the container); only their records are in Supabase. If that folder is not on a persistent volume, every redeploy / container re-creation wipes the files while the records stay.
+**Cause:** the bytes of a file are written to the backend's `UPLOAD_DIR` (default `uploads/`, i.e. `/app/uploads` in the container); only its record is in Supabase. Without a persistent volume on that folder, every redeploy / container re-creation wipes the files while the records stay.
 
-**Fix:** mount a persistent volume on that folder.
-- `docker-compose.yml` already does it: `uploads_data:/app/uploads`.
-- On a platform (Coolify, Dokploy, Portainer…): add a *persistent storage / volume* of the backend service with the container path `/app/uploads`. To use another path, set `UPLOAD_DIR` (e.g. `UPLOAD_DIR=/data/uploads`) and mount the volume there.
-- Back that volume up like the database. Files already lost cannot be recovered from Supabase: they have to be uploaded again (the folder shows which ones).
-
-At startup the backend logs `UPLOADS MISSING` when the database lists employee files but none of a sample exists on disk, which is the sign of this problem.
+**Fix, built in:** employee files (employee folder, intern scans, generated documents saved to a folder, CVs used by interviews) are now *also* kept in a private **Supabase Storage** bucket (`wedy-files`, created automatically with the service-role key, same relative path as on disk). The disk is only a cache: a file missing from it is restored from the bucket on demand, and files already on disk are copied to the bucket at startup. Nothing to configure beyond having **Storage enabled in the Supabase project**.
+- Backend log at startup: `Durable file storage ready (bucket 'wedy-files'); N existing file(s) copied` = OK. `DURABLE FILE STORAGE OFF` = Storage could not be reached (check the logs just above it); files then live on the disk only.
+- Settings: `DURABLE_STORAGE=false` turns it off, `DURABLE_STORAGE_BUCKET` renames the bucket.
+- Files lost **before** this was deployed cannot be recovered (their bytes are gone): they have to be uploaded again, the folder shows which ones.
+- A persistent volume on `UPLOAD_DIR` is still a good idea (`docker-compose.yml` has `uploads_data:/app/uploads`; on Coolify / Dokploy add a persistent storage on `/app/uploads`): it keeps the cache warm and also covers the files that are not yet in the bucket.
+- Not covered yet: job-post visuals (`uploads/annonces`, redrawn by the browser) and candidate CVs sent with a public application (`uploads/cvs`).
 
 ---
 

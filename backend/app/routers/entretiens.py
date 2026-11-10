@@ -188,8 +188,9 @@ def _cv_file(supabase: Client, cand: dict) -> Optional[dict]:
         files = []
     if files:
         f = files[0]
-        path = os.path.join(settings.UPLOAD_DIR, f["file_path"])
-        if os.path.exists(path):
+        from app.services.storage import ensure_local  # restored from the durable copy if the disk lost it
+        path = ensure_local(f["file_path"])
+        if path:
             return {"path": path, "name": f.get("name") or os.path.basename(path), "mime": f.get("mime_type"), "source": "folder"}
     url = str((cand.get("custom_fields") or {}).get("cv_url") or "")
     m = re.search(r"/cv/download/([0-9a-fA-F-]{36})", url)

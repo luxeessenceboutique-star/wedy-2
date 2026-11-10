@@ -19,6 +19,7 @@ from app.agents import llm, service  # noqa: E402
 from app.config import settings  # noqa: E402
 
 settings.UPLOAD_DIR = tempfile.mkdtemp(prefix="wedy-test-uploads-")  # generated PDFs never land in the real uploads folder
+settings.DURABLE_STORAGE = False  # tests must never write to the real Supabase Storage
 
 USER = {"id": "11111111-2222-3333-4444-555555555555", "role_name": "hr", "full_name": "Salma Idrissi", "email": "salma@tython.ma"}
 OTHER = {**USER, "id": "99999999-2222-3333-4444-555555555555"}

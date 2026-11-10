@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     # Files
     MAX_FILE_SIZE_MB: int = 20
     UPLOAD_DIR: str = "uploads"
+    # Employee files are also kept in a private Supabase Storage bucket so a redeploy (which wipes UPLOAD_DIR unless it is a
+    # persistent volume) never loses them; the disk is then only a cache. Set DURABLE_STORAGE=false to turn it off.
+    DURABLE_STORAGE: bool = True
+    DURABLE_STORAGE_BUCKET: str = "wedy-files"
 
     @property
     def origins(self) -> List[str]:

@@ -165,9 +165,11 @@ def generate_doc(
         file_path_rel = os.path.join("employees", str(payload.employee_id), safe_name)
         full_path = os.path.join(settings.UPLOAD_DIR, file_path_rel)
         
-        # Write to disk
+        # Write to disk, and keep a durable copy (a redeploy wipes the disk)
         with open(full_path, "wb") as f:
             f.write(pdf_bytes)
+        from app.services.storage import durable_put
+        durable_put(file_path_rel.replace("\\", "/"), pdf_bytes, "application/pdf")
             
         # Record in employee_files
         record = {

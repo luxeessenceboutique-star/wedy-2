@@ -27,6 +27,24 @@ export const uploadAdVisual = (id: string, fmt: 'square' | 'linkedin' | 'story',
   fd.append('file', png, `${fmt}.png`);
   return api.post<{ url: string }>(`/annonces/${id}/visual`, fd, { params: { fmt }, timeout: 60000 }).then(r => r.data);
 };
+/** The server's explanation of a failed blob request (its JSON body arrives as a Blob). */
+async function explain(e: unknown): Promise<Error> {
+  const res = (e as { response?: { data?: unknown; status?: number } })?.response;
+  if (res?.data instanceof Blob) {
+    let detail = '';
+    try { const j = JSON.parse(await res.data.text()); detail = typeof j?.detail === 'string' ? j.detail : ''; } catch { /* not JSON */ }
+    if (detail) return Object.assign(new Error(detail), { status: res.status });
+  }
+  return e instanceof Error ? e : new Error(String(e));
+}
+
+export type AdArtRequest = { format: 'square' | 'linkedin' | 'story'; lang: string; company?: string; idea?: string };
+/** Paint the background artwork of an ad with the image model (20–60 s). The server keeps it. */
+export const generateAdArt = (id: string, body: AdArtRequest) =>
+  api.post<Blob>(`/annonces/${id}/ai-art`, body, { responseType: 'blob', timeout: 200000 }).then(r => r.data, async e => { throw await explain(e); });
+/** The artwork already generated for this ad and format, or null. */
+export const getAdArt = (id: string, fmt: 'square' | 'linkedin' | 'story') =>
+  api.get<Blob>(`/annonces/${id}/ai-art/${fmt}.png`, { responseType: 'blob', timeout: 30000 }).then(r => r.data, () => null);
 export const getSocialPosts = (id: string, body: { lang: string; company?: string; share_url: string }) =>
   api.post<SocialPosts>(`/annonces/${id}/social`, body, { timeout: 90000 }).then(r => r.data);
 export const chatGenerateAnnonce = (messages: ChatMessage[], opts?: { mode?: 'direct'; language?: string; company?: string }) =>

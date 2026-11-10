@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_BASE_URL: str = ""
     OPENAI_MODEL: str = "gpt-4o-mini"
+    # Job-post artwork (image generation). Same key / router as above unless overridden.
+    OPENAI_IMAGE_MODEL: str = "gpt-image-1"
+    OPENAI_IMAGE_QUALITY: str = "medium"   # low | medium | high (gpt-image models)
+    OPENAI_IMAGE_API_KEY: str = ""
+    OPENAI_IMAGE_BASE_URL: str = ""
     ANTHROPIC_API_KEY: str = ""
     CV_AI_MODEL: str = "claude-sonnet-4-6"
     TYBOTFLOW_API_KEY: str = ""

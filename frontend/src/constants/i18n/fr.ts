@@ -3682,4 +3682,18 @@ export const fr = {
     cop_conv_waiting: 'À valider',
     // Re-upload a lost file
     emf_reupload: 'Ré-uploader',
+    // AI job post images
+    sk_bg: 'Fond du visuel',
+    sk_mode_tpl: 'Modèles',
+    sk_mode_ai: 'Image IA',
+    sk_ai_idea: 'Idée pour l\'image (facultatif)',
+    sk_ai_idea_ph: 'ex. équipe dans un bureau moderne, ambiance chaleureuse',
+    sk_ai_gen: 'Générer l\'image avec l\'IA',
+    sk_ai_regen: 'Générer une autre image',
+    sk_ai_busy: 'L\'IA dessine votre visuel… (20 à 60 s)',
+    sk_ai_done: 'Image créée et enregistrée',
+    sk_ai_none: 'Aucune image IA pour cette annonce : générez-la, elle sera conservée.',
+    sk_ai_other: 'L\'image d\'un autre format est recadrée ici : générez-en une pour ce format.',
+    sk_ai_note: 'L\'IA ne crée que le décor : le logo, le titre et le code QR sont ajoutés par Wedy pour rester exacts.',
+    sk_default_logo: 'Logo par défaut affiché. Ajoutez celui de votre entreprise dans Paramètres.',
 } as const;

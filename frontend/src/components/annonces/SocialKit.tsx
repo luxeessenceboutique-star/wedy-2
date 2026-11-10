@@ -3,8 +3,8 @@
 // the visual), Instagram (download + caption, or the phone's share sheet), Indeed (job description to paste), WhatsApp.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Check, Copy, Download, ExternalLink, Image as ImageIcon, Link2, Megaphone, RefreshCw, Share2, Sparkles } from 'lucide-react';
-import { adShareUrl, getApiError, getSocialPosts, uploadAdVisual, type JobAd, type SocialPosts } from '@/services/api';
+import { Check, Copy, Download, ExternalLink, Image as ImageIcon, Link2, Megaphone, RefreshCw, Share2, Sparkles, WandSparkles } from 'lucide-react';
+import { adShareUrl, generateAdArt, getAdArt, getApiError, getSocialPosts, uploadAdVisual, type JobAd, type SocialPosts } from '@/services/api';
 import { Drawer, Spinner } from '@/components/ui';
 import { useLang, type TKey } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
@@ -21,6 +21,9 @@ const FORMAT_KEYS: [VisualFormat, TKey, TKey][] = [['square', 'sk_f_square', 'sk
 const THEMES: [VisualTheme, string][] = [['ocean', 'linear-gradient(135deg,#06141a,#0b4a58,#16b6c8)'], ['light', 'linear-gradient(135deg,#f3f6f7,#d7eef1)'], ['night', 'linear-gradient(135deg,#0a0f1f,#3b2f8f)']];
 const NETS: [Net, string, string][] = [['linkedin', 'LinkedIn', '#0a66c2'], ['facebook', 'Facebook', '#1877f2'], ['instagram', 'Instagram', '#d62976'], ['indeed', 'Indeed', '#2557a7']];
 
+/** Used on the visuals until a logo is uploaded in the settings. */
+const DEFAULT_LOGO = '/brand/tython-logo.png';
+
 const lab: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#33474f' };
 const inp: CSSProperties = { height: 40, padding: '0 11px', borderRadius: 10, border: '1px solid #d6dfe3', background: '#fff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none', boxSizing: 'border-box', width: '100%' };
 const btn: CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 38, padding: '0 13px', borderRadius: 11, border: '1px solid #d6dfe3', background: '#fff', color: '#0a1c24', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' };
@@ -31,7 +34,7 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
   const notify = useNotify();
   const settingsQ = useAppSettings();
   const company = settingsQ.data?.company?.name || '';
-  const logo = settingsQ.data?.assets?.logo || null;
+  const logo = settingsQ.data?.assets?.logo || DEFAULT_LOGO; // the company logo of the settings, else the default brand logo
   const [fmt, setFmt] = useState<VisualFormat>('square');
   const [theme, setTheme] = useState<VisualTheme>('ocean');
   const [vlang, setVlang] = useState<'fr' | 'en' | 'ar'>(initialLang);
@@ -42,6 +45,11 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
   const [key, setKey] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [saved, setSaved] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  // « Image IA »: the background is painted by the image model; logo, title and QR code are still drawn here so they stay exact
+  const [mode, setMode] = useState<'tpl' | 'ai'>('tpl');
+  const [arts, setArts] = useState<Partial<Record<VisualFormat, string>>>({});
+  const [idea, setIdea] = useState('');
+  const [genBusy, setGenBusy] = useState(false);
 
   // reset when another ad is opened
   if (ad && open && key !== ad.id) {
@@ -49,16 +57,35 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
   }
   const share = ad ? adShareUrl(ad.id) : '';
   const [contract, city] = (ad?.description || '').split('·').map(s => s.trim());
-  const data = useMemo(() => ({
+  const base = useMemo(() => ({
     title: title.trim() || ad?.poste || '', contract, city, points: points.split('\n').map(s => s.trim()).filter(Boolean),
     company, logo, url: share, lang: vlang, labels: LABELS[vlang],
   }), [title, points, contract, city, company, logo, share, vlang, ad?.poste]);
+  /** The visual's data for one format: its own artwork, else another format's (cropped) so the preview is never empty. */
+  const dataFor = (f: VisualFormat) => ({ ...base, art: mode === 'ai' ? (arts[f] ?? Object.values(arts)[0] ?? null) : null });
+  const data = useMemo(() => dataFor(fmt), [base, mode, arts, fmt]); // eslint-disable-line react-hooks/exhaustive-deps
+  const hasOwnArt = !!arts[fmt];
 
   // preview
   useEffect(() => {
     if (!open || !ad || !canvasRef.current) return;
     renderJobVisual(canvasRef.current, fmt, theme, data).catch(() => {});
   }, [open, ad, fmt, theme, data]);
+
+  // artwork already generated for this ad (kept by the server, so it is not paid for twice)
+  useEffect(() => {
+    if (!open || !ad) return;
+    let gone = false;
+    const urls: string[] = [];
+    Promise.all((['square', 'linkedin', 'story'] as const).map(async f => [f, await getAdArt(ad.id, f)] as const)).then(found => {
+      if (gone) return;
+      const next: Partial<Record<VisualFormat, string>> = {};
+      for (const [f, blob] of found) if (blob) { const u = URL.createObjectURL(blob); urls.push(u); next[f] = u; }
+      setArts(next);
+      if (Object.keys(next).length) setMode('ai');
+    });
+    return () => { gone = true; urls.forEach(u => URL.revokeObjectURL(u)); };
+  }, [open, ad]);
 
   // the LinkedIn-size visual is the link preview of the share link: keep the stored one in step (debounced)
   useEffect(() => {
@@ -67,14 +94,15 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
       setSaved('saving');
       try {
         const c = document.createElement('canvas');
-        await renderJobVisual(c, 'linkedin', theme, data);
+        await renderJobVisual(c, 'linkedin', theme, dataFor('linkedin'));
         const b = await canvasBlob(c);
         if (b) await uploadAdVisual(ad.id, 'linkedin', b);
         setSaved('saved');
       } catch { setSaved('error'); }
     }, 1200);
     return () => window.clearTimeout(h);
-  }, [open, ad, theme, data]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, ad, theme, base, mode, arts]);
 
   const socialQ = useQuery<SocialPosts>({
     queryKey: ['ad-social', ad?.id, vlang, company],
@@ -84,7 +112,17 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
   const textOf = (n: Net) => texts[n] ?? socialQ.data?.[n] ?? '';
 
   const fileName = (f: VisualFormat) => `${(ad?.poste || 'annonce').toLowerCase().replace(/[^a-z0-9؀-ۿ]+/gi, '-').replace(/^-|-$/g, '')}-${f}.png`;
-  const renderBlob = async (f: VisualFormat) => { const c = document.createElement('canvas'); await renderJobVisual(c, f, theme, data); return canvasBlob(c); };
+  const renderBlob = async (f: VisualFormat) => { const c = document.createElement('canvas'); await renderJobVisual(c, f, theme, dataFor(f)); return canvasBlob(c); };
+  const generate = async () => {
+    if (!ad || genBusy) return;
+    setGenBusy(true);
+    try {
+      const blob = await generateAdArt(ad.id, { format: fmt, lang: vlang, company, idea: idea.trim() });
+      const url = URL.createObjectURL(blob);
+      setArts(a => { if (a[fmt]) URL.revokeObjectURL(a[fmt]!); return { ...a, [fmt]: url }; });
+      setMode('ai'); notify.success(t('sk_ai_done'));
+    } catch (e) { notify.error(getApiError(e, t('error'))); } finally { setGenBusy(false); }
+  };
   const download = async (f: VisualFormat) => {
     const b = await renderBlob(f);
     if (!b) return;
@@ -132,9 +170,27 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
                 </button>
               ))}
             </div>
+            <div role="group" aria-label={t('sk_bg')} style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 12, background: '#f3f6f7' }}>
+              {([['tpl', 'sk_mode_tpl', ImageIcon], ['ai', 'sk_mode_ai', WandSparkles]] as const).map(([m, key, Icon]) => (
+                <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, height: 34, border: 'none', borderRadius: 9, background: mode === m ? '#fff' : 'transparent', boxShadow: mode === m ? '0 1px 3px rgba(10,28,36,.14)' : 'none', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 700, color: mode === m ? '#0a1c24' : '#5f7079', cursor: 'pointer' }}><Icon size={14} />{t(key)}</button>
+              ))}
+            </div>
             <div style={{ display: 'flex', justifyContent: 'center', padding: 14, borderRadius: 16, background: '#eaf0f2', border: '1px solid #e2e8eb' }}>
               <canvas ref={canvasRef} width={w} height={h} style={{ width: '100%', maxWidth: fmt === 'story' ? 260 : fmt === 'square' ? 420 : 480, height: 'auto', borderRadius: 10, boxShadow: '0 18px 40px -22px rgba(10,28,36,.6)' }} />
             </div>
+            {mode === 'ai' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 14, background: '#f6f4fe', border: '1px solid #e3def8' }}>
+                <label style={lab}>{t('sk_ai_idea')}
+                  <input value={idea} maxLength={400} onChange={e => setIdea(e.target.value)} placeholder={t('sk_ai_idea_ph')} style={inp} disabled={genBusy} />
+                </label>
+                <button type="button" onClick={generate} disabled={genBusy} style={{ ...btn, background: 'linear-gradient(135deg,#6d5ad6,#0e6f84)', color: '#fff', border: 'none' }}>
+                  {genBusy ? <><Spinner size={14} color="#fff" />{t('sk_ai_busy')}</> : <><WandSparkles size={15} />{t(hasOwnArt ? 'sk_ai_regen' : 'sk_ai_gen')}</>}
+                </button>
+                {!hasOwnArt && Object.keys(arts).length > 0 && <p style={{ margin: 0, fontSize: 12, color: '#8a5207' }}>{t('sk_ai_other')}</p>}
+                {Object.keys(arts).length === 0 && !genBusy && <p style={{ margin: 0, fontSize: 12, color: '#5f7079' }}>{t('sk_ai_none')}</p>}
+                <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#7d8f97' }}>{t('sk_ai_note')}</p>
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>{t('sk_style')}</span>
               {THEMES.map(([th, bg]) => <button key={th} type="button" aria-label={th} onClick={() => setTheme(th)} style={{ width: 30, height: 30, borderRadius: 9, border: theme === th ? '2px solid #0a1c24' : '1px solid #d6dfe3', background: bg, cursor: 'pointer' }} />)}
@@ -143,7 +199,7 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
             </div>
             <label style={lab}>{t('sk_headline')}<input value={title} onChange={e => setTitle(e.target.value)} style={inp} /></label>
             <label style={lab}>{t('sk_points')}<textarea rows={4} value={points} onChange={e => setPoints(e.target.value)} placeholder={t('sk_points_ph')} style={{ ...inp, height: 'auto', padding: '9px 11px', resize: 'vertical', lineHeight: 1.5 }} /></label>
-            {!logo && <p style={{ margin: 0, fontSize: 12, color: '#8a5207', background: '#fbefda', padding: '8px 10px', borderRadius: 9 }}>{t('sk_no_logo')}</p>}
+            {!settingsQ.data?.assets?.logo && <p style={{ margin: 0, fontSize: 12, color: '#5f7079', background: '#f3f6f7', padding: '8px 10px', borderRadius: 9 }}>{t('sk_default_logo')}</p>}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button type="button" style={{ ...btn, background: '#0a1c24', color: '#fff', border: 'none' }} onClick={() => download(fmt)}><Download size={15} />{t('sk_download')}</button>
               <button type="button" style={btn} onClick={async () => { for (const f of ['square', 'linkedin', 'story'] as const) await download(f); }}><Download size={15} />{t('sk_download_all')}</button>

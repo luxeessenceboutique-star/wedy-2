@@ -3628,4 +3628,18 @@ export const en = {
     cop_conv_waiting: 'To approve',
     // Re-upload a lost file
     emf_reupload: 'Upload again',
+    // AI job post images
+    sk_bg: 'Visual background',
+    sk_mode_tpl: 'Templates',
+    sk_mode_ai: 'AI image',
+    sk_ai_idea: 'Idea for the image (optional)',
+    sk_ai_idea_ph: 'e.g. a team in a modern office, warm mood',
+    sk_ai_gen: 'Generate the image with AI',
+    sk_ai_regen: 'Generate another image',
+    sk_ai_busy: 'The AI is painting your visual… (20–60 s)',
+    sk_ai_done: 'Image created and saved',
+    sk_ai_none: 'No AI image for this ad yet: generate it, it will be kept.',
+    sk_ai_other: 'The image of another format is cropped here: generate one for this format.',
+    sk_ai_note: 'The AI only paints the backdrop: Wedy adds the logo, title and QR code so they stay exact.',
+    sk_default_logo: 'Default logo shown. Add your company\'s in Settings.',
 } as const;

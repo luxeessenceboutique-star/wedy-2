@@ -143,6 +143,9 @@ cp backend/.env.example backend/.env
 | `OPENAI_API_KEY` | **Yes** | — | OpenAI API key |
 | `OPENAI_BASE_URL` | No | — | Custom OpenAI-compatible endpoint (if using a proxy) |
 | `OPENAI_MODEL` | No | `gpt-4o-mini` | OpenAI model name |
+| `OPENAI_IMAGE_MODEL` | No | `gpt-image-1` | Image model used for the AI artwork of job-post visuals (`dall-e-3` also works). Uses `OPENAI_API_KEY` / `OPENAI_BASE_URL` unless the two next ones are set |
+| `OPENAI_IMAGE_API_KEY` / `OPENAI_IMAGE_BASE_URL` | No | — | A separate key / endpoint for images only |
+| `OPENAI_IMAGE_QUALITY` | No | `medium` | `low` / `medium` / `high` (gpt-image models; dropped automatically if the router refuses it) |
 | `COPILOT_MODEL` | No | provider default | Model used by the multi-agent Copilot (LangGraph). With `ANTHROPIC_API_KEY` it runs on Claude, otherwise on the OpenAI-compatible endpoint above |
 | `COPILOT_PROVIDER` | No | auto | Force `anthropic` or `openai` for the Copilot |
 | `TYBOTFLOW_API_KEY` | No | — | TybotFlow integration key |
@@ -635,6 +638,19 @@ The Copilot (`/app/copilot`) streams from `POST /api/copilot/agent`. The page no
 | « Le serveur du Copilot a rencontré un problème » + 5xx and a detail line | the request reached the server but failed (gateway timeout, crash) | read `docker compose logs backend` |
 | « Connexion interrompue » with no number | the browser really lost the connection, or a proxy cut the stream | make sure the reverse proxy does not buffer or time out SSE (`proxy_buffering off`, read timeout ≥ 120 s) |
 | « L'IA n'est pas configurée » | no `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` on the backend | set one and restart |
+
+### "Image IA" of a job post fails
+
+In *Annonces → Diffuser l'annonce → Image IA*, the backend asks the image model for a background (`POST /api/annonces/{id}/ai-art`, 20–60 s, at most 12 per user and hour) and the browser draws the logo, title, key points and QR code on top.
+
+| Message | Fix |
+|---|---|
+| « Génération d'image non configurée » (503) | set `OPENAI_API_KEY` (and `OPENAI_BASE_URL` if you use a router) on the backend |
+| « Le service d'image a échoué : 401 … » | the key is wrong or has no access to the image model |
+| « … 404 / model not found » | set `OPENAI_IMAGE_MODEL` to the exact name your key / router exposes (e.g. `gpt-image-1`, `dall-e-3`) |
+| « … 429 » (service) / « Limite atteinte » (Wedy) | provider rate limit / Wedy's 12 per hour per user |
+
+The generated artwork is kept (disk + the durable Supabase copy), so it is paid for once per format.
 
 ### Uploaded files answer 404 after a redeploy ("Fichier introuvable")
 

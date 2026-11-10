@@ -11,6 +11,8 @@ export const FORMATS: Record<VisualFormat, [number, number]> = { square: [1080, 
 export type VisualData = {
   title: string; contract?: string; city?: string; points: string[];
   company: string; logo?: string | null; url: string; lang: 'fr' | 'en' | 'ar';
+  /** Background painted by the image model (a blob / data URL): replaces the template background, the text stays drawn here so it is exact. */
+  art?: string | null;
   labels: { hiring: string; apply: string; scan: string };
 };
 
@@ -78,6 +80,47 @@ const loadImage = (src: string) => new Promise<HTMLImageElement | null>(res => {
   img.onload = () => res(img); img.onerror = () => res(null); img.src = src;
 });
 
+type Logo = { img: HTMLImageElement; sx: number; sy: number; sw: number; sh: number; light: boolean; wide: boolean };
+
+/** The logo without its empty margins, and whether it is light (a white logo vanishes on a white tile) or a wide wordmark. */
+function prepareLogo(img: HTMLImageElement): Logo {
+  const whole: Logo = { img, sx: 0, sy: 0, sw: img.width, sh: img.height, light: false, wide: img.width / img.height > 2.2 };
+  try {
+    const k = Math.min(1, 480 / Math.max(img.width, img.height));
+    const cw = Math.max(1, Math.round(img.width * k)), ch = Math.max(1, Math.round(img.height * k));
+    const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const g = cv.getContext('2d', { willReadFrequently: true });
+    if (!g) return whole;
+    g.drawImage(img, 0, 0, cw, ch);
+    const px = g.getImageData(0, 0, cw, ch).data;
+    let x0 = cw, y0 = ch, x1 = -1, y1 = -1, lum = 0, w = 0;
+    for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+      const i = (y * cw + x) * 4, a = px[i + 3];
+      if (a < 16) continue;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      lum += (0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2]) * a; w += a;
+    }
+    if (x1 < 0) return whole;
+    const sx = x0 / k, sy = y0 / k, sw = (x1 - x0 + 1) / k, sh = (y1 - y0 + 1) / k;
+    return { img, sx, sy, sw, sh, light: w > 0 && lum / w > 190, wide: sw / sh > 2.2 };
+  } catch { return whole; } // a cross-origin logo cannot be read: drawn as it is
+}
+
+/** The artwork as a background (cover), darkened where the text sits so it stays readable. */
+function drawArt(c: CanvasRenderingContext2D, art: HTMLImageElement, W: number, H: number, fmt: VisualFormat) {
+  const r = Math.max(W / art.width, H / art.height), w = art.width * r, h = art.height * r;
+  c.drawImage(art, (W - w) / 2, (H - h) / 2, w, h);
+  // enough shade for white text to stay readable on any artwork (the text also gets a soft shadow), little enough to keep the picture
+  c.fillStyle = 'rgba(4,12,18,.14)'; c.fillRect(0, 0, W, H);
+  if (fmt === 'linkedin') {
+    const g = c.createLinearGradient(0, 0, W, 0); g.addColorStop(0, 'rgba(4,12,18,.8)'); g.addColorStop(0.55, 'rgba(4,12,18,.52)'); g.addColorStop(1, 'rgba(4,12,18,.06)');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+  } else {
+    const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(4,12,18,.78)'); g.addColorStop(0.35, 'rgba(4,12,18,.58)'); g.addColorStop(0.7, 'rgba(4,12,18,.4)'); g.addColorStop(1, 'rgba(4,12,18,.5)');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+  }
+}
+
 /** What the visual prints under « apply »: the site's address only (the QR code carries the full link). */
 export const shortUrl = (url: string) => { try { return new URL(url).host; } catch { return url.replace(/^https?:\/\//, '').split('/')[0]; } };
 
@@ -90,11 +133,13 @@ export async function renderJobVisual(canvas: HTMLCanvasElement, fmt: VisualForm
   const display = rtl ? '"Noto Kufi Arabic", "Bricolage Grotesque", sans-serif' : '"Bricolage Grotesque", system-ui, sans-serif';
   const body = rtl ? '"Noto Kufi Arabic", Geist, sans-serif' : 'Geist, system-ui, sans-serif';
   try { await Promise.all([document.fonts.load(`700 60px ${display}`), document.fonts.load(`600 30px ${body}`), document.fonts.load(`400 30px ${body}`)]); } catch { /* system fonts */ }
-  const logo = d.logo ? await loadImage(d.logo) : null;
-  const p = PALETTES[theme];
-  p.bg(c, W, H);
+  const [logoImg, artImg] = await Promise.all([d.logo ? loadImage(d.logo) : Promise.resolve(null), d.art ? loadImage(d.art) : Promise.resolve(null)]);
+  const logo = logoImg ? prepareLogo(logoImg) : null;
+  const p = PALETTES[artImg && theme === 'light' ? 'ocean' : theme]; // text on an artwork is always light
+  if (artImg) drawArt(c, artImg, W, H, fmt); else p.bg(c, W, H);
   c.direction = rtl ? 'rtl' : 'ltr';
   c.textBaseline = 'alphabetic';
+  if (artImg) { c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = Math.round(12 * (fmt === 'linkedin' ? H / 627 : W / 1080)); c.shadowOffsetY = Math.round(2 * (fmt === 'linkedin' ? H / 627 : W / 1080)); }
 
   const landscape = fmt === 'linkedin';
   const S = landscape ? H / 627 : W / 1080;          // scale unit
@@ -108,11 +153,22 @@ export async function renderJobVisual(canvas: HTMLCanvasElement, fmt: VisualForm
   // ── company ─────────────────────────────────────────────────────────────────
   let y = P;
   const logoS = Math.round((landscape ? 64 : 84) * S);
-  if (logo) {
-    const r = Math.min(logoS / logo.width, logoS / logo.height);
-    const lw = logo.width * r, lh = logo.height * r;
+  let logoW = logoS;                                  // horizontal room the logo takes (the company name is printed after it)
+  if (logo && (logo.light || logo.wide)) {
+    // a white logo or a wordmark goes straight onto the background (a dark tile on a light theme), never on a white tile
+    const h = Math.round(logoS * (logo.wide ? 0.95 : 1)), maxW = colW * 0.72;
+    const r = Math.min(h / logo.sh, maxW / logo.sw), lw = logo.sw * r, lh = logo.sh * r;
+    const onLight = p === PALETTES.light && logo.light;
+    if (onLight) { c.fillStyle = '#0a1c24'; roundRect(c, X(P - 14 * S, lw + 28 * S), y + (logoS - lh) / 2 - 14 * S, lw + 28 * S, lh + 28 * S, 18 * S); c.fill(); }
+    c.save(); c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 14 * S;
+    c.drawImage(logo.img, logo.sx, logo.sy, logo.sw, logo.sh, X(P, lw), y + (logoS - lh) / 2, lw, lh);
+    c.restore();
+    logoW = logo.wide ? 0 : lw;                       // a wordmark already says the company's name
+  } else if (logo) {
+    const r = Math.min(logoS / logo.sw, logoS / logo.sh);
+    const lw = logo.sw * r, lh = logo.sh * r;
     c.fillStyle = '#ffffff'; roundRect(c, X(P, logoS + 16 * S), y - 8 * S, logoS + 16 * S, logoS + 16 * S, 18 * S); c.fill();
-    c.drawImage(logo, X(P + 8 * S + (logoS - lw) / 2, lw), y + (logoS - lh) / 2, lw, lh);
+    c.drawImage(logo.img, logo.sx, logo.sy, logo.sw, logo.sh, X(P + 8 * S + (logoS - lw) / 2, lw), y + (logoS - lh) / 2, lw, lh);
   } else {
     c.fillStyle = p.accent; roundRect(c, X(P, logoS), y, logoS, logoS, 20 * S); c.fill();
     c.fillStyle = theme === 'light' ? '#ffffff' : '#06141a';
@@ -121,9 +177,11 @@ export async function renderJobVisual(canvas: HTMLCanvasElement, fmt: VisualForm
     c.fillText(ini, X(P, logoS) + logoS / 2, y + logoS * 0.64);
     c.textAlign = rtl ? 'right' : 'left';
   }
-  c.fillStyle = p.ink; c.font = `600 ${Math.round(30 * S)}px ${body}`;
-  const nameX = rtl ? W - P - logoS - 34 * S : P + logoS + 34 * S;
-  c.fillText(wrap(c, d.company || '', colW - logoS - 40 * S, 1)[0] ?? '', nameX, y + logoS * 0.62);
+  if (logoW > 0) {
+    c.fillStyle = p.ink; c.font = `600 ${Math.round(30 * S)}px ${body}`;
+    const nameX = rtl ? W - P - logoW - 34 * S : P + logoW + 34 * S;
+    c.fillText(wrap(c, d.company || '', colW - logoW - 40 * S, 1)[0] ?? '', nameX, y + logoS * 0.62);
+  }
   y += logoS + Math.round((landscape ? 34 : tall ? 150 : 64) * S);
 
   // ── « we're hiring » pill ───────────────────────────────────────────────────
@@ -176,6 +234,7 @@ export async function renderJobVisual(canvas: HTMLCanvasElement, fmt: VisualForm
     y += pl.length * lineH + (tall ? 22 : 14) * S;
   }
 
+  c.shadowColor = 'transparent'; c.shadowBlur = 0; c.shadowOffsetY = 0; // the white card needs no text shadow
   // ── apply: link + QR ────────────────────────────────────────────────────────
   const qr = qrcode(0, 'M'); qr.addData(d.url); qr.make();
   const n = qr.getModuleCount();

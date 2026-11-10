@@ -159,18 +159,29 @@ import os as _os
 import re as _re
 import time as _time
 
+import asyncio as _asyncio
+
 from fastapi import File, Query, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
+from pydantic import BaseModel as _BaseModel, Field as _Field
 
 from app.config import settings
 from app.dependencies import require_hr_or_admin
 
 _VISUAL_FORMATS = {"square", "linkedin", "story"}
-_VISUAL_DIR = _os.path.join(settings.UPLOAD_DIR, "annonces")
+
+
+def _visual_dir() -> str:
+    return _os.path.join(settings.UPLOAD_DIR, "annonces")
 
 
 def _visual_path(ad_id: str, fmt: str) -> str:
-    return _os.path.join(_VISUAL_DIR, f"{ad_id}-{fmt}.png")
+    return _os.path.join(_visual_dir(), f"{ad_id}-{fmt}.png")
+
+
+def _visual_rel(ad_id: str, fmt: str, art: bool = False) -> str:
+    """Path of a visual relative to UPLOAD_DIR (also its key in the durable copy)."""
+    return f"annonces/{ad_id}-art-{fmt}.png" if art else f"annonces/{ad_id}-{fmt}.png"
 
 
 def _public_base(request: Request) -> str:
@@ -198,9 +209,11 @@ async def upload_visual(
     data = await file.read()
     if len(data) > 6 * 1024 * 1024 or not data.startswith(b"\x89PNG"):
         raise HTTPException(status_code=400, detail="Image PNG de 6 Mo maximum attendue")
-    _os.makedirs(_VISUAL_DIR, exist_ok=True)
+    _os.makedirs(_visual_dir(), exist_ok=True)
     with open(_visual_path(str(id), fmt), "wb") as fh:
         fh.write(data)
+    from app.services.storage import durable_put  # a redeploy wipes the disk: the link previews on the networks must survive
+    await _asyncio.to_thread(durable_put, _visual_rel(str(id), fmt), data, "image/png")
     url = f"/api/annonces/{id}/visual/{fmt}.png?v={int(_time.time())}"
     if fmt == "linkedin":
         try:
@@ -215,10 +228,67 @@ def get_visual(id: UUID, fmt: str):
     """Public: the visual of an ad (used by the networks' link previews)."""
     if fmt not in _VISUAL_FORMATS:
         raise HTTPException(status_code=404, detail="Format inconnu")
-    path = _visual_path(str(id), fmt)
-    if not _os.path.exists(path):
+    from app.services.storage import ensure_local  # restored from the durable copy if the disk lost it
+    path = ensure_local(_visual_rel(str(id), fmt))
+    if not path:
         raise HTTPException(status_code=404, detail="Visuel non généré")
     return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=300"})
+
+
+# ── AI artwork: the background of the visual is painted by an image model (the browser adds logo, title and QR code on top) ──
+
+class ArtRequest(_BaseModel):
+    format: str = _Field("square", pattern="^(square|linkedin|story)$")
+    lang: str = "fr"
+    company: str = _Field("", max_length=120)
+    idea: str = _Field("", max_length=400)   # optional creative direction from the HR team
+
+
+@router.post("/{id}/ai-art")
+async def generate_art(id: UUID, body: ArtRequest, supabase: Client = Depends(get_db), user: dict = Depends(require_hr_or_admin)):
+    """Paint the background artwork of this ad for one format and keep it (so it is not paid for twice)."""
+    res = annonce_repository.get_annonce(supabase, str(id))
+    ad = (res.data if res else None) or {}
+    if isinstance(ad, list):
+        ad = ad[0] if ad else {}
+    if not ad:
+        raise HTTPException(status_code=404, detail="Annonce non trouvée")
+    from app.services import image_ai
+    from app.services.storage import durable_put
+    if not image_ai.config()["key"]:
+        raise HTTPException(status_code=503, detail="Génération d'image non configurée : ajoutez OPENAI_API_KEY (et OPENAI_IMAGE_MODEL si besoin) sur le serveur.")
+    try:
+        image_ai.check_quota(str(user.get("id")))
+    except image_ai.TooMany as e:
+        raise HTTPException(status_code=429, detail=str(e))
+    try:
+        prompt = await image_ai.concept(ad, body.company.strip(), body.idea, body.format)
+        png = await image_ai.generate(prompt, body.format)
+    except image_ai.ImageUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except image_ai.ImageFailed as e:
+        raise HTTPException(status_code=502, detail=f"Le service d'image a échoué : {e}")
+    rel = _visual_rel(str(id), body.format, art=True)
+    _os.makedirs(_visual_dir(), exist_ok=True)
+    with open(_os.path.join(settings.UPLOAD_DIR, rel), "wb") as fh:
+        fh.write(png)
+    await _asyncio.to_thread(durable_put, rel, png, image_ai.sniff(png) or "image/png")
+    return Response(content=png, media_type=image_ai.sniff(png) or "image/png", headers={"Cache-Control": "no-store"})
+
+
+@router.get("/{id}/ai-art/{fmt}.png")
+def get_art(id: UUID, fmt: str, _user: dict = Depends(require_hr_or_admin)):
+    """The artwork already generated for this ad and format (404 when there is none)."""
+    if fmt not in _VISUAL_FORMATS:
+        raise HTTPException(status_code=404, detail="Format inconnu")
+    from app.services.image_ai import sniff
+    from app.services.storage import ensure_local
+    path = ensure_local(_visual_rel(str(id), fmt, art=True))
+    if not path:
+        raise HTTPException(status_code=404, detail="Pas d'image IA pour ce format")
+    with open(path, "rb") as fh:
+        kind = sniff(fh.read(16)) or "image/png"
+    return FileResponse(path, media_type=kind, headers={"Cache-Control": "private, max-age=60"})
 
 
 @router.get("/{id}/share", response_class=HTMLResponse)
@@ -235,7 +305,8 @@ def share_page(id: UUID, request: Request, supabase: Client = Depends(get_db)):
     text = _re.sub(r"\s+", " ", _re.sub(r"[•*#]", " ", ad.get("contenu") or "")).strip()
     desc = (text[:220] + "…") if len(text) > 220 else text
     title = f"{ad.get('poste') or 'Offre'}" + (f" · {ad['description']}" if ad.get("description") else "")
-    has_img = _os.path.exists(_visual_path(str(id), "linkedin"))
+    from app.services.storage import ensure_local
+    has_img = bool(ensure_local(_visual_rel(str(id), "linkedin")))
     img = f"{base}/api/annonces/{id}/visual/linkedin.png" if has_img else ""
     e = _html.escape
     meta = [

@@ -2,7 +2,7 @@
 // (employees, leave, recruitment, documents, performance, analytics, meetings) that act in Wedy with real tools. The page
 // streams their progress, shows every change for confirmation before it runs, and keeps the conversation.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowUp, BarChart3, Bot, Check, CircleAlert, ClipboardList, Copy, FileText, Info, Loader2, Plus, RotateCcw, Scale, ShieldCheck, Sparkles, Square,
@@ -126,6 +126,9 @@ export default function CopilotPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const [params, setParams] = useSearchParams();
+  const incoming = params.get('q') ?? '';
+  const handled = useRef('');
 
   const last = turns[turns.length - 1];
   const running = last?.role === 'assistant' && last.status === 'running';
@@ -192,6 +195,15 @@ export default function CopilotPage() {
   const cmdList = slash ? CMDS(t).filter(c => c.cmd.startsWith(input.toLowerCase()) || input === '/') : [];
   const empty = turns.length === 0;
   const busy = running || awaiting;
+
+  // a question sent from elsewhere in the app (?q=…): ask it now, or leave it in the box if Wedy is mid-task
+  useEffect(() => {
+    if (!incoming || handled.current === incoming) return;
+    handled.current = incoming;
+    setParams({}, { replace: true });
+    setTimeout(() => { if (busy) setInputAuto(incoming, true); else ask(incoming); }, 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incoming]);
 
   const errText = (b: Extract<Block, { k: 'error' }>) => ({
     no_ai_key: t('cop_err_no_key'), ai_unavailable: t('cop_err_unavailable'), forbidden: t('cop_err_forbidden'), forbidden_role: t('cop_err_role'),

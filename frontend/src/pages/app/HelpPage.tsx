@@ -38,6 +38,10 @@ const SUGG = ['Solde de congés', 'Modèle en arabe', 'Export de la paie', 'Impo
 
 // What actually shipped recently (keep in sync with the release notes).
 const NEWS = [
+  { tag: 'IA',       tint: '#ece9fb', color: '#5444b8', t: "Copilot multi-agents : Wedy exécute vos tâches RH (employés, congés, recrutement, documents, paie…) après votre validation", d: 'Novembre 2026' },
+  { tag: 'Nouveau',  tint: '#e1f5ec', color: '#0f6f49', t: 'Bouton « Demander à Wedy » sur chaque page, avec des suggestions adaptées',   d: 'Novembre 2026' },
+  { tag: 'Nouveau',  tint: '#e1f5ec', color: '#0f6f49', t: 'Entretiens : salle d\'entretien avec visio Wedy gratuite, grille et CV',        d: 'Novembre 2026' },
+  { tag: 'Nouveau',  tint: '#e1f5ec', color: '#0f6f49', t: 'Annonces : visuel du poste et publication Facebook, Instagram, LinkedIn, Indeed', d: 'Novembre 2026' },
   { tag: 'IA',       tint: '#ece9fb', color: '#5444b8', t: "Réunions : ordre du jour et compte rendu rédigés par Wedy", d: 'Novembre 2026' },
   { tag: 'Nouveau',  tint: '#e1f5ec', color: '#0f6f49', t: 'Flux iCal des congés et webhooks Slack / Teams',          d: 'Novembre 2026' },
   { tag: 'Amélioré', tint: '#e4f2f4', color: '#0b5f72', t: 'Paramètres : règles de congés et jours fériés lunaires',   d: 'Novembre 2026' },

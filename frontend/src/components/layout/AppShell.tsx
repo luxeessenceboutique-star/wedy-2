@@ -6,6 +6,7 @@ import { cx } from '@/lib/visual';
 import { listNotifications, getInboxCount } from '@/services/api';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { AskWedy } from '@/components/copilot/AskWedy';
 import { useIdleLogout } from '@/lib/useIdleLogout';
 
 export { PageHeader } from './PageHeader';
@@ -63,6 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Topbar unreadCount={unreadCount} onOpenMenu={() => setMenuOpen(true)} />
         {children}
       </div>
+      <AskWedy />
     </div>
   );
 }

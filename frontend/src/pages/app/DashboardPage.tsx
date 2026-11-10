@@ -8,6 +8,7 @@ import type { InboxItem } from '@/services/api';
 import { useAuth } from '@/lib/auth';
 import { useLang } from '@/lib/lang';
 import { tf } from '@/lib/format';
+import { copilotUrl } from '@/lib/copilotAsk';
 import { DashboardView } from './DashboardView';
 
 const PERIODS = [30, 90, 180, 365] as const;
@@ -139,7 +140,7 @@ function useDashboardModel() {
   }, [query, lang]);
   const hasQuery = query.trim().length > 0;
   const pick = (to: string) => { setPalette(false); navigate(to); };
-  const askWedy = () => { setPalette(false); navigate('/app/copilot'); };
+  const askWedy = () => { setPalette(false); navigate(copilotUrl(query)); };
   const clampSel = Math.min(sel, items.length - (hasQuery ? 0 : 1));
   useEffect(() => {
     if (!palette) return;

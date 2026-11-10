@@ -1,14 +1,18 @@
-import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, ChevronRight, Menu, Sparkles } from 'lucide-react';
 import { useLang } from '@/lib/lang';
 import { findNavMatch } from './navConfig';
 import { LangSwitch } from './LangSwitch';
+import { copilotUrl } from '@/lib/copilotAsk';
 
 /** Sticky glass bar (design/WedyTopbar.dc.html): breadcrumb from the nav config, ask-Wedy shortcut, bell. */
 export function Topbar({ unreadCount, onOpenMenu }: { unreadCount: number; onOpenMenu: () => void }) {
   const { t } = useLang();
   const { pathname } = useLocation();
   const match = findNavMatch(pathname);
+  const navigate = useNavigate();
+  const [ask, setAsk] = useState('');
 
   return (
     <header className="wy-topbar">
@@ -24,10 +28,10 @@ export function Topbar({ unreadCount, onOpenMenu }: { unreadCount: number; onOpe
         </div>
       )}
 
-      <Link to="/app/copilot" className="wy-topbar-ask">
+      <form className="wy-topbar-ask" role="search" onSubmit={e => { e.preventDefault(); navigate(copilotUrl(ask)); setAsk(''); }}>
         <span className="wy-topbar-ask-icon"><Sparkles size={15} /></span>
-        <span className="wy-topbar-ask-text">{t('ask_wedy')}</span>
-      </Link>
+        <input className="wy-topbar-ask-input" value={ask} onChange={e => setAsk(e.target.value)} placeholder={t('ask_wedy')} aria-label={t('ask_wedy_short')} enterKeyHint="send" />
+      </form>
 
       <LangSwitch />
 

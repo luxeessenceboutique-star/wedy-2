@@ -124,6 +124,9 @@
 }
 .wy-topbar-ask:hover { color: var(--text-muted); border-color: var(--primary-border); }
 .wy-topbar-ask .wy-topbar-ask-icon { display: inline-flex; color: var(--primary-400); }
+.wy-topbar-ask:focus-within { border-color: var(--primary-400); color: var(--text); }
+.wy-topbar-ask-input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; padding: 0; font: inherit; color: var(--text); text-align: start; }
+.wy-topbar-ask-input::placeholder { color: var(--text-subtle); opacity: 1; }
 .wy-topbar-ask-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: start; }
 .wy-topbar-bell {
   position: relative; flex-shrink: 0; width: 40px; height: 40px; border-radius: var(--r-btn);

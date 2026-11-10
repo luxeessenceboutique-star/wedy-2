@@ -3598,4 +3598,8 @@ export const ar = {
     ask_emp_1: 'قدّم لي ملخصاً لملف {name}',
     ask_emp_2: 'ما رصيد إجازات {name}؟',
     ask_emp_3: 'أنشئ شهادة عمل لـ {name}',
+    // Interns documents
+    stg_file_added: 'تمت الإضافة',
+    stg_view: 'عرض',
+    stg_replace: 'استبدال',
 } as const;

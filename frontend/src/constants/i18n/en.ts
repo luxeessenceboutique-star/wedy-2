@@ -3598,4 +3598,8 @@ export const en = {
     ask_emp_1: 'Give me a summary of {name}\'s file',
     ask_emp_2: 'What is {name}\'s leave balance?',
     ask_emp_3: 'Generate an employment certificate for {name}',
+    // Interns documents
+    stg_file_added: 'Added',
+    stg_view: 'View',
+    stg_replace: 'Replace',
 } as const;

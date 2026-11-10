@@ -41,7 +41,7 @@ export type EmployeeFile = {
   id: string;
   employee_id: string;
   name: string;
-  file_type: 'cv' | 'certificat' | 'diplome' | 'contrat' | 'autre';
+  file_type: 'cv' | 'certificat' | 'diplome' | 'contrat' | 'autre' | (string & {});
   file_path: string;
   file_size?: number;
   mime_type?: string;
@@ -63,6 +63,21 @@ export const deleteEmployeeFile = (employee_id: string, file_id: string) =>
   api.delete(`/employees/${employee_id}/files/${file_id}`);
 
 export const getEmployeeFileUrl = (file_path: string) => `${BASE}/uploads/${file_path}`;
+
+const MIME: Record<string, string> = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', txt: 'text/plain' };
+
+/** Open a protected upload in a new tab (PDF / image preview). The tab is opened first so the browser does not block it. */
+export const viewEmployeeFile = async (file_path: string, name: string, mime?: string) => {
+  const w = window.open('', '_blank');
+  try {
+    const res = await api.get<Blob>(`/uploads/${file_path}`, { responseType: 'blob', timeout: 0 });
+    const ext = (name.split('.').pop() ?? file_path.split('.').pop() ?? '').toLowerCase();
+    const type = mime || (res.data.type && res.data.type !== 'application/octet-stream' ? res.data.type : '') || MIME[ext] || 'application/octet-stream';
+    const url = URL.createObjectURL(new Blob([res.data], { type }));
+    if (w) w.location.href = url; else window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 120_000);
+  } catch (e) { w?.close(); throw e; }
+};
 
 /** Download a protected upload: the endpoint needs the Bearer token, so a plain link can't be used. */
 export const downloadEmployeeFile = async (file_path: string, name: string) => {

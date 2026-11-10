@@ -5,13 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import {
-  Award, Briefcase, Calendar, CheckCircle2, ClipboardList, FileText, FileUp, GraduationCap, Link2, Mail, Pencil, Phone, Plus,
-  Settings, Target, Trash2, User, UserCheck, WandSparkles, X,
+  Award, Briefcase, Calendar, CheckCircle2, ClipboardList, Eye, FileText, FileUp, GraduationCap, Link2, Mail, Pencil, Phone, Plus,
+  RefreshCw, Settings, Target, Trash2, User, UserCheck, WandSparkles, X,
 } from 'lucide-react';
 import {
-  createInternEvaluation, deleteDocument, deleteInternEvaluation, getApiError, getInternOnboarding, listDocuments, listInternEvaluations,
-  sendForSignature, updateInternOnboarding, uploadDocument,
-  type ChecklistItem, type Intern, type InternEvaluation, type InternOnboarding,
+  createInternEvaluation, deleteDocument, deleteEmployeeFile, deleteInternEvaluation, getApiError, getInternOnboarding, listDocuments, listEmployeeFiles,
+  listInternEvaluations, sendForSignature, updateInternOnboarding, uploadEmployeeFile, viewEmployeeFile,
+  type ChecklistItem, type EmployeeFile, type Intern, type InternEvaluation, type InternOnboarding,
 } from '@/services/api';
 import { Drawer, Spinner } from '@/components/ui';
 import { useLang, type TKey } from '@/lib/lang';
@@ -358,26 +358,43 @@ function EvaluationForm({ internId, onDone }: { internId: string; onDone: () => 
 
 const SCANS: [type: string, key: TKey][] = [['cin', 'stg_doc_cin'], ['convention', 'stg_doc_convention'], ['nda', 'stg_doc_nda'], ['completion', 'stg_doc_completion']];
 
+const fileSize = (n?: number) => (!n ? '' : n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} Ko` : `${(n / (1024 * 1024)).toFixed(1)} Mo`);
+const greenPill: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: '#e1f5ec', color: '#0f6f49', whiteSpace: 'nowrap' };
+
 function DocsTab({ intern }: { intern: Intern }) {
   const { t } = useLang();
   const notify = useNotify();
   const qc = useQueryClient();
+  // generated documents (contracts, certificates…) and the scanned files added by hand live in two places
   const docsQ = useQuery({ queryKey: ['intern-docs', intern.id], queryFn: () => listDocuments({ employee_id: intern.id }) });
+  const filesQ = useQuery({ queryKey: ['intern-files', intern.id], queryFn: () => listEmployeeFiles(intern.id) });
   const docs = docsQ.data?.data ?? [];
-  const refresh = () => qc.invalidateQueries({ queryKey: ['intern-docs', intern.id] });
+  const files = (filesQ.data ?? []) as EmployeeFile[];
+  const refresh = () => { qc.invalidateQueries({ queryKey: ['intern-docs', intern.id] }); qc.invalidateQueries({ queryKey: ['intern-files', intern.id] }); };
   const [busy, setBusy] = useState('');
+  const scanLabel = (type: string) => { const hit = SCANS.find(([ty]) => ty === type); return hit ? t(hit[1]) : ''; };
+  const fileFor = (type: string) => files.find(f => f.file_type === type); // newest first
+
   const upload = (type: string, label: string) => {
     const input = document.createElement('input');
     input.type = 'file';
+    input.accept = '.pdf,.png,.jpg,.jpeg,.webp,.doc,.docx';
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
       setBusy(type);
-      try { await uploadDocument(intern.id, type, label, file, true); notify.success(tf(t('stg_doc_added'), { name: label })); refresh(); }
-      catch (e) { notify.error(getApiError(e, t('error'))); } finally { setBusy(''); }
+      try {
+        const old = files.filter(f => f.file_type === type);
+        await uploadEmployeeFile(intern.id, file, type);
+        // replacing a scan: the previous one goes only once the new one is safely stored
+        await Promise.allSettled(old.map(f => deleteEmployeeFile(intern.id, f.id)));
+        notify.success(tf(t('stg_doc_added'), { name: label }));
+        refresh();
+      } catch (e) { notify.error(getApiError(e, t('error'))); } finally { setBusy(''); }
     };
     input.click();
   };
+  const view = (f: EmployeeFile) => { viewEmployeeFile(f.file_path, f.name, f.mime_type).catch(e => notify.error(getApiError(e, t('error')))); };
   const sign = async (id: string) => {
     try {
       const res = await sendForSignature(id);
@@ -387,37 +404,75 @@ function DocsTab({ intern }: { intern: Intern }) {
       refresh();
     } catch (e) { notify.error(getApiError(e, t('error'))); }
   };
-  const remove = async (id: string) => {
+  const removeDoc = async (id: string) => {
     if (!window.confirm(t('stg_doc_confirm_del'))) return;
     try { await deleteDocument(id); refresh(); } catch (e) { notify.error(getApiError(e, t('error'))); }
   };
+  const removeFile = async (id: string) => {
+    if (!window.confirm(t('stg_doc_confirm_del'))) return;
+    try { await deleteEmployeeFile(intern.id, id); refresh(); } catch (e) { notify.error(getApiError(e, t('error'))); }
+  };
+  const iconBtn: CSSProperties = { width: 32, height: 32, border: 'none', borderRadius: 9, background: 'transparent', color: '#9fb4bb', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' };
+  const rows = [
+    ...files.map(f => ({ kind: 'file' as const, at: f.created_at, f })),
+    ...docs.map(d => ({ kind: 'doc' as const, at: d.created_at, d })),
+  ].sort((a, b) => (a.at < b.at ? 1 : -1));
+  const loading = docsQ.isLoading || filesQ.isLoading;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={card}>
-        <div style={kicker}><FileText size={13} />{t('stg_docs_saved')}</div>
-        {docsQ.isLoading ? <Spinner /> : !docs.length ? <p style={{ margin: 0, fontSize: 13, color: '#7d8f97' }}>{t('stg_docs_none')}</p> : docs.map(d => (
-          <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid #f0f3f5', flexWrap: 'wrap' }}>
+        <div style={kicker}><FileText size={13} />{t('stg_docs_saved')}{rows.length > 0 && <span style={{ marginInlineStart: 'auto', fontFamily: "'Geist Mono',monospace" }}>{rows.length}</span>}</div>
+        {loading ? <Spinner /> : !rows.length ? <p style={{ margin: 0, fontSize: 13, color: '#7d8f97' }}>{t('stg_docs_none')}</p> : rows.map(r => r.kind === 'file' ? (
+          <div key={`f${r.f.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid #f0f3f5', flexWrap: 'wrap' }}>
+            <span style={{ width: 32, height: 32, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e1f5ec', color: '#0f6f49', flexShrink: 0 }}><FileUp size={15} /></span>
+            <button type="button" onClick={() => view(r.f)} title={t('stg_view')} style={{ flex: '1 1 180px', minWidth: 0, textAlign: 'start', background: 'none', border: 'none', padding: 0, fontFamily: 'inherit', cursor: 'pointer' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#0a1c24', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{scanLabel(r.f.file_type) || r.f.name}</div>
+              <div style={{ fontSize: 11.5, color: '#7d8f97', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{[scanLabel(r.f.file_type) ? r.f.name : '', fileSize(r.f.file_size), fmtDate(r.f.created_at)].filter(Boolean).join(' · ')}</div>
+            </button>
+            <span style={greenPill}><CheckCircle2 size={12} />{t('stg_file_added')}</span>
+            <button type="button" aria-label={t('stg_view')} title={t('stg_view')} onClick={() => view(r.f)} style={{ ...iconBtn, color: '#0e6f84' }}><Eye size={16} /></button>
+            <button type="button" aria-label={t('stg_delete')} title={t('stg_delete')} onClick={() => removeFile(r.f.id)} style={iconBtn}><Trash2 size={15} /></button>
+          </div>
+        ) : (
+          <div key={`d${r.d.id}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid #f0f3f5', flexWrap: 'wrap' }}>
             <span style={{ width: 32, height: 32, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e4f2f4', color: '#0e6f84', flexShrink: 0 }}><FileText size={15} /></span>
             <div style={{ flex: '1 1 180px', minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#0a1c24' }}>{d.name || d.document_type}</div>
-              <div style={{ fontSize: 11.5, color: '#7d8f97' }}><span style={{ textTransform: 'uppercase' }}>{d.document_type}</span> · {fmtDate(d.created_at)}</div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#0a1c24' }}>{r.d.name || r.d.document_type}</div>
+              <div style={{ fontSize: 11.5, color: '#7d8f97' }}><span style={{ textTransform: 'uppercase' }}>{r.d.document_type}</span> · {fmtDate(r.d.created_at)}</div>
             </div>
-            {SCANS.some(([ty]) => ty === d.document_type) ? null : d.signature_status === 'signed'
-              ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: '#e1f5ec', color: '#0f6f49' }}><CheckCircle2 size={12} />{t('stg_signed')}</span>
-              : <button type="button" style={ghost} onClick={() => sign(d.id)}>{t(d.signature_status === 'pending' ? 'stg_resend' : 'stg_sign')}</button>}
-            <button type="button" aria-label={t('stg_delete')} onClick={() => remove(d.id)} style={{ width: 32, height: 32, border: 'none', borderRadius: 9, background: 'transparent', color: '#9fb4bb', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={14} /></button>
+            {r.d.signature_status === 'signed'
+              ? <span style={greenPill}><CheckCircle2 size={12} />{t('stg_signed')}</span>
+              : <button type="button" style={ghost} onClick={() => sign(r.d.id)}>{t(r.d.signature_status === 'pending' ? 'stg_resend' : 'stg_sign')}</button>}
+            <button type="button" aria-label={t('stg_delete')} onClick={() => removeDoc(r.d.id)} style={iconBtn}><Trash2 size={15} /></button>
           </div>
         ))}
       </div>
       <div style={card}>
         <div style={kicker}><FileUp size={13} />{t('stg_scan')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 8 }}>
-          {SCANS.map(([type, key]) => (
-            <div key={type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '10px 12px', borderRadius: 12, border: '1px solid #e2e8eb' }}>
-              <span style={{ fontSize: 13, color: '#22343c' }}>{t(key)}</span>
-              <button type="button" style={ghost} disabled={!!busy} onClick={() => upload(type, t(key))}>{busy === type ? <Spinner size={12} /> : <FileUp size={13} />}{t('stg_upload')}</button>
-            </div>
-          ))}
+          {SCANS.map(([type, key]) => {
+            const f = fileFor(type);
+            return (
+              <div key={type} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '10px 12px', borderRadius: 12, border: `1px solid ${f ? '#b7e2cc' : '#e2e8eb'}`, background: f ? '#f3fbf7' : '#ffffff' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: f ? 600 : 400, color: '#22343c' }}>{t(key)}</span>
+                  {f
+                    ? <span style={greenPill}><CheckCircle2 size={12} />{t('stg_file_added')}</span>
+                    : <button type="button" style={ghost} disabled={!!busy} onClick={() => upload(type, t(key))}>{busy === type ? <Spinner size={12} /> : <FileUp size={13} />}{t('stg_upload')}</button>}
+                </div>
+                {f && (
+                  <>
+                    <div style={{ fontSize: 11.5, color: '#4d6a5d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={f.name}>{f.name}{fileSize(f.file_size) ? ` · ${fileSize(f.file_size)}` : ''}</div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button type="button" style={{ ...ghost, height: 30, flex: 1, justifyContent: 'center' }} onClick={() => view(f)}><Eye size={13} />{t('stg_view')}</button>
+                      <button type="button" style={{ ...ghost, height: 30 }} disabled={!!busy} onClick={() => upload(type, t(key))} aria-label={t('stg_replace')} title={t('stg_replace')}>{busy === type ? <Spinner size={12} /> : <RefreshCw size={13} />}{t('stg_replace')}</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

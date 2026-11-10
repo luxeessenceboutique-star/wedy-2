@@ -3652,4 +3652,8 @@ export const fr = {
     ask_emp_1: 'Fais-moi un résumé du dossier de {name}',
     ask_emp_2: 'Quel est le solde de congés de {name} ?',
     ask_emp_3: 'Génère une attestation de travail pour {name}',
+    // Interns documents
+    stg_file_added: 'Ajouté',
+    stg_view: 'Voir',
+    stg_replace: 'Remplacer',
 } as const;

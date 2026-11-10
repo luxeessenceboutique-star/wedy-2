@@ -15,7 +15,8 @@ class DocumentCreate(BaseModel):
 
 class DocumentOut(BaseModel):
     id: UUID
-    profile_id: UUID
+    profile_id: Optional[UUID] = None  # files added to an employee's folder have no profile
+    employee_id: Optional[UUID] = None
     type: Optional[str] = None
     name: Optional[str] = None
     file_url: Optional[str] = None

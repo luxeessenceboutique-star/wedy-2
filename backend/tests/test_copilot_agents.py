@@ -212,6 +212,33 @@ def test_without_any_ai_key_the_stream_says_so():
     assert evs[0]["t"] == "error" and evs[0]["code"] == "no_ai_key"
 
 
+def test_conversations_are_isolated_from_each_other():
+    setup(); db = make_db()
+    sm.ROUTES += [{"next": "general"}, {"next": "FINISH"}] * 3
+    sm.AGENT += [AIMessage(content="Bonjour Zorglub."), AIMessage(content="Le préavis dépend du contrat."), AIMessage(content="Pour Bartholomé, voyons le contrat.")]
+    run(collect(db, "Bonjour, je suis Zorglub et je prépare le contrat de Bartholomé", thread="conv-a"))
+    sm.LOG.clear()
+    run(collect(db, "Quel est le préavis de démission ?", thread="conv-b"))
+    seen_by_b = " ".join(str(getattr(x, "content", "")) for _, msgs in sm.LOG for x in msgs)
+    assert "Zorglub" not in seen_by_b and "Bartholomé" not in seen_by_b, "a conversation must not see another one"
+    run(collect(db, "Et pour Bartholomé ?", thread="conv-a"))  # each conversation keeps its own memory
+    last_agent_call = [m for k, m in sm.LOG if k == "agent"][-1]
+    assert any("Zorglub" in str(getattr(x, "content", "")) for x in last_agent_call)
+    assert not any("préavis" in str(getattr(x, "content", "")) for x in last_agent_call), "conv-b's question leaked into conv-a"
+
+
+def test_deleting_a_conversation_forgets_it_and_only_its_owner_can():
+    setup(); db = make_db()
+    sm.ROUTES += [{"next": "general"}, {"next": "FINISH"}]
+    sm.AGENT += [AIMessage(content="Salut")]
+    run(collect(db, "Bonjour", thread="conv-a"))
+    assert service.forget("conv-a", OTHER["id"]) is False
+    assert service.forget("conv-a", USER["id"]) is True
+    state = run(service.graph().aget_state({"configurable": {"thread_id": "conv-a"}}))
+    assert not state.values.get("messages")
+    assert service.forget("never-existed", USER["id"]) is True
+
+
 def test_http_endpoint_is_hr_only_and_streams_sse():
     from fastapi import HTTPException
     from fastapi.testclient import TestClient
@@ -238,6 +265,11 @@ def test_http_endpoint_is_hr_only_and_streams_sse():
     info = c.get("/api/copilot/agents?lang=en").json()["agents"]
     assert {a["name"] for a in info} >= {"employees", "leave", "recruitment", "documents", "talent", "analytics", "comms", "general"}
     assert any(t["write"] for a in info for t in a["tools"])
+    assert c.delete("/api/copilot/agent/h1").status_code == 204          # the owner deletes a conversation
+    sm.ROUTES += [{"next": "general"}, {"next": "FINISH"}]; sm.AGENT += [AIMessage(content="Salut")]
+    c.post("/api/copilot/agent", json={"thread_id": "h2", "message": "salut"})
+    m.app.dependency_overrides[require_hr_or_admin] = lambda: OTHER
+    assert c.delete("/api/copilot/agent/h2").status_code == 403          # somebody else's conversation
     m.app.dependency_overrides.clear()
 
 

@@ -67,6 +67,21 @@ def _claim(thread_id: str, user_id: str) -> bool:
     return True
 
 
+def forget(thread_id: str, user_id: str) -> bool:
+    """Drop a conversation's memory. Only its owner can; forgetting an unknown conversation is a no-op that succeeds."""
+    t = _threads.get(thread_id)
+    if t is None:
+        return True
+    if t["owner"] != user_id:
+        return False
+    _threads.pop(thread_id, None)
+    try:
+        _saver.delete_thread(thread_id)
+    except Exception:
+        pass
+    return True
+
+
 def _chunk_text(chunk: Any) -> str:
     c = getattr(chunk, "content", "")
     if isinstance(c, str):

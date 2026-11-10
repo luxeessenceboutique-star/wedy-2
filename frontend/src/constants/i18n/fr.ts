@@ -3670,4 +3670,14 @@ export const fr = {
     cop_err_session: 'Votre session a expiré. Reconnectez-vous puis réessayez.',
     cop_err_outdated: 'Le serveur n\'a pas encore la dernière version du Copilot. Redéployez le backend puis réessayez.',
     cop_err_server: 'Le serveur du Copilot a rencontré un problème.',
+    // Copilot conversations
+    cop_convs: 'Conversations',
+    cop_conv_isolated: 'Chaque conversation a sa propre mémoire : elles ne se mélangent jamais.',
+    cop_conv_today: 'Aujourd\'hui',
+    cop_conv_week: 'Cette semaine',
+    cop_conv_older: 'Plus ancien',
+    cop_conv_rename: 'Renommer',
+    cop_conv_delete: 'Supprimer',
+    cop_conv_delete_confirm: 'Supprimer cette conversation ? Sa mémoire sera effacée.',
+    cop_conv_waiting: 'À valider',
 } as const;

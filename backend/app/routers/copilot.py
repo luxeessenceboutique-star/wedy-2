@@ -279,6 +279,17 @@ async def agent_run(body: AgentRun, supabase: Client = Depends(get_db), current_
     return StreamingResponse(gen, media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"})
 
 
+@router.delete("/agent/{thread_id}", status_code=204)
+def agent_forget(thread_id: str, current_user: dict = Depends(require_hr_or_admin)):
+    """The user deleted a conversation: drop its memory on the server (owner only)."""
+    try:
+        from app.agents import service
+    except ImportError:
+        return  # nothing was ever kept
+    if not service.forget(thread_id, str(current_user.get("id"))):
+        raise HTTPException(status_code=403, detail="Conversation inconnue")
+
+
 @router.get("/agents")
 def agents_info(lang: str = Query("fr"), current_user: dict = Depends(require_hr_or_admin)):
     """The specialists and what they can do (shown in the Copilot page)."""

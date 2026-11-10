@@ -55,5 +55,8 @@ export async function runAgent(body: AgentRequest, onEvent: (e: AgentEvent) => v
   }
 }
 
+/** A conversation was deleted in the browser: let the server drop its memory too (best effort). */
+export const forgetConversation = (thread_id: string) => api.delete(`/copilot/agent/${encodeURIComponent(thread_id)}`).then(() => undefined, () => undefined);
+
 export type AgentInfo = { name: string; label: string; examples: string[]; tools: { name: string; label: string; write: boolean; danger: boolean }[] };
 export const getAgents = (lang: string) => api.get<{ agents: AgentInfo[] }>('/copilot/agents', { params: { lang } }).then(r => r.data.agents);

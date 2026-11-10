@@ -3616,4 +3616,14 @@ export const en = {
     cop_err_session: 'Your session has expired. Sign in again and retry.',
     cop_err_outdated: 'The server does not have the latest Copilot yet. Redeploy the backend and retry.',
     cop_err_server: 'The Copilot server ran into a problem.',
+    // Copilot conversations
+    cop_convs: 'Conversations',
+    cop_conv_isolated: 'Each conversation has its own memory: they never get mixed up.',
+    cop_conv_today: 'Today',
+    cop_conv_week: 'This week',
+    cop_conv_older: 'Older',
+    cop_conv_rename: 'Rename',
+    cop_conv_delete: 'Delete',
+    cop_conv_delete_confirm: 'Delete this conversation? Its memory will be erased.',
+    cop_conv_waiting: 'To approve',
 } as const;

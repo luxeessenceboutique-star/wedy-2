@@ -5,13 +5,13 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ArrowUp, BarChart3, Bot, Check, CircleAlert, ClipboardList, Copy, FileText, Info, Loader2, Plus, RotateCcw, Scale, ShieldCheck, Sparkles, Square,
-  Target, TrendingUp, UserCheck, Users, Video, X, Zap, CalendarClock, ExternalLink, type LucideIcon,
+  ArrowUp, BarChart3, Bot, Check, CircleAlert, ClipboardList, Copy, FileText, Info, Loader2, MessagesSquare, Pencil, Plus, RotateCcw, Scale, ShieldCheck, Sparkles, Square,
+  Target, Trash2, TrendingUp, UserCheck, Users, Video, X, Zap, CalendarClock, ExternalLink, type LucideIcon,
 } from 'lucide-react';
 import { RV } from '@/components/motion';
 import { Drawer } from '@/components/ui';
 import { Markdown } from '@/components/copilot/Markdown';
-import { getAgents, runAgent, type AgentEvent } from '@/components/copilot/agentStream';
+import { forgetConversation, getAgents, runAgent, type AgentEvent } from '@/components/copilot/agentStream';
 import { toast } from 'sonner';
 import { useLang, type TKey } from '@/lib/lang';
 import { useAuth } from '@/lib/auth';
@@ -29,9 +29,13 @@ type Block =
 type Turn =
   | { id: string; role: 'user'; text: string }
   | { id: string; role: 'assistant'; blocks: Block[]; links: Link_[]; status: 'running' | 'awaiting' | 'done' | 'error' };
-type Stored = { thread: string; turns: Turn[] };
+/** One conversation = one memory on the server (its id is the LangGraph thread). Conversations never share messages or context. */
+type Conv = { id: string; title: string; custom: boolean; updated: number; turns: Turn[] };
+type Store = { active: string; convs: Conv[] };
 
-const STORE = 'wedy_copilot_v2';
+const LEGACY = 'wedy_copilot_v2'; // the single conversation of the previous version
+const STORE = 'wedy_copilot_v3';
+const MAX_CONVS = 40;
 const AUTO = 'wedy_copilot_auto';
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
@@ -101,14 +105,46 @@ function apply(turn: Turn, ev: AgentEvent): Turn {
   return { ...turn, blocks, links, status };
 }
 
-function load(): Stored {
+const newConv = (): Conv => ({ id: uid(), title: '', custom: false, updated: Date.now(), turns: [] });
+const titleFrom = (text: string) => { const t = text.replace(/\s+/g, ' ').trim(); return t.length > 48 ? `${t.slice(0, 47)}…` : t; };
+/** A reload interrupts any answer that was still streaming. */
+const settle = (turns: Turn[]): Turn[] => turns.map(x => (x.role === 'assistant' && x.status === 'running' ? { ...x, status: 'error' as const } : x));
+
+function loadStore(): Store {
   try {
-    const s = JSON.parse(localStorage.getItem(STORE) ?? 'null') as Stored | null;
-    if (s?.thread && Array.isArray(s.turns)) {
-      return { thread: s.thread, turns: s.turns.map(t => (t.role === 'assistant' && t.status === 'running' ? { ...t, status: 'error' as const } : t)) };
+    const s = JSON.parse(localStorage.getItem(STORE) ?? 'null') as Store | null;
+    if (s && Array.isArray(s.convs) && s.convs.length) {
+      const convs = s.convs.filter(c => c?.id && Array.isArray(c.turns)).map(c => ({ ...c, turns: settle(c.turns) }));
+      const active = convs.some(c => c.id === s.active) ? s.active : convs[0]?.id;
+      // empty conversations are not worth keeping, except the one that is open
+      const kept = convs.filter(c => c.turns.length || c.id === active);
+      if (kept.length && active) return { active, convs: kept };
+    }
+    // first visit after the update: the old single conversation becomes the first one of the list
+    const old = JSON.parse(localStorage.getItem(LEGACY) ?? 'null') as { thread?: string; turns?: Turn[] } | null;
+    if (old?.thread && Array.isArray(old.turns) && old.turns.length) {
+      const first = old.turns.find(x => x.role === 'user');
+      const c: Conv = { id: old.thread, title: first && first.role === 'user' ? titleFrom(first.text) : '', custom: false, updated: Date.now(), turns: settle(old.turns) };
+      return { active: c.id, convs: [c] };
     }
   } catch { /* corrupted or unavailable storage */ }
-  return { thread: uid(), turns: [] };
+  const c = newConv();
+  return { active: c.id, convs: [c] };
+}
+
+function saveStore(store: Store) {
+  const convs = [...store.convs].sort((a, b) => b.updated - a.updated).slice(0, MAX_CONVS);
+  if (!convs.some(c => c.id === store.active)) { const a = store.convs.find(c => c.id === store.active); if (a) convs.push(a); }
+  try {
+    let out = JSON.stringify({ active: store.active, convs });
+    while (out.length > 3_500_000 && convs.length > 1) { // browser storage is small: the oldest conversations go first
+      const drop = convs.map((c, k) => [c, k] as const).filter(([c]) => c.id !== store.active).sort((a, b) => a[0].updated - b[0].updated)[0];
+      if (!drop) break;
+      convs.splice(drop[1], 1);
+      out = JSON.stringify({ active: store.active, convs });
+    }
+    localStorage.setItem(STORE, out);
+  } catch { /* storage full or unavailable */ }
 }
 
 export default function CopilotPage() {
@@ -116,16 +152,19 @@ export default function CopilotPage() {
   const { user } = useAuth();
   const fullName = user?.full_name || (typeof user?.profile?.full_name === 'string' ? user.profile.full_name : '') || user?.email?.split('@')[0] || '';
   const firstName = fullName.split(/\s+/)[0] || '';
-  const [init] = useState(load);
-  const [thread, setThread] = useState(init.thread);
-  const [turns, setTurns] = useState<Turn[]>(init.turns);
+  const [store, setStore] = useState(loadStore);
+  const conv = store.convs.find(c => c.id === store.active) ?? store.convs[0];
+  const thread = conv.id;
+  const turns = conv.turns;
   const [input, setInput] = useState('');
   const [lang, setLang] = useState<Lang>(appLang === 'ar' ? 'ar' : appLang === 'en' ? 'en' : 'fr');
   const [auto, setAuto] = useState(() => { try { return localStorage.getItem(AUTO) === '1'; } catch { return false; } });
   const [capOpen, setCapOpen] = useState(false);
+  const [convsOpen, setConvsOpen] = useState(false);
+  const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
+  const aborts = useRef(new Map<string, AbortController>()); // one running answer per conversation: they continue in the background
   const [params, setParams] = useSearchParams();
   const incoming = params.get('q') ?? '';
   const handled = useRef('');
@@ -135,12 +174,12 @@ export default function CopilotPage() {
   const awaiting = last?.role === 'assistant' && last.status === 'awaiting';
   const agentsQ = useQuery({ queryKey: ['copilot-agents', lang], queryFn: () => getAgents(lang), staleTime: 600_000, retry: false });
 
-  useEffect(() => { try { localStorage.setItem(STORE, JSON.stringify({ thread, turns } satisfies Stored)); } catch { /* storage full */ } }, [thread, turns]);
+  useEffect(() => { saveStore(store); }, [store]);
   useEffect(() => {
     const el = scrollRef.current;
     if (el) requestAnimationFrame(() => el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }));
-  }, [turns]);
-  useEffect(() => () => abortRef.current?.abort(), []);
+  }, [turns, thread]);
+  useEffect(() => { const map = aborts.current; return () => map.forEach(ac => ac.abort()); }, []);
 
   const setInputAuto = (v: string, focus?: boolean) => {
     setInput(v);
@@ -156,54 +195,94 @@ export default function CopilotPage() {
     ? { role: 'user' as const, content: x.text }
     : { role: 'assistant' as const, content: x.blocks.filter(b => b.k === 'text').map(b => (b as Extract<Block, { k: 'text' }>).text).join('\n') })).filter(m => m.content), [turns]);
 
-  const start = useCallback(async (turnId: string, body: Parameters<typeof runAgent>[0]) => {
-    abortRef.current?.abort();
+  /** Change one conversation without touching the others (answers keep streaming into theirs while another one is open). */
+  const patch = useCallback((id: string, fn: (c: Conv) => Conv) => setStore(st => ({ ...st, convs: st.convs.map(c => (c.id === id ? fn(c) : c)) })), []);
+  const patchTurns = useCallback((id: string, fn: (ts: Turn[]) => Turn[]) => patch(id, c => ({ ...c, updated: Date.now(), turns: fn(c.turns) })), [patch]);
+
+  const start = useCallback(async (convId: string, turnId: string, body: Parameters<typeof runAgent>[0]) => {
+    aborts.current.get(convId)?.abort();
     const ac = new AbortController();
-    abortRef.current = ac;
-    const fail = (code: string, message: string) => setTurns(ts => ts.map(x => (x.id === turnId ? apply(x, { t: 'error', code, message }) : x)));
+    aborts.current.set(convId, ac);
+    const upd = (fn: (x: Turn) => Turn) => patchTurns(convId, ts => ts.map(x => (x.id === turnId ? fn(x) : x)));
     try {
-      await runAgent(body, ev => setTurns(ts => ts.map(x => (x.id === turnId ? apply(x, ev) : x))), ac.signal);
-      setTurns(ts => ts.map(x => (x.id === turnId && x.role === 'assistant' && x.status === 'running' ? { ...x, status: 'done' } : x)));
+      await runAgent(body, ev => upd(x => apply(x, ev)), ac.signal);
+      upd(x => (x.role === 'assistant' && x.status === 'running' ? { ...x, status: 'done' } : x));
     } catch (e) {
-      if (ac.signal.aborted) { setTurns(ts => ts.map(x => (x.id === turnId && x.role === 'assistant' ? { ...x, status: 'done' } : x))); return; }
+      if (ac.signal.aborted) { upd(x => (x.role === 'assistant' ? { ...x, status: 'done' } : x)); return; }
       // the real reason matters: an HTTP error (old backend, missing libraries, gateway) is not a lost connection
       const status = (e as { status?: number }).status;
       const code = status === 403 ? 'forbidden_role' : status === 401 ? 'session' : status === 404 || status === 405 ? 'outdated' : status && status >= 500 ? 'server' : 'network';
-      fail(code, e instanceof Error ? (status ? `${status} · ${e.message}` : e.message) : '');
+      upd(x => apply(x, { t: 'error', code, message: e instanceof Error ? (status ? `${status} · ${e.message}` : e.message) : '' }));
+    } finally {
+      if (aborts.current.get(convId) === ac) aborts.current.delete(convId);
     }
-  }, []);
+  }, [patchTurns]);
+
+  const send = (convId: string, content: string, hist: { role: 'user' | 'assistant'; content: string }[]) => {
+    const tid = uid();
+    patch(convId, c => ({
+      ...c, updated: Date.now(), title: c.custom || c.turns.length ? c.title : titleFrom(content),
+      turns: [...c.turns, { id: uid(), role: 'user', text: content }, { id: tid, role: 'assistant', blocks: [], links: [], status: 'running' }],
+    }));
+    void start(convId, tid, { thread_id: convId, message: content, lang, auto_approve: auto, history: hist.slice(-12) });
+  };
 
   const ask = (text: string) => {
     const content = text.trim();
     if (!content || running || awaiting) return;
-    const tid = uid();
-    setTurns(ts => [...ts, { id: uid(), role: 'user', text: content }, { id: tid, role: 'assistant', blocks: [], links: [], status: 'running' }]);
     setInputAuto('');
-    void start(tid, { thread_id: thread, message: content, lang, auto_approve: auto, history: history.slice(-12) });
+    send(thread, content, history);
   };
 
   const answer = (approve: boolean) => {
     if (!last || last.role !== 'assistant') return;
     const tid = last.id;
-    setTurns(ts => ts.map(x => (x.id === tid && x.role === 'assistant'
+    patchTurns(thread, ts => ts.map(x => (x.id === tid && x.role === 'assistant'
       ? { ...x, status: 'running', blocks: x.blocks.map(b => (b.k === 'confirm' && b.state === 'pending' ? { ...b, state: approve ? 'approved' : 'declined' } : b)) } : x)));
-    void start(tid, { thread_id: thread, resume: { approve }, lang, auto_approve: auto });
+    void start(thread, tid, { thread_id: thread, resume: { approve }, lang, auto_approve: auto });
   };
 
-  const stop = () => abortRef.current?.abort();
-  const reset = () => { abortRef.current?.abort(); setThread(uid()); setTurns([]); setInputAuto(''); };
+  const stop = () => aborts.current.get(thread)?.abort();
+
+  /** A new, empty conversation (the open one is reused when it is still empty). Returns its id. */
+  const openFresh = (): string => {
+    if (!turns.length) return thread;
+    const c = newConv();
+    setStore(st => ({ active: c.id, convs: [c, ...st.convs] }));
+    return c.id;
+  };
+  const newChat = () => { openFresh(); setInputAuto(''); setConvsOpen(false); };
+  const switchTo = (id: string) => { if (id !== thread) { setStore(st => ({ ...st, active: id })); setInputAuto(''); } setConvsOpen(false); };
+  const removeConv = (id: string) => {
+    const c = store.convs.find(x => x.id === id);
+    if (!c) return;
+    if (c.turns.length && !window.confirm(t('cop_conv_delete_confirm'))) return;
+    aborts.current.get(id)?.abort();
+    void forgetConversation(id); // the server forgets its memory too
+    setStore(st => {
+      const rest = st.convs.filter(x => x.id !== id);
+      if (!rest.length) { const n = newConv(); return { active: n.id, convs: [n] }; }
+      return { active: st.active === id ? [...rest].sort((a, b) => b.updated - a.updated)[0].id : st.active, convs: rest };
+    });
+  };
+  const commitRename = () => {
+    if (!renaming) return;
+    const title = renaming.value.trim();
+    if (title) patch(renaming.id, c => ({ ...c, title: titleFrom(title), custom: true }));
+    setRenaming(null);
+  };
 
   const slash = input.startsWith('/') && !input.includes(' ');
   const cmdList = slash ? CMDS(t).filter(c => c.cmd.startsWith(input.toLowerCase()) || input === '/') : [];
   const empty = turns.length === 0;
   const busy = running || awaiting;
 
-  // a question sent from elsewhere in the app (?q=…): ask it now, or leave it in the box if Wedy is mid-task
+  // a question sent from elsewhere in the app (?q=…)
   useEffect(() => {
     if (!incoming || handled.current === incoming) return;
     handled.current = incoming;
     setParams({}, { replace: true });
-    setTimeout(() => { if (busy) setInputAuto(incoming, true); else ask(incoming); }, 0);
+    setTimeout(() => { const id = openFresh(); setInputAuto(''); send(id, incoming, []); }, 0); // a question from another page is a new topic: its own conversation
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incoming]);
 
@@ -328,6 +407,63 @@ export default function CopilotPage() {
     );
   };
 
+  // ── the list of conversations (side column on large screens, a drawer on small ones) ──
+  const renderConvs = () => {
+    const day = 86_400_000;
+    const startOfToday = new Date().setHours(0, 0, 0, 0);
+    const shown = [...store.convs].filter(c => c.turns.length || c.id === store.active).sort((a, b) => b.updated - a.updated);
+    const groups: [string, Conv[]][] = [
+      [t('cop_conv_today'), shown.filter(c => c.updated >= startOfToday)],
+      [t('cop_conv_week'), shown.filter(c => c.updated < startOfToday && c.updated >= startOfToday - 6 * day)],
+      [t('cop_conv_older'), shown.filter(c => c.updated < startOfToday - 6 * day)],
+    ];
+    const when = (c: Conv) => (c.updated >= startOfToday
+      ? new Date(c.updated).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })
+      : new Date(c.updated).toLocaleDateString(lang, { day: 'numeric', month: 'short' }));
+    return (
+      <div className="cop-convs-in">
+        <button type="button" onClick={newChat} className="cop-btn cop-btn-go cop-new"><Plus size={15} />{t('copilot_new_chat')}</button>
+        <p className="cop-convs-note"><ShieldCheck size={13} />{t('cop_conv_isolated')}</p>
+        {groups.filter(([, list]) => list.length).map(([label, list]) => (
+          <div key={label}>
+            <div className="cop-convs-h">{label}</div>
+            <ul className="cop-convs-ul">
+              {list.map(c => {
+                const lastT = c.turns[c.turns.length - 1];
+                const st = lastT && lastT.role === 'assistant' ? lastT.status : 'done';
+                return (
+                  <li key={c.id} className={`cop-conv${c.id === store.active ? ' on' : ''}`}>
+                    {renaming?.id === c.id ? (
+                      <input
+                        className="cop-conv-edit" autoFocus value={renaming.value} maxLength={80} aria-label={t('cop_conv_rename')}
+                        onChange={e => setRenaming({ id: c.id, value: e.target.value })} onBlur={commitRename}
+                        onKeyDown={e => { if (e.key === 'Enter') commitRename(); else if (e.key === 'Escape') setRenaming(null); }}
+                      />
+                    ) : (
+                      <button type="button" className="cop-conv-main" onClick={() => switchTo(c.id)} aria-current={c.id === store.active ? 'true' : undefined}>
+                        <span className="cop-conv-t">{c.title || t('copilot_new_chat')}</span>
+                        <span className="cop-conv-s">
+                          {st === 'running' ? <Loader2 size={11} className="cop-spin" /> : st === 'awaiting' ? <span className="cop-conv-dot" title={t('cop_conv_waiting')} /> : null}
+                          {st === 'awaiting' ? t('cop_conv_waiting') : when(c)}
+                        </span>
+                      </button>
+                    )}
+                    {renaming?.id !== c.id && (
+                      <span className="cop-conv-act">
+                        <button type="button" onClick={() => setRenaming({ id: c.id, value: c.title })} aria-label={t('cop_conv_rename')} title={t('cop_conv_rename')}><Pencil size={13} /></button>
+                        <button type="button" onClick={() => removeConv(c.id)} aria-label={t('cop_conv_delete')} title={t('cop_conv_delete')}><Trash2 size={13} /></button>
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const agents = agentsQ.data ?? [];
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', backgroundColor: '#f3f6f7', backgroundImage: 'radial-gradient(#dde5e8 1px,transparent 1px)', backgroundSize: '22px 22px' }}>
@@ -342,11 +478,12 @@ export default function CopilotPage() {
           <div style={{ fontSize: 12.5, color: '#52646d', whiteSpace: 'nowrap' }}>{agents.length ? tf(t('cop_subtitle'), { n: agents.length - 1 }) : t('cop_subtitle_plain')}</div>
         </div>
         <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <button type="button" onClick={() => setConvsOpen(true)} className="cop-btn cop-convs-open" aria-label={t('cop_convs')} title={t('cop_convs')}><MessagesSquare size={14} /><span className="cop-lbl">{t('cop_convs')}</span></button>
           <button type="button" onClick={toggleAuto} className={`cop-auto${auto ? ' on' : ''}`} title={t('cop_auto_help')} aria-pressed={auto}>
             <span className="cop-switch"><span /></span>{t('cop_auto')}
           </button>
           <button type="button" onClick={() => setCapOpen(true)} className="cop-btn" aria-label={t('cop_capabilities')} title={t('cop_capabilities')}><Info size={14} /><span className="cop-lbl">{t('cop_capabilities')}</span></button>
-          {!empty && <button type="button" onClick={reset} className="cop-btn" aria-label={t('copilot_new_chat')} title={t('copilot_new_chat')}><Plus size={14} /><span className="cop-lbl">{t('copilot_new_chat')}</span></button>}
+          {!empty && <button type="button" onClick={newChat} className="cop-btn" aria-label={t('copilot_new_chat')} title={t('copilot_new_chat')}><Plus size={14} /><span className="cop-lbl">{t('copilot_new_chat')}</span></button>}
           <div style={{ display: 'flex', padding: 3, borderRadius: 11, background: '#f3f6f7', border: '1px solid #e2e8eb' }}>
             {(['fr', 'ar', 'en'] as Lang[]).map(l => (
               <button key={l} type="button" onClick={() => setLang(l)} aria-label={t('copilot_lang_label')} style={{ position: 'relative', border: 'none', background: 'transparent', padding: '5px 11px', borderRadius: 8, fontFamily: l === 'ar' ? "'Noto Kufi Arabic',sans-serif" : 'inherit', fontSize: 12.5, fontWeight: 600, color: '#52646d', cursor: 'pointer' }}>
@@ -358,6 +495,9 @@ export default function CopilotPage() {
         </div>
       </div>
 
+      <div className="cop-main">
+        <aside className="cop-convs" aria-label={t('cop_convs')}>{renderConvs()}</aside>
+        <div className="cop-chat">
       {/* ── Conversation ── */}
       <div ref={scrollRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
         <div style={{ maxWidth: 860, margin: '0 auto', padding: '28px 24px 32px', display: 'flex', flexDirection: 'column', gap: 18, minHeight: '100%' }}>
@@ -437,7 +577,13 @@ export default function CopilotPage() {
         </div>
       </div>
 
+        </div>
+      </div>
+
       {/* ── What Copilot can do ── */}
+      <Drawer open={convsOpen} onClose={() => setConvsOpen(false)} width={380} icon={<MessagesSquare size={18} />} title={t('cop_convs')}>
+        {renderConvs()}
+      </Drawer>
       <Drawer open={capOpen} onClose={() => setCapOpen(false)} width={560} icon={<Bot size={18} />} title={t('cop_capabilities')} subtitle={t('cop_cap_sub')}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: '#52646d' }}>{t('cop_cap_intro')}</p>

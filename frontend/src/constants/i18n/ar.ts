@@ -3616,4 +3616,14 @@ export const ar = {
     cop_err_session: 'انتهت جلستك. سجّل الدخول من جديد ثم أعد المحاولة.',
     cop_err_outdated: 'الخادم لا يملك بعد آخر نسخة من المساعد. أعد نشر الواجهة الخلفية ثم حاول مجدداً.',
     cop_err_server: 'واجه خادم المساعد مشكلة.',
+    // Copilot conversations
+    cop_convs: 'المحادثات',
+    cop_conv_isolated: 'لكل محادثة ذاكرتها الخاصة: لا تختلط أبداً.',
+    cop_conv_today: 'اليوم',
+    cop_conv_week: 'هذا الأسبوع',
+    cop_conv_older: 'أقدم',
+    cop_conv_rename: 'إعادة تسمية',
+    cop_conv_delete: 'حذف',
+    cop_conv_delete_confirm: 'حذف هذه المحادثة؟ ستُمحى ذاكرتها.',
+    cop_conv_waiting: 'بانتظار الموافقة',
 } as const;

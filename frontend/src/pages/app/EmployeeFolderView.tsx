@@ -219,7 +219,7 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                     </Fragment>
                   ))}
                 </div>
-                <button type="button" onClick={v.upload} style={{ marginTop: '14px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '28px 16px', borderRadius: '16px', border: '1.5px dashed #b9dfe5', background: 'linear-gradient(180deg,#f3fafb,#ffffff)', fontFamily: 'inherit', cursor: 'pointer', transition: 'border-color .2s,background .2s' }} className="emf-h4">
+                <button type="button" onClick={v.upload} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) v.drop(f); }} style={{ marginTop: '14px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '28px 16px', borderRadius: '16px', border: '1.5px dashed #b9dfe5', background: 'linear-gradient(180deg,#f3fafb,#ffffff)', fontFamily: 'inherit', cursor: 'pointer', transition: 'border-color .2s,background .2s' }} className="emf-h4">
                   <span style={{ width: '48px', height: '48px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e4f2f4', color: '#0e6f84' }} className="wedy-float">
                     <span style={{ display: 'inline-flex', width: '22px', height: '22px' }}><CloudUpload size={22} style={{ display: 'block' }} /></span>
                   </span>
@@ -246,6 +246,9 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                       </div>
                       <button type="button" onClick={fl.download} aria-label={t('emf_telecharger')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
                         <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><Download size={15} style={{ display: 'block' }} /></span>
+                      </button>
+                      <button type="button" onClick={fl.rename} aria-label={t('emf_fn_rename')} title={t('emf_fn_rename')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
+                        <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><Pencil size={15} style={{ display: 'block' }} /></span>
                       </button>
                       <button type="button" onClick={fl.remove} aria-label={t('emf_supprimer')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
                         <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><Trash2 size={15} style={{ display: 'block' }} /></span>

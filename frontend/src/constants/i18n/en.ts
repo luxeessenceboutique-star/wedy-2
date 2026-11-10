@@ -3602,4 +3602,11 @@ export const en = {
     stg_file_added: 'Added',
     stg_view: 'View',
     stg_replace: 'Replace',
+    // Employee folder — file naming
+    emf_fn_title: 'Name the file',
+    emf_fn_rename_title: 'Rename the file',
+    emf_fn_rename: 'Rename',
+    emf_fn_label: 'File name',
+    emf_fn_hint: 'The .{ext} extension is kept automatically.',
+    emf_fn_add: 'Add to folder',
 } as const;

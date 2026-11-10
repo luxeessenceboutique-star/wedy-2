@@ -52,12 +52,17 @@ export type EmployeeFile = {
 export const listEmployeeFiles = (employee_id: string) =>
   api.get<EmployeeFile[]>(`/employees/${employee_id}/files`).then(r => r.data);
 
-export const uploadEmployeeFile = (employee_id: string, file: File, file_type: string) => {
+/** `name` is the name the file is shown under (the extension is kept by the server); empty = the file's own name. */
+export const uploadEmployeeFile = (employee_id: string, file: File, file_type: string, name = '') => {
   const form = new FormData();
   form.append('file', file);
   form.append('file_type', file_type);
+  if (name.trim()) form.append('name', name.trim());
   return api.post<EmployeeFile>(`/employees/${employee_id}/files`, form, { timeout: 0 }).then(r => r.data);
 };
+
+export const renameEmployeeFile = (employee_id: string, file_id: string, name: string) =>
+  api.patch<EmployeeFile>(`/employees/${employee_id}/files/${file_id}`, { name }).then(r => r.data);
 
 export const deleteEmployeeFile = (employee_id: string, file_id: string) =>
   api.delete(`/employees/${employee_id}/files/${file_id}`);

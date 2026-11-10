@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calendar, FileText, Folder, User, Wallet, TrendingUp, type LucideIcon } from 'lucide-react';
 import {
   getEmployee, updateEmployee, listEmployeeDocuments, listEmployeeFiles,
-  uploadEmployeeFile, deleteEmployeeFile, downloadEmployeeFile,
+  uploadEmployeeFile, renameEmployeeFile, deleteEmployeeFile, downloadEmployeeFile,
   listLeaveRequests, listPayslips, listGoals, listReviews, getLeaveBalance,
   printDocument, listDepartments,
   analyzeEmployeeFolder, applyAnalysis,
@@ -147,9 +147,9 @@ export type EmployeeFolderVals = {
   hasMissing: boolean; missingLabel: string; goFiles: () => void;
   hasSkillsOrLangs: boolean; skills: string[]; languages: string[];
   fileTypes: { label: string; on: boolean; color: string; pick: () => void }[];
-  files: { name: string; type: string; size: string; bg: string; color: string; download: () => void; remove: () => void }[];
+  files: { name: string; type: string; size: string; bg: string; color: string; download: () => void; rename: () => void; remove: () => void }[];
   fileCount: number;
-  upload: () => void;
+  upload: () => void; drop: (f: File) => void;
   aiIdle: boolean; aiBusy: boolean; aiDone: boolean; aiApplied: boolean;
   analyze: () => void;
   extracted: { key: string; label: string; value: string; empty: boolean; conflict: boolean; current?: string; on: boolean; delay: string; toggle: () => void }[];
@@ -165,6 +165,9 @@ export type EmployeeFolderVals = {
   showToast: boolean; toastText: string;
 };
 
+/** "CV Hiba.pdf" → { name: "CV Hiba", ext: "pdf" }: the name is what the user edits, the extension is kept. */
+const splitName = (n: string) => { const i = n.lastIndexOf('.'); return i > 0 && i < n.length - 1 ? { name: n.slice(0, i), ext: n.slice(i + 1) } : { name: n, ext: '' }; };
+
 export default function EmployeeFolderPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -177,6 +180,8 @@ export default function EmployeeFolderPage() {
   const [pick, setPick] = useState<Record<string, boolean>>({});
   const [analysisResult, setAnalysisResult] = useState<Extracted | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // naming step: a file is named before it is added, and an existing file can be renamed
+  const [naming, setNaming] = useState<{ mode: 'upload'; file: File; name: string; ext: string } | { mode: 'rename'; id: string; name: string; ext: string; original: string } | null>(null);
 
   const { data: employee, isLoading, isError } = useQuery({
     queryKey: ['employee', id],
@@ -243,8 +248,14 @@ export default function EmployeeFolderPage() {
   });
 
   const uploadMut = useMutation({
-    mutationFn: (file: File) => uploadEmployeeFile(id!, file, ftype),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['employee-files', id] }); toast.success(t('save')); },
+    mutationFn: ({ file, name }: { file: File; name: string }) => uploadEmployeeFile(id!, file, ftype, name),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['employee-files', id] }); toast.success(t('save')); setNaming(null); },
+    onError: (e: unknown) => toast.error(getApiError(e, 'Error')),
+  });
+
+  const renameMut = useMutation({
+    mutationFn: ({ fileId, name }: { fileId: string; name: string }) => renameEmployeeFile(id!, fileId, name),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['employee-files', id] }); toast.success(t('save')); setNaming(null); },
     onError: (e: unknown) => toast.error(getApiError(e, 'Error')),
   });
 
@@ -391,11 +402,13 @@ export default function EmployeeFolderPage() {
       return {
         name: f.name, type: style.label, size: sizeKb, bg: style.bg, color: style.color,
         download: () => downloadEmployeeFile(f.file_path, f.name).catch((e: unknown) => toast.error(getApiError(e, 'Error'))),
+        rename: () => setNaming({ mode: 'rename', id: f.id, original: f.name, ...splitName(f.name) }),
         remove: () => { if (confirm(`${t('delete')} "${f.name}" ?`)) deleteMut.mutate(f.id); },
       };
     }),
     fileCount: files.length,
     upload: () => fileInputRef.current?.click(),
+    drop: (f: File) => setNaming({ mode: 'upload', file: f, ...splitName(f.name) }),
     aiIdle: ai === 'idle', aiBusy: ai === 'busy', aiDone: ai === 'done', aiApplied: ai === 'applied',
     analyze: () => { setPick({}); setAi('busy'); analyzeMut.mutate(); },
     extracted, selCount, noneSel: selCount === 0,
@@ -444,8 +457,31 @@ export default function EmployeeFolderPage() {
       <EmployeeFolderView v={v} />
       <input
         ref={fileInputRef} type="file" style={{ display: 'none' }}
-        onChange={e => { const f = e.target.files?.[0]; if (f) uploadMut.mutate(f); e.target.value = ''; }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) setNaming({ mode: 'upload', file: f, ...splitName(f.name) }); e.target.value = ''; }}
       />
+      <Modal
+        open={!!naming} onClose={() => setNaming(null)} width={460}
+        title={naming?.mode === 'rename' ? t('emf_fn_rename_title') : t('emf_fn_title')}
+        subtitle={naming ? (naming.mode === 'rename' ? naming.original : naming.file.name) : undefined}
+        footer={naming && (
+          <>
+            <Button variant="secondary" onClick={() => setNaming(null)}>{t('cancel')}</Button>
+            <Button disabled={!naming.name.trim() || uploadMut.isPending || renameMut.isPending} loading={uploadMut.isPending || renameMut.isPending}
+              onClick={() => (naming.mode === 'upload' ? uploadMut.mutate({ file: naming.file, name: naming.name }) : renameMut.mutate({ fileId: naming.id, name: naming.name }))}>
+              {naming.mode === 'upload' ? t('emf_fn_add') : t('save')}
+            </Button>
+          </>
+        )}
+      >
+        {naming && (
+          <Input
+            autoFocus label={t('emf_fn_label')} value={naming.name} maxLength={140}
+            onChange={e => setNaming({ ...naming, name: e.target.value })}
+            onKeyDown={e => { if (e.key === 'Enter' && naming.name.trim()) { e.preventDefault(); if (naming.mode === 'upload') uploadMut.mutate({ file: naming.file, name: naming.name }); else renameMut.mutate({ fileId: naming.id, name: naming.name }); } }}
+            hint={naming.ext ? tf(t('emf_fn_hint'), { ext: naming.ext }) : undefined}
+          />
+        )}
+      </Modal>
       <Modal open={editing} onClose={() => setEditing(false)} title={t('edit_profile')} width={740}>
         <EditForm
           employee={employee}

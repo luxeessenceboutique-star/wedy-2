@@ -3656,4 +3656,11 @@ export const fr = {
     stg_file_added: 'Ajouté',
     stg_view: 'Voir',
     stg_replace: 'Remplacer',
+    // Employee folder — file naming
+    emf_fn_title: 'Nommer le fichier',
+    emf_fn_rename_title: 'Renommer le fichier',
+    emf_fn_rename: 'Renommer',
+    emf_fn_label: 'Nom du fichier',
+    emf_fn_hint: 'L\'extension .{ext} est conservée automatiquement.',
+    emf_fn_add: 'Ajouter au dossier',
 } as const;

@@ -3602,4 +3602,11 @@ export const ar = {
     stg_file_added: 'تمت الإضافة',
     stg_view: 'عرض',
     stg_replace: 'استبدال',
+    // Employee folder — file naming
+    emf_fn_title: 'تسمية الملف',
+    emf_fn_rename_title: 'إعادة تسمية الملف',
+    emf_fn_rename: 'إعادة تسمية',
+    emf_fn_label: 'اسم الملف',
+    emf_fn_hint: 'يتم الاحتفاظ بالامتداد .{ext} تلقائياً.',
+    emf_fn_add: 'إضافة إلى الملف',
 } as const;

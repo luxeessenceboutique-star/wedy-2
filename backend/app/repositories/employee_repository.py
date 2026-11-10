@@ -31,6 +31,10 @@ def create_employee_file(supabase: Client, record: dict):
     return supabase.table("employee_files").insert(record).execute()
 
 
+def rename_employee_file(supabase: Client, file_id: str, name: str):
+    return supabase.table("employee_files").update({"name": name}).eq("id", file_id).execute()
+
+
 def list_employee_files_full(supabase: Client, employee_id: str):
     return supabase.table("employee_files").select("*").eq("employee_id", employee_id).execute()
 
@@ -44,7 +48,7 @@ def apply_employee_analysis(supabase: Client, employee_id: str, data: dict):
 
 
 def get_employee_file(supabase: Client, employee_id: str, file_id: str):
-    return supabase.table("employee_files").select("file_path").eq("id", file_id).eq("employee_id", employee_id).execute()
+    return supabase.table("employee_files").select("*").eq("id", file_id).eq("employee_id", employee_id).execute()
 
 
 def delete_employee_file(supabase: Client, file_id: str):

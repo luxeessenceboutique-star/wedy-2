@@ -7,6 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from supabase import Client
 
 from app.services import webhooks as webhook_service
@@ -191,11 +192,25 @@ def list_employee_files(
     return res.data
 
 
+def _file_display_name(requested: str, original: str, ext: str) -> str:
+    """The name shown for a file: what the user typed, or the uploaded file's own name.
+
+    The real extension is always kept (the folder analysis and the download rely on it) and path characters are dropped."""
+    name = (requested or "").strip().replace("\\", " ").replace("/", " ")
+    name = " ".join(name.split())[:150]
+    if not name:
+        return original
+    if ext and not name.lower().endswith("." + ext.lower()):
+        name = name.rstrip(". ") + "." + ext
+    return name
+
+
 @router.post("/{employee_id}/files", status_code=201)
 async def upload_employee_file(
     employee_id: UUID,
     file: UploadFile = File(...),
     file_type: str = Form("autre"),
+    name: str = Form(""),
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
@@ -218,7 +233,7 @@ async def upload_employee_file(
 
     record = {
         "employee_id": str(employee_id),
-        "name":        original_name,
+        "name":        _file_display_name(name, original_name, ext),
         "file_type":   file_type,
         "file_path":   file_path_rel.replace("\\", "/"),
         "file_size":   len(content),
@@ -359,6 +374,32 @@ def delete_employee_file(
         os.remove(file_path)
 
     employee_repository.delete_employee_file(supabase, str(file_id))
+
+
+class FileRename(BaseModel):
+    name: str
+
+
+@router.patch("/{employee_id}/files/{file_id}")
+def rename_employee_file(
+    employee_id: UUID,
+    file_id: UUID,
+    body: FileRename,
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """Change the name a file is shown (and downloaded) under; the stored file and its extension do not change."""
+    res = employee_repository.get_employee_file(supabase, str(employee_id), str(file_id))
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Fichier introuvable")
+    if not body.name.strip():
+        raise HTTPException(status_code=422, detail="Le nom du fichier ne peut pas être vide")
+    row = res.data[0]
+    ext = row["file_path"].rsplit(".", 1)[-1] if "." in os.path.basename(row["file_path"]) else ""
+    new_name = _file_display_name(body.name, row["name"], ext)
+    updated = employee_repository.rename_employee_file(supabase, str(file_id), new_name)
+    log_action(supabase, current_user["id"], "RENAME_FILE", "employee_file", str(file_id))
+    return updated.data[0] if updated.data else {**row, "name": new_name}
 
 
 # ── Single employee + CRUD ────────────────────────────────────────────────────

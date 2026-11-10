@@ -45,6 +45,8 @@ export type EmployeeFile = {
   file_path: string;
   file_size?: number;
   mime_type?: string;
+  /** false when the record exists but the file is no longer on the server (the list endpoint checks the disk) */
+  available?: boolean;
   uploaded_by?: string;
   created_at: string;
 };
@@ -66,6 +68,9 @@ export const renameEmployeeFile = (employee_id: string, file_id: string, name: s
 
 export const deleteEmployeeFile = (employee_id: string, file_id: string) =>
   api.delete(`/employees/${employee_id}/files/${file_id}`);
+
+/** The server answered 404: the file is not on its disk any more (blob responses hide the server's message). */
+export const isFileMissing = (e: unknown) => (e as { response?: { status?: number } })?.response?.status === 404;
 
 export const getEmployeeFileUrl = (file_path: string) => `${BASE}/uploads/${file_path}`;
 

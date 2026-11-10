@@ -31,6 +31,18 @@ def save_local(file_bytes: bytes, filename: str, subfolder: str = "") -> str:
     return str(file_path)
 
 
+def resolve_upload(rel_path: str) -> Optional[str]:
+    """Absolute path of a file stored under UPLOAD_DIR, or None when the path would leave that folder (`..`, absolute paths)."""
+    base = os.path.realpath(settings.UPLOAD_DIR)
+    full = os.path.realpath(os.path.join(base, rel_path or ""))
+    return full if full == base or full.startswith(base + os.sep) else None
+
+
+def upload_exists(rel_path: str) -> bool:
+    full = resolve_upload(rel_path)
+    return bool(full and os.path.isfile(full))
+
+
 def read_local(file_path: str) -> bytes:
     return Path(file_path).read_bytes()
 

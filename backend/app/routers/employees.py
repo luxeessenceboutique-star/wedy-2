@@ -15,6 +15,7 @@ from app.database import get_db
 from app.dependencies import get_current_user, require_role, require_hr_or_admin
 from app.schemas import EmployeeCreate, EmployeeUpdate, EmployeeOut
 from app.services.audit import log_action
+from app.services.storage import upload_exists
 from app.services import import_service
 from app.config import settings
 from app.repositories import employee_repository
@@ -189,7 +190,8 @@ def list_employee_files(
     current_user: dict = Depends(get_current_user),
 ):
     res = employee_repository.list_employee_files(supabase, str(employee_id))
-    return res.data
+    # `available` is false when the record exists but the file is no longer on the server's disk (e.g. a redeploy without a persistent volume)
+    return [{**r, "available": upload_exists(r.get("file_path") or "")} for r in (res.data or [])]
 
 
 def _file_display_name(requested: str, original: str, ext: str) -> str:

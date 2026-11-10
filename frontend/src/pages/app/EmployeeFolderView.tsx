@@ -242,9 +242,9 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                       </span>
                       <div style={{ flex: '1', minWidth: '0' }}>
                         <div style={{ fontSize: '13.5px', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fl.name}</div>
-                        <div style={{ fontSize: '12px', color: '#5f7079' }}>{`${fl.type} · ${fl.size}`}</div>
+                        <div style={{ fontSize: '12px', color: fl.missing ? '#c64a35' : '#5f7079' }}>{fl.missing ? `${fl.type} · ${t('emf_file_missing_pill')}` : `${fl.type} · ${fl.size}`}</div>
                       </div>
-                      <button type="button" onClick={fl.download} aria-label={t('emf_telecharger')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
+                      <button type="button" onClick={fl.download} disabled={fl.missing} title={fl.missing ? t('emf_file_missing') : undefined} aria-label={t('emf_telecharger')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', opacity: fl.missing ? 0.35 : 1, cursor: fl.missing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
                         <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><Download size={15} style={{ display: 'block' }} /></span>
                       </button>
                       <button type="button" onClick={fl.rename} aria-label={t('emf_fn_rename')} title={t('emf_fn_rename')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">

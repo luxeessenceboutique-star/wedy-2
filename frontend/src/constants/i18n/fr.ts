@@ -3663,4 +3663,7 @@ export const fr = {
     emf_fn_label: 'Nom du fichier',
     emf_fn_hint: 'L\'extension .{ext} est conservée automatiquement.',
     emf_fn_add: 'Ajouter au dossier',
+    // Missing files
+    emf_file_missing: 'Ce fichier n\'est plus sur le serveur : ajoutez-le à nouveau.',
+    emf_file_missing_pill: 'Fichier introuvable',
 } as const;

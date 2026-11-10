@@ -3609,4 +3609,7 @@ export const en = {
     emf_fn_label: 'File name',
     emf_fn_hint: 'The .{ext} extension is kept automatically.',
     emf_fn_add: 'Add to folder',
+    // Missing files
+    emf_file_missing: 'This file is no longer on the server: please add it again.',
+    emf_file_missing_pill: 'File missing',
 } as const;

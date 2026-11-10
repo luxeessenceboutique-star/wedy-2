@@ -67,6 +67,32 @@ def test_rename_rejects_empty_names_and_unknown_files():
     assert c.patch(f"/api/employees/{EMP}/files/00000000-0000-4000-8000-0000000000ff", json={"name": "x"}).status_code == 404
 
 
+def test_listing_says_which_files_are_still_on_disk():
+    c, db = client()
+    a = upload(c, "A.pdf", None).json()
+    b = upload(c, "B.pdf", None).json()
+    os.remove(os.path.join(settings.UPLOAD_DIR, b["file_path"]))  # what a redeploy without a persistent volume does
+    rows = {r["id"]: r for r in c.get(f"/api/employees/{EMP}/files").json()}
+    assert rows[a["id"]]["available"] is True and rows[b["id"]]["available"] is False
+
+
+def test_uploads_endpoint_serves_files_and_never_leaves_the_folder():
+    c, _ = client()
+    created = upload(c, "CV.pdf", None).json()
+    ok = c.get(f"/api/uploads/{created['file_path']}")
+    assert ok.status_code == 200 and ok.content.startswith(b"%PDF")
+    gone = c.get("/api/uploads/employees/nothing/here.pdf")
+    assert gone.status_code == 404 and "introuvable" in gone.json()["detail"].lower()
+    secret = os.path.join(os.path.dirname(settings.UPLOAD_DIR), "wedy-secret.txt")
+    with open(secret, "w") as f:
+        f.write("secret")
+    try:
+        for evil in ("../wedy-secret.txt", "..%2Fwedy-secret.txt", "employees/../../wedy-secret.txt"):
+            assert c.get(f"/api/uploads/{evil}").status_code == 404, evil
+    finally:
+        os.remove(secret)
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

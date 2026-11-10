@@ -9,7 +9,7 @@ import {
   listLeaveRequests, listPayslips, listGoals, listReviews, getLeaveBalance,
   printDocument, listDepartments,
   analyzeEmployeeFolder, applyAnalysis,
-  getApiError,
+  getApiError, isFileMissing,
   type Employee, type GeneratedDoc, type EmployeeFile,
   type LeaveRequest, type Payslip, type PerformanceGoal, type PerformanceReview,
   type AnalysisResult,
@@ -147,7 +147,7 @@ export type EmployeeFolderVals = {
   hasMissing: boolean; missingLabel: string; goFiles: () => void;
   hasSkillsOrLangs: boolean; skills: string[]; languages: string[];
   fileTypes: { label: string; on: boolean; color: string; pick: () => void }[];
-  files: { name: string; type: string; size: string; bg: string; color: string; download: () => void; rename: () => void; remove: () => void }[];
+  files: { name: string; type: string; size: string; missing: boolean; bg: string; color: string; download: () => void; rename: () => void; remove: () => void }[];
   fileCount: number;
   upload: () => void; drop: (f: File) => void;
   aiIdle: boolean; aiBusy: boolean; aiDone: boolean; aiApplied: boolean;
@@ -400,8 +400,8 @@ export default function EmployeeFolderPage() {
       const style = FILE_TYPES.find(x => x.value === f.file_type) ?? FILE_TYPES[4];
       const sizeKb = f.file_size ? (f.file_size < 1024 * 1024 ? `${Math.round(f.file_size / 1024)} Ko` : `${(f.file_size / (1024 * 1024)).toFixed(1)} Mo`) : '';
       return {
-        name: f.name, type: style.label, size: sizeKb, bg: style.bg, color: style.color,
-        download: () => downloadEmployeeFile(f.file_path, f.name).catch((e: unknown) => toast.error(getApiError(e, 'Error'))),
+        name: f.name, type: style.label, size: sizeKb, missing: f.available === false, bg: style.bg, color: style.color,
+        download: () => downloadEmployeeFile(f.file_path, f.name).catch((e: unknown) => toast.error(isFileMissing(e) ? t('emf_file_missing') : getApiError(e, 'Error'))),
         rename: () => setNaming({ mode: 'rename', id: f.id, original: f.name, ...splitName(f.name) }),
         remove: () => { if (confirm(`${t('delete')} "${f.name}" ?`)) deleteMut.mutate(f.id); },
       };

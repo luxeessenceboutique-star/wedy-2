@@ -3609,4 +3609,7 @@ export const ar = {
     emf_fn_label: 'اسم الملف',
     emf_fn_hint: 'يتم الاحتفاظ بالامتداد .{ext} تلقائياً.',
     emf_fn_add: 'إضافة إلى الملف',
+    // Missing files
+    emf_file_missing: 'هذا الملف لم يعد موجوداً على الخادم: أضفه من جديد.',
+    emf_file_missing_pill: 'الملف مفقود',
 } as const;

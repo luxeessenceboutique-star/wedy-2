@@ -99,10 +99,11 @@ async def get_protected_upload(
     _current_user: dict = Depends(get_current_user)
 ):
     """Serve files only to authenticated users"""
-    full_path = os.path.join(settings.UPLOAD_DIR, file_path)
-    if not os.path.exists(full_path):
-        from fastapi import HTTPException
-        raise HTTPException(status_code=404, detail="Fichier non trouvé")
+    from fastapi import HTTPException
+    from app.services.storage import resolve_upload
+    full_path = resolve_upload(file_path)  # never outside UPLOAD_DIR (`..` in the URL)
+    if not full_path or not os.path.isfile(full_path):
+        raise HTTPException(status_code=404, detail="Fichier introuvable sur le serveur")
     return FileResponse(full_path)
 
 @app.exception_handler(RequestValidationError)
@@ -166,7 +167,22 @@ async def global_exception_handler(request: Request, exc: Exception):
 def health_check():
     return {"status": "healthy", "service": "backend", "db_mode": "supabase_sdk"}
 
+def _warn_if_uploads_are_gone() -> None:
+    """Files live on disk (UPLOAD_DIR) and only their records live in the database: when the folder is not on a persistent volume,
+    a redeploy wipes the files and every download then answers 404. Say so in the logs."""
+    try:
+        from app.database import get_supabase
+        from app.services.storage import upload_exists
+        rows = get_supabase().table("employee_files").select("file_path").limit(20).execute().data or []
+        if rows and not any(upload_exists(r["file_path"]) for r in rows):
+            logger.warning(f"UPLOADS MISSING: the database lists employee files but none of the sampled ones exist under '{settings.UPLOAD_DIR}'. "
+                           "Mount a persistent volume on that folder (see DEPLOYMENT.md), otherwise uploads vanish at every redeploy.")
+    except Exception as e:  # never block startup for a diagnostic
+        logger.debug(f"uploads check skipped: {e}")
+
+
 @app.on_event("startup")
 async def on_startup():
     logger.info(f"WEDY RH Platform started (SDK Mode)")
     logger.info(f"   URL: {settings.SUPABASE_URL}")
+    _warn_if_uploads_are_gone()

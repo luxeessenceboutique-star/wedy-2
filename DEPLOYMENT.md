@@ -624,6 +624,19 @@ docker compose logs backend | grep -i minio
 - MinIO bucket `rh-platform` does not exist (run Step 6)
 - `MINIO_ENDPOINT` set to `localhost:9000` instead of `rh_minio:9000`
 
+### Uploaded files answer 404 after a redeploy ("Fichier introuvable")
+
+**Symptom:** a file is still listed in an employee / intern folder but downloading it fails with 404 (the UI shows it in red as « Fichier introuvable »).
+
+**Cause:** the files themselves (employee folder, intern scans, job-post visuals, generated documents) are written to the backend's `UPLOAD_DIR` (default `uploads/`, i.e. `/app/uploads` in the container); only their records are in Supabase. If that folder is not on a persistent volume, every redeploy / container re-creation wipes the files while the records stay.
+
+**Fix:** mount a persistent volume on that folder.
+- `docker-compose.yml` already does it: `uploads_data:/app/uploads`.
+- On a platform (Coolify, Dokploy, Portainer…): add a *persistent storage / volume* of the backend service with the container path `/app/uploads`. To use another path, set `UPLOAD_DIR` (e.g. `UPLOAD_DIR=/data/uploads`) and mount the volume there.
+- Back that volume up like the database. Files already lost cannot be recovered from Supabase: they have to be uploaded again (the folder shows which ones).
+
+At startup the backend logs `UPLOADS MISSING` when the database lists employee files but none of a sample exists on disk, which is the sign of this problem.
+
 ---
 
 ### Frontend shows "Network Error" or blank page

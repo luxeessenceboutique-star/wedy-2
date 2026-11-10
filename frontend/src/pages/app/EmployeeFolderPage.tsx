@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Calendar, FileText, Folder, User, Wallet, TrendingUp, type LucideIcon } from 'lucide-react';
 import {
   getEmployee, updateEmployee, listEmployeeDocuments, listEmployeeFiles,
-  uploadEmployeeFile, renameEmployeeFile, deleteEmployeeFile, downloadEmployeeFile,
+  uploadEmployeeFile, renameEmployeeFile, replaceEmployeeFileContent, deleteEmployeeFile, downloadEmployeeFile,
   listLeaveRequests, listPayslips, listGoals, listReviews, getLeaveBalance,
   printDocument, listDepartments,
   analyzeEmployeeFolder, applyAnalysis,
@@ -147,7 +147,7 @@ export type EmployeeFolderVals = {
   hasMissing: boolean; missingLabel: string; goFiles: () => void;
   hasSkillsOrLangs: boolean; skills: string[]; languages: string[];
   fileTypes: { label: string; on: boolean; color: string; pick: () => void }[];
-  files: { name: string; type: string; size: string; missing: boolean; bg: string; color: string; download: () => void; rename: () => void; remove: () => void }[];
+  files: { name: string; type: string; size: string; missing: boolean; bg: string; color: string; download: () => void; reupload: () => void; rename: () => void; remove: () => void }[];
   fileCount: number;
   upload: () => void; drop: (f: File) => void;
   aiIdle: boolean; aiBusy: boolean; aiDone: boolean; aiApplied: boolean;
@@ -180,6 +180,8 @@ export default function EmployeeFolderPage() {
   const [pick, setPick] = useState<Record<string, boolean>>({});
   const [analysisResult, setAnalysisResult] = useState<Extracted | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const reuploadRef = useRef<HTMLInputElement>(null);
+  const [reuploadId, setReuploadId] = useState('');
   // naming step: a file is named before it is added, and an existing file can be renamed
   const [naming, setNaming] = useState<{ mode: 'upload'; file: File; name: string; ext: string } | { mode: 'rename'; id: string; name: string; ext: string; original: string } | null>(null);
 
@@ -250,6 +252,13 @@ export default function EmployeeFolderPage() {
   const uploadMut = useMutation({
     mutationFn: ({ file, name }: { file: File; name: string }) => uploadEmployeeFile(id!, file, ftype, name),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['employee-files', id] }); toast.success(t('save')); setNaming(null); },
+    onError: (e: unknown) => toast.error(getApiError(e, 'Error')),
+  });
+
+  // a file whose bytes were lost keeps its record: one click puts it back with the same name and type
+  const reuploadMut = useMutation({
+    mutationFn: ({ fileId, file }: { fileId: string; file: File }) => replaceEmployeeFileContent(id!, fileId, file),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['employee-files', id] }); toast.success(t('save')); },
     onError: (e: unknown) => toast.error(getApiError(e, 'Error')),
   });
 
@@ -402,6 +411,7 @@ export default function EmployeeFolderPage() {
       return {
         name: f.name, type: style.label, size: sizeKb, missing: f.available === false, bg: style.bg, color: style.color,
         download: () => downloadEmployeeFile(f.file_path, f.name).catch((e: unknown) => toast.error(isFileMissing(e) ? t('emf_file_missing') : getApiError(e, 'Error'))),
+        reupload: () => { setReuploadId(f.id); reuploadRef.current?.click(); },
         rename: () => setNaming({ mode: 'rename', id: f.id, original: f.name, ...splitName(f.name) }),
         remove: () => { if (confirm(`${t('delete')} "${f.name}" ?`)) deleteMut.mutate(f.id); },
       };
@@ -458,6 +468,10 @@ export default function EmployeeFolderPage() {
       <input
         ref={fileInputRef} type="file" style={{ display: 'none' }}
         onChange={e => { const f = e.target.files?.[0]; if (f) setNaming({ mode: 'upload', file: f, ...splitName(f.name) }); e.target.value = ''; }}
+      />
+      <input
+        ref={reuploadRef} type="file" style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f && reuploadId) reuploadMut.mutate({ fileId: reuploadId, file: f }); e.target.value = ''; }}
       />
       <Modal
         open={!!naming} onClose={() => setNaming(null)} width={460}

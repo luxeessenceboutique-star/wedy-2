@@ -3626,4 +3626,6 @@ export const ar = {
     cop_conv_delete: 'حذف',
     cop_conv_delete_confirm: 'حذف هذه المحادثة؟ ستُمحى ذاكرتها.',
     cop_conv_waiting: 'بانتظار الموافقة',
+    // Re-upload a lost file
+    emf_reupload: 'إعادة الرفع',
 } as const;

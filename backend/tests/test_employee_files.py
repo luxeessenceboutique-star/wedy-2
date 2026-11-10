@@ -205,6 +205,42 @@ def test_ensure_local_restores_only_what_exists_somewhere():
         restore()
 
 
+def test_a_lost_file_can_be_put_back_under_its_record():
+    bucket = FakeBucket(); restore = with_bucket(bucket)
+    try:
+        c, db = client()
+        created = upload(c, "CIN.pdf", "CIN Nizar").json()
+        wipe_disk(created["file_path"]); bucket.objects.clear()           # lost everywhere: what happened to the old files
+        assert c.get(f"/api/employees/{EMP}/files").json()[0]["available"] is False
+        r = c.put(f"/api/employees/{EMP}/files/{created['id']}/content", files={"file": ("scan.pdf", b"%PDF-1.1 new", "application/pdf")})
+        assert r.status_code == 200 and r.json()["name"] == "CIN Nizar.pdf"                 # same record, same name
+        row = c.get(f"/api/employees/{EMP}/files").json()[0]
+        assert row["id"] == created["id"] and row["available"] is True and row["file_type"] == "autre"
+        assert c.get(f"/api/uploads/{row['file_path']}").content == b"%PDF-1.1 new"
+        assert row["file_path"] in bucket.objects and len(db.tables["employee_files"]) == 1
+    finally:
+        restore()
+
+
+def test_putting_back_another_kind_of_file_fixes_the_extension_and_drops_the_old_copy():
+    bucket = FakeBucket(); restore = with_bucket(bucket)
+    try:
+        c, _ = client()
+        created = upload(c, "CIN.pdf", "CIN Nizar").json()
+        r = c.put(f"/api/employees/{EMP}/files/{created['id']}/content", files={"file": ("photo.jpg", b"\xff\xd8\xff jpeg", "image/jpeg")})
+        assert r.json()["name"] == "CIN Nizar.jpg" and r.json()["file_path"].endswith(".jpg")
+        assert created["file_path"] not in bucket.objects and not os.path.exists(os.path.join(settings.UPLOAD_DIR, created["file_path"]))
+    finally:
+        restore()
+
+
+def test_putting_back_rejects_empty_files_and_unknown_records():
+    c, _ = client()
+    created = upload(c, "CIN.pdf", None).json()
+    assert c.put(f"/api/employees/{EMP}/files/{created['id']}/content", files={"file": ("x.pdf", b"", "application/pdf")}).status_code == 422
+    assert c.put(f"/api/employees/{EMP}/files/00000000-0000-4000-8000-0000000000ff/content", files={"file": ("x.pdf", b"x", "application/pdf")}).status_code == 404
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

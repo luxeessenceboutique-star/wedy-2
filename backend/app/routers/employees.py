@@ -412,6 +412,48 @@ def rename_employee_file(
     return updated.data[0] if updated.data else {**row, "name": new_name}
 
 
+@router.put("/{employee_id}/files/{file_id}/content")
+async def replace_employee_file_content(
+    employee_id: UUID,
+    file_id: UUID,
+    file: UploadFile = File(...),
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """Put a file back under an existing record (name and type are kept): used when the bytes were lost but the record is still there."""
+    res = employee_repository.get_employee_file(supabase, str(employee_id), str(file_id))
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Fichier introuvable")
+    row = res.data[0]
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=422, detail="Le fichier est vide")
+    ext = re.sub(r"[^A-Za-z0-9]", "", (file.filename or "").rsplit(".", 1)[-1])[:8] if "." in (file.filename or "") else ""
+    new_rel = f"employees/{employee_id}/{uuid.uuid4().hex}" + (f".{ext}" if ext else "")
+    full = os.path.join(settings.UPLOAD_DIR, new_rel)
+    os.makedirs(os.path.dirname(full), exist_ok=True)
+    with open(full, "wb") as f:
+        f.write(content)
+    old_ext = row["file_path"].rsplit(".", 1)[-1].lower() if "." in os.path.basename(row["file_path"]) else ""
+    name = row.get("name") or file.filename or "fichier"
+    if ext and ext.lower() != old_ext:  # another kind of file: the name must carry the new extension (analysis and downloads rely on it)
+        name = (name.rsplit(".", 1)[0] if "." in name else name) + "." + ext
+    fields = {"file_path": new_rel, "file_size": len(content), "mime_type": file.content_type or "", "name": name}
+    try:
+        updated = employee_repository.update_employee_file(supabase, str(file_id), fields)
+    except Exception as e:
+        os.remove(full)
+        raise HTTPException(status_code=400, detail=f"Erreur base de données : {e}")
+    await asyncio.to_thread(file_storage.durable_put, new_rel, content, fields["mime_type"] or "application/octet-stream")
+    old_full = os.path.join(settings.UPLOAD_DIR, row["file_path"])
+    if row["file_path"] != new_rel:
+        if os.path.exists(old_full):
+            os.remove(old_full)
+        file_storage.durable_delete(row["file_path"])
+    log_action(supabase, current_user["id"], "REPLACE_FILE", "employee_file", str(file_id))
+    return updated.data[0] if updated.data else {**row, **fields}
+
+
 # ── Single employee + CRUD ────────────────────────────────────────────────────
 
 @router.get("/{employee_id}")

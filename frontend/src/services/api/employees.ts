@@ -66,6 +66,13 @@ export const uploadEmployeeFile = (employee_id: string, file: File, file_type: s
 export const renameEmployeeFile = (employee_id: string, file_id: string, name: string) =>
   api.patch<EmployeeFile>(`/employees/${employee_id}/files/${file_id}`, { name }).then(r => r.data);
 
+/** Put a file back under an existing record whose bytes were lost (name and type are kept). */
+export const replaceEmployeeFileContent = (employee_id: string, file_id: string, file: File) => {
+  const form = new FormData();
+  form.append('file', file);
+  return api.put<EmployeeFile>(`/employees/${employee_id}/files/${file_id}/content`, form, { timeout: 0 }).then(r => r.data);
+};
+
 export const deleteEmployeeFile = (employee_id: string, file_id: string) =>
   api.delete(`/employees/${employee_id}/files/${file_id}`);
 

@@ -244,6 +244,11 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                         <div style={{ fontSize: '13.5px', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fl.name}</div>
                         <div style={{ fontSize: '12px', color: fl.missing ? '#c64a35' : '#5f7079' }}>{fl.missing ? `${fl.type} · ${t('emf_file_missing_pill')}` : `${fl.type} · ${fl.size}`}</div>
                       </div>
+                      {fl.missing && (
+                        <button type="button" onClick={fl.reupload} title={t('emf_file_missing')} style={{ height: '30px', padding: '0 11px', border: '1px solid #f0c9c0', borderRadius: '9px', background: '#fdf4f2', color: '#a33a28', fontFamily: 'inherit', fontSize: '12.5px', fontWeight: '600', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                          <span style={{ display: 'inline-flex', width: '14px', height: '14px' }}><CloudUpload size={14} style={{ display: 'block' }} /></span>{t('emf_reupload')}
+                        </button>
+                      )}
                       <button type="button" onClick={fl.download} disabled={fl.missing} title={fl.missing ? t('emf_file_missing') : undefined} aria-label={t('emf_telecharger')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', opacity: fl.missing ? 0.35 : 1, cursor: fl.missing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
                         <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><Download size={15} style={{ display: 'block' }} /></span>
                       </button>

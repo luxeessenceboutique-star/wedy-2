@@ -3680,4 +3680,6 @@ export const fr = {
     cop_conv_delete: 'Supprimer',
     cop_conv_delete_confirm: 'Supprimer cette conversation ? Sa mémoire sera effacée.',
     cop_conv_waiting: 'À valider',
+    // Re-upload a lost file
+    emf_reupload: 'Ré-uploader',
 } as const;

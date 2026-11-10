@@ -3626,4 +3626,6 @@ export const en = {
     cop_conv_delete: 'Delete',
     cop_conv_delete_confirm: 'Delete this conversation? Its memory will be erased.',
     cop_conv_waiting: 'To approve',
+    // Re-upload a lost file
+    emf_reupload: 'Upload again',
 } as const;

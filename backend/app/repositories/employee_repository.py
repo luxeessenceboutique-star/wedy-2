@@ -35,6 +35,10 @@ def rename_employee_file(supabase: Client, file_id: str, name: str):
     return supabase.table("employee_files").update({"name": name}).eq("id", file_id).execute()
 
 
+def update_employee_file(supabase: Client, file_id: str, fields: dict):
+    return supabase.table("employee_files").update(fields).eq("id", file_id).execute()
+
+
 def list_employee_files_full(supabase: Client, employee_id: str):
     return supabase.table("employee_files").select("*").eq("employee_id", employee_id).execute()
 

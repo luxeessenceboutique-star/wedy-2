@@ -3612,4 +3612,8 @@ export const ar = {
     // Missing files
     emf_file_missing: 'هذا الملف لم يعد موجوداً على الخادم: أضفه من جديد.',
     emf_file_missing_pill: 'الملف مفقود',
+    // Copilot errors
+    cop_err_session: 'انتهت جلستك. سجّل الدخول من جديد ثم أعد المحاولة.',
+    cop_err_outdated: 'الخادم لا يملك بعد آخر نسخة من المساعد. أعد نشر الواجهة الخلفية ثم حاول مجدداً.',
+    cop_err_server: 'واجه خادم المساعد مشكلة.',
 } as const;

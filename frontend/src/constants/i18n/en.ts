@@ -3612,4 +3612,8 @@ export const en = {
     // Missing files
     emf_file_missing: 'This file is no longer on the server: please add it again.',
     emf_file_missing_pill: 'File missing',
+    // Copilot errors
+    cop_err_session: 'Your session has expired. Sign in again and retry.',
+    cop_err_outdated: 'The server does not have the latest Copilot yet. Redeploy the backend and retry.',
+    cop_err_server: 'The Copilot server ran into a problem.',
 } as const;

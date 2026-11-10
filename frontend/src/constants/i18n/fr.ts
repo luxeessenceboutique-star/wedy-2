@@ -3666,4 +3666,8 @@ export const fr = {
     // Missing files
     emf_file_missing: 'Ce fichier n\'est plus sur le serveur : ajoutez-le à nouveau.',
     emf_file_missing_pill: 'Fichier introuvable',
+    // Copilot errors
+    cop_err_session: 'Votre session a expiré. Reconnectez-vous puis réessayez.',
+    cop_err_outdated: 'Le serveur n\'a pas encore la dernière version du Copilot. Redéployez le backend puis réessayez.',
+    cop_err_server: 'Le serveur du Copilot a rencontré un problème.',
 } as const;

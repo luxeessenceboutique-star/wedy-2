@@ -166,8 +166,10 @@ export default function CopilotPage() {
       setTurns(ts => ts.map(x => (x.id === turnId && x.role === 'assistant' && x.status === 'running' ? { ...x, status: 'done' } : x)));
     } catch (e) {
       if (ac.signal.aborted) { setTurns(ts => ts.map(x => (x.id === turnId && x.role === 'assistant' ? { ...x, status: 'done' } : x))); return; }
+      // the real reason matters: an HTTP error (old backend, missing libraries, gateway) is not a lost connection
       const status = (e as { status?: number }).status;
-      fail(status === 403 ? 'forbidden_role' : 'network', e instanceof Error ? e.message : '');
+      const code = status === 403 ? 'forbidden_role' : status === 401 ? 'session' : status === 404 || status === 405 ? 'outdated' : status && status >= 500 ? 'server' : 'network';
+      fail(code, e instanceof Error ? (status ? `${status} · ${e.message}` : e.message) : '');
     }
   }, []);
 
@@ -207,7 +209,9 @@ export default function CopilotPage() {
 
   const errText = (b: Extract<Block, { k: 'error' }>) => ({
     no_ai_key: t('cop_err_no_key'), ai_unavailable: t('cop_err_unavailable'), forbidden: t('cop_err_forbidden'), forbidden_role: t('cop_err_role'),
+    session: t('cop_err_session'), outdated: t('cop_err_outdated'), server: t('cop_err_server'),
   } as Record<string, string>)[b.code] ?? (b.code === 'network' ? t('cop_err_network') : t('copilot_err'));
+  const errDetail = (b: Extract<Block, { k: 'error' }>) => (['server', 'outdated', 'failed'].includes(b.code) ? b.message : '');
   const copyDoc = (title: string, text: string) => navigator.clipboard.writeText(`${title}\n\n${text}`).then(() => toast.success(t('copilot_copy_done'))).catch(() => toast.error(t('copilot_copy_fail')));
 
   const renderText = (b: Extract<Block, { k: 'text' }>) => {
@@ -299,7 +303,7 @@ export default function CopilotPage() {
       if (b.k === 'route') { routed = b.label; out.push(<span key={i} className="cop-route"><Zap size={11} />{b.label}</span>); }
       else if (b.k === 'text') out.push(<div key={b.id + i}>{renderText(b.label === routed ? { ...b, label: '' } : b)}</div>);
       else if (b.k === 'confirm') out.push(<div key={b.callId}>{renderConfirm(b, isLast && turn.status === 'awaiting')}</div>);
-      else out.push(<div key={i} className="cop-error"><CircleAlert size={15} />{errText(b)}</div>);
+      else out.push(<div key={i} className="cop-error"><CircleAlert size={15} /><div style={{ minWidth: 0 }}>{errText(b)}{errDetail(b) && <div className="cop-error-d">{errDetail(b)}</div>}</div></div>);
     });
     flush('end');
     const hasText = turn.blocks.some(b => b.k === 'text');

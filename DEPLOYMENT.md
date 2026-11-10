@@ -624,6 +624,18 @@ docker compose logs backend | grep -i minio
 - MinIO bucket `rh-platform` does not exist (run Step 6)
 - `MINIO_ENDPOINT` set to `localhost:9000` instead of `rh_minio:9000`
 
+### Copilot answers "Connexion interrompue", 404 or 503
+
+The Copilot (`/app/copilot`) streams from `POST /api/copilot/agent`. The page now shows the real cause:
+
+| What you see | Meaning | Fix |
+|---|---|---|
+| « Le serveur n'a pas encore la dernière version du Copilot » (404 / 405) | the backend that is running does not have the multi-agent routes | redeploy the backend from the latest `main` |
+| « Copilot indisponible : … LangChain / LangGraph » (503) | the backend image was built before `langchain-core`, `langchain-openai`, `langchain-anthropic`, `langgraph` were added to `requirements.txt` | rebuild the image / `pip install -r requirements.txt`, restart |
+| « Le serveur du Copilot a rencontré un problème » + 5xx and a detail line | the request reached the server but failed (gateway timeout, crash) | read `docker compose logs backend` |
+| « Connexion interrompue » with no number | the browser really lost the connection, or a proxy cut the stream | make sure the reverse proxy does not buffer or time out SSE (`proxy_buffering off`, read timeout ≥ 120 s) |
+| « L'IA n'est pas configurée » | no `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` on the backend | set one and restart |
+
 ### Uploaded files answer 404 after a redeploy ("Fichier introuvable")
 
 **Symptom:** a file is still listed in an employee / intern folder but downloading it fails with 404 (the UI shows it in red as « Fichier introuvable »).

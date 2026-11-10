@@ -258,10 +258,18 @@ class AgentRun(BaseModel):
     history: Optional[List[Message]] = None  # what the browser shows, used when the server no longer has the conversation
 
 
+def _agents_unavailable(e: ImportError) -> HTTPException:
+    return HTTPException(status_code=503, detail=f"Copilot indisponible : le serveur n'a pas les bibliothèques LangChain / LangGraph ({e.name or e}). "
+                                                  "Installez-les (pip install -r requirements.txt, ou reconstruisez l'image du backend) puis redémarrez.")
+
+
 @router.post("/agent")
 async def agent_run(body: AgentRun, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
     """One turn of the multi-agent Copilot, streamed as Server-Sent Events."""
-    from app.agents import service
+    try:
+        from app.agents import service
+    except ImportError as e:  # dependencies not installed on this deployment: say so instead of a bare 500
+        raise _agents_unavailable(e)
     if not body.resume and not (body.message or "").strip():
         raise HTTPException(status_code=422, detail="message or resume required")
     if len(body.thread_id) > 80:
@@ -274,9 +282,12 @@ async def agent_run(body: AgentRun, supabase: Client = Depends(get_db), current_
 @router.get("/agents")
 def agents_info(lang: str = Query("fr"), current_user: dict = Depends(require_hr_or_admin)):
     """The specialists and what they can do (shown in the Copilot page)."""
-    from app.agents import graph as _g  # noqa: F401  (registers the tools)
-    from app.agents.catalog import AGENTS
-    from app.agents.runtime import AGENT_TOOLS, SPECS
+    try:
+        from app.agents import graph as _g  # noqa: F401  (registers the tools)
+        from app.agents.catalog import AGENTS
+        from app.agents.runtime import AGENT_TOOLS, SPECS
+    except ImportError as e:
+        raise _agents_unavailable(e)
     idx = {"fr": 0, "en": 1, "ar": 2}.get(lang, 0)
     out = []
     for name, a in AGENTS.items():

@@ -26,10 +26,12 @@ const CONTRACT_TYPES = ['CDI', 'CDD', 'Stage', 'ANAPEC', 'Consultant', 'Freelanc
 const FILE_TYPES: { value: EmployeeFile['file_type']; label: string; bg: string; color: string }[] = [
   { value: 'cv', label: 'CV', bg: '#e4f2f4', color: '#0e6f84' },
   { value: 'diplome', label: 'Diplôme', bg: '#ece9fb', color: '#6d5ad6' },
-  { value: 'certificat', label: 'Certificat', bg: '#e1f5ec', color: '#16a06b' },
+  { value: 'cin', label: 'CIN', bg: '#e1f5ec', color: '#16a06b' },
   { value: 'contrat', label: 'Contrat', bg: '#fbefda', color: '#b06b0c' },
   { value: 'autre', label: 'Autre', bg: '#f3f6f7', color: '#52646d' },
 ];
+/** Files classified « Certificat » before that type became « CIN » keep their label (it can no longer be chosen). */
+const LEGACY_FILE_TYPES: typeof FILE_TYPES = [{ value: 'certificat', label: 'Certificat', bg: '#e1f5ec', color: '#16a06b' }];
 const STATUS_STYLE: Record<string, { bg: string; color: string; dot: string }> = {
   active: { bg: 'rgba(43,189,134,.16)', color: '#4fd3a0', dot: '#2bbd86' },
   intern: { bg: 'rgba(95,227,240,.16)', color: '#5fe3f0', dot: '#27c0d4' },
@@ -406,7 +408,7 @@ export default function EmployeeFolderPage() {
     hasSkillsOrLangs: !!(employee.skills?.length || employee.languages?.length), skills: employee.skills ?? [], languages: employee.languages ?? [],
     fileTypes: FILE_TYPES.map(f => ({ label: f.label, on: ftype === f.value, color: ftype === f.value ? '#ffffff' : '#52646d', pick: () => setFtype(f.value) })),
     files: (files as EmployeeFile[]).map(f => {
-      const style = FILE_TYPES.find(x => x.value === f.file_type) ?? FILE_TYPES[4];
+      const style = [...FILE_TYPES, ...LEGACY_FILE_TYPES].find(x => x.value === f.file_type) ?? FILE_TYPES[4];
       const sizeKb = f.file_size ? (f.file_size < 1024 * 1024 ? `${Math.round(f.file_size / 1024)} Ko` : `${(f.file_size / (1024 * 1024)).toFixed(1)} Mo`) : '';
       return {
         name: f.name, type: style.label, size: sizeKb, missing: f.available === false, bg: style.bg, color: style.color,

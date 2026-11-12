@@ -41,7 +41,7 @@ export type EmployeeFile = {
   id: string;
   employee_id: string;
   name: string;
-  file_type: 'cv' | 'certificat' | 'diplome' | 'contrat' | 'autre' | (string & {});
+  file_type: 'cv' | 'cin' | 'certificat' | 'diplome' | 'contrat' | 'autre' | (string & {});
   file_path: string;
   file_size?: number;
   mime_type?: string;

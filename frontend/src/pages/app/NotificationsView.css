@@ -2,3 +2,8 @@
 .ntf-h1:hover { border-color: #9fb4bb !important; }
 .ntf-h2:hover { background: #f6fafb !important; }
 .ntf-h3:hover { color: #0e6f84 !important; border-color: #b9dfe5 !important; }
+
+/* delete a notification */
+.ntf-del { flex-shrink: 0; width: 32px; height: 32px; border: none; border-radius: 9px; background: transparent; color: #9fb4bb; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s, color .15s; }
+.ntf-del:hover, .ntf-del:focus-visible { background: #fbe9e6; color: #c64a35; }
+.ntf-clear:hover:not(:disabled) { border-color: #f0c9c0 !important; color: #a33a28 !important; }

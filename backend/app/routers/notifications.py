@@ -128,11 +128,20 @@ def mark_as_read(
     raise HTTPException(status_code=404, detail="Notification not found")
 
 
+@router.delete("/read")
+def delete_read_notifications(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Clear the notifications the user has already read (unread ones are kept)."""
+    return {"status": "deleted", "count": notification_repository.delete_read(supabase, current_user["id"])}
+
+
 @router.delete("/{notif_id}")
 def delete_notification(
     notif_id: str,
     supabase: Client = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    notification_repository.delete_notification(supabase, notif_id, current_user["id"])
-    return {"status": "deleted"}
+    res = notification_repository.delete_notification(supabase, notif_id, current_user["id"])  # only the user's own: someone else's id deletes nothing
+    return {"status": "deleted", "count": len(res.data or [])}

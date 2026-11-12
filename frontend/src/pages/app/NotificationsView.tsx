@@ -2,7 +2,7 @@
 // notifications and preferences come from /notifications; only the in-app channel exists, so it is the only column.
 // The markup keeps the reference's exact inline styles; `v` is the page logic (the reference's renderVals()).
 import { Fragment } from 'react';
-import { ArrowRight, BellOff, Check, CheckCheck, CircleCheck } from 'lucide-react';
+import { ArrowRight, BellOff, Check, CheckCheck, CircleCheck, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { RV } from '@/components/motion';
 import { Spinner } from '@/components/ui';
@@ -20,10 +20,16 @@ export function NotificationsView({ v }: { v: NotificationsVals }) {
             <RV as='h1' variant='up' style={{ margin: '0', fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: 'clamp(30px,3vw,40px)', letterSpacing: '-.045em', lineHeight: '1.05' }}>{t('ntf_notifications')}</RV>
             <RV as='p' variant='up' delay={60} style={{ margin: '8px 0 0', fontSize: '15px', color: '#52646d' }}>{v.subtitle}</RV>
           </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+          <RV as='button' variant='up' delay={100} type="button" onClick={v.clearRead} disabled={v.clearing} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', height: '42px', padding: '0 14px', borderRadius: '12px', border: '1px solid #d6dfe3', background: '#ffffff', color: '#33474f', fontFamily: 'inherit', fontSize: '13.5px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', opacity: v.clearReadOp }} className="ntf-clear">
+            <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}>{v.clearing ? <Spinner size={15} /> : <Trash2 size={15} style={{ display: 'block' }} />}</span>
+            {t('ntf_clear_read')}
+          </RV>
           <RV as='button' variant='up' delay={100} type="button" onClick={v.readAll} style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', height: '42px', padding: '0 14px', borderRadius: '12px', border: '1px solid #d6dfe3', background: '#ffffff', color: '#33474f', fontFamily: 'inherit', fontSize: '13.5px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', opacity: v.readAllOp }} className="ntf-h1">
             <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><CheckCheck size={15} style={{ display: 'block' }} /></span>
             {t('ntf_tout_marquer_comme_lu')}
           </RV>
+          </div>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'flex-start' }}>
           <div style={{ flex: '2 1 520px', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -104,6 +110,9 @@ export function NotificationsView({ v }: { v: NotificationsVals }) {
                           <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#16b6c8', flexShrink: '0', marginTop: '6px', boxShadow: '0 0 0 4px rgba(22,182,200,.15)' }} />
                           </>
                         ) : null}
+                        <button type="button" onClick={e => { e.stopPropagation(); n.remove(); }} aria-label={t('ntf_delete')} title={t('ntf_delete')} className="ntf-del">
+                          <Trash2 size={15} style={{ display: 'block' }} />
+                        </button>
                       </RV>
                     </Fragment>
                   ))}

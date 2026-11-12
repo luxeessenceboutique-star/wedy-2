@@ -3642,4 +3642,9 @@ export const en = {
     sk_ai_other: 'The image of another format is cropped here: generate one for this format.',
     sk_ai_note: 'The AI only paints the backdrop: Wedy adds the logo, title and QR code so they stay exact.',
     sk_default_logo: 'Default logo shown. Add your company\'s in Settings.',
+    // Notifications delete
+    ntf_delete: 'Delete notification',
+    ntf_clear_read: 'Delete read ones',
+    ntf_clear_confirm: 'Delete the {n} notification(s) you have already read? This cannot be undone.',
+    ntf_cleared: '{n} notification(s) deleted',
 } as const;

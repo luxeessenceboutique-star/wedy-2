@@ -15,8 +15,9 @@ type Action = { label: string; isBtn: boolean; isLink: boolean; href: string; bu
 export type NotificationsVals = {
   loading: boolean; rtl: boolean;
   subtitle: string; readAll: () => void; readAllOp: string;
+  clearRead: () => void; clearReadOp: string; clearing: boolean;
   tabs: { label: string; n: number; on: boolean; color: string; badgeBg: string; go: () => void }[];
-  groups: { label: string; items: { title: string; body: string; time: string; icon: LucideIcon; tint: string; color: string; unread: boolean; weight: string; bg: string; delay: string; read: () => void; hasActions: boolean; hasDone: boolean; done: string; actions: Action[] }[] }[];
+  groups: { label: string; items: { title: string; body: string; time: string; icon: LucideIcon; tint: string; color: string; unread: boolean; weight: string; bg: string; delay: string; read: () => void; remove: () => void; hasActions: boolean; hasDone: boolean; done: string; actions: Action[] }[] }[];
   empty: boolean;
   prefs: { label: string; icon: LucideIcon; color: string; ch: { aria: string; track: string; knob: string; toggle: () => void }[] }[];
 };
@@ -67,6 +68,7 @@ export default function NotificationsPage() {
   const prefsQ = useQuery({ queryKey: ['notification-prefs'], queryFn: () => api.get<{ prefs: Record<Pref, boolean> }>('/notifications/preferences').then(r => r.data.prefs) });
   const items = q.data?.data ?? [];
   const unread = items.filter(n => n.unread).length;
+  const readCount = items.length - unread;
 
   const markRead = (n: Notif) => {
     if (!n.unread) return;
@@ -78,6 +80,28 @@ export default function NotificationsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['notifications'] }); notify.success(t('ntf_all_read')); },
     onError: e => notify.error(getApiError(e, t('error'))),
   });
+  // delete: the row disappears at once and comes back if the server refuses
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/notifications/${id}`),
+    onMutate: async (id: string) => {
+      await qc.cancelQueries({ queryKey: ['notifications'] });
+      const prev = qc.getQueryData<{ data: Notif[]; unread_count: number }>(['notifications']);
+      qc.setQueryData<{ data: Notif[]; unread_count: number }>(['notifications'], old => {
+        if (!old) return old;
+        const gone = old.data.find(x => x.id === id);
+        return { ...old, unread_count: gone?.unread ? Math.max(0, old.unread_count - 1) : old.unread_count, data: old.data.filter(x => x.id !== id) };
+      });
+      return { prev };
+    },
+    onError: (e, _id, ctx) => { if (ctx?.prev) qc.setQueryData(['notifications'], ctx.prev); notify.error(getApiError(e, t('error'))); },
+    onSettled: () => { qc.invalidateQueries({ queryKey: ['notifications'] }); },
+  });
+  const clearRead = useMutation({
+    mutationFn: () => api.delete<{ count: number }>('/notifications/read').then(r => r.data.count),
+    onSuccess: n => { qc.invalidateQueries({ queryKey: ['notifications'] }); notify.success(tf(t('ntf_cleared'), { n })); },
+    onError: e => notify.error(getApiError(e, t('error'))),
+  });
+
   const savePrefs = useMutation({
     mutationFn: (prefs: Record<Pref, boolean>) => api.put<{ prefs: Record<Pref, boolean> }>('/notifications/preferences', { prefs }).then(r => r.data.prefs),
     onMutate: prefs => { qc.setQueryData(['notification-prefs'], prefs); },
@@ -125,6 +149,8 @@ export default function NotificationsPage() {
     loading: q.isLoading, rtl: lang === 'ar',
     subtitle: unread ? tf(t(unread === 1 ? 'ntf_sub_one' : 'ntf_sub_n'), { n: unread }) : t('ntf_sub_none'),
     readAll: () => { if (unread) readAll.mutate(); }, readAllOp: unread ? '1' : '.5',
+    clearRead: () => { if (readCount && !clearRead.isPending && window.confirm(tf(t('ntf_clear_confirm'), { n: readCount }))) clearRead.mutate(); },
+    clearReadOp: readCount ? '1' : '.5', clearing: clearRead.isPending,
     tabs: ([['all', 'ntf_t_all', items.length], ['unread', 'ntf_t_unread', unread], ['action', 'ntf_t_action', items.filter(needs).length], ['security', 'ntf_t_security', items.filter(n => n.type === 'security').length]] as const)
       .map(([k, key, n]) => ({ label: t(key), n, on: tab === k, color: tab === k ? '#ffffff' : '#52646d', badgeBg: tab === k ? 'rgba(255,255,255,.18)' : '#eef2f4', go: () => setTab(k) })),
     groups: groups.map(g => ({
@@ -135,6 +161,7 @@ export default function NotificationsPage() {
         return {
           title: n.title, body: n.body, time: timeOf(n.time), icon, tint, color, unread: n.unread, weight: n.unread ? '700' : '600', bg: n.unread ? '#f5fbfc' : '#ffffff', delay: String(Math.min(i, 10) * 50),
           read: () => markRead(n),
+          remove: () => remove.mutate(n.id),
           hasActions: acts.length > 0 && !done[n.id], hasDone: !!done[n.id], done: done[n.id] ?? '',
           actions: acts.map(a => ({
             label: a.label, isBtn: !!a.approveLeave, isLink: !a.approveLeave, href: a.href ?? '#', busy: busy === n.id,

@@ -50,3 +50,14 @@ def mark_one_read(supabase: Client, notif_id: str, user_id: str):
 
 def delete_notification(supabase: Client, notif_id: str, user_id: str):
     return supabase.table("notifications").delete().eq("id", notif_id).eq("user_id", user_id).execute()
+
+
+def delete_read(supabase: Client, user_id: str) -> int:
+    """Delete the user's notifications that were already read (column 'read' or 'is_read', like the rest of this module)."""
+    for col in ("read", "is_read"):
+        try:
+            res = supabase.table("notifications").delete().eq("user_id", user_id).eq(col, True).execute()
+            return len(res.data or [])
+        except Exception:
+            continue
+    return 0

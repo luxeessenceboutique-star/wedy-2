@@ -3696,4 +3696,9 @@ export const fr = {
     sk_ai_other: 'L\'image d\'un autre format est recadrée ici : générez-en une pour ce format.',
     sk_ai_note: 'L\'IA ne crée que le décor : le logo, le titre et le code QR sont ajoutés par Wedy pour rester exacts.',
     sk_default_logo: 'Logo par défaut affiché. Ajoutez celui de votre entreprise dans Paramètres.',
+    // Notifications delete
+    ntf_delete: 'Supprimer la notification',
+    ntf_clear_read: 'Supprimer les lues',
+    ntf_clear_confirm: 'Supprimer les {n} notification(s) déjà lue(s) ? Cette action est définitive.',
+    ntf_cleared: '{n} notification(s) supprimée(s)',
 } as const;

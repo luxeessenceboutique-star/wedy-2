@@ -104,6 +104,20 @@ class ChatGenerateRequest(BaseModel):
 _LANG_NAMES = {"fr": "français", "ar": "arabe", "en": "anglais"}
 
 
+class PolishRequest(BaseModel):
+    title: str = ""
+    city: str = ""
+    points: str = ""
+    language: Optional[str] = "fr"
+
+
+@router.post("/polish")
+async def polish_fields(body: PolishRequest, current_user: dict = Depends(get_current_user)):
+    """Spelling clean-up of the studio form (title, city, key points) before the ad is written; never blocks, never invents."""
+    from app.services import ad_text
+    return await ad_text.polish(body.title[:200], body.city[:80], body.points[:2000], body.language or "fr")
+
+
 @router.post("/chat-generate")
 async def chat_generate(
     body: ChatGenerateRequest,

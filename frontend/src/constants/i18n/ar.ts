@@ -3647,4 +3647,9 @@ export const ar = {
     ntf_clear_read: 'حذف المقروءة',
     ntf_clear_confirm: 'حذف {n} إشعار(ات) مقروءة؟ لا يمكن التراجع عن هذا الإجراء.',
     ntf_cleared: 'تم حذف {n} إشعار(ات)',
+    // Job post spelling fix
+    ads_checking: 'أتحقق من الإملاء…',
+    ads_fixed_title: 'صحّح Wedy هذا قبل الكتابة',
+    ads_fixed_points: 'تم تصحيح الأخطاء',
+    ads_fix_undo: 'إلغاء التصحيحات',
 } as const;

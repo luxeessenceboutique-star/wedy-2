@@ -1,11 +1,11 @@
 ﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowUpRight, Briefcase, Copy, Megaphone, Send, Sparkles, Trash2, Users } from 'lucide-react';
+import { ArrowUpRight, Briefcase, Copy, Megaphone, RotateCcw, Send, Sparkles, SpellCheck, Trash2, Users } from 'lucide-react';
 import { SocialKit } from '@/components/annonces/SocialKit';
 import { useAppSettings } from '@/lib/appSettings';
 import { adIdOf } from '@/lib/recruitment';
-import { listAnnonces, createAnnonce, updateAnnonce, deleteAnnonce, chatGenerateAnnonce, listCandidates, getApiError } from '@/services/api';
+import { listAnnonces, createAnnonce, updateAnnonce, deleteAnnonce, chatGenerateAnnonce, polishAnnonce, listCandidates, getApiError, type PolishResult } from '@/services/api';
 import type { Employee, JobAd } from '@/services/api';
 import { RV } from '@/components/motion';
 import { Spinner } from '@/components/ui';
@@ -34,6 +34,9 @@ export default function AnnoncesPage() {
   const [lang, setLang] = useState<'fr' | 'ar' | 'en'>('fr');
   const [draft, setDraft] = useState('');
   const [kit, setKit] = useState<{ ad: JobAd; fresh: boolean } | null>(null);
+  // spelling fixed by Wedy before the ad was written: what changed, and what was typed (to undo)
+  const [fixes, setFixes] = useState<{ original: { title: string; city: string; notes: string }; changes: PolishResult['changes'] } | null>(null);
+  const [polishing, setPolishing] = useState(false);
   const settingsQ = useAppSettings();
 
   const { data: ads = [], isLoading } = useQuery({ queryKey: ['annonces'], queryFn: listAnnonces });
@@ -44,8 +47,8 @@ export default function AnnoncesPage() {
   const appsOf = (ad: JobAd) => cands.filter(c => adIdOf(c, ads) === ad.id).length;
 
   const gen = useMutation({
-    mutationFn: () => chatGenerateAnnonce([{ role: 'user', content: [
-      `${t('ads_f_title')} : ${title.trim()}`, `${t('ads_f_contract')} : ${contract}`, city.trim() ? `${t('ads_f_city')} : ${city.trim()}` : '', notes.trim() ? `${t('ads_f_points')} : ${notes.trim()}` : '',
+    mutationFn: (f: { title: string; city: string; notes: string }) => chatGenerateAnnonce([{ role: 'user', content: [
+      `${t('ads_f_title')} : ${f.title.trim()}`, `${t('ads_f_contract')} : ${contract}`, f.city.trim() ? `${t('ads_f_city')} : ${f.city.trim()}` : '', f.notes.trim() ? `${t('ads_f_points')} : ${f.notes.trim()}` : '',
     ].filter(Boolean).join('\n') }], { mode: 'direct', language: lang, company }),
     onSuccess: r => setDraft((r.reply || '').replace(/```[a-z]*\n?|```/g, '').replace(/\*\*/g, '').trim()),
     onError: e => notify.error(getApiError(e, t('ads_gen_error'))),
@@ -66,16 +69,37 @@ export default function AnnoncesPage() {
     onError: e => notify.error(getApiError(e, t('error'))),
   });
 
-  const generate = () => {
-    if (!title.trim()) { notify.error(t('ads_title_required')); return; }
-    if (!gen.isPending) gen.mutate();
+  /** Fix the typos first (title, city, key points), put the corrected text in the form, then write the ad from it. */
+  const generate = async (typed?: { title: string; city: string; notes: string }) => {
+    const input = typed ?? { title, city, notes };
+    if (!input.title.trim()) { notify.error(t('ads_title_required')); return; }
+    if (gen.isPending || polishing) return;
+    let use = input;
+    if (!typed) {                                   // undoing the corrections regenerates from what was typed, without correcting again
+      setPolishing(true); setFixes(null);
+      try {
+        const p = await polishAnnonce({ title: input.title, city: input.city, points: input.notes, language: lang });
+        if (p.changed) {
+          use = { title: p.title, city: p.city, notes: p.points };
+          setTitle(use.title); setCity(use.city); setNotes(use.notes);
+          setFixes({ original: input, changes: p.changes });
+        }
+      } catch { /* the spelling check never blocks the ad */ } finally { setPolishing(false); }
+    }
+    gen.mutate(use);
+  };
+  const undoFixes = () => {
+    if (!fixes) return;
+    const o = fixes.original;
+    setTitle(o.title); setCity(o.city); setNotes(o.notes); setFixes(null);
+    void generate(o);
   };
   const copyLink = (ad: JobAd) => {
     const url = `${window.location.origin}/postuler/${ad.id}`;
     navigator.clipboard?.writeText(url).then(() => notify.success(t('ads_link_copied')), () => notify.info(url));
   };
   const sorted = [...ads].sort((a, b) => Number(b.is_active) - Number(a.is_active) || (b.created_at || '').localeCompare(a.created_at || ''));
-  const busy = gen.isPending;
+  const busy = gen.isPending || polishing;
   const code = LANGS.find(l => l.k === lang)!.code;
 
   return (
@@ -142,14 +166,26 @@ export default function AnnoncesPage() {
                 return <button key={l.k} type="button" onClick={() => setLang(l.k)} style={{ height: 32, padding: '0 12px', borderRadius: 99, border: `1px solid ${on ? '#0a1c24' : '#e2e8eb'}`, background: on ? '#0a1c24' : '#ffffff', color: on ? '#ffffff' : '#33474f', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>{l.label}</button>;
               })}
             </div>
-            <button type="button" onClick={generate} disabled={busy} style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, border: 'none', borderRadius: 13, background: 'linear-gradient(135deg,#5444b8,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 14px 30px -14px rgba(109,90,214,.8)' }}>
+            <button type="button" onClick={() => void generate()} disabled={busy} style={{ position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, border: 'none', borderRadius: 13, background: 'linear-gradient(135deg,#5444b8,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer', boxShadow: '0 14px 30px -14px rgba(109,90,214,.8)' }}>
               <span className="wedy-shine" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '40%', background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)', pointerEvents: 'none' }} />
               {busy ? (
-                <><span className="wedy-spin" style={{ position: 'relative', width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,.35)', borderTopColor: '#ffffff' }} /><span style={{ position: 'relative' }}>{t('ads_writing')}</span></>
+                <><span className="wedy-spin" style={{ position: 'relative', width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,.35)', borderTopColor: '#ffffff' }} /><span style={{ position: 'relative' }}>{t(polishing ? 'ads_checking' : 'ads_writing')}</span></>
               ) : (
                 <><Sparkles size={17} style={{ position: 'relative' }} /><span style={{ position: 'relative' }}>{t(draft ? 'ads_regenerate' : 'ads_generate')}</span></>
               )}
             </button>
+            {fixes && !busy && (
+              <RV as="div" variant="up" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '11px 13px', borderRadius: 13, background: '#f1faf6', border: '1px solid #cfeadd' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 700, color: '#0f6f49' }}><SpellCheck size={14} />{t('ads_fixed_title')}</div>
+                {fixes.changes.map(c => (
+                  <div key={c.field} style={{ fontSize: 12.5, lineHeight: 1.45, color: '#33474f', overflowWrap: 'anywhere' }}>
+                    <b>{t(c.field === 'title' ? 'ads_f_title' : c.field === 'city' ? 'ads_f_city' : 'ads_f_points')}</b>
+                    {c.field === 'points' ? <> : {t('ads_fixed_points')}</> : <> : <s style={{ color: '#7d8f97' }}>{c.from}</s> → <b style={{ color: '#0a1c24' }}>{c.to}</b></>}
+                  </div>
+                ))}
+                <button type="button" onClick={undoFixes} style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 8, border: '1px solid #cfeadd', background: '#ffffff', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: '#33474f', cursor: 'pointer' }}><RotateCcw size={12} />{t('ads_fix_undo')}</button>
+              </RV>
+            )}
             {draft && !busy && (
               <>
                 <RV as="div" variant="up" style={{ borderRadius: 16, border: '1px solid #dfe7ea', background: '#fbfcfc', overflow: 'hidden' }}>

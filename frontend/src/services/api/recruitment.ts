@@ -49,6 +49,10 @@ export const getSocialPosts = (id: string, body: { lang: string; company?: strin
   api.post<SocialPosts>(`/annonces/${id}/social`, body, { timeout: 90000 }).then(r => r.data);
 export const chatGenerateAnnonce = (messages: ChatMessage[], opts?: { mode?: 'direct'; language?: string; company?: string }) =>
   api.post<{ reply: string }>('/annonces/chat-generate', { messages, ...opts }, { timeout: 90000 }).then(r => r.data);
+export type PolishResult = { title: string; city: string; points: string; changed: boolean; source: 'ai' | 'local'; changes: { field: 'title' | 'city' | 'points'; from: string; to: string }[] };
+/** Spelling clean-up of the studio form (title, city, key points) before the ad is written. */
+export const polishAnnonce = (body: { title: string; city: string; points: string; language: string }) =>
+  api.post<PolishResult>('/annonces/polish', body, { timeout: 30000 }).then(r => r.data);
 export const updateAnnonce = (ad: JobAd, patch: Partial<JobAd>) =>
   api.patch<JobAd>(`/annonces/${ad.id}`, {
     poste: ad.poste, description: ad.description, competences: ad.competences, experience: ad.experience,

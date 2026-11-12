@@ -3647,4 +3647,9 @@ export const en = {
     ntf_clear_read: 'Delete read ones',
     ntf_clear_confirm: 'Delete the {n} notification(s) you have already read? This cannot be undone.',
     ntf_cleared: '{n} notification(s) deleted',
+    // Job post spelling fix
+    ads_checking: 'Checking the spelling…',
+    ads_fixed_title: 'Wedy fixed this before writing',
+    ads_fixed_points: 'spelling fixed',
+    ads_fix_undo: 'Undo the corrections',
 } as const;

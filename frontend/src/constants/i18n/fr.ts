@@ -3701,4 +3701,9 @@ export const fr = {
     ntf_clear_read: 'Supprimer les lues',
     ntf_clear_confirm: 'Supprimer les {n} notification(s) déjà lue(s) ? Cette action est définitive.',
     ntf_cleared: '{n} notification(s) supprimée(s)',
+    // Job post spelling fix
+    ads_checking: 'Je vérifie l\'orthographe…',
+    ads_fixed_title: 'Wedy a corrigé avant de rédiger',
+    ads_fixed_points: 'fautes corrigées',
+    ads_fix_undo: 'Annuler les corrections',
 } as const;

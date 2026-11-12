@@ -40,6 +40,17 @@ def _jwt_claims(token: str) -> dict:
         return {}
 
 
+def _why(r: "httpx.Response") -> str:
+    """Tybot's own explanation of a refusal (short, single line)."""
+    try:
+        j = r.json()
+        msg = j.get("message") or j.get("detail") or j.get("error") if isinstance(j, dict) else j
+        text = msg if isinstance(msg, str) else json.dumps(msg, ensure_ascii=False)
+    except Exception:
+        text = r.text
+    return " ".join(str(text).split())[:200] or "(empty answer)"
+
+
 def login(email: str, password: str) -> dict:
     """Authenticate against Tybot. Returns {access_token, email, id, full_name}."""
     try:
@@ -48,10 +59,15 @@ def login(email: str, password: str) -> dict:
         logger.error(f"[TYBOT] login unreachable: {e}")
         raise HTTPException(status_code=503, detail="Service d'authentification Tybot indisponible")
     if r.status_code in (400, 401):
+        # What Tybot said goes to the server log (never the password, never to the browser: the screen keeps one generic message so it
+        # cannot be used to find out which accounts exist). The target URL tells a wrong TYBOT_API_URL apart from wrong credentials.
+        logger.warning(f"[TYBOT] login refused by {settings.TYBOT_API_URL.rstrip('/')}/auth/login: HTTP {r.status_code} · {_why(r)} · account {email.strip().lower()}")
         raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
     if r.status_code == 403:
+        logger.warning(f"[TYBOT] login forbidden: HTTP 403 · {_why(r)} · account {email.strip().lower()}")
         raise HTTPException(status_code=403, detail="Accès refusé par Tybot")
     if r.status_code != 200:
+        logger.error(f"[TYBOT] login unexpected answer: HTTP {r.status_code} · {_why(r)}")
         raise HTTPException(status_code=502, detail=f"Réponse inattendue de Tybot ({r.status_code})")
 
     data = r.json()

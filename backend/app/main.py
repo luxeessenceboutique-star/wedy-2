@@ -32,6 +32,7 @@ from app.routers import (
 from app.routers import settings as settings_router  # not `settings`: that name is the app config
 from app.routers import integrations
 from app.routers import visio
+from app.routers import cv_events
 
 from app.dependencies import get_current_user  # used in protected upload below
 
@@ -91,6 +92,7 @@ app.include_router(candidats.router, prefix="/api")
 app.include_router(creneaux.router, prefix="/api")
 app.include_router(entretiens.router, prefix="/api")
 app.include_router(visio.router, prefix="/api")
+app.include_router(cv_events.router, prefix="/api")
 
 
 # Protected Uploads Endpoint
@@ -148,7 +150,9 @@ def _schema_drift_detail(exc: Exception) -> str | None:
     t = _re.search(r"Could not find the table '(?:[^'.]+\.)?([^']+)'", msg)
     if code == "PGRST205" or t:
         name = t.group(1) if t else '?'
-        hint = " Exécutez backend/database/migrations/rh_schema_fixes.sql dans l'éditeur SQL de Supabase." if name in ("intern_onboarding", "intern_evaluations", "import_logs") else " Une migration n'a pas été exécutée."
+        hint = (" Exécutez backend/database/migrations/rh_schema_fixes.sql dans l'éditeur SQL de Supabase." if name in ("intern_onboarding", "intern_evaluations", "import_logs")
+                else " Exécutez backend/database/migrations/cv_events.sql dans l'éditeur SQL de Supabase." if name in ("cv_events", "cv_prospects")
+                else " Une migration n'a pas été exécutée.")
         return f"La table « {name} » n'existe pas dans Supabase.{hint}"
     return None
 

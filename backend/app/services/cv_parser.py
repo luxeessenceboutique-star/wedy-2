@@ -16,13 +16,15 @@ from loguru import logger
 # ── Regex patterns ──────────────────────────────────────────────────────────
 
 EMAIL_RE    = re.compile(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+')
-PHONE_RE    = re.compile(r'(?:\+212|00212|0)[\s.\-]?[5-7]\d[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2}')
+# Moroccan numbers however they are written: +212 6 12 34 56 78 · 06 12 34 56 78 · 0612345678 · (+212) 612-345-678 · 00212612345678
+PHONE_RE    = re.compile(r'(?<!\d)(?:\(\+212\)|\+212|00212|0)[\s.\-]?[5-7](?:[\s.\-]?\d){8}(?!\d)')
 LINKEDIN_RE = re.compile(r'linkedin\.com/in/[\w\-]+', re.I)
 GITHUB_RE   = re.compile(r'github\.com/[\w\-]+', re.I)
 DATE_RE     = re.compile(
     r'(?:jan|fév|mar|avr|mai|juin|juil|aoû|sep|oct|nov|déc|'
     r'jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)'
-    r'[\w.]*\s*\d{2,4}|\d{1,2}[/\-]\d{2,4}|\d{4}',
+    r'[\w.]*\s*\d{2,4}|\d{1,2}[/\-]\d{2,4}|\d{4}'
+    r'|\b(?:présent|present|actuel(?:lement)?|aujourd.hui|en cours|à ce jour|now|current)\b',   # « 2022 – Présent » keeps its end
     re.I
 )
 
@@ -272,8 +274,8 @@ def _parse_experience_blocks(lines: List[str]) -> List[Dict]:
                 jobs.append(current)
             current = {'title': '', 'company': '', 'dates': ' - '.join(dates[:2]), 'description': ''}
             # Remove dates from line to get title/company
-            clean = DATE_RE.sub('', line).strip(' -–|•')
-            parts = re.split(r'[|@–\-]{1,2}', clean)
+            clean = re.sub(r'[(\[]\s*[)\]]|[(\[]\s*$', '', DATE_RE.sub('', line)).strip(' -–|•()[]')
+            parts = [x.strip(' ()[]') for x in re.split(r'[|@–\-]{1,2}', clean)]
             if len(parts) >= 2:
                 current['title']   = parts[0].strip()
                 current['company'] = parts[1].strip()
@@ -300,8 +302,8 @@ def _parse_education_blocks(lines: List[str]) -> List[Dict]:
         if dates:
             if current:
                 items.append(current)
-            clean = DATE_RE.sub('', line).strip(' -–|•')
-            parts = re.split(r'[|@–\-]{1,2}', clean)
+            clean = re.sub(r'[(\[]\s*[)\]]|[(\[]\s*$', '', DATE_RE.sub('', line)).strip(' -–|•()[]')
+            parts = [x.strip(' ()[]') for x in re.split(r'[|@–\-]{1,2}', clean)]
             current = {
                 'degree': parts[0].strip() if parts else line,
                 'institution': parts[1].strip() if len(parts) > 1 else '',

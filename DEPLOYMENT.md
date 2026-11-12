@@ -366,6 +366,7 @@ psql $SUPABASE_DB_URL -f backend/database/migrations/interns_advanced_migration.
 psql $SUPABASE_DB_URL -f backend/database/migrations/create_hr_requests.sql
 psql $SUPABASE_DB_URL -f backend/database/migrations/migration_employee_files.sql
 psql $SUPABASE_DB_URL -f backend/database/migrations/employee_import_support.sql
+psql $SUPABASE_DB_URL -f backend/database/migrations/cv_events.sql   # Événements: CV scanned at job fairs (needs an AI key for full extraction)
 ```
 
 > **Note:** For a fresh environment, `setup_database.sql` creates the base schema. The remaining scripts are additive migrations applied on top. All migration SQL files now live under `backend/database/migrations/`.

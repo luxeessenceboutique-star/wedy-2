@@ -259,6 +259,15 @@ Security notes (`app/SecurityPage.tsx` + `SecurityView.tsx`):
 
 Help notes (`app/HelpPage.tsx`): "Demandez à Wedy" opens the Copilot; the fake live chat ("réponse moyenne en 4 min") is gone (support is by email); the payroll FAQ describes what the payroll screen really does (no Sage / Cegid / Damancom export); a "Non" on an answer opens an email to support with the question; "Nouveautés" lists features that shipped. The page is still French-only and was not regenerated from the reference.
 
+Événements notes (`app/EvenementsPage.tsx`, `routers/cv_events.py`, `services/cv_pool.py`, route `/app/evenements`, HR only):
+- **Needs the migration `backend/database/migrations/cv_events.sql`** (tables `rh.cv_events` and `rh.cv_prospects`, run once in the Supabase SQL editor). Until then the API answers 503 with the name of the script.
+- For a job fair / forum: create an event, drop any number of CV files (PDF, DOCX/DOC, PNG/JPG/WEBP, ≤ 15 MB each). The browser sends them one request per file, three at a time, so one bad file never blocks the others and the queue shows ok / à vérifier / échec per file with a retry.
+- Extraction reuses the Candidates pipeline (`services/cv_parser.py`: AI vision on the page images first, regex fallback when no AI key or the AI fails). Each CV gives flat searchable fields (name, email, phone normalised to 212…, city, headline, years of experience computed from the periods, skills) plus the full `profile` JSON (summary, experience, education, languages, certifications). `extraction` is `ok` / `partial` (rules only: to be checked) / `failed` (no identity read: HR types name or email in the drawer, then it becomes `partial`).
+- The same person scanned twice (same email or phone) is flagged « Déjà scanné » but kept. Files live under `cv-events/{event}/…` on disk plus the durable Supabase bucket.
+- Pool: search (name, email, skill, city, headline; accent-insensitive), status pills (nouveaux / gardés / refusés / candidatures), sort (recent / experience / rating / name), 1–5 stars, keep / reject (optimistic), CSV export, bulk bar. The drawer edits the fields and notes and shows the whole extraction + « Voir le CV ».
+- « Créer des candidatures » (`POST /cv-prospects/convert`): optional job post (active ones) and position. Creates an `employees` row `status = candidate` (source « Événement · <name> », stage `new`, skills and CV profile in `custom_fields`) and copies the CV into the candidate folder (`employee_files`, type `cv`). Skipped with a reason per CV: already converted, already known (staff / intern, or a candidate for the same post), extraction failed and not yet reviewed, no name. Deleting an event deletes its prospects and files but never the candidates created from them.
+- Tests: `backend/tests/test_cv_events.py` (15; fake database, fake extraction, one real PDF through the rules fallback). Not verified against the real AI, Supabase or Storage from the sandbox.
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |

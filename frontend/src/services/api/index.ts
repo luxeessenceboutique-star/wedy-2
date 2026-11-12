@@ -21,6 +21,7 @@ export * from './performance';
 export * from './users';
 export * from './assets';
 export * from './notifications';
+export * from './cvEvents';
 export * from './webhooks';
 export * from './orgchart';
 export * from './recruitment';

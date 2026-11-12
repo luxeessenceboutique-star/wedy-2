@@ -3652,4 +3652,13 @@ export const en = {
     ads_fixed_title: 'Wedy fixed this before writing',
     ads_fixed_points: 'spelling fixed',
     ads_fix_undo: 'Undo the corrections',
+    // Visio network
+    vz_net_checking: 'Testing your network…',
+    vz_net_relay: 'Network ready: the call will work even behind a firewall.',
+    vz_net_direct: 'Direct connection only: it may fail if the other person is on another network (4G, company Wi-Fi).',
+    vz_net_blocked: 'This network seems to block video calls. Try another network, for example your phone\'s hotspot.',
+    vz_fail_title: 'Cannot connect with {name}',
+    vz_fail_help: 'This almost always comes from the network (firewall, 4G, company Wi-Fi). Reconnect; if it persists, one of you can switch networks (for example the phone\'s hotspot).',
+    vz_fail_noturn: 'Administrator: no relay (TURN) server is active, so calls fail between some networks. See DEPLOYMENT.md, « Visio » section.',
+    vz_reconnect: 'Reconnect',
 } as const;

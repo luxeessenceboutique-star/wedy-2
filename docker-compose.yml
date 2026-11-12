@@ -74,6 +74,42 @@ services:
       - ./backend:/app
       - uploads_data:/app/uploads
 
+  # TURN relay for Wedy Visio (calls between people on different networks). Optional, not started by default:
+  #   docker compose --profile turn up -d coturn
+  # Needs VISIO_TURN_SECRET and VISIO_TURN_EXTERNAL_IP (the server's public IP) in the environment, and these ports open in the
+  # firewall: UDP + TCP 3478 and UDP 49160-49200. Host networking: a relay needs a wide UDP range. Then point the backend at it:
+  #   VISIO_TURN_URL=turn:<public host>:3478?transport=udp,turn:<public host>:3478?transport=tcp  and the same VISIO_TURN_SECRET.
+  coturn:
+    profiles: ["turn"]
+    image: coturn/coturn:4.6.2
+    container_name: wedy_coturn
+    network_mode: host
+    restart: unless-stopped
+    command:
+      - "-n"
+      - "--log-file=stdout"
+      - "--realm=${VISIO_TURN_REALM:-wedy}"
+      - "--use-auth-secret"
+      - "--static-auth-secret=${VISIO_TURN_SECRET:-}"
+      - "--listening-port=3478"
+      - "--min-port=49160"
+      - "--max-port=49200"
+      - "--external-ip=${VISIO_TURN_EXTERNAL_IP:-}"
+      - "--fingerprint"
+      - "--no-cli"
+      - "--no-tls"
+      - "--no-dtls"
+      - "--no-multicast-peers"
+      # never relay towards private / internal addresses (a TURN server must not be a door into the internal network)
+      - "--denied-peer-ip=0.0.0.0-0.255.255.255"
+      - "--denied-peer-ip=10.0.0.0-10.255.255.255"
+      - "--denied-peer-ip=100.64.0.0-100.127.255.255"
+      - "--denied-peer-ip=127.0.0.0-127.255.255.255"
+      - "--denied-peer-ip=169.254.0.0-169.254.255.255"
+      - "--denied-peer-ip=172.16.0.0-172.31.255.255"
+      - "--denied-peer-ip=192.168.0.0-192.168.255.255"
+      - "--denied-peer-ip=198.18.0.0-198.19.255.255"
+
   celery_worker:
     build:
       context: ./backend

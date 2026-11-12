@@ -2,9 +2,10 @@
 // `mode="page"` fills the screen (/visio/:room); `mode="dock"` is the floating panel of the interview room.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
-  Copy, Link2, Maximize2, MessageSquare, Mic, MicOff, Minimize2, MonitorUp, PhoneOff, RefreshCw, Send, Users, Video, VideoOff, X,
+  Copy, Link2, Maximize2, MessageSquare, Mic, MicOff, Minimize2, MonitorUp, PhoneOff, RefreshCw, Send, ShieldCheck, TriangleAlert, Users, Video, VideoOff, WifiOff, X,
 } from 'lucide-react';
-import { makeGuestLink, getApiError } from '@/services/api';
+import { makeGuestLink, getApiError, getIceConfig } from '@/services/api';
+import { checkNetwork, netStateOf, type NetState } from '@/lib/visio/netCheck';
 import { useVisio, type VisioAuth, type VisioPeer } from '@/lib/visio/useVisio';
 import { Spinner } from '@/components/ui';
 import { useLang, type TKey } from '@/lib/lang';
@@ -28,7 +29,7 @@ function Tile({ name, stream, cam, mic, screen, me, conn, big }: { name: string;
       {stream && <VideoEl stream={stream} muted={me} mirror={me && !screen} />}
       {!hasVideo && <span className="vz-av" style={{ background: avatarGradient(name || '?') }}>{initialsOf(name || '?')}</span>}
       <span className="vz-name">{!mic && <MicOff size={12} />}{name}{me ? ` (${t('vz_you')})` : ''}{screen ? ` · ${t('vz_sharing')}` : ''}</span>
-      {conn && conn !== 'connected' && conn !== 'new' && <span className="vz-conn">{conn === 'failed' || conn === 'disconnected' ? t('vz_conn_failed') : t('vz_conn_wait')}</span>}
+      {conn && conn !== 'connected' && conn !== 'new' && <span className="vz-conn">{conn === 'failed' || conn === 'disconnected' || conn === 'stuck' ? t('vz_conn_failed') : t('vz_conn_wait')}</span>}
     </div>
   );
 }
@@ -48,6 +49,22 @@ export function VisioCall({ room, auth, title, mode = 'page', canInvite, guestDe
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const h = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(h); }, []);
   const [autoDone, setAutoDone] = useState(false);
+  // what this network allows (relay / direct only / blocked), looked up once before the call
+  const [net, setNet] = useState<{ state: NetState; configured: boolean }>({ state: 'checking', configured: false });
+  const guestKey = auth && 'guest' in auth ? auth.guest : '';
+  const hasAuth = !!auth;
+  useEffect(() => {
+    if (!hasAuth || autoJoin) return;
+    let cancelled = false;
+    (async () => {
+      let ice: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }];
+      let configured = false;
+      try { const c = await getIceConfig(room, guestKey || undefined); ice = c.iceServers; configured = !!c.turn_configured; } catch { /* public STUN only */ }
+      const found = await checkNetwork(ice).catch(() => ({ host: false, srflx: false, relay: false }));
+      if (!cancelled) setNet({ state: netStateOf(found), configured });
+    })();
+    return () => { cancelled = true; };
+  }, [room, guestKey, hasAuth, autoJoin]);
   if (autoJoin && !autoDone && v.local && v.status === 'preview') { setAutoDone(true); v.join(); }
 
   const unread = chatOpen ? 0 : Math.max(0, v.chat.filter(c => !c.mine).length - seen);
@@ -85,6 +102,13 @@ export function VisioCall({ room, auth, title, mode = 'page', canInvite, guestDe
           <h2>{title}</h2>
           <p className="vz-muted">{liveCount ? tf(t(liveCount === 1 ? 'vz_live_one' : 'vz_live_n'), { n: liveCount }) : t('vz_live_none')}</p>
           {v.mediaErr && <p className="vz-warn">{t(v.mediaErr === 'none' ? 'vz_media_none' : 'vz_media_cam')}</p>}
+          {!autoJoin && (
+            <p className={`vz-net ${net.state}`} role="status">
+              {net.state === 'checking' ? <Spinner size={12} /> : net.state === 'relay' ? <ShieldCheck size={14} /> : net.state === 'direct' ? <TriangleAlert size={14} /> : <WifiOff size={14} />}
+              <span>{t(({ checking: 'vz_net_checking', relay: 'vz_net_relay', direct: 'vz_net_direct', blocked: 'vz_net_blocked' } as const)[net.state])}</span>
+            </p>
+          )}
+          {!autoJoin && net.state !== 'relay' && net.state !== 'checking' && !net.configured && auth && 'staff' in auth && <p className="vz-fine">{t('vz_fail_noturn')}</p>}
           {v.status === 'error' && <p className="vz-err">{t(errKey[v.error] ?? 'vz_err_unavailable')}</p>}
           <button type="button" className="vz-join" onClick={v.join} disabled={v.status === 'connecting' || ['not_invited', 'invalid_link', 'expired_link'].includes(v.error)}>
             {v.status === 'connecting' ? <Spinner size={15} color="#fff" /> : v.status === 'error' ? <RefreshCw size={16} /> : <Video size={16} />}
@@ -128,6 +152,17 @@ export function VisioCall({ room, auth, title, mode = 'page', canInvite, guestDe
         {canInvite && <button type="button" className="vz-ghost" onClick={() => setInvite(i => ({ ...i, open: !i.open }))}><Link2 size={14} />{mode === 'page' ? t('vz_invite') : ''}</button>}
         {mode === 'dock' && <button type="button" className="vz-ghost" onClick={() => setBig(b => !b)} aria-label={t(big ? 'vz_shrink' : 'vz_expand')}>{big ? <Minimize2 size={14} /> : <Maximize2 size={14} />}</button>}
       </div>
+      {v.peers.some(p => p.conn === 'failed' || p.conn === 'stuck') && (
+        <div className="vz-fail" role="alert">
+          <TriangleAlert size={16} />
+          <div>
+            <b>{tf(t('vz_fail_title'), { name: v.peers.filter(p => p.conn === 'failed' || p.conn === 'stuck').map(p => p.name).filter(Boolean).join(', ') || '…' })}</b>
+            <span>{t('vz_fail_help')}</span>
+            {!v.turn?.given && auth && 'staff' in auth && <span>{t('vz_fail_noturn')}</span>}
+          </div>
+          <button type="button" onClick={v.join}><RefreshCw size={13} />{t('vz_reconnect')}</button>
+        </div>
+      )}
       {invite.open && (
         <div className="vz-invite">
           <div>{t('vz_invite_s')}</div>

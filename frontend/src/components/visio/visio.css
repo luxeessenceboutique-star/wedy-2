@@ -93,3 +93,16 @@
   .vz-dock { inset-inline-end: 10px; bottom: 10px; width: calc(100vw - 20px); }
   .vz-dock.vz-big { inset: 10px; }
 }
+
+/* network check before the call, and the « connection impossible » banner during it */
+.vz-net { display: flex; align-items: flex-start; gap: 7px; margin: 0; padding: 8px 11px; border-radius: 10px; font-size: 12.5px; line-height: 1.4; background: rgba(255,255,255,.08); color: #c9d7dc; }
+.vz-net svg, .vz-net .spinner { flex-shrink: 0; margin-top: 1px; }
+.vz-net.relay { background: rgba(43,189,134,.16); color: #8be3bf; }
+.vz-net.direct { background: rgba(240,189,106,.16); color: #f0c98a; }
+.vz-net.blocked { background: rgba(223,87,64,.18); color: #ffb3a4; }
+.vz-fail { display: flex; align-items: flex-start; gap: 10px; margin: 8px 12px 0; padding: 10px 12px; border-radius: 12px; background: rgba(223,87,64,.16); border: 1px solid rgba(223,87,64,.4); color: #ffd2c9; font-size: 12.5px; line-height: 1.45; }
+.vz-fail > svg { flex-shrink: 0; margin-top: 2px; color: #ff9b88; }
+.vz-fail > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.vz-fail b { color: #ffffff; font-size: 13px; }
+.vz-fail button { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: none; border-radius: 9px; background: #ffffff; color: #0a1c24; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.vz-fail button:hover { background: #eef6f7; }

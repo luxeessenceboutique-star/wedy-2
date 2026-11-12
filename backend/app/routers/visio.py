@@ -8,8 +8,11 @@ Who may join:
   - signed-in staff: HR / admin in any room; an employee in the meetings they take part in;
   - a guest (e.g. the candidate) with a signed invite link made by HR (`POST /visio/{room}/guest-link`), no account needed.
 
-ICE servers: public STUN by default. Behind strict corporate firewalls a TURN relay is needed — set VISIO_TURN_URL,
-VISIO_TURN_USERNAME and VISIO_TURN_CREDENTIAL (e.g. a self-hosted coturn) and it is handed to the browsers.
+ICE servers: public STUN by default. Two people on different networks (4G, a company Wi-Fi, a home router that is strict about
+NAT) often cannot reach each other directly: the tiles then say « Connexion impossible ». A TURN relay fixes it. Set
+VISIO_TURN_URL (comma-separated turn: / turns: URLs) with either VISIO_TURN_SECRET (coturn `use-auth-secret`: the API hands out
+credentials that expire after 12 h) or VISIO_TURN_USERNAME + VISIO_TURN_CREDENTIAL. The relay credentials are only given to
+signed-in staff and to guests holding a valid invite link, never to anonymous callers.
 The rooms live in the memory of the API process (the API runs as a single uvicorn process).
 """
 import asyncio
@@ -24,7 +27,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from supabase import Client
@@ -153,13 +156,50 @@ def room_info(room: str, supabase: Client = Depends(get_db), user: dict = Depend
     return {**_public_info(room, info), "can_invite": user.get("role_name") in HR_ROLES, "me": user.get("full_name") or user.get("email")}
 
 
+TURN_TTL = 12 * 3600
+
+
+def turn_servers(now: Optional[float] = None) -> tuple[list[dict[str, Any]], str]:
+    """The configured TURN relay as an ICE server, and how its credentials are made: 'ephemeral', 'static' or 'none'."""
+    urls = [u.strip() for u in (os.getenv("VISIO_TURN_URL") or "").split(",") if u.strip()]
+    if not urls:
+        return [], "none"
+    secret = os.getenv("VISIO_TURN_SECRET")
+    if secret:  # coturn's REST scheme: username = expiry:label, credential = base64(HMAC-SHA1(secret, username))
+        username = f"{int((now if now is not None else time.time()) + TURN_TTL)}:wedy"
+        credential = base64.b64encode(hmac.new(secret.encode(), username.encode(), hashlib.sha1).digest()).decode()
+        return [{"urls": urls, "username": username, "credential": credential}], "ephemeral"
+    return [{"urls": urls, "username": os.getenv("VISIO_TURN_USERNAME", ""), "credential": os.getenv("VISIO_TURN_CREDENTIAL", "")}], "static"
+
+
+def _may_use_relay(request: Request, room: Optional[str], k: Optional[str], supabase: Client) -> bool:
+    """Relay credentials cost bandwidth: only signed-in staff and guests with a valid invite link get them."""
+    if room and k:
+        try:
+            _check_room(room)
+            _verify(k, room)
+            return True
+        except HTTPException:
+            pass
+    auth = request.headers.get("authorization") or ""
+    if auth.lower().startswith("bearer "):
+        try:
+            get_current_user(HTTPAuthorizationCredentials(scheme="Bearer", credentials=auth[7:].strip()), supabase)
+            return True
+        except Exception:
+            return False
+    return False
+
+
 @router.get("/ice")
-def ice_servers():
+def ice_servers(request: Request, room: Optional[str] = None, k: Optional[str] = None, supabase: Client = Depends(get_db)):
     servers: list[dict[str, Any]] = [{"urls": ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:global.stun.twilio.com:3478"]}]
-    turn = os.getenv("VISIO_TURN_URL")
-    if turn:
-        servers.append({"urls": [u.strip() for u in turn.split(",") if u.strip()], "username": os.getenv("VISIO_TURN_USERNAME", ""), "credential": os.getenv("VISIO_TURN_CREDENTIAL", "")})
-    return {"iceServers": servers, "max_peers": MAX_PEERS, "turn": bool(turn)}
+    relay, mode = turn_servers()
+    allowed = bool(relay) and _may_use_relay(request, room, k, supabase)
+    if allowed:
+        servers.extend(relay)
+    # `turn_configured`: the server has a relay (even if this caller may not use it); `turn`: the browser received it
+    return {"iceServers": servers, "max_peers": MAX_PEERS, "turn": allowed, "turn_configured": bool(relay), "turn_mode": mode if allowed else "none"}
 
 
 @router.get("/live")

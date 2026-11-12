@@ -210,14 +210,34 @@ the API only relays the handshake over a WebSocket (`/api/visio/ws/...`). Requir
 - **HTTPS** in production: browsers only give access to the camera and microphone on `https://` (or `localhost`).
 - The reverse proxy must forward WebSocket upgrades on `/api/` (the provided `frontend/nginx.conf` already does).
 - The API must run as **one** uvicorn process (the rooms live in its memory) — the default Docker command does.
-- Optional TURN relay for strict corporate networks (public STUN is used otherwise; most home / mobile networks work without it),
-  e.g. a self-hosted coturn:
+- **A TURN relay.** Without it only public STUN is used: when the two people are on different networks (one on 4G or behind a
+  company Wi-Fi / firewall, or a router that is strict about NAT), their browsers cannot reach each other and **both screens show
+  « Connexion impossible »**. This is the usual cause of « we both see a connection problem » between HR and a candidate. The
+  signalling is fine (the people appear in the room); only the media path is blocked, and only a relay fixes it.
+
+  Run coturn on a server with a public IP (the provided `docker-compose.yml` has a `coturn` service, off by default):
+
+```bash
+# .env of the stack
+VISIO_TURN_SECRET=a_long_random_string
+VISIO_TURN_EXTERNAL_IP=203.0.113.10        # the server's public IP
+docker compose --profile turn up -d coturn
+```
+
+  Open in the firewall: **UDP + TCP 3478** and **UDP 49160-49200**. Then tell the API where it is (`backend/.env`, same secret) and restart it:
 
 ```env
-VISIO_TURN_URL=turn:turn.yourdomain.com:3478,turns:turn.yourdomain.com:5349
-VISIO_TURN_USERNAME=wedy
-VISIO_TURN_CREDENTIAL=change_me
+VISIO_TURN_URL=turn:turn.yourdomain.com:3478?transport=udp,turn:turn.yourdomain.com:3478?transport=tcp
+VISIO_TURN_SECRET=a_long_random_string
 ```
+
+  The API then hands the browsers credentials that **expire after 12 h** (coturn's `use-auth-secret` scheme) and only to signed-in
+  staff and guests holding an invite link. Any other TURN provider works with a fixed login instead:
+  `VISIO_TURN_USERNAME` + `VISIO_TURN_CREDENTIAL`. Check with `GET /api/visio/ice` (while signed in): `"turn": true`.
+  Before a call, the join screen tests the network and says whether the relay is reachable (« Réseau prêt »), whether only direct
+  connections are possible, or whether the network blocks video calls; during a call a banner with a **Reconnecter** button
+  appears when a participant cannot be reached. Not tested by us against a live coturn from the build sandbox: try a call between
+  a laptop on Wi-Fi and a phone on 4G after setting it up.
 
 Guest invite links (candidates) are signed with `SECRET_KEY` and expire 24 h after the meeting.
 

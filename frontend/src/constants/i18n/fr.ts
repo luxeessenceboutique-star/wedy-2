@@ -3706,4 +3706,13 @@ export const fr = {
     ads_fixed_title: 'Wedy a corrigé avant de rédiger',
     ads_fixed_points: 'fautes corrigées',
     ads_fix_undo: 'Annuler les corrections',
+    // Visio network
+    vz_net_checking: 'Test de votre réseau…',
+    vz_net_relay: 'Réseau prêt : la visio passera même derrière un pare-feu.',
+    vz_net_direct: 'Connexion directe uniquement : elle peut échouer si l\'autre personne est sur un autre réseau (4G, Wi-Fi d\'entreprise).',
+    vz_net_blocked: 'Ce réseau semble bloquer la visio. Essayez un autre réseau, par exemple le partage de connexion de votre téléphone.',
+    vz_fail_title: 'Connexion impossible avec {name}',
+    vz_fail_help: 'Cela vient presque toujours du réseau (pare-feu, 4G, Wi-Fi d\'entreprise). Reconnectez-vous ; si cela persiste, l\'un de vous peut changer de réseau (par exemple le partage de connexion du téléphone).',
+    vz_fail_noturn: 'Administrateur : aucun serveur relais (TURN) n\'est actif, donc la visio échoue entre certains réseaux. Voir DEPLOYMENT.md, section « Visio ».',
+    vz_reconnect: 'Reconnecter',
 } as const;

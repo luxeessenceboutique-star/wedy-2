@@ -33,6 +33,7 @@ export function useVisio(room: string, auth: VisioAuth | null) {
   const [mediaErr, setMediaErr] = useState('');
   const [joinedAt, setJoinedAt] = useState<number | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [turn, setTurn] = useState<{ given: boolean; configured: boolean } | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const links = useRef(new Map<string, Link>());
@@ -83,7 +84,8 @@ export function useVisio(room: string, auth: VisioAuth | null) {
     const map = links.current;
 
     const upsertPeer = (id: string, patch: Partial<VisioPeer>) => setPeers(ps => (ps.some(p => p.id === id) ? ps.map(p => (p.id === id ? { ...p, ...patch } : p)) : [...ps, { id, name: '', role: 'guest', mic: true, cam: true, screen: false, stream: null, conn: 'new', ...patch }]));
-    const drop = (id: string) => { map.get(id)?.pc.close(); map.delete(id); setPeers(ps => ps.filter(p => p.id !== id)); };
+    const timers = new Map<string, number>();
+    const drop = (id: string) => { window.clearTimeout(timers.get(id)); timers.delete(id); map.get(id)?.pc.close(); map.delete(id); setPeers(ps => ps.filter(p => p.id !== id)); };
 
     const makeLink = (id: string, initiator: boolean): Link => {
       const pc = new RTCPeerConnection({ iceServers: ice });
@@ -102,6 +104,9 @@ export function useVisio(room: string, auth: VisioAuth | null) {
       };
       pc.onicecandidate = e => { if (e.candidate) send({ t: 'signal', to: id, data: { candidate: e.candidate.toJSON() } }); };
       pc.onconnectionstatechange = () => upsertPeer(id, { conn: pc.connectionState });
+      // ICE can stay « connecting » for half a minute before it admits defeat: say so after 15 s (the call screen offers to reconnect)
+      window.clearTimeout(timers.get(id));
+      timers.set(id, window.setTimeout(() => { if (map.get(id) === link && pc.connectionState !== 'connected') upsertPeer(id, { conn: 'stuck' }); }, 15000));
       map.set(id, link);
       return link;
     };
@@ -140,7 +145,10 @@ export function useVisio(room: string, auth: VisioAuth | null) {
     };
 
     (async () => {
-      try { ice = (await getIceConfig()).iceServers; } catch { /* public STUN fallback */ }
+      try {
+        const cfg = await getIceConfig(room, 'guest' in auth ? auth.guest : undefined);
+        ice = cfg.iceServers; setTurn({ given: cfg.turn, configured: !!cfg.turn_configured });
+      } catch { /* public STUN fallback */ }
       if (closed) return;
       const ws = new WebSocket(wsUrl(room, auth));
       wsRef.current = ws;
@@ -174,6 +182,7 @@ export function useVisio(room: string, auth: VisioAuth | null) {
 
     return () => {
       closed = true;
+      timers.forEach(h => window.clearTimeout(h)); timers.clear();
       send({ t: 'leave' });
       wsRef.current?.close(); wsRef.current = null;
       map.forEach(l => l.pc.close()); map.clear();
@@ -234,5 +243,5 @@ export function useVisio(room: string, auth: VisioAuth | null) {
   // our own chat messages come back from the server: keep the local copy, drop the echo
   const shownChat = chat.filter(c => c.mine || c.from !== me?.id);
 
-  return { status, error, me, peers, chat: shownChat, local, mic, cam, screen, mediaErr, joinedAt, join, leave, toggleMic, toggleCam, toggleScreen, sendChat, canScreen: !!navigator.mediaDevices?.getDisplayMedia };
+  return { status, error, turn, me, peers, chat: shownChat, local, mic, cam, screen, mediaErr, joinedAt, join, leave, toggleMic, toggleCam, toggleScreen, sendChat, canScreen: !!navigator.mediaDevices?.getDisplayMedia };
 }

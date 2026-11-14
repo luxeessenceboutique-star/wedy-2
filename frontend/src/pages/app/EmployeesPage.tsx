@@ -8,6 +8,7 @@ import { CVImportModal } from '@/components/employees/CVImportModal';
 import { SmartImportModal } from '@/components/employees/SmartImportModal';
 import { ExportModal } from '@/components/employees/ExportModal';
 import { DepartmentsModal } from '@/components/employees/DepartmentsModal';
+import { RestoreDocsModal } from '@/components/employees/RestoreDocsModal';
 import { readEmployeeFilters, filtersToQuery, rememberEmployeeList } from '@/lib/listMemory';
 import { useLang } from '@/lib/lang';
 import { tf } from '@/lib/format';
@@ -76,6 +77,7 @@ function useEmployeesModel() {
   const [formErr, setFormErr] = useState('');
   const [newId, setNewId] = useState<string | null>(null);
   const [showCV, setShowCV] = useState(false);
+  const [showRestore, setShowRestore] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showDepts, setShowDepts] = useState(false);
@@ -222,6 +224,7 @@ function useEmployeesModel() {
     importOpen, toggleImport: () => setImportOpen(o => !o),
     smartImport: () => { setImportOpen(false); setShowImport(true); },
     cvImport: () => { setImportOpen(false); setShowCV(true); },
+    restoreDocs: () => { setImportOpen(false); setShowRestore(true); },
     exportToast: () => setShowExport(true), deptToast: () => setShowDepts(true),
     drawer, openDrawer, closeDrawer: () => setDrawer(false),
     extra, toggleExtra: () => setExtra(x => !x), extraLabel: t(extra ? 'emp_extra_hide' : 'emp_extra_show'),
@@ -253,6 +256,7 @@ function useEmployeesModel() {
         rows={(selected.length ? selected : list) as unknown as Record<string, unknown>[]}
       />
       <DepartmentsModal open={showDepts} onClose={() => setShowDepts(false)} />
+      <RestoreDocsModal open={showRestore} onClose={() => setShowRestore(false)} />
     </>
   );
   return { v, modals };

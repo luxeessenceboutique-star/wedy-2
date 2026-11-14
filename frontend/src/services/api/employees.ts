@@ -76,6 +76,14 @@ export const replaceEmployeeFileContent = (employee_id: string, file_id: string,
 export const deleteEmployeeFile = (employee_id: string, file_id: string) =>
   api.delete(`/employees/${employee_id}/files/${file_id}`);
 
+/** Everyone and every file record (with `available`): what the bulk restore of a folder of documents matches against. */
+export type DocumentsOverview = {
+  employees: { id: string; full_name: string; status: string }[];
+  files: (EmployeeFile & { available: boolean })[];
+};
+export const getDocumentsOverview = () =>
+  api.get<DocumentsOverview>('/employees/documents/overview', { timeout: 120000 }).then(r => r.data);
+
 /** The server answered 404: the file is not on its disk any more (blob responses hide the server's message). */
 export const isFileMissing = (e: unknown) => (e as { response?: { status?: number } })?.response?.status === 404;
 

@@ -2,7 +2,7 @@
 // The markup keeps the reference's exact inline styles; `v` is the page logic (the reference's renderVals()).
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Building2, Calendar, Check, ChevronDown, ChevronsUpDown, CircleAlert, Clock, Columns3, Download, Eye, FileClock, FileSpreadsheet, FileUp, GraduationCap, LayoutGrid, List, Mail, Plus, Search, SearchX, Trash2, Upload, UserPlus, Users, WandSparkles, X } from 'lucide-react';
+import { ArrowRight, Building2, Calendar, Check, ChevronDown, ChevronsUpDown, CircleAlert, Clock, Columns3, Download, Eye, FileClock, FileSpreadsheet, FileUp, FolderUp, GraduationCap, LayoutGrid, List, Mail, Plus, Search, SearchX, Trash2, Upload, UserPlus, Users, WandSparkles, X } from 'lucide-react';
 import { RV } from '@/components/motion';
 import { Spinner } from '@/components/ui';
 import { useLang } from '@/lib/lang';
@@ -64,6 +64,15 @@ export function EmployeesView({ v }: { v: EmployeesVals }) {
                       <span style={{ fontSize: '10px', fontWeight: '700', padding: '1px 6px', borderRadius: '99px', background: '#ece9fb', color: '#5444b8' }}>{'IA'}</span>
                     </span>
                     <span style={{ display: 'block', fontSize: '12.5px', color: '#52646d', marginTop: '2px' }}>{t('emp_wedy_lit_le_cv_et_pre_remplit_le')}</span>
+                  </span>
+                </button>
+                <button type="button" onClick={v.restoreDocs} style={{ width: '100%', display: 'flex', gap: '11px', alignItems: 'flex-start', padding: '10px', border: 'none', borderRadius: '11px', background: 'transparent', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer' }} className="emp-h2">
+                  <span style={{ width: '32px', height: '32px', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e4f2f4', color: '#0e6f84', flexShrink: '0' }}>
+                    <span style={{ display: 'inline-flex', width: '16px', height: '16px' }}><FolderUp size={16} style={{ display: 'block' }} /></span>
+                  </span>
+                  <span>
+                    <span style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#0a1c24' }}>{t('rst_menu')}</span>
+                    <span style={{ display: 'block', fontSize: '12.5px', color: '#52646d', marginTop: '2px' }}>{t('rst_menu_s')}</span>
                   </span>
                 </button>
               </RV>

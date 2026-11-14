@@ -186,6 +186,34 @@ def commit_import(
 
 # ── Employee file sub-resources (BEFORE parameterized /{employee_id}) ─────────
 
+def _all_rows(supabase: Client, table: str, columns: str, page: int = 1000) -> list:
+    """Every row of a table, page by page (PostgREST caps one answer at 1000 rows)."""
+    out, start = [], 0
+    while True:
+        res = supabase.table(table).select(columns).order("id").range(start, start + page - 1).execute()
+        rows = res.data or []
+        out.extend(rows)
+        if len(rows) < page:
+            return out
+        start += page
+
+
+@router.get("/documents/overview")
+def documents_overview(
+    supabase: Client = Depends(get_db),
+    current_user: dict = Depends(require_hr_or_admin),
+):
+    """Everyone and every file record, with `available` (the file can still be opened): what the bulk restore of a
+    folder of documents matches against — which records lost their file, which documents a person has no record of."""
+    people = _all_rows(supabase, "employees", "id,full_name,status")
+    files = _all_rows(supabase, "employee_files", "id,employee_id,name,file_type,file_path,file_size,created_at")
+    ok = file_storage.availability([f.get("file_path") or "" for f in files])
+    return {
+        "employees": [{"id": p["id"], "full_name": p.get("full_name") or "", "status": p.get("status") or ""} for p in people],
+        "files": [{**f, "available": ok.get(f.get("file_path") or "", False)} for f in files],
+    }
+
+
 @router.get("/{employee_id}/files")
 def list_employee_files(
     employee_id: UUID,

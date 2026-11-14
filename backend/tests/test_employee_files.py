@@ -241,6 +241,32 @@ def test_putting_back_rejects_empty_files_and_unknown_records():
     assert c.put(f"/api/employees/{EMP}/files/00000000-0000-4000-8000-0000000000ff/content", files={"file": ("x.pdf", b"x", "application/pdf")}).status_code == 404
 
 
+def test_documents_overview_lists_everyone_and_which_files_are_lost():
+    c, db = client()
+    db.tables["employees"].append({"id": "00000000-0000-4000-8000-0000000000e2", "full_name": "Nizar Taoussi", "status": "active"})
+    kept = upload(c, "CV.pdf", None).json()
+    lost = upload(c, "CIN Hiba.pdf", None).json()
+    os.remove(os.path.join(settings.UPLOAD_DIR, lost["file_path"]))
+    r = c.get("/api/employees/documents/overview")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert {e["full_name"] for e in body["employees"]} == {"Hiba", "Nizar Taoussi"}
+    files = {f["id"]: f for f in body["files"]}
+    assert files[kept["id"]]["available"] is True and files[lost["id"]]["available"] is False
+    assert files[lost["id"]]["employee_id"] == EMP and files[lost["id"]]["name"] == "CIN Hiba.pdf"
+
+
+def test_documents_overview_is_for_hr_only():
+    c, _ = client()
+    app.dependency_overrides.pop(require_hr_or_admin, None)
+    app.dependency_overrides[get_current_user] = lambda: {**USER, "role_name": "employee"}
+    try:
+        assert c.get("/api/employees/documents/overview").status_code == 403
+    finally:
+        app.dependency_overrides[require_hr_or_admin] = lambda: USER
+        app.dependency_overrides[get_current_user] = lambda: USER
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

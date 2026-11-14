@@ -268,6 +268,13 @@ Help notes (`app/HelpPage.tsx`): "Demandez à Wedy" opens the Copilot; the fake 
 - « Créer des candidatures » (`POST /cv-prospects/convert`): optional job post (active ones) and position. Creates an `employees` row `status = candidate` (source « Événement · <name> », stage `new`, skills and CV profile in `custom_fields`) and copies the CV into the candidate folder (`employee_files`, type `cv`). Skipped with a reason per CV: already converted, already known (staff / intern, or a candidate for the same post), extraction failed and not yet reviewed, no name. Deleting an event deletes its prospects and files but never the candidates created from them.
 - Tests: `backend/tests/test_cv_events.py` (15; fake database, fake extraction, one real PDF through the rules fallback). Not verified against the real AI, Supabase or Storage from the sandbox.
 
+Restaurer les documents notes (`components/employees/RestoreDocsModal.tsx`, `lib/docRestore.ts`, Employés › Importer › « Restaurer les documents »):
+- For the files lost before durable storage (« Fichier introuvable »): HR drops the folder of scans, or the zip as downloaded from Drive (a zip inside a zip works; `fflate` reads it in the browser), with one sub-folder per person or files named after the person.
+- `GET /employees/documents/overview` (HR) returns everyone and every file record with `available`. `buildPlan` matches each folder / file name to a person (accents, word order, joined words and one-letter slips tolerated: Amar / Ammar, Grida / Gridda, El Orchi / Elorchi; a single word or two equally close people never match), detects the kind (CIN, CV, contrat, diplôme / attestation de réussite, RIB → stored as « autre »), then the record: same name first, else a lost record of the same kind.
+- Preview before anything is sent: à remettre (PUT `/files/{id}/content` into the lost record), à ajouter (POST, typed), déjà présent (skipped), à vérifier (a document naming someone else than its folder, or an unknown folder: choose the person by hand). Two uploads at a time, per-row result, failures stay listed.
+- « Ce qu'il reste à chercher »: per person concerned, the standard documents found nowhere; records still without a file; records whose name points to another person (« classés chez une autre personne ? » with a link to the folder). « Copier la liste » puts it in the clipboard to send.
+- Tests: `backend/tests/test_employee_files.py` (overview, HR only) and `npm run test:docs` (matching, fictional names).
+
 ## Screens (38)
 
 | # | Screen | Design file | Route | Page file | Status |

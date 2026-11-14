@@ -2,7 +2,7 @@
 // The markup keeps the reference's exact inline styles; `v` is the page logic (the reference's renderVals()).
 import { Fragment, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Briefcase, Calendar, Check, CircleCheck, CloudUpload, Download, FileClock, FileText, Mail, MapPin, Pencil, Receipt, ScanText, Sparkles, Star, Trash2, User, WandSparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Briefcase, Calendar, Check, CircleCheck, CloudUpload, Download, Eye, FileClock, FileText, Mail, MapPin, Pencil, Receipt, ScanText, Sparkles, Star, Trash2, User, WandSparkles } from 'lucide-react';
 import { RV } from '@/components/motion';
 import { useLang } from '@/lib/lang';
 import { tf } from '@/lib/format';
@@ -241,7 +241,7 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                         <span style={{ display: 'inline-flex', width: '16px', height: '16px' }}><FileText size={16} style={{ display: 'block' }} /></span>
                       </span>
                       <div style={{ flex: '1', minWidth: '0' }}>
-                        <div style={{ fontSize: '13.5px', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{fl.name}</div>
+                        <button type="button" onClick={fl.view} title={t('fpv_view')} style={{ display: 'block', maxWidth: '100%', padding: 0, border: 'none', background: 'none', fontFamily: 'inherit', textAlign: 'start', color: '#0a1c24', fontSize: '13.5px', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'pointer' }} className="emf-fname">{fl.name}</button>
                         <div style={{ fontSize: '12px', color: fl.missing ? '#c64a35' : '#5f7079' }}>{fl.missing ? `${fl.type} · ${t('emf_file_missing_pill')}` : `${fl.type} · ${fl.size}`}</div>
                       </div>
                       {fl.missing && (
@@ -249,6 +249,9 @@ export function EmployeeFolderView({ v }: { v: EmployeeFolderVals }) {
                           <span style={{ display: 'inline-flex', width: '14px', height: '14px' }}><CloudUpload size={14} style={{ display: 'block' }} /></span>{t('emf_reupload')}
                         </button>
                       )}
+                      <button type="button" onClick={fl.view} aria-label={t('fpv_view')} title={t('fpv_view')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#0e6f84', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
+                        <span style={{ display: 'inline-flex', width: '16px', height: '16px' }}><Eye size={16} style={{ display: 'block' }} /></span>
+                      </button>
                       <button type="button" onClick={fl.download} disabled={fl.missing} title={fl.missing ? t('emf_file_missing') : undefined} aria-label={t('emf_telecharger')} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '9px', background: 'transparent', color: '#7d8f97', opacity: fl.missing ? 0.35 : 1, cursor: fl.missing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="emf-h5">
                         <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><Download size={15} style={{ display: 'block' }} /></span>
                       </button>

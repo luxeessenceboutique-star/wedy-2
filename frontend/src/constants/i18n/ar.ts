@@ -3804,4 +3804,15 @@ export const ar = {
     rst_copied: 'تم نسخ القائمة: يمكنك لصقها في رسالة',
     // Restore documents (link)
     rst_open: 'فتح الملف',
+    // File preview
+    fpv_view: 'عرض الوثيقة',
+    fpv_prev: 'السابق',
+    fpv_next: 'التالي',
+    fpv_open_tab: 'فتح في علامة تبويب',
+    fpv_loading: 'جارٍ تحميل الوثيقة…',
+    fpv_no_preview: 'لا تتوفر معاينة لهذا النوع من الملفات',
+    fpv_no_preview_s: 'افتحه في علامة تبويب أو قم بتنزيله.',
+    fpv_lost_hint: 'لم يعد الملف على الخادم: استعمل «إعادة الرفع» لإرجاعه.',
+    // File preview (pdf)
+    fpv_no_pdf: 'هذا المتصفح لا يعرض ملفات PDF داخل الصفحة',
 } as const;

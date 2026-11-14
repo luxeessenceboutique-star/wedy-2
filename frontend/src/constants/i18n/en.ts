@@ -3804,4 +3804,15 @@ export const en = {
     rst_copied: 'List copied: you can paste it in a message',
     // Restore documents (link)
     rst_open: 'Open the folder',
+    // File preview
+    fpv_view: 'View the document',
+    fpv_prev: 'Previous',
+    fpv_next: 'Next',
+    fpv_open_tab: 'Open in a new tab',
+    fpv_loading: 'Loading the document…',
+    fpv_no_preview: 'No preview for this kind of file',
+    fpv_no_preview_s: 'Open it in a new tab or download it.',
+    fpv_lost_hint: 'The file is no longer on the server: use “Re-upload” to put it back.',
+    // File preview (pdf)
+    fpv_no_pdf: 'This browser does not show PDFs inside the page',
 } as const;

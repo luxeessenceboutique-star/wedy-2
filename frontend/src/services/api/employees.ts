@@ -91,14 +91,19 @@ export const getEmployeeFileUrl = (file_path: string) => `${BASE}/uploads/${file
 
 const MIME: Record<string, string> = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', txt: 'text/plain' };
 
+/** A protected upload as a Blob typed from its name when the server says nothing useful (so a PDF / image can be shown). */
+export const fetchEmployeeFileBlob = async (file_path: string, name: string, mime?: string): Promise<Blob> => {
+  const res = await api.get<Blob>(`/uploads/${file_path}`, { responseType: 'blob', timeout: 0 });
+  const ext = (name.split('.').pop() ?? file_path.split('.').pop() ?? '').toLowerCase();
+  const type = mime || (res.data.type && res.data.type !== 'application/octet-stream' ? res.data.type : '') || MIME[ext] || 'application/octet-stream';
+  return new Blob([res.data], { type });
+};
+
 /** Open a protected upload in a new tab (PDF / image preview). The tab is opened first so the browser does not block it. */
 export const viewEmployeeFile = async (file_path: string, name: string, mime?: string) => {
   const w = window.open('', '_blank');
   try {
-    const res = await api.get<Blob>(`/uploads/${file_path}`, { responseType: 'blob', timeout: 0 });
-    const ext = (name.split('.').pop() ?? file_path.split('.').pop() ?? '').toLowerCase();
-    const type = mime || (res.data.type && res.data.type !== 'application/octet-stream' ? res.data.type : '') || MIME[ext] || 'application/octet-stream';
-    const url = URL.createObjectURL(new Blob([res.data], { type }));
+    const url = URL.createObjectURL(await fetchEmployeeFileBlob(file_path, name, mime));
     if (w) w.location.href = url; else window.open(url, '_blank');
     setTimeout(() => URL.revokeObjectURL(url), 120_000);
   } catch (e) { w?.close(); throw e; }

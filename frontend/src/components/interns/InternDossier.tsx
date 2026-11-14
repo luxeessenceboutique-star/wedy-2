@@ -9,11 +9,12 @@ import {
   RefreshCw, Settings, Target, Trash2, User, UserCheck, WandSparkles, X,
 } from 'lucide-react';
 import {
-  createInternEvaluation, deleteDocument, deleteEmployeeFile, deleteInternEvaluation, getApiError, getInternOnboarding, isFileMissing, listDocuments, listEmployeeFiles,
-  listInternEvaluations, sendForSignature, updateInternOnboarding, uploadEmployeeFile, viewEmployeeFile,
+  createInternEvaluation, deleteDocument, deleteEmployeeFile, deleteInternEvaluation, getApiError, getInternOnboarding, listDocuments, listEmployeeFiles,
+  listInternEvaluations, sendForSignature, updateInternOnboarding, uploadEmployeeFile,
   type ChecklistItem, type EmployeeFile, type Intern, type InternEvaluation, type InternOnboarding,
 } from '@/services/api';
 import { Drawer, Spinner } from '@/components/ui';
+import { FilePreviewModal } from '@/components/files/FilePreviewModal';
 import { useLang, type TKey } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { tf } from '@/lib/format';
@@ -395,7 +396,8 @@ function DocsTab({ intern }: { intern: Intern }) {
     };
     input.click();
   };
-  const view = (f: EmployeeFile) => { viewEmployeeFile(f.file_path, f.name, f.mime_type).catch(e => notify.error(isFileMissing(e) ? t('emf_file_missing') : getApiError(e, t('error')))); };
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const view = (f: EmployeeFile) => setPreviewId(f.id); // shown inside Wedy, the other files of the folder one arrow away
   const sign = async (id: string) => {
     try {
       const res = await sendForSignature(id);
@@ -422,6 +424,8 @@ function DocsTab({ intern }: { intern: Intern }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <FilePreviewModal openId={previewId} onClose={() => setPreviewId(null)}
+        files={files.map(f => ({ id: f.id, name: f.name, file_path: f.file_path, mime_type: f.mime_type, available: f.available, label: scanLabel(f.file_type) || undefined }))} />
       <div style={card}>
         <div style={kicker}><FileText size={13} />{t('stg_docs_saved')}{rows.length > 0 && <span style={{ marginInlineStart: 'auto', fontFamily: "'Geist Mono',monospace" }}>{rows.length}</span>}</div>
         {loading ? <Spinner /> : !rows.length ? <p style={{ margin: 0, fontSize: 13, color: '#7d8f97' }}>{t('stg_docs_none')}</p> : rows.map(r => r.kind === 'file' ? (

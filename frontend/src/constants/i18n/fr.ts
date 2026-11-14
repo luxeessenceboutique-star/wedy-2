@@ -3858,4 +3858,15 @@ export const fr = {
     rst_copied: 'Liste copiée : vous pouvez la coller dans un message',
     // Restore documents (link)
     rst_open: 'Ouvrir le dossier',
+    // File preview
+    fpv_view: 'Voir le document',
+    fpv_prev: 'Précédent',
+    fpv_next: 'Suivant',
+    fpv_open_tab: 'Ouvrir dans un onglet',
+    fpv_loading: 'Chargement du document…',
+    fpv_no_preview: 'Aperçu non disponible pour ce type de fichier',
+    fpv_no_preview_s: 'Ouvrez-le dans un onglet ou téléchargez-le.',
+    fpv_lost_hint: 'Le fichier n\'est plus sur le serveur : utilisez « Ré-uploader » pour le remettre.',
+    // File preview (pdf)
+    fpv_no_pdf: 'Ce navigateur n\'affiche pas les PDF dans la page',
 } as const;

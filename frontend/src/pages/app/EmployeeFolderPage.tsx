@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { useLang } from '@/lib/lang';
 import { tf } from '@/lib/format';
 import { useProvideAskPrompts } from '@/lib/askContext';
+import { FilePreviewModal } from '@/components/files/FilePreviewModal';
 
 const CONTRACT_TYPES = ['CDI', 'CDD', 'Stage', 'ANAPEC', 'Consultant', 'Freelance'];
 const FILE_TYPES: { value: EmployeeFile['file_type']; label: string; bg: string; color: string }[] = [
@@ -149,7 +150,7 @@ export type EmployeeFolderVals = {
   hasMissing: boolean; missingLabel: string; goFiles: () => void;
   hasSkillsOrLangs: boolean; skills: string[]; languages: string[];
   fileTypes: { label: string; on: boolean; color: string; pick: () => void }[];
-  files: { name: string; type: string; size: string; missing: boolean; bg: string; color: string; download: () => void; reupload: () => void; rename: () => void; remove: () => void }[];
+  files: { name: string; type: string; size: string; missing: boolean; bg: string; color: string; view: () => void; download: () => void; reupload: () => void; rename: () => void; remove: () => void }[];
   fileCount: number;
   upload: () => void; drop: (f: File) => void;
   aiIdle: boolean; aiBusy: boolean; aiDone: boolean; aiApplied: boolean;
@@ -183,6 +184,7 @@ export default function EmployeeFolderPage() {
   const [analysisResult, setAnalysisResult] = useState<Extracted | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reuploadRef = useRef<HTMLInputElement>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [reuploadId, setReuploadId] = useState('');
   // naming step: a file is named before it is added, and an existing file can be renamed
   const [naming, setNaming] = useState<{ mode: 'upload'; file: File; name: string; ext: string } | { mode: 'rename'; id: string; name: string; ext: string; original: string } | null>(null);
@@ -412,6 +414,7 @@ export default function EmployeeFolderPage() {
       const sizeKb = f.file_size ? (f.file_size < 1024 * 1024 ? `${Math.round(f.file_size / 1024)} Ko` : `${(f.file_size / (1024 * 1024)).toFixed(1)} Mo`) : '';
       return {
         name: f.name, type: style.label, size: sizeKb, missing: f.available === false, bg: style.bg, color: style.color,
+        view: () => setPreviewId(f.id),
         download: () => downloadEmployeeFile(f.file_path, f.name).catch((e: unknown) => toast.error(isFileMissing(e) ? t('emf_file_missing') : getApiError(e, 'Error'))),
         reupload: () => { setReuploadId(f.id); reuploadRef.current?.click(); },
         rename: () => setNaming({ mode: 'rename', id: f.id, original: f.name, ...splitName(f.name) }),
@@ -467,6 +470,10 @@ export default function EmployeeFolderPage() {
   return (
     <>
       <EmployeeFolderView v={v} />
+      <FilePreviewModal
+        openId={previewId} onClose={() => setPreviewId(null)}
+        files={(files as EmployeeFile[]).map(f => ({ id: f.id, name: f.name, file_path: f.file_path, mime_type: f.mime_type, available: f.available, label: ([...FILE_TYPES, ...LEGACY_FILE_TYPES].find(x => x.value === f.file_type) ?? FILE_TYPES[4]).label }))}
+      />
       <input
         ref={fileInputRef} type="file" style={{ display: 'none' }}
         onChange={e => { const f = e.target.files?.[0]; if (f) setNaming({ mode: 'upload', file: f, ...splitName(f.name) }); e.target.value = ''; }}

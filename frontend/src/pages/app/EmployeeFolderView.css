@@ -8,3 +8,5 @@
 .emf-h7:hover { border-color: #b9dfe5 !important; }
 .emf-h8:hover { color: #ffffff !important; }
 .emf-h9:hover { background: #f8fbfb !important; }
+
+.emf-fname:hover { color: #0e6f84 !important; text-decoration: underline; }

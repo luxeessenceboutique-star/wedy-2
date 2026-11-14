@@ -1,8 +1,12 @@
 // Bulk restore of employee documents: a folder (or zip) of scans is matched to the people of Wedy and to the file
 // records that lost their file. Pure functions only (no React, no network) so the matching can be tested on its own.
 
-export type DocKind = 'cin' | 'cv' | 'contrat' | 'diplome' | 'rib' | 'autre';
+export type DocKind = 'cin' | 'cv' | 'contrat' | 'diplome' | 'rib' | 'convention' | 'nda' | 'completion' | 'autre';
+/** The documents every employee's folder should hold. */
 export const STANDARD_KINDS: DocKind[] = ['cin', 'cv', 'contrat', 'diplome', 'rib'];
+/** …and every intern's (the « Documents » tab of an intern: CIN, convention, charte IT / NDA; the CV too). */
+export const INTERN_KINDS: DocKind[] = ['cin', 'cv', 'convention', 'nda'];
+export const standardKindsFor = (status?: string) => (status === 'intern' ? INTERN_KINDS : STANDARD_KINDS);
 
 export type Person = { id: string; full_name: string; status?: string };
 export type FileRecord = { id: string; employee_id: string; name: string; file_type: string; file_path?: string; available: boolean };
@@ -97,14 +101,17 @@ export function nameScore(a: string, b: string): number {
 
 // ── document kind ────────────────────────────────────────────────────────────────────────────────────────
 
-const KIND_WORDS = /\b(cin|cni|carte nationale|rib|releve d identite bancaire|contrat|cdi|cdd|anapec|cv|curriculum vitae|diplome|dipl\w*|attestation|de|reussite|licence|master|bachelor|scan|copie|du|la|le|des|d)\b/g;
+const KIND_WORDS = /\b(cin|cni|carte nationale|rib|releve d identite bancaire|contrat|cdi|cdd|anapec|cv|curriculum vitae|diplome|dipl\w*|attestation|de|reussite|licence|master|bachelor|convention|stage|charte|nda|confidentialite|engagement|it|scan|copie|du|la|le|des|d)\b/g;
 
 export function kindOf(name: string, fileType?: string): DocKind {
   if (fileType === 'cin' || fileType === 'certificat') return 'cin';
-  if (fileType === 'cv' || fileType === 'contrat' || fileType === 'diplome') return fileType;
+  if (fileType === 'cv' || fileType === 'contrat' || fileType === 'diplome' || fileType === 'convention' || fileType === 'nda' || fileType === 'completion') return fileType;
   const n = norm(fixMojibake(name));
   if (/\b(cin|cni)\b|carte nationale/.test(n)) return 'cin';
   if (/\brib\b|releve d identite bancaire|\biban\b/.test(n)) return 'rib';
+  if (/\bconvention\b/.test(n)) return 'convention';
+  if (/\bcharte\b|\bnda\b|confidentialite|non divulgation/.test(n)) return 'nda';
+  if (/attestation de (fin de )?stage|\bcompletion\b/.test(n)) return 'completion';
   if (/\bcontrat\b|\bcdi\b|\bcdd\b/.test(n)) return 'contrat';
   if (/\bcv\b|curriculum/.test(n)) return 'cv';
   if (/\bdipl|attestation de reussite|\breussite\b|\blicence\b|\bmaster\b|\bbachelor\b/.test(n)) return 'diplome';
@@ -202,7 +209,7 @@ export function buildPlan(picks: Picked[], people: Person[], records: FileRecord
     const have = new Set<DocKind>();
     (recsOf.get(pid) ?? []).forEach(r => { if (r.available) have.add(kindOf(r.name, r.file_type)); });
     items.forEach(i => { if (i.personId === pid && (i.action === 'add' || i.action === 'restore' || i.action === 'present')) have.add(i.kind); });
-    const kinds = STANDARD_KINDS.filter(k => !have.has(k));
+    const kinds = standardKindsFor(byId.get(pid)?.status).filter(k => !have.has(k));
     if (kinds.length) missing.push({ personId: pid, personName: byId.get(pid)?.full_name ?? '?', kinds });
   });
   missing.sort((a, b) => a.personName.localeCompare(b.personName));

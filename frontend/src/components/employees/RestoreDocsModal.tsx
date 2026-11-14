@@ -18,7 +18,7 @@ import './RestoreDocsModal.css';
 const DOC_EXT = /\.(pdf|jpe?g|png|webp|heic|gif|bmp|tiff?|docx?|odt|xlsx?|txt)$/i;
 const SKIP = /(^|\/)(__MACOSX|\.[^/]*|Thumbs\.db|desktop\.ini)(\/|$)/i;
 const MIME: Record<string, string> = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
-const KIND_KEY: Record<DocKind, TKey> = { cin: 'rst_k_cin', cv: 'rst_k_cv', contrat: 'rst_k_contrat', diplome: 'rst_k_diplome', rib: 'rst_k_rib', autre: 'rst_k_autre' };
+const KIND_KEY: Record<DocKind, TKey> = { cin: 'rst_k_cin', cv: 'rst_k_cv', contrat: 'rst_k_contrat', diplome: 'rst_k_diplome', rib: 'rst_k_rib', convention: 'stg_doc_convention', nda: 'stg_doc_nda', completion: 'stg_doc_completion', autre: 'rst_k_autre' };
 const ACTION_KEY: Record<Action, TKey> = { restore: 'rst_a_restore', add: 'rst_a_add', present: 'rst_a_present', conflict: 'rst_a_conflict', unmatched: 'rst_a_unmatched' };
 
 type Status = { state: 'run' | 'ok' | 'err'; why?: string };

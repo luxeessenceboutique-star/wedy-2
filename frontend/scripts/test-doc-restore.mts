@@ -64,6 +64,9 @@ eq(bestPerson('Abdelilah Elalaoui', close)?.id, 'x', 'joined and reordered words
 eq(folderLabel('EMPLOYES (2)/EMPLOYES/CV.pdf'), '', 'generic containers are not people');
 eq(kindOf('RELEVE D IDENTITE BANCAIRE.pdf'), 'rib', 'RIB spelled out');
 eq(kindOf('x.pdf', 'certificat'), 'cin', 'legacy « certificat » type is the CIN');
+eq([kindOf('CHARTE.pdf'), kindOf('Convention de stage.pdf'), kindOf('Attestation de stage.pdf'), kindOf('Attestation de réussite.pdf')], ['nda', 'convention', 'completion', 'diplome'], 'intern documents');
+const internPlan = buildPlan([pick('STAGIAIRES/Nadia Tazi/CHARTE.pdf', 9)], [{ id: 'i1', full_name: 'Nadia Tazi', status: 'intern' }], []);
+eq(internPlan.missing[0]?.kinds, ['cin', 'cv', 'convention'], 'an intern is expected to have a CIN, a CV, a convention and a charte');
 eq(fixMojibake('DiplÃ´me'), 'Diplôme', 'names from zips without the UTF-8 flag are decoded');
 eq(personInName('Contrat CDI Nadia Tazi.pdf'), 'nadia tazi', 'the person named by a file');
 

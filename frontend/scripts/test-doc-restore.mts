@@ -56,6 +56,11 @@ eq([manual.items[0].action, manual.items[0].personName], ['add', 'Omar Fassi'], 
 
 eq(bestPerson('Rachid Lahlou', people)?.full_name, 'Rachid Lahlou', 'close names: the exact one wins');
 eq(bestPerson('Lahlou', people), null, 'one word is not enough to pick someone');
+const twins = [{ id: 'a', full_name: 'NADIA TAZI', status: 'active' }, { id: 'b', full_name: 'Tazi Nadia', status: 'intern' }, { id: 'c', full_name: 'Omar Fassi', status: 'intern' }, { id: 'd', full_name: 'Omar Fassi', status: 'intern' }];
+eq(bestPerson('Nadia Tazi', twins)?.id, 'a', 'the same person as employee and as intern: the employee');
+eq(bestPerson('Omar Fassi', twins), null, 'two homonyms with the same status: no guess');
+const close = [{ id: 'x', full_name: 'EL ALAOUI Abdel ilah', status: 'active' }, { id: 'y', full_name: 'ABDEL ILAH ALAOUI', status: 'intern' }];
+eq(bestPerson('Abdelilah Elalaoui', close)?.id, 'x', 'joined and reordered words find the exact person, not a near one');
 eq(folderLabel('EMPLOYES (2)/EMPLOYES/CV.pdf'), '', 'generic containers are not people');
 eq(kindOf('RELEVE D IDENTITE BANCAIRE.pdf'), 'rib', 'RIB spelled out');
 eq(kindOf('x.pdf', 'certificat'), 'cin', 'legacy « certificat » type is the CIN');

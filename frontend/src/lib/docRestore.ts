@@ -68,13 +68,31 @@ function lev(a: string, b: string): number {
 }
 const ratio = (a: string, b: string) => (a || b ? 1 - lev(a, b) / Math.max(a.length, b.length) : 0);
 
-/** How close two person names are (0..1): spelling slips (Amar / Ammar, Grida / Gridda), word order and joined words are tolerated. */
+/** Share of the letters of `text` (spaces removed) that the words of `words` cover, each letter counted once. */
+function coverage(text: string, words: string[]): number {
+  const s = compact(text);
+  if (!s) return 0;
+  const hit = new Array<boolean>(s.length).fill(false);
+  for (const w of [...words].sort((x, y) => y.length - x.length)) {
+    if (w.length < 2) continue;
+    for (let i = s.indexOf(w); i >= 0; i = s.indexOf(w, i + 1)) {
+      if (hit.slice(i, i + w.length).some(Boolean)) continue;
+      for (let k = i; k < i + w.length; k++) hit[k] = true;
+      break;
+    }
+  }
+  return hit.filter(Boolean).length / s.length;
+}
+
+/** How close two person names are (0..1): spelling slips (Amar / Ammar, Grida / Gridda), word order and joined words
+ *  (« Salaheddine Elgharabi » = « EL GHARABI Salah eddine ») are tolerated. */
 export function nameScore(a: string, b: string): number {
   const ta = norm(a).split(' ').filter(Boolean), tb = norm(b).split(' ').filter(Boolean);
   if (!ta.length || !tb.length) return 0;
   const raw = ratio(compact(a), compact(b));
   const sorted = ratio([...ta].sort().join(''), [...tb].sort().join(''));
-  return Math.max(raw, sorted);
+  const joined = Math.min(coverage(a, tb), coverage(b, ta)); // every letter of each name found in the words of the other
+  return Math.max(raw, sorted, joined);
 }
 
 // ── document kind ────────────────────────────────────────────────────────────────────────────────────────
@@ -103,16 +121,24 @@ export const personInName = (fileName: string) => norm(stripExt(fixMojibake(file
 
 const MATCH = 0.84;
 
-/** The person a label designates, if one is clearly closest (null when nobody is close or two people are as close). */
+/** Who wins when the same name is there twice (an employee who was an intern first keeps both records): the employee. */
+const STATUS_RANK: Record<string, number> = { active: 4, 'on-leave': 3, intern: 2, inactive: 1, terminated: 1, candidate: 0 };
+const rankOf = (p: Person) => STATUS_RANK[p.status ?? ''] ?? 1;
+
+/** The person a label designates, if one is clearly closest (null when nobody is close, or when two people are as
+ *  close and nothing tells them apart — the same name twice goes to the employee rather than the intern or candidate). */
 export function bestPerson(label: string, people: Person[]): Person | null {
   if (norm(label).split(' ').filter(t => t.length > 1).length < 2) return null;
-  let best: Person | null = null, bs = 0, second = 0;
-  for (const p of people) {
-    const s = nameScore(label, p.full_name);
-    if (s > bs) { second = bs; bs = s; best = p; } else if (s > second) second = s;
-  }
-  return bs >= MATCH && bs - second >= 0.04 ? best : null;
+  const scored = people.map(p => ({ p, s: nameScore(label, p.full_name) })).filter(x => x.s >= MATCH).sort((a, b) => b.s - a.s);
+  if (!scored.length) return null;
+  const top = scored.filter(x => scored[0].s - x.s < 0.04);
+  if (top.length === 1) return top[0].p;
+  // several people as close: only the same name written the same way may be told apart, by status
+  if (top.some(x => compactSorted(x.p.full_name) !== compactSorted(top[0].p.full_name))) return null;
+  const byRank = [...top].sort((a, b) => rankOf(b.p) - rankOf(a.p));
+  return rankOf(byRank[0].p) > rankOf(byRank[1].p) ? byRank[0].p : null;
 }
+const compactSorted = (s: string) => norm(s).split(' ').sort().join('');
 
 const GENERIC = /^(employes?|employees?|documents?|dossiers?|fichiers?|scans?|rh|personnel|staff|stagiaires?|interns?|tous|all|copie|copy|backup|archives?|new|nouveau)$/;
 
@@ -142,9 +168,10 @@ export function buildPlan(picks: Picked[], people: Person[], records: FileRecord
     const chosen = manual[pick.key] ? byId.get(manual[pick.key]) ?? null : null;
     const person = chosen ?? (folder ? bestPerson(folder, people) : null) ?? bestPerson(fromName, people);
     if (!person) return { pick, kind, action: 'unmatched' as Action, guessedFrom };
-    // the file names someone else than the folder it sits in
+    // the file names someone else than the folder it sits in (unless this person already has a record of that very name)
     const named = bestPerson(fromName, people);
-    if (!chosen && named && named.id !== person.id && nameScore(fromName, person.full_name) < 0.7)
+    const ownRecord = (recsOf.get(person.id) ?? []).some(r => compact(stripExt(r.name)) === compact(stripExt(fixMojibake(pick.name))));
+    if (!chosen && !ownRecord && named && named.id !== person.id && nameScore(fromName, person.full_name) < 0.7)
       return { pick, kind, action: 'conflict' as Action, personId: person.id, personName: person.full_name, namesOther: named.full_name, guessedFrom };
     return { pick, kind, action: 'add' as Action, personId: person.id, personName: person.full_name, guessedFrom };
   });

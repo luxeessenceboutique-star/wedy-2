@@ -177,6 +177,51 @@ def test_generation_fills_an_intern_contract():
     assert employee["salary"] == "18,500.00 MAD" and employee["salary_words"] == "dix-huit mille cinq cents" and employee["contract_end"] == "à ce jour"
 
 
+def make_attestation_pdf():
+    """An attestation like the real one: a logo, a centred title, short lines, a signature block on the right."""
+    import fitz
+    from PIL import Image
+    buf = io.BytesIO(); Image.new("RGB", (400, 90), (90, 30, 120)).save(buf, "PNG")
+    doc = fitz.open(); page = doc.new_page()          # A4 portrait, 595 x 842
+    page.insert_image(fitz.Rect(72, 60, 290, 110), stream=buf.getvalue())
+    title_w = fitz.get_text_length("ATTESTATION DE STAGE", fontname="tibo", fontsize=18)
+    page.insert_text(((72 + 523) / 2 - title_w / 2, 190), "ATTESTATION DE STAGE", fontsize=18, fontname="tibo")
+    body = ("Je soussignée, Madame Widad, Directrice des Ressources Humaines au sein de la société TYTHON SARL, "
+            "certifie que M./Mme [Nom et Prénom], a effectué un stage au sein de notre entreprise du [Date de début] "
+            "jusqu'au [Date de fin]. Durant cette période, il/elle a été intégré(e) à nos équipes.")
+    page.insert_textbox(fitz.Rect(72, 220, 523, 330), body, fontsize=12, fontname="tiro")
+    page.insert_text((72, 380), "Fait à Casablanca, le [Date de rédaction]", fontsize=12, fontname="tiro")
+    for k, line in enumerate(["TYTHON SARL", "Mme Widad", "Directrice RH"]):
+        page.insert_text((72, 420 + k * 16), line, fontsize=12, fontname="tibo")
+    page.insert_text((363, 500), "Signature et cachet", fontsize=12, fontname="tibo")
+    page.insert_text((352, 516), "Madame Widad Ennaji", fontsize=12, fontname="tibo")
+    return doc.tobytes()
+
+
+def test_a_pdf_keeps_its_logo_title_lines_and_signature_block():
+    from app.services.pdf_template_extractor import extract_template_smart
+    html = extract_template_smart(make_attestation_pdf(), "attestation.pdf")
+    assert "<img" in html and "data:image/png;base64," in html             # the logo is kept, as a picture of its area
+    assert "Times New Roman" in html                                       # the document's (serif) font
+    import re as _re
+    title = _re.search(r"<(h\d|p) style=\"([^\"]*)\">(?:<strong>)?ATTESTATION DE STAGE", html)
+    assert title and "text-align:center" in title.group(2)                 # the centred title stays centred
+    assert "TYTHON SARL</strong><br><strong>Mme Widad</strong><br><strong>Directrice RH" in html.replace("</strong><strong>", "")
+    assert "Signature et cachet</strong><br><strong>Madame Widad Ennaji" in html and "margin-inline-start" in html
+    fields = {f["placeholder"]: f["key"] for f in tf.analyse_html(html)}
+    assert fields["M./Mme"] == "civility_short" and fields["[Nom et Prénom]"] == "full_name" and fields["[Date de rédaction]"] == "today"
+
+
+def test_the_text_agrees_with_the_civility():
+    html = "<p>Il/Elle a été intégré(e) ; l'intéressé(e) <b>né(e)</b> le ; il/elle est salarié(e)s.</p>"
+    assert tf.agree(html, "Madame") == "<p>Elle a été intégrée ; l'intéressée <b>née</b> le ; elle est salariées.</p>"
+    assert tf.agree(html, "Monsieur") == "<p>Il a été intégré ; l'intéressé <b>né</b> le ; il est salariés.</p>"
+    assert tf.agree(html, "Monsieur/Madame") == html                       # unknown: left as written
+    ctx = build_context({"full_name": "X", "status": "intern"}, {"civility_short": "Mme"}, None, {})
+    assert (ctx["civility"], ctx["civility_short"]) == ("Madame", "Mme")
+    assert build_context({"full_name": "X"}, {}, None, {})["civility_short"] == "M./Mme"
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

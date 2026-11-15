@@ -67,7 +67,8 @@ const resolveVar = (name: string, emp: Person, co: CompanyProfile, typed: Record
   const start = typed.contract_start || fmt(emp.contract_start || (intern ? emp.internship_start : '') || emp.hire_date);
   const end = typed.contract_end || (emp.contract_end ? fmt(emp.contract_end) : intern && emp.internship_end ? fmt(emp.internship_end) : '');
   const salaryNum = parseAmount(typed.salary_figures) ?? parseAmount(typed.salary) ?? parseAmount(emp.salary ?? (intern ? emp.remuneration : null));
-  const civ = (emp.custom_fields?.civility || emp.custom_fields?.civilite || '').trim();
+  const civ = (typed.civility || emp.custom_fields?.civility || emp.custom_fields?.civilite || ({ 'M.': 'Monsieur', Mme: 'Madame' } as Record<string, string>)[typed.civility_short ?? ''] || '').trim();
+  const civShort = typed.civility_short || ({ Monsieur: 'M.', Madame: 'Mme' } as Record<string, string>)[civ] || '';
   const MAP: Record<string, () => string> = {
     full_name: () => emp.full_name || '', cin: () => emp.cin || '', email: () => emp.email || '', phone: () => emp.phone || '',
     address: () => emp.address || '', city: () => emp.city || '', nationality: () => emp.nationality || '',
@@ -78,7 +79,7 @@ const resolveVar = (name: string, emp: Person, co: CompanyProfile, typed: Record
     birth_date: () => fmt(emp.birth_date), school: () => emp.school || '', cnss_number: () => emp.cnss_number || '', bank_account: () => emp.bank_account || '',
     salary: () => (salaryNum !== null ? `${salaryNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD` : ''),
     salary_figures: () => (salaryNum !== null ? salaryFigures(salaryNum) : ''), salary_words: () => (salaryNum !== null ? salaryWords(salaryNum) : ''),
-    duration: () => durationText(start, end), civility: () => civ,
+    duration: () => durationText(start, end), civility: () => civ, civility_short: () => civShort,
     today: () => ddmmyyyy(new Date()), company: () => co.name || '',
     company_address: () => co.address || '', company_city: () => co.city || '', company_phone: () => co.phone || '', company_email: () => co.email || '',
     company_ice: () => co.ice || '', company_rc: () => co.rc || '', company_if: () => co.if || '', company_cnss: () => co.cnss || '',
@@ -321,9 +322,10 @@ export default function GeneratePage() {
                 <RV key={v.name} variant="up" delay={i * 40} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 12, border: `1px solid ${v.missing ? 'rgba(230,169,72,.45)' : '#eef2f4'}`, background: v.missing ? '#fffaf1' : '#ffffff', flexWrap: 'wrap' }}>
                   <code style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11.5, fontWeight: 600, padding: '3px 7px', borderRadius: 7, background: '#e4f2f4', color: '#0b5f72', whiteSpace: 'nowrap' }}>{`{{${v.name}}}`}</code>
                   <span style={{ width: 150, fontSize: 12.5, color: '#52646d' }}>{v.label}</span>
-                  {v.name === 'civility' ? (
-                    <select value={v.value} onChange={e => setExtraVars(s => ({ ...s, civility: e.target.value }))} className="gen-input" style={{ flex: 1, minWidth: 160, height: 36, padding: '0 10px', borderRadius: 9, border: `1px solid ${v.missing ? 'rgba(230,169,72,.7)' : '#d6dfe3'}`, background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' }}>
-                      <option value="">{t('gen_civility_pick')}</option><option value="Monsieur">Monsieur</option><option value="Madame">Madame</option>
+                  {v.name === 'civility' || v.name === 'civility_short' ? (
+                    <select value={v.value} onChange={e => setExtraVars(s => ({ ...s, [v.name]: e.target.value }))} className="gen-input" style={{ flex: 1, minWidth: 160, height: 36, padding: '0 10px', borderRadius: 9, border: `1px solid ${v.missing ? 'rgba(230,169,72,.7)' : '#d6dfe3'}`, background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' }}>
+                      <option value="">{t('gen_civility_pick')}</option>
+                      {(v.name === 'civility' ? ['Monsieur', 'Madame'] : ['M.', 'Mme']).map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
                   ) : (
                   <input value={v.value} onChange={e => setExtraVars(s => ({ ...s, [v.name]: e.target.value }))} placeholder={t('gen_to_fill')} className="gen-input" style={{ flex: 1, minWidth: 160, height: 36, padding: '0 10px', borderRadius: 9, border: `1px solid ${v.missing ? 'rgba(230,169,72,.7)' : '#d6dfe3'}`, background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' }} />

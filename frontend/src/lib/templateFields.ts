@@ -6,7 +6,7 @@ import type { TKey } from '@/lib/lang';
 
 /** Wedy fields a placeholder can be mapped to, in the order the import screen lists them. */
 export const FIELD_LABELS: [string, TKey][] = [
-  ['civility', 'tpl_v_civility'], ['full_name', 'tpl_v_full_name'], ['cin', 'tpl_v_cin'], ['address', 'tpl_v_address'],
+  ['civility', 'tpl_v_civility'], ['civility_short', 'tpl_v_civility_short'], ['full_name', 'tpl_v_full_name'], ['cin', 'tpl_v_cin'], ['address', 'tpl_v_address'],
   ['city', 'tpl_v_city'], ['birth_date', 'tpl_v_birth_date'], ['nationality', 'tpl_v_nationality'], ['email', 'tpl_v_email'],
   ['phone', 'tpl_v_phone'], ['matricule', 'tpl_v_matricule'], ['cnss_number', 'tpl_v_cnss'], ['bank_account', 'tpl_v_bank'],
   ['position', 'tpl_v_position'], ['department', 'tpl_v_department'], ['manager', 'tpl_v_manager'], ['school', 'tpl_v_school'],

@@ -3847,4 +3847,6 @@ export const ar = {
     tpl_an_preview: 'معاينة النموذج',
     tpl_an_back: 'رجوع',
     gen_civility_pick: 'اختر…',
+    // Smart template import (short civility)
+    tpl_v_civility_short: 'اللقب المختصر',
 } as const;

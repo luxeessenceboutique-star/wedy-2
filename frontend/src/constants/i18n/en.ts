@@ -3847,4 +3847,6 @@ export const en = {
     tpl_an_preview: 'Template preview',
     tpl_an_back: 'Back',
     gen_civility_pick: 'Choose…',
+    // Smart template import (short civility)
+    tpl_v_civility_short: 'Short title (Mr / Mrs)',
 } as const;

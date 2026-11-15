@@ -296,27 +296,45 @@ _BULLETS = ("●", "•", "▪", "◦", "–", "-", "*", "➢", "✓")
 
 
 def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
-    """Rebuild a text PDF as flowing HTML, or None when it has (almost) no text (a scan)."""
+    """Rebuild a text PDF as flowing HTML, or None when it has (almost) no text (a scan).
+
+    Kept from the original: titles and sizes, bold / italic, centred lines, blocks set to the right (signatures),
+    short lines kept as lines (addresses, signature blocks), bullet lists, two-column lines, the images (logo)
+    at their place, the main font (serif or sans)."""
     if not _HAS_FITZ:
         return None
     try:
         doc = fitz.open(stream=file_bytes, filetype="pdf")
     except Exception:
         return None
-    spans_by_page = []
+    pages = []
     sizes: list[float] = []
+    fonts: dict[str, int] = {}
     for page in doc:
-        spans = []
+        spans, images = [], []
+        pw, ph = page.rect.width, page.rect.height
         for blk in page.get_text("dict").get("blocks", []):
+            if blk.get("type") == 1:  # an image: kept as a picture of its area (exact look, rotation included)
+                x0, y0, x1, y1 = blk["bbox"]
+                w, h = x1 - x0, y1 - y0
+                if w < 8 or h < 8 or w * h > pw * ph * 0.6:
+                    continue
+                try:
+                    pix = page.get_pixmap(matrix=fitz.Matrix(3, 3), clip=fitz.Rect(blk["bbox"]), alpha=False)
+                    data = base64.b64encode(pix.tobytes("png")).decode()
+                except Exception:
+                    continue
+                images.append({"x0": x0, "x1": x1, "top": y0, "bottom": y1, "w": w, "data": data})
+                continue
             if blk.get("type") != 0:
                 continue
             for ln in blk.get("lines", []):
                 for sp in ln.get("spans", []):
-                    raw = (sp.get("text") or "").replace("\u00a0", " ")
+                    raw = (sp.get("text") or "").replace(" ", " ")
                     # Google Docs writes some spaces as pairs of zero-width spaces: two or more of them are a space
-                    lead = len(raw) - len(raw.lstrip("\u200b"))
-                    trail = len(raw) - len(raw.rstrip("\u200b"))
-                    text = re.sub("\u200b{2,}", " ", raw.strip("\u200b")).translate(_ZW)
+                    lead = len(raw) - len(raw.lstrip("​"))
+                    trail = len(raw) - len(raw.rstrip("​"))
+                    text = re.sub("​{2,}", " ", raw.strip("​")).translate(_ZW)
                     if not text.strip():
                         continue
                     x0, y0, x1, y1 = sp["bbox"]
@@ -326,125 +344,179 @@ def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
                                   "zw": (lead, trail),
                                   "bold": bool(sp.get("flags", 0) & 16) or "bold" in font,
                                   "italic": bool(sp.get("flags", 0) & 2) or "italic" in font or "oblique" in font})
-                    sizes.extend([size] * len(text.strip()))
-        spans_by_page.append((page.rect.width, spans))
+                    n = len(text.strip())
+                    sizes.extend([size] * n)
+                    fam = "serif" if re.search(r"times|serif|georgia|garamond|cambria|book|roman", font) else "sans"
+                    fonts[fam] = fonts.get(fam, 0) + n
+        pages.append((pw, spans, images))
     if len(sizes) < 120:
         return None
     body = statistics.median(sizes)
-
-    # 1. lines: spans whose vertical centres are close, left to right
-    lines = []
-    for width, spans in spans_by_page:
-        spans.sort(key=lambda s: (round(s["yc"]), s["x0"]))
-        cur = []
-        for sp in sorted(spans, key=lambda s: s["yc"]):
-            if cur and abs(sp["yc"] - sum(s["yc"] for s in cur) / len(cur)) > 0.45 * max(sp["size"], body):
-                lines.append((width, sorted(cur, key=lambda s: s["x0"])))
-                cur = []
-            cur.append(sp)
-        if cur:
-            lines.append((width, sorted(cur, key=lambda s: s["x0"])))
-
-    # 2. each line as styled segments; a wide gap splits it in two columns (signature blocks)
-    def line_info(width, spans):
-        cols = [[]]
-        prev = None
-        for sp in spans:
-            if prev is not None:
-                gap = sp["x0"] - prev["x1"]
-                if gap > max(60, width * 0.12):
-                    cols.append([])
-                elif (gap > 0.2 * sp["size"] or prev["zw"][1] + sp["zw"][0] >= 2) and not cols[-1][-1][0].endswith(" ") \
-                        and not sp["text"].startswith((" ", ",", ".", ")")):
-                    cols[-1].append((" ", prev["bold"] and sp["bold"], False))
-            cols[-1].append((sp["text"], sp["bold"], sp["italic"]))
-            prev = sp
-        top, bottom = min(s["y0"] for s in spans), max(s["y1"] for s in spans)
-        size = max(s["size"] for s in spans)
-        x0, x1 = spans[0]["x0"], max(s["x1"] for s in spans)
-        return {"cols": cols, "top": top, "bottom": bottom, "size": size, "x0": x0, "x1": x1, "width": width}
-
-    infos = [line_info(w, sp) for w, sp in lines]
+    serif = fonts.get("serif", 0) > fonts.get("sans", 0)
 
     def plain(segs):
         return "".join(t for t, _, _ in segs).strip()
 
-    # 3. paragraphs: consecutive lines of the same kind, close to each other
-    paras = []
-    for li in infos:
-        first = plain(li["cols"][0])
-        kind = "cols" if len(li["cols"]) > 1 else ("bullet" if first[:1] in _BULLETS and len(first) > 2 else "text")
-        heading = li["size"] >= body * 1.3
-        right = kind == "text" and li["x0"] > li["width"] * 0.45
-        p = paras[-1] if paras else None
-        joinable = (
-            p is not None and kind == "text" and p["kind"] == "text" and p["heading"] == heading and p["right"] == right
-            and li["top"] - p["bottom"] < 0.55 * li["size"] and li["top"] >= p["top"]
-        )
-        if joinable:
-            segs = p["segs"]
-            if segs and not segs[-1][0].endswith((" ", "-")):
-                segs.append((" ", False, False))
-            segs.extend(li["cols"][0])
-            p["bottom"] = li["bottom"]
-        else:
-            paras.append({"kind": kind, "heading": heading, "right": right, "size": li["size"], "top": li["top"],
-                          "bottom": li["bottom"], "segs": list(li["cols"][0]), "cols": li["cols"]})
-
     def to_html(segs):
-        out, run, style = [], [], None
         merged = []
         for t, b, i in segs:
-            if merged and merged[-1][1] == b and merged[-1][2] == i:
+            if merged and t != "\n" and merged[-1][0] != "\n" and merged[-1][1] == b and merged[-1][2] == i:
                 merged[-1] = (merged[-1][0] + t, b, i)
             else:
                 merged.append((t, b, i))
+        out = []
         for t, b, i in merged:
+            if t == "\n":
+                out.append("<br>")
+                continue
             h = _esc(re.sub(r"[ \t]+", " ", t))
             if b and h.strip():
                 h = f"<strong>{h}</strong>"
             if i and h.strip():
                 h = f"<em>{h}</em>"
             out.append(h)
-        return "".join(out).strip()
+        return re.sub(r"\s*<br>\s*", "<br>", "".join(out)).strip()
 
-    html, i = [], 0
-    while i < len(paras):
-        p = paras[i]
-        if p["kind"] == "bullet":
-            items = []
-            while i < len(paras) and paras[i]["kind"] == "bullet":
-                segs = paras[i]["segs"]
-                first = segs[0][0].lstrip()
-                segs = [(first[1:].lstrip(), segs[0][1], segs[0][2])] + segs[1:]
-                items.append(f"<li style=\"margin:3px 0;\">{to_html(segs)}</li>")
-                i += 1
-            html.append(f"<ul style=\"margin:6px 0 10px;padding-inline-start:26px;\">{''.join(items)}</ul>")
+    html: list[str] = []
+    for width, spans, images in pages:
+        # 1. lines: spans whose vertical centres are close, left to right
+        lines = []
+        cur = []
+        for sp in sorted(spans, key=lambda s: s["yc"]):
+            if cur and abs(sp["yc"] - sum(s["yc"] for s in cur) / len(cur)) > 0.45 * max(sp["size"], body):
+                lines.append(sorted(cur, key=lambda s: s["x0"]))
+                cur = []
+            cur.append(sp)
+        if cur:
+            lines.append(sorted(cur, key=lambda s: s["x0"]))
+        if not lines and not images:
             continue
-        if p["kind"] == "cols":
-            rows = []
-            while i < len(paras) and (paras[i]["kind"] == "cols" or (rows and paras[i]["right"] and not paras[i]["heading"])):
-                q = paras[i]
-                cols = q["cols"] if q["kind"] == "cols" else [[], q["segs"]]
-                left, right = to_html(cols[0]), to_html([s for c in cols[1:] for s in c])
-                rows.append(f"<tr><td style=\"width:50%;vertical-align:top;padding:2px 0;\">{left}</td>"
-                            f"<td style=\"width:50%;vertical-align:top;padding:2px 0;text-align:right;\">{right}</td></tr>")
-                i += 1
-            html.append(f"<table style=\"width:100%;border-collapse:collapse;margin:28px 0 8px;\">{''.join(rows)}</table>")
-            continue
-        content = to_html(p["segs"])
-        if p["heading"]:
-            big = p["size"] >= body * 1.8
-            tag, fs = ("h1", "20pt") if big else ("h2", "14pt")
-            html.append(f"<{tag} style=\"font-size:{fs};font-weight:bold;margin:{'0 0 22px' if big else '20px 0 8px'};"
-                        f"line-height:1.3;\">{content}</{tag}>")
-        else:
-            align = "text-align:right;" if p["right"] else "text-align:justify;"
-            html.append(f"<p style=\"margin:0 0 10px;{align}\">{content}</p>")
-        i += 1
+        left = min([ln[0]["x0"] for ln in lines] + [im["x0"] for im in images])
+        right = max([max(s["x1"] for s in ln) for ln in lines] + [im["x1"] for im in images])
+        cw = max(right - left, 1)
 
+        # 2. each line: styled segments, a wide gap splits it in columns; its alignment
+        items = []
+        for ln in lines:
+            cols = [[]]
+            prev = None
+            for sp in ln:
+                if prev is not None:
+                    gap = sp["x0"] - prev["x1"]
+                    if gap > max(60, width * 0.12):
+                        cols.append([])
+                    elif (gap > 0.2 * sp["size"] or prev["zw"][1] + sp["zw"][0] >= 2) and cols[-1] and not cols[-1][-1][0].endswith(" ") \
+                            and not sp["text"].startswith((" ", ",", ".", ")")):
+                        cols[-1].append((" ", prev["bold"] and sp["bold"], False))
+                cols[-1].append((sp["text"], sp["bold"], sp["italic"]))
+                prev = sp
+            x0, x1 = ln[0]["x0"], max(s["x1"] for s in ln)
+            centred = abs((x0 + x1) / 2 - (left + right) / 2) < max(6, cw * 0.03) and (x1 - x0) < cw * 0.8 and x0 > left + 20
+            items.append({"type": "line", "cols": cols, "top": min(s["y0"] for s in ln), "bottom": max(s["y1"] for s in ln),
+                          "size": max(s["size"] for s in ln), "x0": x0, "x1": x1, "centred": centred,
+                          "side": (not centred) and x0 > left + cw * 0.4})
+        items += [{"type": "image", **im} for im in images]
+        items.sort(key=lambda it: it["top"])
+
+        # 3. paragraphs: consecutive lines of the same kind, close to each other
+        paras = []
+        for it in items:
+            if it["type"] == "image":
+                paras.append({"kind": "image", **it})
+                continue
+            first = plain(it["cols"][0])
+            kind = "cols" if len(it["cols"]) > 1 else ("bullet" if first[:1] in _BULLETS and len(first) > 2 else "text")
+            heading = it["size"] >= body * 1.3
+            p = paras[-1] if paras else None
+            joinable = (
+                p is not None and kind == "text" and p["kind"] == "text" and p["heading"] == heading
+                and p["centred"] == it["centred"] and p["side"] == it["side"] and abs(p["size"] - it["size"]) < 1.5
+                and it["top"] - p["bottom"] < 0.55 * it["size"] and it["top"] >= p["top"]
+            )
+            if joinable:
+                segs = p["segs"]
+                # a line that stopped short of the margin was a real line break (address, signature block…)
+                hard = p["centred"] or p["side"] or p["last_x1"] < right - cw * 0.15
+                if hard:
+                    segs.append(("\n", False, False))
+                elif segs and not segs[-1][0].endswith((" ", "-")):
+                    segs.append((" ", False, False))
+                segs.extend(it["cols"][0])
+                p["bottom"], p["last_x1"] = it["bottom"], it["x1"]
+                p["x0"], p["x1"] = min(p["x0"], it["x0"]), max(p["x1"], it["x1"])
+                p["centres"].append((it["x0"] + it["x1"]) / 2)
+                p["starts"].append(it["x0"])
+            else:
+                paras.append({"kind": kind, "heading": heading, "centred": it["centred"], "side": it["side"], "size": it["size"],
+                              "top": it["top"], "bottom": it["bottom"], "segs": list(it["cols"][0]), "cols": it["cols"],
+                              "x0": it["x0"], "x1": it["x1"], "last_x1": it["x1"],
+                              "centres": [(it["x0"] + it["x1"]) / 2], "starts": [it["x0"]]})
+
+        def pct(v):
+            return f"{max(0.0, min(100.0, v)):.1f}%"
+
+        # the blank space of the original above each block (under the logo, around the title, before the signature)
+        prev_bottom = None
+        for q in paras:
+            gap = 0 if prev_bottom is None else q["top"] - prev_bottom
+            q["space"] = f"margin-top:{min(gap - 9, 90):.0f}pt;" if gap > 18 else ""
+            prev_bottom = q["bottom"]
+
+        i = 0
+        while i < len(paras):
+            p = paras[i]
+            if p["kind"] == "image":
+                align = "center" if abs((p["x0"] + p["x1"]) / 2 - (left + right) / 2) < cw * 0.05 else ("right" if p["x0"] > left + cw * 0.4 else "left")
+                margin = "" if align != "left" or p["x0"] - left < 4 else f"margin-inline-start:{pct((p['x0'] - left) / cw * 100)};"
+                html.append(f'<p style="margin:0 0 14px;{p["space"]}text-align:{align};{margin}"><img src="data:image/png;base64,{p["data"]}" '
+                            f'style="width:{p["w"]:.0f}pt;max-width:100%;height:auto;" alt=""></p>')
+                i += 1
+                continue
+            if p["kind"] == "bullet":
+                lis = []
+                while i < len(paras) and paras[i]["kind"] == "bullet":
+                    segs = paras[i]["segs"]
+                    first = segs[0][0].lstrip()
+                    segs = [(first[1:].lstrip(), segs[0][1], segs[0][2])] + segs[1:]
+                    lis.append(f'<li style="margin:3px 0;">{to_html(segs)}</li>')
+                    i += 1
+                html.append(f'<ul style="margin:6px 0 10px;padding-inline-start:26px;">{"".join(lis)}</ul>')
+                continue
+            if p["kind"] == "cols":
+                rows = []
+                while i < len(paras) and (paras[i]["kind"] == "cols" or (rows and paras[i]["side"] and not paras[i]["heading"])):
+                    q = paras[i]
+                    cols = q["cols"] if q["kind"] == "cols" else [[], q["segs"]]
+                    lc, rc = to_html(cols[0]), to_html([s for c in cols[1:] for s in c])
+                    rows.append(f'<tr><td style="width:50%;vertical-align:top;padding:2px 0;">{lc}</td>'
+                                f'<td style="width:50%;vertical-align:top;padding:2px 0;text-align:right;">{rc}</td></tr>')
+                    i += 1
+                html.append(f'<table style="width:100%;border-collapse:collapse;margin:28px 0 8px;">{"".join(rows)}</table>')
+                continue
+            content = to_html(p["segs"])
+            size = "" if abs(p["size"] - body) < 1 else f"font-size:{min(p['size'], 26):.0f}pt;"
+            if p["heading"]:
+                tag = "h1" if p["size"] >= body * 1.8 else "h2"
+                align = "text-align:center;" if p["centred"] else ""
+                html.append(f'<{tag} style="font-family:inherit;letter-spacing:normal;color:inherit;font-size:{min(p["size"], 26):.0f}pt;font-weight:bold;margin:18px 0 14px;{p["space"]}'
+                            f'line-height:1.3;{align}">{content}</{tag}>')
+            elif p["centred"]:
+                html.append(f'<p style="margin:0 0 12px;{p["space"]}text-align:center;{size}">{content}</p>')
+            elif p["side"]:
+                # a block on the right (signature): its own column, lines centred in it when they were
+                same_centre = max(p["centres"]) - min(p["centres"]) < 6 and max(p["starts"]) - min(p["starts"]) > 3
+                start = pct((p["x0"] - left) / cw * 100)
+                wid = pct((p["x1"] - p["x0"]) / cw * 100 + 2)
+                align = "center" if same_centre else "left"
+                html.append(f'<p style="margin:0 0 12px;{p["space"]}margin-inline-start:{start};width:{wid};text-align:{align};{size}">{content}</p>')
+            else:
+                align = "text-align:justify;" if "<br>" not in content else ""
+                html.append(f'<p style="margin:0 0 10px;{p["space"]}{align}{size}">{content}</p>')
+            i += 1
+
+    family = "'Times New Roman',Times,serif" if serif else "Arial,Helvetica,sans-serif"
     return (
-        '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.6;color:#111;'
+        f'<div style="font-family:{family};font-size:{body:.0f}pt;line-height:1.55;color:#111;'
         'max-width:720px;margin:0 auto;padding:48px 56px;background:#fff;">\n'
         + "\n".join(html)
         + "\n</div>"

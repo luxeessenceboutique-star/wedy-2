@@ -37,6 +37,7 @@ def norm(s: str) -> str:
 
 KNOWN_FIELDS: dict[str, str] = {
     "civility": "Civilité (Monsieur / Madame)",
+    "civility_short": "Civilité abrégée (M. / Mme)",
     "full_name": "Nom et prénom",
     "cin": "N° de CIN",
     "address": "Adresse",
@@ -159,8 +160,8 @@ def resolve(ph: dict, text: str, mapping: Optional[dict] = None) -> str:
         return re.sub(r"\W", "_", str(mapping[ph["raw"]]))[:48]
     if ph["kind"] == "variable":
         return ph["label"]
-    if ph["kind"] == "civility":
-        return "civility"
+    if ph["kind"] == "civility":  # « M./Mme » keeps the short form of the document
+        return "civility" if re.match(r"(monsieur|madame)", ph["raw"], re.IGNORECASE) else "civility_short"
     return map_label(ph["label"], text[ph["end"]:ph["end"] + 12]) or slug_key(ph["label"])
 
 
@@ -402,3 +403,45 @@ def duration_text(start, end) -> str:
     if not parts:
         return ""
     return " et ".join(parts)
+
+
+# ── agreement with the civility (« intégré(e) », « il/elle ») ─────────────────────────────────────────────
+
+_SHORT = {"monsieur": "M.", "madame": "Mme"}
+_LONG = {"m.": "Monsieur", "m": "Monsieur", "mr": "Monsieur", "mr.": "Monsieur", "mme": "Madame", "mme.": "Madame"}
+
+
+def civility_pair(civility: str = "", short: str = "") -> tuple[str, str]:
+    """(Monsieur|Madame|"", M.|Mme|"") from whichever of the two was given."""
+    c, s = (civility or "").strip(), (short or "").strip()
+    if not c and s.lower() in _LONG:
+        c = _LONG[s.lower()]
+    if not s and c.lower() in _SHORT:
+        s = _SHORT[c.lower()]
+    return (c if c.lower() in _SHORT else "", s if s.lower().rstrip(".") in ("m", "mme", "mr") else "")
+
+
+_PAIRS = [("il/elle", "il", "elle"), ("elle/il", "il", "elle"), ("le/la", "le", "la"), ("la/le", "le", "la"),
+          ("lui/elle", "lui", "elle"), ("celui/celle", "celui", "celle"), ("du/de la", "du", "de la")]
+
+
+def agree(html: str, civility: str) -> str:
+    """Write the text for a man or a woman: « intégré(e) » → intégré / intégrée, « il/elle » → il / elle.
+    Only the written text is changed (not the tags), and only when the civility is known."""
+    fem = {"monsieur": False, "madame": True}.get((civility or "").strip().lower())
+    if fem is None:
+        return html
+
+    def fix(text: str) -> str:
+        text = re.sub(r"(\w)\((e)\)(s?)(?!\w)", lambda m: m.group(1) + ("e" if fem else "") + m.group(3), text)
+        for pair, masc, femi in _PAIRS:
+            def repl(m, masc=masc, femi=femi):
+                word = femi if fem else masc
+                return word[0].upper() + word[1:] if m.group(0)[0].isupper() else word
+            text = re.sub(r"\b" + re.escape(pair).replace("/", r"\s*/\s*") + r"\b", repl, text, flags=re.IGNORECASE)
+        return text
+
+    parts = _TAG.split(html)
+    for i in range(0, len(parts), 2):
+        parts[i] = fix(parts[i])
+    return "".join(parts)

@@ -136,8 +136,9 @@ def build_context(emp: dict, extra: dict = None, company: Optional[dict] = None,
         ctx["salary_words"] = tfields.salary_words(amount) if amount is not None else ""
     if not (extra or {}).get("duration"):
         ctx["duration"] = tfields.duration_text(_parse_any_date(ctx.get("contract_start")), _parse_any_date(ctx.get("contract_end")))
-    if not ctx.get("civility"):
-        ctx["civility"] = "Monsieur/Madame"
+    civ, short = tfields.civility_pair(ctx.get("civility"), ctx.get("civility_short"))
+    ctx["civility"] = civ or "Monsieur/Madame"   # unknown: the document's own wording is kept
+    ctx["civility_short"] = short or "M./Mme"
     return ctx
 
 
@@ -180,7 +181,8 @@ def generate_doc(
     from app.services import template_fields as tfields
     body = template.get("body_template", "")
     ctx = build_context(employee, payload.extra_variables or {}, app_settings.load(supabase)[0]["company"], tfields.read_meta(body))
-    content = render_template(tfields.strip_meta(body), ctx)
+    # « intégré(e) », « il/elle » written for the person once the civility is known
+    content = tfields.agree(render_template(tfields.strip_meta(body), ctx), ctx.get("civility", ""))
 
     # 4. Optional AI enhancement
     ai_enhanced = False

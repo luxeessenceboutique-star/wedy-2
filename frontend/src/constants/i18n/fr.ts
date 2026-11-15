@@ -3901,4 +3901,6 @@ export const fr = {
     tpl_an_preview: 'Aperçu du modèle',
     tpl_an_back: 'Retour',
     gen_civility_pick: 'Choisir…',
+    // Smart template import (short civility)
+    tpl_v_civility_short: 'Civilité abrégée (M. / Mme)',
 } as const;

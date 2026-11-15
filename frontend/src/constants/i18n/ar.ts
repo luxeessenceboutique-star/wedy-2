@@ -3815,4 +3815,6 @@ export const ar = {
     fpv_lost_hint: 'لم يعد الملف على الخادم: استعمل «إعادة الرفع» لإرجاعه.',
     // File preview (pdf)
     fpv_no_pdf: 'هذا المتصفح لا يعرض ملفات PDF داخل الصفحة',
+    // Interns list spacing
+    stg_c_status_type: 'الحالة · النوع',
 } as const;

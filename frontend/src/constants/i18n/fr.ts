@@ -3869,4 +3869,6 @@ export const fr = {
     fpv_lost_hint: 'Le fichier n\'est plus sur le serveur : utilisez « Ré-uploader » pour le remettre.',
     // File preview (pdf)
     fpv_no_pdf: 'Ce navigateur n\'affiche pas les PDF dans la page',
+    // Interns list spacing
+    stg_c_status_type: 'Statut · type',
 } as const;

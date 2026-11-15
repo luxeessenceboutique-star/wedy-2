@@ -3815,4 +3815,6 @@ export const en = {
     fpv_lost_hint: 'The file is no longer on the server: use “Re-upload” to put it back.',
     // File preview (pdf)
     fpv_no_pdf: 'This browser does not show PDFs inside the page',
+    // Interns list spacing
+    stg_c_status_type: 'Status · type',
 } as const;

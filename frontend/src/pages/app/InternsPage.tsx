@@ -169,7 +169,7 @@ export default function InternsPage() {
       <span style={{ position: 'relative', display: 'inline-flex', justifySelf: 'start', maxWidth: '100%' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, padding: '4px 9px 4px 8px', borderRadius: 99, background: bg, color: ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flexShrink: 0 }} />
-          {i.internship_status ? t(STAGE_KEY[i.internship_status] ?? 'stg_none') || i.internship_status : t('stg_set_status')}
+          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{i.internship_status ? t(STAGE_KEY[i.internship_status] ?? 'stg_none') || i.internship_status : t('stg_set_status')}</span>
           {withSelect && <ChevronDown size={12} style={{ flexShrink: 0 }} />}
         </span>
         {withSelect && (
@@ -293,11 +293,11 @@ export default function InternsPage() {
           ) : view === 'list' ? (
             <RV as="div" variant="up" delay={200} className="stg-card">
               <div style={{ overflowX: 'auto' }}>
-                <div style={{ minWidth: 1020 }}>
+                <div style={{ minWidth: 1096 }}>
                   <div className="stg-row stg-row-h">
                     <Check20 on={allSel} onClick={() => setSel(allSel ? [] : list.map(i => i.id))} label={t('emp_tout_selectionner')} />
-                    <span>{t('stg_c_intern')}</span><span>{t('stg_c_mission')}</span><span>{t('stg_c_tutor')}</span><span>{t('stg_f_type')}</span>
-                    <span>{t('stg_f_status')}</span><span>{t('stg_c_period')}</span><span style={{ textAlign: 'end' }}>{t('emp_actions')}</span>
+                    <span>{t('stg_c_intern')}</span><span>{t('stg_c_mission')}</span><span>{t('stg_c_tutor')}</span>
+                    <span>{t('stg_c_status_type')}</span><span>{t('stg_c_period')}</span><span style={{ textAlign: 'end' }}>{t('emp_actions')}</span>
                   </div>
                   {list.map((i, n) => (
                     <RV key={i.id} as="div" variant="up" delay={Math.min(n, 12) * 40} className="stg-row emp-h7" onClick={() => openFile(i)}>
@@ -312,8 +312,7 @@ export default function InternsPage() {
                       </span>
                       <span className="stg-two"><b>{i.position || '—'}</b><small>{i.school || i.education_summary || '—'}</small></span>
                       <span className="stg-two"><b>{i.manager || '—'}</b><small>{i.department || '—'}</small></span>
-                      <span style={{ minWidth: 0, paddingInlineEnd: 8 }}>{typeChip(i)}</span>
-                      <span style={{ minWidth: 0, paddingInlineEnd: 8 }} onClick={e => e.stopPropagation()}>{stageChip(i, true)}</span>
+                      <span className="stg-chips" onClick={e => e.stopPropagation()}>{stageChip(i, true)}{typeChip(i)}</span>
                       <span className="stg-two"><span>{endCell(i)}</span><small>{i.internship_start ? tf(t('stg_since'), { d: fmtDate(i.internship_start) }) : '—'}</small></span>
                       {actions(i)}
                     </RV>

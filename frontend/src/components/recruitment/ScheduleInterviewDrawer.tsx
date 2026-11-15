@@ -1,10 +1,11 @@
 import { useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, Check, Video, X } from 'lucide-react';
-import { scheduleInterview, listEmployees, getApiError } from '@/services/api';
+import { CalendarClock, Check, Mail, Video, X } from 'lucide-react';
+import { scheduleInterview, listEmployees, getApiError, getMailStatus } from '@/services/api';
 import type { Employee, Interview, InterviewPerson } from '@/services/api';
 import { Drawer, Spinner } from '@/components/ui';
 import { useLang } from '@/lib/lang';
+import { tf } from '@/lib/format';
 import { INTERVIEW_KIND } from '@/lib/recruitment';
 import { durationMin, interviewStart } from '@/lib/interview';
 import { useNotify } from '@/lib/notify';
@@ -27,6 +28,8 @@ export function ScheduleInterviewDrawer({ open, onClose, candidates, defaultDate
   const [people, setPeople] = useState<InterviewPerson[]>([]);
   const [who, setWho] = useState('');
   const [withMeeting, setWithMeeting] = useState(true);
+  const [notify_, setNotify] = useState(true);
+  const mailQ = useQuery({ queryKey: ['mail-status'], queryFn: getMailStatus, enabled: open, staleTime: 60_000, retry: false });
   const [lastKey, setLastKey] = useState(`${open}|${candidateId}|${defaultType}`);
   if (`${open}|${candidateId}|${defaultType}` !== lastKey) { setLastKey(`${open}|${candidateId}|${defaultType}`); if (open) { setF(empty); setPeople([]); setWho(''); } }
   const set = (k: keyof typeof empty, v: string) => setF(x => ({ ...x, [k]: v }));
@@ -42,6 +45,11 @@ export function ScheduleInterviewDrawer({ open, onClose, candidates, defaultDate
   };
   const onWhoKey = (e: KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addPerson(who); } };
 
+  const cand = candidates.find(x => x.id === f.candidate_id);
+  const candMail = (cand?.email ?? '').trim();
+  const mailOn = mailQ.data?.configured ?? false;
+  const canMail = mailOn && !!candMail;
+  const visioMode = !f.place || !!f.meet_link;
   const mut = useMutation({
     mutationFn: () => {
       const c = candidates.find(x => x.id === f.candidate_id);
@@ -51,11 +59,14 @@ export function ScheduleInterviewDrawer({ open, onClose, candidates, defaultDate
         candidate_name: c?.full_name, job_title: c?.position || undefined, meet_link: f.meet_link || undefined, notes: f.notes || undefined,
         recruiter_name: all[0]?.name, interviewers: all,
         meeting: withMeeting ? { starts_at: interviewStart(f.date, f.start_time).toISOString(), duration_min: durationMin(f.start_time, f.end_time), place: f.place || undefined, visio_url: f.meet_link || undefined } : undefined,
+        notify_candidate: canMail && notify_,
       });
     },
     onSuccess: iv => {
       qc.invalidateQueries({ queryKey: ['interviews'] }); qc.invalidateQueries({ queryKey: ['interviews-board'] }); qc.invalidateQueries({ queryKey: ['meetings'] });
-      notify.success(t('pl_interview_planned'));
+      if (iv.email?.sent) notify.success(tf(t('itv_mail_sent'), { to: iv.email.to ?? '' }));
+      else if (iv.email && !iv.email.sent) notify.warning(`${t('pl_interview_planned')} — ${iv.email.error ?? t('itv_mail_not_sent')}`);
+      else notify.success(t('pl_interview_planned'));
       onScheduled?.(candidates.find(x => x.id === f.candidate_id), iv);
       setF(empty); setPeople([]); onClose();
     },
@@ -114,6 +125,16 @@ export function ScheduleInterviewDrawer({ open, onClose, candidates, defaultDate
           <span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0a1c24' }}><Video size={14} color="#0e6f84" />{t('itv_with_meeting')}</span>
             <span style={{ display: 'block', marginTop: 2, fontSize: 12, color: '#5f7079' }}>{t('itv_with_meeting_s')}</span>
+          </span>
+        </label>
+        <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '11px 12px', borderRadius: 12, background: canMail && notify_ ? '#f2f9fa' : '#f6f8f9', border: `1px solid ${canMail && notify_ ? '#cfe8ec' : '#e2e8eb'}`, cursor: canMail ? 'pointer' : 'default', opacity: canMail ? 1 : 0.85 }}>
+          <input type="checkbox" checked={canMail && notify_} disabled={!canMail} onChange={e => setNotify(e.target.checked)} style={{ marginTop: 2, accentColor: '#0e6f84' }} />
+          <span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0a1c24' }}><Mail size={14} color="#0e6f84" />{t('itv_mail_invite')}</span>
+            <span style={{ display: 'block', marginTop: 2, fontSize: 12, color: canMail ? '#5f7079' : '#a35b12', lineHeight: 1.45 }}>
+              {!mailQ.data ? '…' : !mailOn ? t('itv_mail_off') : !f.candidate_id ? t('itv_mail_pick') : !candMail ? t('itv_mail_no_address')
+                : tf(t(visioMode ? 'itv_mail_invite_s' : 'itv_mail_invite_place_s'), { to: candMail, n: mailQ.data.reminder_minutes })}
+            </span>
           </span>
         </label>
         <div><label style={labelStyle}>{t('pl_notes')}</label><textarea rows={3} value={f.notes} onChange={e => set('notes', e.target.value)} style={{ ...inputStyle, height: 'auto', padding: '10px 12px', resize: 'vertical' }} /></div>

@@ -7,6 +7,7 @@ import { RV } from '@/components/motion';
 import { Spinner } from '@/components/ui';
 import { useLang } from '@/lib/lang';
 import type { IntegrationsVals } from './IntegrationsPage';
+import { ConnectorsSection } from '@/components/integrations/ConnectorsSection';
 import './IntegrationsView.css';
 
 export function IntegrationsView({ v }: { v: IntegrationsVals }) {
@@ -45,6 +46,7 @@ export function IntegrationsView({ v }: { v: IntegrationsVals }) {
             </div>
           </RV>
         </div>
+        <ConnectorsSection />
         <RV as='div' variant='up' delay={120} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {v.cats.map((c, cIndex) => (
             <Fragment key={cIndex}>

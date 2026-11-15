@@ -249,6 +249,33 @@ def get_visual(id: UUID, fmt: str):
     return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=300"})
 
 
+@router.get("/{id}/visual/{fmt}.jpg")
+def get_visual_jpeg(id: UUID, fmt: str):
+    """Public: the same visual in JPEG (Instagram only accepts JPEG images given by URL)."""
+    if fmt not in _VISUAL_FORMATS:
+        raise HTTPException(status_code=404, detail="Format inconnu")
+    from app.services.storage import ensure_local
+    path = ensure_local(_visual_rel(str(id), fmt))
+    if not path:
+        raise HTTPException(status_code=404, detail="Visuel non généré")
+    from PIL import Image
+    import io as _io
+    buf = _io.BytesIO()
+    Image.open(path).convert("RGB").save(buf, "JPEG", quality=92)
+    return Response(content=buf.getvalue(), media_type="image/jpeg", headers={"Cache-Control": "public, max-age=300"})
+
+
+def ad_visual(ad_id: str, prefer: str) -> tuple[Optional[tuple[bytes, str]], Optional[str]]:
+    """The finished visual of an ad (background, logo, title, QR code — made in the studio), preferred format first."""
+    from app.services.storage import ensure_local
+    for fmt in [prefer] + [f for f in ("linkedin", "square", "story") if f != prefer]:
+        path = ensure_local(_visual_rel(ad_id, fmt))
+        if path:
+            with open(path, "rb") as fh:
+                return (fh.read(), "image/png"), fmt
+    return None, None
+
+
 # ── AI artwork: the background of the visual is painted by an image model (the browser adds logo, title and QR code on top) ──
 
 class ArtRequest(_BaseModel):

@@ -1,0 +1,31 @@
+/* Intégrations › réseaux sociaux et e-mails (ConnectorsSection.tsx) */
+.cx { display: flex; flex-direction: column; gap: 12px; }
+.cx-h b { display: block; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-size: 18px; font-weight: 700; color: #0a1c24; }
+.cx-h small { display: block; margin-top: 3px; font-size: 13px; color: #52646d; }
+.cx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.cx-card { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 18px; background: #fff; border: 1px solid #e2e8eb; }
+.cx-card.on { border-color: #bfe3d2; box-shadow: 0 0 0 3px rgba(22, 160, 107, .07); }
+.cx-head { display: flex; align-items: flex-start; gap: 11px; }
+.cx-mono { width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 17px; flex-shrink: 0; font-family: Arial, sans-serif; }
+.cx-title { flex: 1; min-width: 0; }
+.cx-title b { display: block; font-size: 14.5px; color: #0a1c24; }
+.cx-title small { display: block; margin-top: 2px; font-size: 12.5px; color: #5f7079; line-height: 1.45; }
+.cx-state { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 9px; border-radius: 99px; font-size: 11.5px; font-weight: 700; white-space: nowrap; background: #eef2f4; color: #52646d; }
+.cx-state.ok { background: #e1f5ec; color: #0f6f49; }
+.cx-state.off { background: #fbefda; color: #8a5207; }
+.cx-body { display: flex; flex-direction: column; gap: 8px; }
+.cx-line { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #52646d; }
+.cx-line > span { min-width: 74px; }
+.cx-line b { color: #0a1c24; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-line em { font-style: normal; color: #8a5207; font-size: 12.5px; }
+.cx-line select { flex: 1; min-width: 0; height: 32px; padding: 0 8px; border-radius: 9px; border: 1px solid #d6dfe3; font-family: inherit; font-size: 13px; background: #fff; }
+.cx-meta { font-size: 12px; color: #7d8f97; line-height: 1.45; }
+.cx-hint { margin: 0; font-size: 12.5px; color: #52646d; line-height: 1.5; }
+.cx-note { margin: 0; display: flex; gap: 7px; align-items: flex-start; font-size: 12.5px; line-height: 1.5; color: #8a5207; }
+.cx-note svg { flex-shrink: 0; margin-top: 2px; }
+.cx-env { display: block; font-family: 'Geist Mono', monospace; font-size: 11px; color: #33474f; background: #f3f6f7; padding: 6px 8px; border-radius: 8px; overflow-wrap: anywhere; }
+.cx-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.cx-btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid #d6dfe3; background: #fff; color: #0a1c24; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.cx-btn.primary { border: none; color: #fff; align-self: flex-start; }
+.cx-btn.danger { color: #a33a28; }
+.cx-btn:disabled { opacity: .6; cursor: default; }

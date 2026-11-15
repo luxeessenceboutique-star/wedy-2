@@ -27,3 +27,4 @@ export * from './orgchart';
 export * from './recruitment';
 export * from './visio';
 export * from './planningNotes';
+export * from './social';

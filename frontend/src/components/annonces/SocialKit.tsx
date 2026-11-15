@@ -2,14 +2,17 @@
 // each network written by Wedy, and the ways to publish: LinkedIn and Facebook share dialogs (their link preview shows
 // the visual), Instagram (download + caption, or the phone's share sheet), Indeed (job description to paste), WhatsApp.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Check, Copy, Download, ExternalLink, Image as ImageIcon, Link2, Megaphone, RefreshCw, Share2, Sparkles, WandSparkles } from 'lucide-react';
-import { adShareUrl, generateAdArt, getAdArt, getApiError, getSocialPosts, uploadAdVisual, type JobAd, type SocialPosts } from '@/services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link as RouterLink } from 'react-router-dom';
+import { Check, CircleAlert, CircleCheck, Copy, Download, ExternalLink, Image as ImageIcon, Link2, Megaphone, Plug, RefreshCw, Send, Share2, Sparkles, WandSparkles } from 'lucide-react';
+import { adShareUrl, generateAdArt, getAdArt, getApiError, getSocialPosts, getSocialStatus, publishAd, uploadAdVisual, type JobAd, type PublishResult, type SocialNetwork, type SocialPosts } from '@/services/api';
+import { tf } from '@/lib/format';
 import { Drawer, Spinner } from '@/components/ui';
 import { useLang, type TKey } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { useAppSettings } from '@/lib/appSettings';
 import { FORMATS, canvasBlob, pointsFrom, renderJobVisual, type VisualFormat, type VisualTheme } from '@/lib/jobVisual';
+import './SocialKit.css';
 
 type Net = 'linkedin' | 'facebook' | 'instagram' | 'indeed';
 const LABELS: Record<'fr' | 'en' | 'ar', { hiring: string; apply: string; scan: string }> = {
@@ -111,6 +114,34 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
   });
   const textOf = (n: Net) => texts[n] ?? socialQ.data?.[n] ?? '';
 
+  // ── direct publishing (the company's pages connected once in Intégrations) ──
+  const qc = useQueryClient();
+  const statusQ = useQuery({ queryKey: ['social-status'], queryFn: getSocialStatus, enabled: open, retry: false, staleTime: 30_000 });
+  const st = statusQ.data;
+  const ready: Record<SocialNetwork, boolean> = { linkedin: !!st?.linkedin.connected, facebook: !!st?.meta.connected, instagram: !!(st?.meta.connected && st.meta.ig_username) };
+  const where: Record<SocialNetwork, string> = { linkedin: st?.linkedin.account_name ?? '', facebook: st?.meta.account_name ?? '', instagram: st?.meta.ig_username ? `@${st.meta.ig_username}` : '' };
+  const [off, setOff] = useState<Partial<Record<SocialNetwork, boolean>>>({});
+  const [pub, setPub] = useState<{ busy: boolean; results: Partial<Record<SocialNetwork, PublishResult>> }>({ busy: false, results: {} });
+  const chosen = (['linkedin', 'facebook', 'instagram'] as SocialNetwork[]).filter(n => ready[n] && !off[n]);
+  const publishDirect = async () => {
+    if (!ad || !chosen.length || pub.busy) return;
+    const names = chosen.map(n => NETS.find(x => x[0] === n)![1]).join(', ');
+    if (!window.confirm(tf(t('sk_direct_confirm'), { nets: names }))) return;
+    setPub({ busy: true, results: {} });
+    try {
+      // the visuals as they are on screen: LinkedIn / Facebook take the wide one, Instagram the square one
+      const formats = new Set<VisualFormat>([...(chosen.some(n => n !== 'instagram') ? ['linkedin' as const] : []), ...(chosen.includes('instagram') ? ['square' as const] : [])]);
+      for (const f of formats) { const b = await renderBlob(f); if (b) await uploadAdVisual(ad.id, f, b); }
+      const results = await publishAd({ ad_id: ad.id, networks: chosen, share_url: share,
+        texts: { linkedin: textOf('linkedin'), facebook: textOf('facebook'), instagram: textOf('instagram') } });
+      setPub({ busy: false, results });
+      const ok = Object.values(results).filter(r => r?.ok).length;
+      if (ok) notify.success(tf(t('sk_direct_done'), { n: ok }));
+      Object.entries(results).forEach(([n, r]) => { if (r && !r.ok) notify.error(`${NETS.find(x => x[0] === n)?.[1]} : ${r.error}`); });
+      qc.invalidateQueries({ queryKey: ['social-history', ad.id] });
+    } catch (e) { setPub({ busy: false, results: {} }); notify.error(getApiError(e, t('error'))); }
+  };
+
   const fileName = (f: VisualFormat) => `${(ad?.poste || 'annonce').toLowerCase().replace(/[^a-z0-9؀-ۿ]+/gi, '-').replace(/^-|-$/g, '')}-${f}.png`;
   const renderBlob = async (f: VisualFormat) => { const c = document.createElement('canvas'); await renderJobVisual(c, f, theme, dataFor(f)); return canvasBlob(c); };
   const generate = async () => {
@@ -209,6 +240,34 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
           {/* ── publish ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <span style={kicker}><Share2 size={12} style={{ verticalAlign: '-2px' }} /> {t('sk_publish')}</span>
+            <div className="sk-direct">
+              <div className="sk-direct-h"><Send size={14} color="#0e6f84" /><b>{t('sk_direct')}</b>{statusQ.isLoading && <Spinner size={12} />}</div>
+              {Object.values(ready).some(Boolean) ? (
+                <>
+                  <small>{t('sk_direct_s')}</small>
+                  <div className="sk-direct-nets">
+                    {(['linkedin', 'facebook', 'instagram'] as SocialNetwork[]).filter(n => ready[n]).map(n => {
+                      const [, label, color] = NETS.find(x => x[0] === n)!;
+                      const r = pub.results[n];
+                      return (
+                        <label key={n} className={`sk-direct-net${!off[n] ? ' on' : ''}`} style={{ ['--net' as string]: color } as CSSProperties}>
+                          <input type="checkbox" checked={!off[n]} disabled={pub.busy} onChange={e => setOff(o => ({ ...o, [n]: !e.target.checked }))} />
+                          <span><b>{label}</b><small>{where[n]}</small></span>
+                          {r?.ok && r.url && <a href={r.url} target="_blank" rel="noreferrer" className="ok"><CircleCheck size={13} />{t('sk_direct_ok')}</a>}
+                          {r?.ok && !r.url && <span className="ok"><CircleCheck size={13} /></span>}
+                          {r && !r.ok && <span className="err" title={r.error ?? ''}><CircleAlert size={13} /></span>}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <button type="button" style={{ ...btn, background: '#0e6f84', color: '#fff', border: 'none' }} onClick={() => void publishDirect()} disabled={!chosen.length || pub.busy || !socialQ.data}>
+                    {pub.busy ? <><Spinner size={14} color="#fff" />{t('sk_direct_busy')}</> : <><Send size={14} />{tf(t('sk_direct_go'), { n: chosen.length })}</>}
+                  </button>
+                </>
+              ) : !statusQ.isLoading && (
+                <div className="sk-direct-none"><span>{t('sk_direct_none')}</span><RouterLink to="/app/integrations" className="sk-direct-link"><Plug size={13} />{t('sk_direct_setup')}</RouterLink></div>
+              )}
+            </div>
             <div style={{ padding: 12, borderRadius: 14, background: '#f2f9fa', border: '1px solid #d7ecef' }}>
               <div style={{ fontSize: 12.5, fontWeight: 600, color: '#0a1c24', display: 'flex', alignItems: 'center', gap: 6 }}><Link2 size={14} color="#0e6f84" />{t('sk_share_link')}</div>
               <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>

@@ -33,6 +33,7 @@ from app.routers import settings as settings_router  # not `settings`: that name
 from app.routers import integrations
 from app.routers import visio
 from app.routers import cv_events
+from app.routers import social as social_router
 
 from app.dependencies import get_current_user  # used in protected upload below
 
@@ -93,6 +94,7 @@ app.include_router(creneaux.router, prefix="/api")
 app.include_router(entretiens.router, prefix="/api")
 app.include_router(visio.router, prefix="/api")
 app.include_router(cv_events.router, prefix="/api")
+app.include_router(social_router.router, prefix="/api")
 
 
 # Protected Uploads Endpoint
@@ -152,6 +154,7 @@ def _schema_drift_detail(exc: Exception) -> str | None:
         name = t.group(1) if t else '?'
         hint = (" Exécutez backend/database/migrations/rh_schema_fixes.sql dans l'éditeur SQL de Supabase." if name in ("intern_onboarding", "intern_evaluations", "import_logs")
                 else " Exécutez backend/database/migrations/cv_events.sql dans l'éditeur SQL de Supabase." if name in ("cv_events", "cv_prospects")
+                else " Exécutez backend/database/migrations/interview_emails_social.sql dans l'éditeur SQL de Supabase." if name in ("social_accounts", "social_posts")
                 else " Une migration n'a pas été exécutée.")
         return f"La table « {name} » n'existe pas dans Supabase.{hint}"
     return None
@@ -196,3 +199,8 @@ async def on_startup():
     logger.info(f"WEDY RH Platform started (SDK Mode)")
     logger.info(f"   URL: {settings.SUPABASE_URL}")
     threading.Thread(target=_check_file_storage, daemon=True).start()  # network calls: never delay startup
+    if os.getenv("INTERVIEW_REMINDERS", "true").lower() not in ("0", "false", "no"):
+        import asyncio
+        from app.database import get_supabase
+        from app.services.interview_mail import reminder_loop
+        asyncio.get_event_loop().create_task(reminder_loop(get_supabase))  # the e-mail with the link, 15 min before

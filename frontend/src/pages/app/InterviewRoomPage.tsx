@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import {
   draftSynthesis, finishInterview, generateFiche, getApiError, getInterviewCv, getInterviewCvText, getInterviewRoom, linkInterviewMeeting,
-  interviewRoom, listCandidates, makeGuestLink, meetingRoom, saveFiche, startInterview, uploadEmployeeFile,
+  interviewRoom, listCandidates, makeGuestLink, meetingRoom, resendInterviewInvite, saveFiche, startInterview, uploadEmployeeFile,
   type Employee, type Interview, type InterviewDecision, type InterviewFull, type InterviewRoom, type Recommendation, type Scorecard,
 } from '@/services/api';
 import { Spinner } from '@/components/ui';
@@ -182,6 +182,7 @@ export default function InterviewRoomPage() {
   const [finishOpen, setFinishOpen] = useState(false);
   const [callOpen, setCallOpen] = useState(false);
   const [guestLink, setGuestLink] = useState('');
+  const [mailBusy, setMailBusy] = useState(false);
   const [linkBusy, setLinkBusy] = useState(false);
   const [decision, setDecision] = useState<InterviewDecision>('later');
   const [nextRound, setNextRound] = useState(false);
@@ -238,6 +239,15 @@ export default function InterviewRoomPage() {
   };
   const mailInvite = guestLink && cand.email ? `mailto:${cand.email}?subject=${encodeURIComponent(tf(t('vz_mail_subject'), { title: cand.position || room.ad?.poste || '' }))}&body=${encodeURIComponent(tf(t('vz_mail_body'), { name: cand.full_name.split(' ')[0], date: dateLabel, time: iv.start_time.slice(0, 5), url: guestLink }))}` : '';
   const startsIn = Math.round((interviewStart(iv.date, iv.start_time).getTime() - now) / 60000);
+  const fmtSent = (d?: string | null) => (d ? new Intl.DateTimeFormat(loc, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(d)) : '');
+  const sendInvite = async () => {
+    setMailBusy(true);
+    try {
+      const r = await resendInterviewInvite(iv.id);
+      if (r.sent) notify.success(tf(t('itv_mail_sent'), { to: r.to ?? '' })); else notify.error(r.error ?? t('itv_mail_not_sent'));
+      qc.invalidateQueries({ queryKey: ['interview-room', id] });
+    } catch (e) { notify.error(getApiError(e, t('error'))); } finally { setMailBusy(false); }
+  };
 
   // sheet editors
   const upSection = (sid: string, fn: (s: Scorecard['sections'][number]) => Scorecard['sections'][number]) => sc && edit({ ...sc, sections: sc.sections.map(s => (s.id === sid ? fn(s) : s)) });
@@ -508,6 +518,17 @@ export default function InterviewRoomPage() {
                 </div>
                 {guestLink && <div className="room-visio-link"><input readOnly value={guestLink} onFocus={e => e.target.select()} />{mailInvite && <a href={mailInvite} className="room-btn"><Mail size={13} />{t('vz_send_mail')}</a>}</div>}
               </div>
+              {cand.email && (
+                <div className="room-mail">
+                  <div className="room-meet-row"><Mail size={14} /><span>
+                    <b>{iv.invite_sent_at ? tf(t('itv_mail_status_invited'), { d: fmtSent(iv.invite_sent_at) }) : t('itv_mail_status_not_invited')}</b><br />
+                    <small>{room.meeting?.place && !visio ? cand.email
+                      : iv.reminder_sent_at ? tf(t('itv_mail_status_link_sent'), { d: fmtSent(iv.reminder_sent_at) }) : tf(t('itv_mail_status_link_planned'), { n: 15 })}</small>
+                    {iv.email_error && <small className="room-mail-err">{tf(t('itv_mail_error'), { e: iv.email_error })}</small>}
+                  </span></div>
+                  <button type="button" className="room-btn" onClick={() => void sendInvite()} disabled={mailBusy}>{mailBusy ? <Spinner size={13} /> : <Mail size={13} />}{t(iv.invite_sent_at ? 'itv_mail_resend' : 'itv_mail_send')}</button>
+                </div>
+              )}
               {visio && <a className="room-meet-row link" href={visio} target="_blank" rel="noreferrer"><ExternalLink size={14} /><span>{t('vz_external')} · {visio.replace(/^https?:\/\//, '').slice(0, 32)}</span></a>}
               <div className="room-people">
                 <Users size={14} />

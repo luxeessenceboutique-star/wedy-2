@@ -14,7 +14,7 @@ from datetime import date, datetime
 from typing import Any, List, Literal, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 from supabase import Client
@@ -24,6 +24,7 @@ from app.database import get_db
 from app.dependencies import require_hr_or_admin
 from app.repositories import entretien_repository
 from app.services import ai_service
+from app.services import interview_mail
 from app.services import webhooks as webhook_service
 from app.services.audit import log_action
 
@@ -65,11 +66,16 @@ class InterviewCreate(InterviewBase):
     slot_id: Optional[UUID] = None
     interviewers: List[Person] = []
     meeting: Optional[MeetingSpec] = None
+    notify_candidate: bool = True            # e-mail the invitation (and the link 15 min before)
 
 
 class InterviewOut(InterviewBase):
     id: UUID
     status: str
+    invite_sent_at: Optional[str] = None
+    reminder_sent_at: Optional[str] = None
+    email_error: Optional[str] = None
+    email: Optional[dict] = None             # result of the invitation e-mail sent when planning
 
     class Config:
         from_attributes = True
@@ -448,9 +454,9 @@ def interviews_board(supabase: Client = Depends(get_db), _user: dict = Depends(r
 
 
 @router.post("", response_model=InterviewOut)
-def schedule_interview(payload: InterviewCreate, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
+def schedule_interview(payload: InterviewCreate, request: Request, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
     # candidate_name / job_title / recruiter_name are display-only: not columns of interviews
-    data = payload.model_dump(exclude={"slot_id", "candidate_name", "job_title", "recruiter_name", "interviewers", "meeting"})
+    data = payload.model_dump(exclude={"slot_id", "candidate_name", "job_title", "recruiter_name", "interviewers", "meeting", "notify_candidate"})
     data["date"] = str(data["date"])
     data["candidate_id"] = str(data["candidate_id"])
     if data.get("recruiter_id"):
@@ -482,15 +488,41 @@ def schedule_interview(payload: InterviewCreate, supabase: Client = Depends(get_
         except Exception:
             pass  # columns not migrated yet: the interview is planned anyway
     log_action(supabase, current_user["id"], "CREATE", "interview", interview["id"])
+    if payload.notify_candidate:  # the invitation (the link itself goes out 15 min before)
+        from app.routers.annonces import _public_base
+        interview["email"] = interview_mail.send_invite(supabase, interview, _public_base(request))
     return interview
 
 
+@router.get("/mail-status")
+def interview_mail_status(_user: dict = Depends(require_hr_or_admin)):
+    """Whether e-mails can be sent (SMTP set on the server), from which address, how long before the link goes out."""
+    return interview_mail.mail_status()
+
+
+@router.post("/{id}/send-invite")
+def resend_invite(id: UUID, request: Request, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
+    """Send (again) the invitation e-mail to the candidate."""
+    iv = (supabase.table("interviews").select("*").eq("id", str(id)).limit(1).execute().data or [None])[0]
+    if not iv:
+        raise HTTPException(status_code=404, detail="Entretien non trouvé")
+    from app.routers.annonces import _public_base
+    out = interview_mail.send_invite(supabase, iv, _public_base(request))
+    if out["sent"]:
+        log_action(supabase, current_user["id"], "SEND_INVITE", "interview", str(id))
+    return out
+
+
 @router.patch("/{id}/status")
-def update_interview_status(id: UUID, status: str, supabase: Client = Depends(get_db), _user: dict = Depends(require_hr_or_admin)):
+def update_interview_status(id: UUID, status: str, request: Request, supabase: Client = Depends(get_db), _user: dict = Depends(require_hr_or_admin)):
     res = entretien_repository.update_interview_status(supabase, str(id), status)
     if not res.data:
         raise HTTPException(status_code=404, detail="Entretien non trouvé")
-    return res.data[0]
+    iv = res.data[0]
+    if status.lower() in ("cancelled", "canceled") and iv.get("invite_sent_at"):  # the candidate was invited: tell them
+        from app.routers.annonces import _public_base
+        iv["email"] = interview_mail.send_invite(supabase, iv, _public_base(request), kind="cancel")
+    return iv
 
 
 # ── Interview room ────────────────────────────────────────────────────────────

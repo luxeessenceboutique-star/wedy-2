@@ -104,12 +104,24 @@ export type Interview = {
   candidate_name?: string;
   job_title?: string;
   recruiter_name?: string;
+  /** e-mails to the candidate: invitation, link 15 min before, last error */
+  invite_sent_at?: string | null;
+  reminder_sent_at?: string | null;
+  email_error?: string | null;
+  email?: MailResult | null;
 };
 
 export const listInterviews = () => api.get<Interview[]>('/entretiens').then(r => r.data);
 export type InterviewPerson = { employee_id?: string | null; name: string };
 export type MeetingSpec = { starts_at: string; duration_min: number; place?: string; visio_url?: string };
-export const scheduleInterview = (body: Partial<Interview> & { slot_id?: string; interviewers?: InterviewPerson[]; meeting?: MeetingSpec }) =>
+/** Result of an e-mail to the candidate: sent or why not (no address, e-mails not set up on the server…). */
+export type MailResult = { sent: boolean; to: string | null; error: string | null };
+export type MailStatus = { configured: boolean; from: string | null; reminder_minutes: number; public_url: string | null };
+export const getMailStatus = () => api.get<MailStatus>('/entretiens/mail-status').then(r => r.data);
+export const resendInterviewInvite = (id: string) => api.post<MailResult>(`/entretiens/${id}/send-invite`).then(r => r.data);
+export const sendTestMail = () => api.post<{ sent: boolean; to: string }>('/integrations/mail/test').then(r => r.data);
+
+export const scheduleInterview = (body: Partial<Interview> & { slot_id?: string; interviewers?: InterviewPerson[]; meeting?: MeetingSpec; notify_candidate?: boolean }) =>
   api.post<Interview>('/entretiens', body).then(r => r.data);
 export const updateInterviewStatus = (id: string, status: string) =>
   api.patch<Interview>(`/entretiens/${id}/status`, null, { params: { status } }).then(r => r.data);

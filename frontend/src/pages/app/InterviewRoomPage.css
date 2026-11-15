@@ -263,3 +263,8 @@
   .room-cv { height: 70vh; }
   .room-two, .room-dec { grid-template-columns: 1fr; }
 }
+/* e-mails to the candidate: invitation, link 15 min before */
+.room-mail { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding: 8px 10px; border-radius: 12px; background: #f6f9fa; border: 1px solid #e6edf0; }
+.room-mail .room-meet-row { padding: 2px 0; flex: 1 1 200px; min-width: 0; }
+.room-mail small { display: block; color: #5f7079; }
+.room-mail .room-mail-err { color: #a33a28; margin-top: 2px; }

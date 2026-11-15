@@ -88,3 +88,28 @@ def ical_feed(token: str, supabase: Client = Depends(get_db)):
                   "TRANSP:TRANSPARENT", "END:VEVENT"]
     lines.append("END:VCALENDAR")
     return Response("\r\n".join(lines) + "\r\n", media_type="text/calendar; charset=utf-8", headers={"Cache-Control": "no-store"})
+
+
+# ── E-mails (interview invitations and reminders) ─────────────────────────────
+
+@router.get("/mail")
+def mail_status(current_user: dict = Depends(require_hr_or_admin)):
+    from app.services.interview_mail import mail_status as status
+    return status()
+
+
+@router.post("/mail/test")
+def mail_test(current_user: dict = Depends(require_hr_or_admin)):
+    """Send a test e-mail to the signed-in user: checks the SMTP settings of the server."""
+    from app.services import mailer
+    to = (current_user.get("email") or "").strip()
+    if not to:
+        raise HTTPException(status_code=422, detail="Votre compte n'a pas d'adresse e-mail.")
+    html = ("<p style=\"font-family:Arial;font-size:14px\">Bonjour,</p><p style=\"font-family:Arial;font-size:14px\">"
+            "Cet e-mail de test confirme que Wedy peut envoyer les invitations aux entretiens et les rappels avec le lien.</p>")
+    try:
+        mailer.send(to, "Test d'envoi d'e-mail – Wedy RH", html,
+                    "Bonjour,\n\nCet e-mail de test confirme que Wedy peut envoyer les invitations aux entretiens et les rappels avec le lien.")
+    except mailer.MailError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    return {"sent": True, "to": to}

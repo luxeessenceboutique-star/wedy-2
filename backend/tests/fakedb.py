@@ -16,6 +16,7 @@ class Query:
     def eq(self, k, v): self.f.append(lambda r: str(r.get(k)) == str(v)); return self
     def neq(self, k, v): self.f.append(lambda r: str(r.get(k)) != str(v)); return self
     def in_(self, k, vs): vs = [str(x) for x in vs]; self.f.append(lambda r: str(r.get(k)) in vs); return self
+    def is_(self, k, v): self.f.append(lambda r: r.get(k) is None if v in (None, 'null') else str(r.get(k)).lower() == str(v).lower()); return self
     def gte(self, k, v): self.f.append(lambda r: r.get(k) is not None and str(r.get(k)) >= str(v)); return self
     def lte(self, k, v): self.f.append(lambda r: r.get(k) is not None and str(r.get(k)) <= str(v)); return self
     def lt(self, k, v): self.f.append(lambda r: r.get(k) is not None and str(r.get(k)) < str(v)); return self

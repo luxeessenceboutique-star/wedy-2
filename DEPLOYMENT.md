@@ -250,6 +250,45 @@ Annonces › « Diffuser » draws the recruitment visual in the browser (square,
 (title, text, visual) that LinkedIn, Facebook and WhatsApp read, then sends visitors to `/postuler/{id}`. Absolute URLs come
 from the proxy headers; set `APP_PUBLIC_URL=https://your-domain` in `backend/.env` if the previews show the wrong address.
 
+### 4.1d Interview e-mails to candidates
+
+When HR plans an interview (Entretiens › « Planifier », box « Envoyer l'invitation par e-mail » ticked by default), the
+candidate receives an invitation: job, date, time, duration, type, interviewers, place or « en visioconférence », and a
+calendar file (.ics) — and is told the link will come 15 minutes before. 15 minutes before the start, a second e-mail
+carries the link (the external link HR typed, or the Wedy Visio guest link). Cancelling the interview sends a cancellation.
+
+Needs the SMTP settings of section 4.1 (`MAIL_SERVER`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`,
+`MAIL_FROM_NAME`; `MAIL_SSL_TLS=true` or port 465 for SSL, otherwise STARTTLS). Gmail / Google Workspace: use an
+*app password*. A relay that authenticates by IP only: set `MAIL_NO_AUTH=true`. Check in Wedy › Intégrations ›
+« E-mails aux candidats » › « M'envoyer un e-mail de test ».
+
+- The reminders are sent by a loop inside the API (every minute). Run **one** API process (the default), or set
+  `INTERVIEW_REMINDERS=false` on the extra ones; a database claim already prevents duplicates.
+- Links point to `APP_PUBLIC_URL` when set (recommended: `APP_PUBLIC_URL=https://your-wedy-domain`), else to the address
+  HR used when planning.
+- Time zone: `APP_TIMEZONE` (default `Africa/Casablanca`). The `tzdata` package is in `requirements.txt`.
+- Migration: `interview_emails_social.sql`.
+
+---
+
+### 4.1e Publishing job posts on LinkedIn, Facebook and Instagram
+
+Annonces › « Diffuser » › « Publier directement » posts the text and the visual on the company's LinkedIn page, Facebook
+page and Instagram professional account. An admin of those pages connects each network **once** in Wedy › Intégrations
+(the network's own sign-in page opens one time); then everyone in HR publishes in one click, without reconnecting.
+Tokens are stored encrypted with `SECRET_KEY` (changing `SECRET_KEY` means connecting again) and never reach the browser.
+
+| Network | What to create | Environment variables |
+|---|---|---|
+| LinkedIn | An app on developer.linkedin.com, linked to the company page, with the **Community Management API** product (scopes `w_organization_social`, `r_organization_social`, `rw_organization_admin`). Authorized redirect URL: `https://<wedy-domain>/api/social/callback/linkedin` | `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` (optional `LINKEDIN_API_VERSION=YYYYMM`) |
+| Facebook + Instagram | An app on developers.facebook.com (type Business, product *Facebook Login for Business*) with the permissions `pages_show_list`, `pages_manage_posts`, `pages_read_engagement`, `instagram_basic`, `instagram_content_publish`, `business_management`. Valid OAuth redirect URI: `https://<wedy-domain>/api/social/callback/meta`. The Instagram account must be *professional* and linked to the Facebook page. | `META_APP_ID`, `META_APP_SECRET` (optional `META_GRAPH_VERSION=v23.0`) |
+
+- LinkedIn grants the Community Management API after a review of the app; Meta requires *App Review* of the permissions
+  for public use — until then, the app works for the people who have a role on it (add the page admins as testers).
+- Instagram fetches the visual from `https://<wedy-domain>/api/annonces/{id}/visual/square.jpg`: the API must be reachable
+  from the internet over HTTPS (set `APP_PUBLIC_URL`).
+- Migration: `interview_emails_social.sql` (tables `rh.social_accounts`, `rh.social_posts`).
+
 ---
 
 ### 4.2 Frontend — `frontend/.env`
@@ -367,6 +406,7 @@ psql $SUPABASE_DB_URL -f backend/database/migrations/create_hr_requests.sql
 psql $SUPABASE_DB_URL -f backend/database/migrations/migration_employee_files.sql
 psql $SUPABASE_DB_URL -f backend/database/migrations/employee_import_support.sql
 psql $SUPABASE_DB_URL -f backend/database/migrations/cv_events.sql   # Événements: CV scanned at job fairs (needs an AI key for full extraction)
+psql $SUPABASE_DB_URL -f backend/database/migrations/interview_emails_social.sql   # interview e-mails + LinkedIn/Facebook/Instagram publishing
 ```
 
 > **Note:** For a fresh environment, `setup_database.sql` creates the base schema. The remaining scripts are additive migrations applied on top. All migration SQL files now live under `backend/database/migrations/`.

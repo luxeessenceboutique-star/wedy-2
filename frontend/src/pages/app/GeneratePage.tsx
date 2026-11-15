@@ -20,6 +20,7 @@ import { useLang, type TKey } from '@/lib/lang';
 import { tf } from '@/lib/format';
 import './GeneratePage.css';
 import { companyInitials, useAppSettings, type AppSettings, type CompanyProfile } from '@/lib/appSettings';
+import { FIELD_LABEL, durationText, parseAmount, readMeta, salaryFigures, salaryWords, type FieldMeta } from '@/lib/templateFields';
 
 /** Before /settings answers (or if the table is not created yet): the company of the official templates. */
 const FALLBACK_CO: Pick<AppSettings, 'company' | 'assets'> = {
@@ -58,20 +59,34 @@ const fmt = (d?: string | null) => {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : ddmmyyyy(new Date(d));
 };
-const resolveVar = (name: string, emp: Employee, co: CompanyProfile): string => {
+type Person = Employee & { remuneration?: number | null; school?: string | null; cnss_number?: string | null; bank_account?: string | null };
+/** The value Wedy puts in a field for this person (same rules as the backend's build_context), with what the form
+ *  already holds: a typed salary / date changes the salary in words / the duration. */
+const resolveVar = (name: string, emp: Person, co: CompanyProfile, typed: Record<string, string> = {}, meta: FieldMeta = {}): string => {
+  const intern = emp.status === 'intern';
+  const start = typed.contract_start || fmt(emp.contract_start || (intern ? emp.internship_start : '') || emp.hire_date);
+  const end = typed.contract_end || (emp.contract_end ? fmt(emp.contract_end) : intern && emp.internship_end ? fmt(emp.internship_end) : '');
+  const salaryNum = parseAmount(typed.salary_figures) ?? parseAmount(typed.salary) ?? parseAmount(emp.salary ?? (intern ? emp.remuneration : null));
+  const civ = (emp.custom_fields?.civility || emp.custom_fields?.civilite || '').trim();
   const MAP: Record<string, () => string> = {
     full_name: () => emp.full_name || '', cin: () => emp.cin || '', email: () => emp.email || '', phone: () => emp.phone || '',
     address: () => emp.address || '', city: () => emp.city || '', nationality: () => emp.nationality || '',
     position: () => emp.position || '', department: () => emp.department || '', manager: () => emp.manager || '',
     matricule: () => emp.matricule || '', contract_type: () => emp.contract_type || '', hire_date: () => fmt(emp.hire_date),
-    contract_start: () => fmt(emp.contract_start || emp.hire_date), contract_end: () => (emp.contract_end ? fmt(emp.contract_end) : ''),
+    contract_start: () => start, contract_end: () => end,
     internship_start: () => fmt(emp.internship_start), internship_end: () => (emp.internship_end ? fmt(emp.internship_end) : ''),
-    salary: () => (emp.salary ? `${Number(emp.salary).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD` : ''), today: () => ddmmyyyy(new Date()), company: () => co.name || '',
+    birth_date: () => fmt(emp.birth_date), school: () => emp.school || '', cnss_number: () => emp.cnss_number || '', bank_account: () => emp.bank_account || '',
+    salary: () => (salaryNum !== null ? `${salaryNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD` : ''),
+    salary_figures: () => (salaryNum !== null ? salaryFigures(salaryNum) : ''), salary_words: () => (salaryNum !== null ? salaryWords(salaryNum) : ''),
+    duration: () => durationText(start, end), civility: () => civ,
+    today: () => ddmmyyyy(new Date()), company: () => co.name || '',
     company_address: () => co.address || '', company_city: () => co.city || '', company_phone: () => co.phone || '', company_email: () => co.email || '',
     company_ice: () => co.ice || '', company_rc: () => co.rc || '', company_if: () => co.if || '', company_cnss: () => co.cnss || '',
   };
-  return MAP[name]?.() ?? '';
+  return MAP[name]?.() ?? meta[name]?.default ?? '';
 };
+/** Fields worked out from others: never asked, they follow what is typed. */
+const DERIVED = new Set(['salary_words', 'duration']);
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -125,10 +140,12 @@ export default function GeneratePage() {
   });
 
   const templateVars = tpl ? extractVars(tpl.body_template) : [];
+  const meta = tpl ? readMeta(tpl.body_template) : {};
   const vars = templateVars.map(v => {
-    const auto = person ? resolveVar(v, person, co.company) : '';
-    const value = extraVars[v] ?? auto;
-    return { name: v, value, missing: !value.trim(), auto: !!auto && value === auto };
+    const auto = person ? resolveVar(v, person as Person, co.company, extraVars, meta) : '';
+    const value = DERIVED.has(v) && extraVars[v] === undefined ? auto : extraVars[v] ?? auto;
+    const label = FIELD_LABEL[v] ? t(FIELD_LABEL[v]) : VAR_LABEL_KEYS[v] ? t(VAR_LABEL_KEYS[v]) : meta[v]?.label ?? t('gen_var_other');
+    return { name: v, value, label, missing: !value.trim(), auto: !!auto && value === auto };
   });
   const missingCount = vars.filter(v => v.missing).length;
 
@@ -303,8 +320,14 @@ export default function GeneratePage() {
               {vars.map((v, i) => (
                 <RV key={v.name} variant="up" delay={i * 40} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 12, border: `1px solid ${v.missing ? 'rgba(230,169,72,.45)' : '#eef2f4'}`, background: v.missing ? '#fffaf1' : '#ffffff', flexWrap: 'wrap' }}>
                   <code style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11.5, fontWeight: 600, padding: '3px 7px', borderRadius: 7, background: '#e4f2f4', color: '#0b5f72', whiteSpace: 'nowrap' }}>{`{{${v.name}}}`}</code>
-                  <span style={{ width: 150, fontSize: 12.5, color: '#52646d' }}>{t(VAR_LABEL_KEYS[v.name] ?? 'gen_var_other')}</span>
+                  <span style={{ width: 150, fontSize: 12.5, color: '#52646d' }}>{v.label}</span>
+                  {v.name === 'civility' ? (
+                    <select value={v.value} onChange={e => setExtraVars(s => ({ ...s, civility: e.target.value }))} className="gen-input" style={{ flex: 1, minWidth: 160, height: 36, padding: '0 10px', borderRadius: 9, border: `1px solid ${v.missing ? 'rgba(230,169,72,.7)' : '#d6dfe3'}`, background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' }}>
+                      <option value="">{t('gen_civility_pick')}</option><option value="Monsieur">Monsieur</option><option value="Madame">Madame</option>
+                    </select>
+                  ) : (
                   <input value={v.value} onChange={e => setExtraVars(s => ({ ...s, [v.name]: e.target.value }))} placeholder={t('gen_to_fill')} className="gen-input" style={{ flex: 1, minWidth: 160, height: 36, padding: '0 10px', borderRadius: 9, border: `1px solid ${v.missing ? 'rgba(230,169,72,.7)' : '#d6dfe3'}`, background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, color: '#0a1c24', outline: 'none' }} />
+                  )}
                   {v.auto ? <CircleCheck size={16} color="#16a06b" /> : v.missing ? <CircleAlert size={16} color="#df9326" /> : null}
                 </RV>
               ))}

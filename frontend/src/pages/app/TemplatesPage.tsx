@@ -1,11 +1,12 @@
 ﻿import { useEffect, useRef, useState, type ChangeEvent, type ComponentType, type FormEvent, type MouseEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, FileUp, GraduationCap, Upload, Users, UsersRound } from 'lucide-react';
+import { ArrowLeft, CircleCheck, FileText, FileUp, GraduationCap, PencilLine, ScanSearch, Upload, Users, UsersRound } from 'lucide-react';
 import {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
-  importTemplateFromPdf, seedDefaultTemplates, listDocuments, getApiError,
+  importTemplateFromPdf, previewTemplateImport, seedDefaultTemplates, listDocuments, getApiError,
 } from '@/services/api';
-import type { Template } from '@/services/api';
+import type { DetectedField, Template } from '@/services/api';
+import { FIELD_LABEL, FIELD_LABELS, KEEP, customKey } from '@/lib/templateFields';
 import { Modal, Spinner } from '@/components/ui';
 import { useNotify } from '@/lib/notify';
 import { useLang, type TKey } from '@/lib/lang';
@@ -37,7 +38,8 @@ const VARS: [string, TKey][] = [
   ['hire_date', 'tpl_v_hire_date'], ['contract_start', 'tpl_v_contract_start'], ['contract_end', 'tpl_v_contract_end'],
   ['contract_type', 'tpl_v_contract_type'], ['salary', 'tpl_v_salary'], ['email', 'tpl_v_email'], ['phone', 'tpl_v_phone'],
   ['address', 'tpl_v_address'], ['city', 'tpl_v_city'], ['matricule', 'tpl_v_matricule'], ['manager', 'tpl_v_manager'],
-  ['today', 'tpl_v_today'], ['nationality', 'tpl_v_nationality'],
+  ['today', 'tpl_v_today'], ['nationality', 'tpl_v_nationality'], ['civility', 'tpl_v_civility'], ['duration', 'tpl_v_duration'],
+  ['salary_figures', 'tpl_v_salary_figures'], ['salary_words', 'tpl_v_salary_words'], ['school', 'tpl_v_school'],
 ];
 
 // ── stored body ⇄ editor HTML ───────────────────────────────────────────────
@@ -212,7 +214,9 @@ export default function TemplatesPage() {
   const save = async () => {
     const ed = edRef.current;
     if (!eName.trim()) { notify.error(t('tpl_name_required')); return; }
-    const body = ed ? fromEditorHTML(ed.innerHTML) : '';
+    let body = ed ? fromEditorHTML(ed.innerHTML) : '';
+    const meta = /^\s*<!--wedy-fields:[\s\S]*?-->/.exec(editing?.body_template ?? '');
+    if (meta && !body.trimStart().startsWith('<!--wedy-fields:')) body = meta[0] + body.replace(/<!--wedy-fields:[\s\S]*?-->/, '');
     const text = ed?.innerText.trim() ?? '';
     if (!text && !isImageTemplate(body)) { notify.error(t('tpl_content_required')); return; }
     const vars = varsIn(ed ? ed.innerText : '');
@@ -327,47 +331,82 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
   const [category, setCategory] = useState<Cat>('attestation');
   const [targetType, setTargetType] = useState<Target>('employee');
   const [loading, setLoading] = useState(false);
+  const [fields, setFields] = useState<DetectedField[] | null>(null);
+  const [preview, setPreview] = useState('');
+  const [choice, setChoice] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const close = () => { if (loading) return; setFile(null); setName(''); onClose(); };
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
+  const reset = () => { setFile(null); setName(''); setFields(null); setPreview(''); setChoice({}); };
+  const close = () => { if (loading) return; reset(); onClose(); };
+  const pick = (f: File) => { setFile(f); setFields(null); setChoice({}); if (!name.trim()) setName(f.name.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim()); };
+  // only what the user changed is sent: the server finds the rest itself
+  const mapping = () => JSON.stringify(Object.fromEntries((fields ?? []).filter(f => choice[f.placeholder] !== undefined && choice[f.placeholder] !== f.key).map(f => [f.placeholder, choice[f.placeholder]])));
+  const form = () => {
+    const fd = new FormData();
+    fd.append('file', file as File); fd.append('name_fr', name.trim()); fd.append('name_en', name.trim());
+    fd.append('category', category); fd.append('target_type', targetType); fd.append('mapping', mapping());
+    return fd;
+  };
+  const analyse = async (e?: FormEvent) => {
+    e?.preventDefault();
     if (!file || !name.trim()) { notify.error(t('tpl_import_required')); return; }
     setLoading(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file); fd.append('name_fr', name.trim()); fd.append('name_en', name.trim());
-      fd.append('category', category); fd.append('target_type', targetType);
-      await importTemplateFromPdf(fd);
-      notify.success(t('tpl_imported'));
-      onImported();
-      setLoading(false);
-      setFile(null); setName(''); onClose();
-    } catch (err) {
-      notify.error(getApiError(err, t('tpl_import_error')));
-      setLoading(false);
-    }
+      const r = await previewTemplateImport(form());
+      setFields(r.fields); setPreview(r.body_template);
+    } catch (err) { notify.error(getApiError(err, t('tpl_import_error'))); }
+    setLoading(false);
   };
+  const save = async () => {
+    setLoading(true);
+    try {
+      await importTemplateFromPdf(form());
+      notify.success(t('tpl_imported'));
+      onImported(); reset(); setLoading(false); onClose();
+    } catch (err) { notify.error(getApiError(err, t('tpl_import_error'))); setLoading(false); }
+  };
+  const valueOf = (f: DetectedField) => choice[f.placeholder] ?? f.key;
+  // the work mode is not in the person's record: it is asked at generation, with the document's own wording proposed
+  const isCustom = (v: string) => v !== KEEP && (!FIELD_LABEL[v] || v === 'work_mode');
+  // the template as it will read: each field shown as its label
+  const previewHtml = preview
+    .replace(/^\s*<!--wedy-fields:[\s\S]*?-->/, '')
+    .replace(/\{\{(\w+)\}\}/g, (_, k: string) => {
+      // the preview was built with the detected fields: show each one as the user has it now
+      const f = (fields ?? []).find(x => x.key === k);
+      const cur = f ? valueOf(f) : k;
+      if (cur === KEEP && f) return esc(f.placeholder);
+      const label = FIELD_LABEL[cur] ? t(FIELD_LABEL[cur]) : f?.label ?? k;
+      return `<span style="${CHIP};background:${isCustom(cur) ? '#fbefda' : '#e4f2f4'};color:${isCustom(cur) ? '#8a5207' : '#0b5f72'}">${esc(label)}</span>`;
+    });
 
+  const review = fields !== null;
   return (
-    <Modal open={open} onClose={close} title={t('tpl_import_title')} subtitle={t('tpl_import_sub')} icon={<FileUp size={17} />} width={500}
-      footer={<>
-        <button type="button" className="btn btn-secondary" onClick={close}>{t('cancel')}</button>
-        <button type="submit" form="tpl-import" className="btn btn-primary" disabled={!file || loading}>
+    <Modal open={open} onClose={close} title={t(review ? 'tpl_an_title' : 'tpl_import_title')} icon={review ? <ScanSearch size={17} /> : <FileUp size={17} />} width={review ? 980 : 500}
+      subtitle={review ? tf(t(fields.length ? 'tpl_an_sub' : 'tpl_an_sub_none'), { n: fields.length, file: file?.name ?? '' }) : t('tpl_import_sub')}
+      footer={review ? <>
+        <button type="button" className="btn btn-secondary" onClick={() => { setFields(null); setPreview(''); }} disabled={loading}><ArrowLeft size={14} /> {t('tpl_an_back')}</button>
+        <button type="button" className="btn btn-primary" onClick={() => void save()} disabled={loading}>
           {loading ? <Spinner size={14} color="#fff" /> : <Upload size={14} />} {t('tpl_import')}
         </button>
+      </> : <>
+        <button type="button" className="btn btn-secondary" onClick={close}>{t('cancel')}</button>
+        <button type="submit" form="tpl-import" className="btn btn-primary" disabled={!file || loading}>
+          {loading ? <Spinner size={14} color="#fff" /> : <ScanSearch size={14} />} {t('tpl_an_analyse')}
+        </button>
       </>}>
-      <form id="tpl-import" onSubmit={submit} style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {!review ? (
+      <form id="tpl-import" onSubmit={analyse} style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div
           onClick={() => fileRef.current?.click()}
           onDragOver={e => e.preventDefault()}
-          onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f); }}
+          onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) pick(f); }}
           style={{ border: `1.5px dashed ${file ? '#16b6c8' : '#d0dadf'}`, borderRadius: 14, padding: '24px 16px', textAlign: 'center', cursor: 'pointer', background: file ? '#f3fafb' : '#f8fafb', transition: 'all .2s' }}
         >
           <span style={{ width: 40, height: 40, borderRadius: 12, margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e4f2f4', color: '#0e6f84' }}><FileText size={19} /></span>
           <div style={{ fontSize: 14, fontWeight: 600, color: file ? '#0b5f72' : '#0a1c24' }}>{file ? file.name : t('tpl_import_drop')}</div>
           <div style={{ fontSize: 12.5, color: '#5f7079', marginTop: 3 }}>{file ? t('tpl_import_change') : t('tpl_import_formats')}</div>
-          <input ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); }} />
+          <input ref={fileRef} type="file" accept=".pdf,.docx,.doc,.txt" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) pick(f); }} />
         </div>
         <div>
           <label style={labelStyle}>{t('tpl_import_name')}</label>
@@ -387,8 +426,44 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
             </select>
           </div>
         </div>
-        <div style={{ padding: '10px 12px', borderRadius: 12, background: '#f3f6f7', fontSize: 12.5, color: '#52646d', lineHeight: 1.55 }}>{t('tpl_import_hint')}</div>
+        <div style={{ padding: '10px 12px', borderRadius: 12, background: '#f3f6f7', fontSize: 12.5, color: '#52646d', lineHeight: 1.55 }}>{t('tpl_an_hint')}</div>
       </form>
+      ) : (
+      <div className="tpl-an">
+        <div className="tpl-an-list">
+          {!fields.length && <div className="tpl-an-none">{t('tpl_an_none')}</div>}
+          {fields.map(f => {
+            const v = valueOf(f);
+            const custom = isCustom(v), keep = v === KEEP;
+            return (
+              <div key={f.placeholder} className={`tpl-an-row${keep ? ' keep' : ''}`}>
+                <div className="tpl-an-ph" title={f.placeholder}>
+                  <code>{f.placeholder}</code>
+                  {f.count > 1 && <small>×{f.count}</small>}
+                </div>
+                <select value={v} onChange={e => setChoice(c => ({ ...c, [f.placeholder]: e.target.value }))} aria-label={f.placeholder}>
+                  <optgroup label={t('tpl_an_g_wedy')}>
+                    {FIELD_LABELS.map(([k, key]) => <option key={k} value={k}>{t(key)}</option>)}
+                  </optgroup>
+                  <optgroup label={t('tpl_an_g_other')}>
+                    <option value={f.known ? customKey(f.label) : f.key}>{tf(t('tpl_an_custom_opt'), { label: f.label })}</option>
+                    <option value={KEEP}>{t('tpl_an_keep')}</option>
+                  </optgroup>
+                </select>
+                <span className={`tpl-an-tag ${keep ? 'keep' : custom ? 'custom' : 'wedy'}`}>
+                  {keep ? t('tpl_an_t_keep') : custom ? <><PencilLine size={12} />{t('tpl_an_t_custom')}</> : <><CircleCheck size={12} />{t('tpl_an_t_wedy')}</>}
+                </span>
+              </div>
+            );
+          })}
+          <p className="tpl-an-note">{t('tpl_an_note')}</p>
+        </div>
+        <div className="tpl-an-preview">
+          <div className="tpl-an-preview-h">{t('tpl_an_preview')}</div>
+          <div className="tpl-an-paper" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+        </div>
+      </div>
+      )}
     </Modal>
   );
 }

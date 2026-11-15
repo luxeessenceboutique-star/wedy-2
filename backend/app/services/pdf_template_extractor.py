@@ -16,6 +16,8 @@ Result: the imported template looks IDENTICAL to the original PDF,
 import re
 import base64
 import io
+import statistics
+from contextvars import ContextVar
 from typing import Optional
 
 try:
@@ -237,8 +239,15 @@ def _apply_contextual_vars(text: str) -> str:
     return text
 
 
+# The smart import (template_fields) finds the fields itself on the extracted HTML: the legacy substitutions are then
+# turned off so they do not map « [Salaire en lettres] » to the salary in figures before it gets the chance.
+_LEGACY_SUBST: ContextVar[bool] = ContextVar("legacy_subst", default=True)
+
+
 def _apply_all(text: str) -> str:
     """Apply bracket patterns then contextual patterns (always both)."""
+    if not _LEGACY_SUBST.get():
+        return text
     result = _apply_vars(text)
     result = _apply_contextual_vars(result)
     return result
@@ -258,6 +267,188 @@ def extract_pdf_template(file_bytes: bytes, filename: str = "template.pdf") -> s
         return _extract_from_docx(file_bytes)
     else:
         return _plain_fallback(file_bytes.decode("utf-8", errors="replace"))
+
+
+def extract_template_smart(file_bytes: bytes, filename: str = "template.pdf") -> str:
+    """The document as editable HTML with its original wording (fields are found afterwards by template_fields).
+
+    A PDF with a text layer is rebuilt as flowing text (titles, bold, lists, the two signature columns), so a long
+    name or address simply wraps; a scanned PDF (no text) keeps the page image with the legacy overlays."""
+    ext = filename.rsplit(".", 1)[-1].lower()
+    token = _LEGACY_SUBST.set(False)
+    try:
+        if ext == "pdf":
+            flow = _pdf_to_flow_html(file_bytes)
+            if flow:
+                return flow
+            _LEGACY_SUBST.reset(token)
+            token = _LEGACY_SUBST.set(True)
+            return _extract_from_pdf(file_bytes)
+        if ext in ("docx", "doc"):
+            return _extract_from_docx(file_bytes)
+        return _plain_fallback(file_bytes.decode("utf-8", errors="replace"))
+    finally:
+        _LEGACY_SUBST.reset(token)
+
+
+_ZW = dict.fromkeys(map(ord, "\u200b\u200c\u200d\u2060\ufeff"), None)
+_BULLETS = ("●", "•", "▪", "◦", "–", "-", "*", "➢", "✓")
+
+
+def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
+    """Rebuild a text PDF as flowing HTML, or None when it has (almost) no text (a scan)."""
+    if not _HAS_FITZ:
+        return None
+    try:
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+    except Exception:
+        return None
+    spans_by_page = []
+    sizes: list[float] = []
+    for page in doc:
+        spans = []
+        for blk in page.get_text("dict").get("blocks", []):
+            if blk.get("type") != 0:
+                continue
+            for ln in blk.get("lines", []):
+                for sp in ln.get("spans", []):
+                    raw = (sp.get("text") or "").replace("\u00a0", " ")
+                    # Google Docs writes some spaces as pairs of zero-width spaces: two or more of them are a space
+                    lead = len(raw) - len(raw.lstrip("\u200b"))
+                    trail = len(raw) - len(raw.rstrip("\u200b"))
+                    text = re.sub("\u200b{2,}", " ", raw.strip("\u200b")).translate(_ZW)
+                    if not text.strip():
+                        continue
+                    x0, y0, x1, y1 = sp["bbox"]
+                    size = sp.get("size", 11)
+                    font = (sp.get("font") or "").lower()
+                    spans.append({"x0": x0, "x1": x1, "y0": y0, "y1": y1, "yc": (y0 + y1) / 2, "size": size, "text": text,
+                                  "zw": (lead, trail),
+                                  "bold": bool(sp.get("flags", 0) & 16) or "bold" in font,
+                                  "italic": bool(sp.get("flags", 0) & 2) or "italic" in font or "oblique" in font})
+                    sizes.extend([size] * len(text.strip()))
+        spans_by_page.append((page.rect.width, spans))
+    if len(sizes) < 120:
+        return None
+    body = statistics.median(sizes)
+
+    # 1. lines: spans whose vertical centres are close, left to right
+    lines = []
+    for width, spans in spans_by_page:
+        spans.sort(key=lambda s: (round(s["yc"]), s["x0"]))
+        cur = []
+        for sp in sorted(spans, key=lambda s: s["yc"]):
+            if cur and abs(sp["yc"] - sum(s["yc"] for s in cur) / len(cur)) > 0.45 * max(sp["size"], body):
+                lines.append((width, sorted(cur, key=lambda s: s["x0"])))
+                cur = []
+            cur.append(sp)
+        if cur:
+            lines.append((width, sorted(cur, key=lambda s: s["x0"])))
+
+    # 2. each line as styled segments; a wide gap splits it in two columns (signature blocks)
+    def line_info(width, spans):
+        cols = [[]]
+        prev = None
+        for sp in spans:
+            if prev is not None:
+                gap = sp["x0"] - prev["x1"]
+                if gap > max(60, width * 0.12):
+                    cols.append([])
+                elif (gap > 0.2 * sp["size"] or prev["zw"][1] + sp["zw"][0] >= 2) and not cols[-1][-1][0].endswith(" ") \
+                        and not sp["text"].startswith((" ", ",", ".", ")")):
+                    cols[-1].append((" ", prev["bold"] and sp["bold"], False))
+            cols[-1].append((sp["text"], sp["bold"], sp["italic"]))
+            prev = sp
+        top, bottom = min(s["y0"] for s in spans), max(s["y1"] for s in spans)
+        size = max(s["size"] for s in spans)
+        x0, x1 = spans[0]["x0"], max(s["x1"] for s in spans)
+        return {"cols": cols, "top": top, "bottom": bottom, "size": size, "x0": x0, "x1": x1, "width": width}
+
+    infos = [line_info(w, sp) for w, sp in lines]
+
+    def plain(segs):
+        return "".join(t for t, _, _ in segs).strip()
+
+    # 3. paragraphs: consecutive lines of the same kind, close to each other
+    paras = []
+    for li in infos:
+        first = plain(li["cols"][0])
+        kind = "cols" if len(li["cols"]) > 1 else ("bullet" if first[:1] in _BULLETS and len(first) > 2 else "text")
+        heading = li["size"] >= body * 1.3
+        right = kind == "text" and li["x0"] > li["width"] * 0.45
+        p = paras[-1] if paras else None
+        joinable = (
+            p is not None and kind == "text" and p["kind"] == "text" and p["heading"] == heading and p["right"] == right
+            and li["top"] - p["bottom"] < 0.55 * li["size"] and li["top"] >= p["top"]
+        )
+        if joinable:
+            segs = p["segs"]
+            if segs and not segs[-1][0].endswith((" ", "-")):
+                segs.append((" ", False, False))
+            segs.extend(li["cols"][0])
+            p["bottom"] = li["bottom"]
+        else:
+            paras.append({"kind": kind, "heading": heading, "right": right, "size": li["size"], "top": li["top"],
+                          "bottom": li["bottom"], "segs": list(li["cols"][0]), "cols": li["cols"]})
+
+    def to_html(segs):
+        out, run, style = [], [], None
+        merged = []
+        for t, b, i in segs:
+            if merged and merged[-1][1] == b and merged[-1][2] == i:
+                merged[-1] = (merged[-1][0] + t, b, i)
+            else:
+                merged.append((t, b, i))
+        for t, b, i in merged:
+            h = _esc(re.sub(r"[ \t]+", " ", t))
+            if b and h.strip():
+                h = f"<strong>{h}</strong>"
+            if i and h.strip():
+                h = f"<em>{h}</em>"
+            out.append(h)
+        return "".join(out).strip()
+
+    html, i = [], 0
+    while i < len(paras):
+        p = paras[i]
+        if p["kind"] == "bullet":
+            items = []
+            while i < len(paras) and paras[i]["kind"] == "bullet":
+                segs = paras[i]["segs"]
+                first = segs[0][0].lstrip()
+                segs = [(first[1:].lstrip(), segs[0][1], segs[0][2])] + segs[1:]
+                items.append(f"<li style=\"margin:3px 0;\">{to_html(segs)}</li>")
+                i += 1
+            html.append(f"<ul style=\"margin:6px 0 10px;padding-inline-start:26px;\">{''.join(items)}</ul>")
+            continue
+        if p["kind"] == "cols":
+            rows = []
+            while i < len(paras) and (paras[i]["kind"] == "cols" or (rows and paras[i]["right"] and not paras[i]["heading"])):
+                q = paras[i]
+                cols = q["cols"] if q["kind"] == "cols" else [[], q["segs"]]
+                left, right = to_html(cols[0]), to_html([s for c in cols[1:] for s in c])
+                rows.append(f"<tr><td style=\"width:50%;vertical-align:top;padding:2px 0;\">{left}</td>"
+                            f"<td style=\"width:50%;vertical-align:top;padding:2px 0;text-align:right;\">{right}</td></tr>")
+                i += 1
+            html.append(f"<table style=\"width:100%;border-collapse:collapse;margin:28px 0 8px;\">{''.join(rows)}</table>")
+            continue
+        content = to_html(p["segs"])
+        if p["heading"]:
+            big = p["size"] >= body * 1.8
+            tag, fs = ("h1", "20pt") if big else ("h2", "14pt")
+            html.append(f"<{tag} style=\"font-size:{fs};font-weight:bold;margin:{'0 0 22px' if big else '20px 0 8px'};"
+                        f"line-height:1.3;\">{content}</{tag}>")
+        else:
+            align = "text-align:right;" if p["right"] else "text-align:justify;"
+            html.append(f"<p style=\"margin:0 0 10px;{align}\">{content}</p>")
+        i += 1
+
+    return (
+        '<div style="font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.6;color:#111;'
+        'max-width:720px;margin:0 auto;padding:48px 56px;background:#fff;">\n'
+        + "\n".join(html)
+        + "\n</div>"
+    )
 
 
 # ── PDF extraction ────────────────────────────────────────────────────────────

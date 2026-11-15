@@ -1,5 +1,7 @@
 """Templates router — /api/templates"""
+import json
 import re
+from typing import Optional
 import time
 from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile, File, Form, Body
 from supabase import Client
@@ -356,6 +358,26 @@ async def create_template(
     return result.data[0]
 
 
+def _smart_template(content: bytes, filename: str, mapping: Optional[dict] = None) -> tuple[str, list[dict]]:
+    """The uploaded document as a template: its fields found, mapped to Wedy data (or to the user's choices)."""
+    from app.services.pdf_template_extractor import extract_template_smart
+    from app.services import template_fields as tfields
+    raw = extract_template_smart(content, filename)
+    fields = tfields.analyse_html(raw, mapping)
+    body = tfields.with_meta(tfields.apply_fields(raw, mapping), fields)
+    return body, fields
+
+
+def _parse_mapping(raw: str) -> Optional[dict]:
+    if not raw:
+        return None
+    try:
+        m = json.loads(raw)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Correspondance des champs illisible")
+    return {str(k): str(v) for k, v in m.items()} if isinstance(m, dict) else None
+
+
 @router.post("/import", status_code=201)
 async def import_template_from_file(
     file: UploadFile = File(...),
@@ -364,6 +386,7 @@ async def import_template_from_file(
     name_ar: str = Form(""),
     category: str = Form("autre"),
     target_type: str = Form("employee"),
+    mapping: str = Form(""),
     db: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
@@ -374,14 +397,16 @@ async def import_template_from_file(
         raise HTTPException(status_code=400, detail="Formats supportés : PDF, DOCX, TXT")
 
     content = await file.read()
+    user_mapping = _parse_mapping(mapping)
 
     try:
-        from app.services.pdf_template_extractor import extract_pdf_template
-        body_template = extract_pdf_template(content, filename)
+        body_template, fields = _smart_template(content, filename, user_mapping)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Impossible de traiter le fichier : {e}")
 
-    if not body_template.strip():
+    if not re.sub(r"<[^>]+>|<!--.*?-->", "", body_template, flags=re.S).strip():
         raise HTTPException(status_code=422, detail="Impossible d'extraire le contenu du document")
 
     variables = sorted(set(re.findall(r"\{\{(\w+)\}\}", body_template)))
@@ -418,12 +443,13 @@ async def import_template_from_file(
     if not result.data:
         raise HTTPException(status_code=500, detail="Impossible de sauvegarder le modèle")
 
-    return {"template": result.data[0], "variables": variables, "body_template": body_template}
+    return {"template": result.data[0], "variables": variables, "body_template": body_template, "fields": fields}
 
 
 @router.post("/preview-import", status_code=200)
 async def preview_import(
     file: UploadFile = File(...),
+    mapping: str = Form(""),
     current_user: dict = Depends(require_hr_or_admin),
 ):
     filename = file.filename or ""
@@ -435,16 +461,19 @@ async def preview_import(
     content = await file.read()
 
     try:
-        from app.services.pdf_template_extractor import extract_pdf_template
-        body_template = extract_pdf_template(content, filename)
+        body_template, fields = _smart_template(content, filename, _parse_mapping(mapping))
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Lecture impossible : {e}")
 
-    if not body_template.strip():
+    if not re.sub(r"<[^>]+>|<!--.*?-->", "", body_template, flags=re.S).strip():
         raise HTTPException(status_code=422, detail="Contenu non extrait")
 
+    from app.services.template_fields import KNOWN_FIELDS
     variables = sorted(set(re.findall(r"\{\{(\w+)\}\}", body_template)))
-    return {"body_template": body_template, "variables": variables, "raw_text": body_template}
+    return {"body_template": body_template, "variables": variables, "raw_text": body_template, "fields": fields,
+            "known_fields": KNOWN_FIELDS}
 
 
 # ── Default professional templates ────────────────────────────────────────────

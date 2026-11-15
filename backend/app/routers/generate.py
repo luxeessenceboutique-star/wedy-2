@@ -38,7 +38,35 @@ def _fmt_date(val) -> str:
         return str(val)
 
 
-def build_context(emp: dict, extra: dict = None, company: Optional[dict] = None) -> dict:
+def _parse_any_date(v):
+    """dd/mm/yyyy (what the form sends) or ISO."""
+    from datetime import datetime as _dt
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+        try:
+            return _dt.strptime(str(v)[:10], fmt).date()
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+def _amount(v):
+    """« 3 500,50 MAD » / 3500.5 → 3500.5 (None when there is no number)."""
+    if v is None or v == "":
+        return None
+    if isinstance(v, (int, float)):
+        return float(v)
+    s = re.sub(r"[^\d,.\-]", "", str(v))
+    if s.count(",") == 1 and (s.count(".") == 0 or s.rfind(",") > s.rfind(".")):
+        s = s.replace(".", "").replace(",", ".")
+    else:
+        s = s.replace(",", "")
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
+def build_context(emp: dict, extra: dict = None, company: Optional[dict] = None, meta: Optional[dict] = None) -> dict:
     co = company or app_settings.DEFAULTS["company"]
     ctx = {
         "company":          co.get("name") or "",
@@ -67,22 +95,49 @@ def build_context(emp: dict, extra: dict = None, company: Optional[dict] = None)
         "hire_date":        _fmt_date(emp.get("hire_date")),
         "contract_start":   _fmt_date(emp.get("contract_start") or emp.get("hire_date")),
         "contract_end":     _fmt_date(emp.get("contract_end")) or "à ce jour",
+        "school":           emp.get("school") or "",
+        "cnss_number":      emp.get("cnss_number") or "",
+        "bank_account":     emp.get("bank_account") or "",
         "internship_start": _fmt_date(emp.get("internship_start")),
         "internship_end":   _fmt_date(emp.get("internship_end")) or "à ce jour",
         "birth_date":       _fmt_date(emp.get("birth_date")),
         "notes":            emp.get("notes") or "",
     }
+    intern = emp.get("status") == "intern"
+    if intern:  # an intern's contract dates are the internship's
+        ctx["contract_start"] = _fmt_date(emp.get("contract_start") or emp.get("internship_start") or emp.get("hire_date"))
+        ctx["contract_end"] = _fmt_date(emp.get("contract_end") or emp.get("internship_end")) or "à ce jour"
     sal = emp.get("salary")
-    if sal is not None:
+    if sal in (None, "") and intern:
+        sal = emp.get("remuneration")
+    if sal not in (None, ""):
         try:
             ctx["salary"] = f"{float(sal):,.2f} MAD"
         except Exception:
             ctx["salary"] = str(sal)
     else:
         ctx["salary"] = ""
+    cf = emp.get("custom_fields") or {}
+    ctx["civility"] = (cf.get("civility") or cf.get("civilite") or "") if isinstance(cf, dict) else ""
+    for key, info in (meta or {}).items():  # fields of an imported template: their default value
+        ctx.setdefault(key, (info or {}).get("default") or "")
 
     if extra:
-        ctx.update(extra)
+        ctx.update({k: v for k, v in extra.items() if v is not None})
+
+    # values computed from the others (after the form's values, so a typed salary / date is the one used)
+    from app.services import template_fields as tfields
+    amount = _amount((extra or {}).get("salary_figures")) or _amount(ctx.get("salary"))
+    if amount is not None:  # typed or from the record, always written « 3 000 »
+        ctx["salary_figures"] = tfields.salary_figures(amount)
+    elif not (extra or {}).get("salary_figures"):
+        ctx["salary_figures"] = ""
+    if not (extra or {}).get("salary_words"):
+        ctx["salary_words"] = tfields.salary_words(amount) if amount is not None else ""
+    if not (extra or {}).get("duration"):
+        ctx["duration"] = tfields.duration_text(_parse_any_date(ctx.get("contract_start")), _parse_any_date(ctx.get("contract_end")))
+    if not ctx.get("civility"):
+        ctx["civility"] = "Monsieur/Madame"
     return ctx
 
 
@@ -122,8 +177,10 @@ def generate_doc(
     employee = e_res.data
 
     # 3. Build context and render
-    ctx = build_context(employee, payload.extra_variables or {}, app_settings.load(supabase)[0]["company"])
-    content = render_template(template.get("body_template", ""), ctx)
+    from app.services import template_fields as tfields
+    body = template.get("body_template", "")
+    ctx = build_context(employee, payload.extra_variables or {}, app_settings.load(supabase)[0]["company"], tfields.read_meta(body))
+    content = render_template(tfields.strip_meta(body), ctx)
 
     # 4. Optional AI enhancement
     ai_enhanced = False

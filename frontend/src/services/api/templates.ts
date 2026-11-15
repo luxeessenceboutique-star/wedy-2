@@ -26,5 +26,11 @@ export const deleteTemplate = (id: string) => api.delete(`/templates/${id}`);
 export const importTemplateFromPdf = (form: FormData) =>
   api.post<Template>('/templates/import', form, { timeout: 120000 }).then(r => r.data);
 
+/** A field found in an uploaded document: its text there, what it was mapped to, how many times it appears. */
+export type DetectedField = { placeholder: string; label: string; key: string; known: boolean; count: number; kind: 'bracket' | 'blank' | 'civility' | 'variable'; default: string };
+/** Read an uploaded document without saving it: its fields (and the template it would give). `mapping` = the user's corrections. */
+export const previewTemplateImport = (form: FormData) =>
+  api.post<{ body_template: string; variables: string[]; fields: DetectedField[]; known_fields: Record<string, string> }>('/templates/preview-import', form, { timeout: 120000 }).then(r => r.data);
+
 export const seedDefaultTemplates = () =>
   api.post<{ created: string[]; skipped: string[] }>('/templates/seed-defaults').then(r => r.data);

@@ -10,7 +10,11 @@ export type GeneratedDoc = {
 export const generateDocument = (body: {
   employee_id: string; template_id: string;
   language?: string; use_ai_enhancement?: boolean; extra_variables?: Record<string, string>;
-}) => api.post<{ document: GeneratedDoc; content: string; ai_enhanced: boolean }>('/documents/generate', body).then(r => r.data);
+}) => api.post<{ document: GeneratedDoc; content: string; html: string; ai_enhanced: boolean; ai_error?: string | null }>('/documents/generate', body, { timeout: 180000 }).then(r => r.data);
+
+/** Save the text changed by hand: the PDF / DOCX and the copy in the person's folder follow. */
+export const updateGeneratedDocument = (docId: string, content: string) =>
+  api.patch<{ document: GeneratedDoc; content: string; html: string }>(`/documents/generate/${docId}`, { content }).then(r => r.data);
 
 export const listDocuments = (params?: Record<string, string | number>) =>
   api.get<{ data: GeneratedDoc[]; count: number }>('/documents', { params }).then(r => r.data);
@@ -35,59 +39,34 @@ export const getDocxUrl = (docId: string) => `${BASE}/documents/generate/${docId
 export const sendForSignature = (docId: string) =>
   api.post(`/documents/generate/${docId}/send-for-signature`).then(r => r.data);
 
-/** Open a print-to-PDF window with proper A4 CSS — renders exactly like the on-screen preview. */
-function _openPrintWindow(html: string, title: string) {
-  const w = window.open('', '_blank')!;
-  w.document.write(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>` +
-    `<style>` +
-    `@page{size:A4;margin:2.5cm 2.8cm;}` +
-    `body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.8;margin:0;color:#1a1a1a;}` +
-    `img{max-width:100%;height:auto;}` +
-    `h1,h2,h3{text-align:center;}` +
-    `p{margin:4px 0;}` +
-    `</style></head><body>${html}</body></html>`
-  );
-  w.document.close();
-  setTimeout(() => { w.focus(); w.print(); }, 350);
+/** The document as a full page, exactly as in the PDF (same page, same styles). */
+async function fetchDocHtml(docId: string): Promise<string> {
+  const token = localStorage.getItem('wedy_token');
+  const res = await fetch(`${BASE}/documents/generate/${docId}/html`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.detail ?? `Erreur ${res.status}`);
+  }
+  return res.text();
 }
 
-/** Fetch a generated document's HTML and open it in a new tab for viewing (no print dialog). */
+function openPage(html: string, print: boolean, title: string) {
+  const w = window.open('', '_blank');
+  if (!w) throw new Error('Fenêtre bloquée par le navigateur');
+  w.document.write(html);
+  w.document.close();
+  w.document.title = title;
+  if (print) setTimeout(() => { w.focus(); w.print(); }, 350);
+}
+
+/** Open a generated document in a new tab (no print dialog). */
 export async function viewDocument(docId: string, title = 'Document'): Promise<void> {
-  const token = localStorage.getItem('wedy_token');
-  const res = await fetch(`/api/documents/generate/${docId}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.detail ?? `Erreur ${res.status}`);
-  }
-  const data = await res.json();
-  const w = window.open('', '_blank')!;
-  w.document.write(
-    `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>` +
-    `<style>` +
-    `body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.8;margin:0;padding:40px 60px;color:#1a1a1a;max-width:800px;margin:0 auto;}` +
-    `img{max-width:100%;height:auto;}` +
-    `h1,h2,h3{text-align:center;}` +
-    `p{margin:4px 0;}` +
-    `</style></head><body>${data.content ?? ''}</body></html>`
-  );
-  w.document.close();
+  openPage(await fetchDocHtml(docId), false, title);
 }
 
-/** Fetch a generated document's HTML and open the browser print dialog (→ Save as PDF). */
+/** Open a generated document and the browser's print dialog (→ Save as PDF). */
 export async function printDocument(docId: string, title = 'Document'): Promise<void> {
-  const token = localStorage.getItem('wedy_token');
-  const res = await fetch(`/api/documents/generate/${docId}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.detail ?? `Erreur ${res.status}`);
-  }
-  const data = await res.json();
-  _openPrintWindow(data.content ?? '', title);
+  openPage(await fetchDocHtml(docId), true, title);
 }
 
 /** Authenticated file download — fetches with Bearer token, triggers browser save-dialog. */

@@ -2,7 +2,7 @@
 // The markup keeps the reference's exact inline styles; `v` is the page logic (the reference's renderVals()).
 import { Fragment, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, ChevronDown, Eye, FileText, FileUp, Upload, Pencil, Plus, Search, Sparkles, Trash2, WandSparkles, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Eye, FileText, FileUp, Upload, Pencil, Plus, ScanSearch, Search, Sparkles, Trash2, WandSparkles, X } from 'lucide-react';
 import { Spinner } from '@/components/ui';
 import { RV } from '@/components/motion';
 import { useLang } from '@/lib/lang';
@@ -174,13 +174,15 @@ export function TemplatesView({ v, edRef, pvRef }: { v: TemplatesVals; edRef: Re
             </button>
           </div>
           <div style={{ flex: '1', overflowY: 'auto', padding: '22px', background: '#eef2f4' }}>
-            <div style={{ background: '#ffffff', borderRadius: '6px', padding: '36px 44px', boxShadow: '0 20px 40px -26px rgba(10,28,36,.4)' }}>
+            <div style={{ background: '#ffffff', borderRadius: '6px', padding: v.pv.own ? '8px' : '36px 44px', boxShadow: '0 20px 40px -26px rgba(10,28,36,.4)' }}>
+              {!v.pv.own && <>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#06141a,#0e6f84)', color: '#ffffff', fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '800', fontSize: '13px' }}>{v.companyInitials}</span>
                 <span style={{ fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: '14px' }}>{v.company}</span>
               </div>
               <div style={{ height: '2px', background: 'linear-gradient(90deg,#0e6f84,#16b6c8)', marginTop: '12px' }} />
               <div style={{ margin: '26px 0 18px', textAlign: 'center', fontFamily: '\'Bricolage Grotesque\',system-ui,sans-serif', fontWeight: '700', fontSize: '18px', letterSpacing: '.1em' }}>{v.pv.upper}</div>
+              </>}
               <div ref={pvRef} style={{ fontFamily: 'Georgia,\'Times New Roman\',serif', fontSize: '14.5px', lineHeight: '1.85', color: '#1d2a30' }} />
             </div>
           </div>
@@ -191,6 +193,9 @@ export function TemplatesView({ v, edRef, pvRef }: { v: TemplatesVals; edRef: Re
               </Fragment>
             ))}
             <span style={{ fontSize: '12.5px', color: '#5f7079' }}>{tf(t('tpl_pv_nvars_variables'), { pv_nvars: v.pv.nvars })}</span>
+            <button type="button" onClick={v.pv.detect} title={t('tpl_fields_detect_s')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', height: '38px', padding: '0 12px', borderRadius: '10px', border: '1px solid #b9dfe5', background: '#f3fafb', fontFamily: 'inherit', fontSize: '13px', fontWeight: '600', color: '#0b5f72', cursor: 'pointer' }}>
+              <ScanSearch size={14} style={{ display: 'block' }} />{t('tpl_fields_detect')}
+            </button>
             <button type="button" onClick={v.pv.remove} aria-label={t('tpl_delete')} title={t('tpl_delete')} style={{ marginLeft: 'auto', width: '38px', height: '38px', borderRadius: '10px', border: '1px solid #f0c9c0', background: '#ffffff', color: '#b8402c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="tpl-h8">
               <span style={{ display: 'inline-flex', width: '14px', height: '14px' }}><Trash2 size={14} style={{ display: 'block' }} /></span>
             </button>

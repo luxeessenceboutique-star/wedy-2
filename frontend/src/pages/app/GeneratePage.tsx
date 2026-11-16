@@ -6,11 +6,12 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight, Check, CircleAlert, CircleCheck, Download, FileText, GraduationCap,
-  History, Pencil, Plus, Search, Send, Sparkles, Users, WandSparkles,
+  History, Pencil, Plus, ScanSearch, Search, Send, Sparkles, Users, WandSparkles,
 } from 'lucide-react';
 import { RV } from '@/components/motion';
+import { DocFrame, type DocFrameHandle } from '@/components/documents/DocFrame';
 import {
-  listEmployees, listInterns, listTemplates, generateDocument, downloadDoc, sendForSignature,
+  listEmployees, listInterns, listTemplates, generateDocument, updateGeneratedDocument, downloadDoc, sendForSignature,
   getApiError, type Employee, type Template,
 } from '@/services/api';
 import { Spinner } from '@/components/ui';
@@ -19,8 +20,8 @@ import { toast } from 'sonner';
 import { useLang, type TKey } from '@/lib/lang';
 import { tf } from '@/lib/format';
 import './GeneratePage.css';
-import { companyInitials, useAppSettings, type AppSettings, type CompanyProfile } from '@/lib/appSettings';
-import { FIELD_LABEL, durationText, parseAmount, readMeta, salaryFigures, salaryWords, type FieldMeta } from '@/lib/templateFields';
+import { useAppSettings, type AppSettings, type CompanyProfile } from '@/lib/appSettings';
+import { FIELD_LABEL, contractPhrase, durationText, longDate, parseAmount, readMeta, salaryFigures, salaryWords, type FieldMeta } from '@/lib/templateFields';
 
 /** Before /settings answers (or if the table is not created yet): the company of the official templates. */
 const FALLBACK_CO: Pick<AppSettings, 'company' | 'assets'> = {
@@ -76,26 +77,25 @@ const resolveVar = (name: string, emp: Person, co: CompanyProfile, typed: Record
     matricule: () => emp.matricule || '', contract_type: () => emp.contract_type || '', hire_date: () => fmt(emp.hire_date),
     contract_start: () => start, contract_end: () => end,
     internship_start: () => fmt(emp.internship_start), internship_end: () => (emp.internship_end ? fmt(emp.internship_end) : ''),
-    birth_date: () => fmt(emp.birth_date), school: () => emp.school || '', cnss_number: () => emp.cnss_number || '', bank_account: () => emp.bank_account || '',
+    birth_date: () => fmt(emp.birth_date), birth_place: () => String(emp.custom_fields?.birth_place ?? ''), school: () => emp.school || '', cnss_number: () => emp.cnss_number || '', bank_account: () => emp.bank_account || '',
     salary: () => (salaryNum !== null ? `${salaryNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD` : ''),
     salary_figures: () => (salaryNum !== null ? salaryFigures(salaryNum) : ''), salary_words: () => (salaryNum !== null ? salaryWords(salaryNum) : ''),
     duration: () => durationText(start, end), civility: () => civ, civility_short: () => civShort,
-    today: () => ddmmyyyy(new Date()), company: () => co.name || '',
+    today: () => ddmmyyyy(new Date()), today_long: () => longDate(new Date()), contract_phrase: () => contractPhrase(typed.contract_type || emp.contract_type),
+    company: () => co.name || '',
     company_address: () => co.address || '', company_city: () => co.city || '', company_phone: () => co.phone || '', company_email: () => co.email || '',
     company_ice: () => co.ice || '', company_rc: () => co.rc || '', company_if: () => co.if || '', company_cnss: () => co.cnss || '',
   };
   return MAP[name]?.() ?? meta[name]?.default ?? '';
 };
 /** Fields worked out from others: never asked, they follow what is typed. */
-const DERIVED = new Set(['salary_words', 'duration']);
+const DERIVED = new Set(['salary_words', 'duration', 'contract_phrase', 'today', 'today_long']);
 
 type Step = 0 | 1 | 2 | 3;
 
 export default function GeneratePage() {
   const { data: settingsData } = useAppSettings();
   const co = settingsData ?? FALLBACK_CO;
-  const coLine = [[co.company.address, co.company.city].filter(Boolean).join(', '), co.company.phone].filter(Boolean).join(' · ');
-  const coIds = [co.company.rc && `RC ${co.company.rc}`, co.company.ice && `ICE ${co.company.ice}`, co.company.cnss && `CNSS ${co.company.cnss}`].filter(Boolean).join(' · ');
   const { t } = useLang();
   const [params] = useSearchParams();
 
@@ -107,15 +107,14 @@ export default function GeneratePage() {
   const [tplCategory, setTplCategory] = useState('');
   const [extraVars, setExtraVars] = useState<Record<string, string>>({});
   const [pickedLang, setLanguage] = useState<string | null>(null);
-  const [useAI, setUseAI] = useState(true);
+  const [useAI, setUseAI] = useState(false);
   // Default: the document language chosen in Settings (other languages than French go through Wedy AI).
   const language = !useAI ? 'fr' : pickedLang ?? settingsData?.docs?.lang ?? 'fr';
-  const [result, setResult] = useState<{ id: string; content: string; document_type: string; byAi: boolean; lang: string } | null>(null);
+  const [result, setResult] = useState<{ id: string; content: string; html: string; document_type: string; byAi: boolean; lang: string } | null>(null);
   const [editing, setEditing] = useState(false);
-  const [body, setBody] = useState('');
   const [modified, setModified] = useState(false);
-
-  const editorStartRef = useRef('');
+  const [saving, setSaving] = useState(false);
+  const frameRef = useRef<DocFrameHandle>(null);
 
   const { data: empData } = useQuery({ queryKey: ['employees', 'active'], queryFn: () => listEmployees({ limit: 500, status: 'active' }) });
   const { data: internData } = useQuery({ queryKey: ['interns'], queryFn: () => listInterns({ limit: 500 }) });
@@ -131,11 +130,10 @@ export default function GeneratePage() {
   const genMut = useMutation({
     mutationFn: () => generateDocument({ employee_id: employeeId, template_id: templateId, language, use_ai_enhancement: useAI, extra_variables: extraVars }),
     onSuccess: data => {
-      setResult({ id: data.document.id, content: data.content, document_type: data.document.document_type, byAi: data.ai_enhanced, lang: language });
-      setBody(data.content);
-      editorStartRef.current = data.content;
+      setResult({ id: data.document.id, content: data.content, html: data.html, document_type: data.document.document_type, byAi: data.ai_enhanced, lang: language });
       setEditing(false); setModified(false); setStep(3);
       toast.success(tf(t('gen_toast_done'), { tpl: data.document.document_type, name: person?.full_name ?? '' }));
+      if (data.ai_error) toast.warning(data.ai_error);
     },
     onError: (e: unknown) => toast.error(getApiError(e, t('gen_err'))),
   });
@@ -162,16 +160,22 @@ export default function GeneratePage() {
   ];
   const stepReachable = (i: number) => i === 0 || (i === 1 && person) || (i === 2 && person && tpl) || (i === 3 && !!result);
 
-  const restart = () => { setStep(0); setTemplateId(''); setResult(null); setExtraVars({}); setBody(''); setEditing(false); setModified(false); };
+  const restart = () => { setStep(0); setTemplateId(''); setResult(null); setExtraVars({}); setEditing(false); setModified(false); };
 
-  const docTitle = (tpl?.[`name_${language}` as 'name_fr'] || tpl?.name_fr || '').toUpperCase();
-  // Real templates imported from a scanned PDF are pre-styled HTML (absolutely-positioned text over a
-  // background image) — rendering those as plain paragraphs would destroy them. Only templates authored as
-  // plain Jinja text (no markup at all) get the letterhead/paragraph treatment below.
-  const isRichHtml = /<img|position:\s*absolute/.test(result?.content ?? '');
-  const paras = isRichHtml ? [] : (result?.content ?? '').replace(/<[^>]+>/g, m => (m === '<br>' || m === '<br/>' ? '\n' : '')).split(/\n{2,}|\r\n\r\n/).map(p => p.trim()).filter(Boolean);
-  const rtl = (result?.lang ?? language) === 'ar';
-  const verifCode = result ? result.id.slice(0, 8).toUpperCase() : '';
+  // « Modifier le texte » → « Terminer »: the page's new text is saved (PDF, DOCX and the filed copy follow)
+  const toggleEdit = async () => {
+    if (!editing || !result) { setEditing(true); return; }
+    const html = frameRef.current?.read();
+    if (!html || html === result.content) { setEditing(false); return; }
+    setSaving(true);
+    try {
+      const r = await updateGeneratedDocument(result.id, html);
+      setResult({ ...result, content: r.content, html: r.html });
+      setModified(true); setEditing(false);
+      toast.success(t('gen_edit_saved'));
+    } catch (e: unknown) { toast.error(getApiError(e, t('gen_err'))); }
+    setSaving(false);
+  };
 
   return (
     <div style={{ padding: '28px 32px 56px', display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 1180, width: '100%', margin: '0 auto' }}>
@@ -318,6 +322,13 @@ export default function GeneratePage() {
                 <span style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16 }}>{tf(t('gen_vars_count'), { n: vars.length })}</span>
                 <span style={{ fontSize: 12.5, color: missingCount ? '#8a5207' : '#0f6f49', fontWeight: 600 }}>{missingCount ? tf(t('gen_vars_missing'), { n: missingCount }) : t('gen_vars_complete')}</span>
               </div>
+              {vars.length === 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(230,169,72,.5)', background: '#fffaf1', fontSize: 13, lineHeight: 1.5, color: '#6b4a10' }}>
+                  <span style={{ display: 'flex', gap: 8, fontWeight: 700 }}><CircleAlert size={16} color="#df9326" style={{ flexShrink: 0, marginTop: 1 }} />{t('gen_no_fields')}</span>
+                  <span>{t('gen_no_fields_s')}</span>
+                  <Link to={`/app/templates?fields=${tpl.id}`} style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 10, background: '#0e6f84', color: '#ffffff', fontSize: 12.5, fontWeight: 600 }}><ScanSearch size={14} />{t('tpl_fields_detect')}</Link>
+                </div>
+              )}
               {vars.map((v, i) => (
                 <RV key={v.name} variant="up" delay={i * 40} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 12, border: `1px solid ${v.missing ? 'rgba(230,169,72,.45)' : '#eef2f4'}`, background: v.missing ? '#fffaf1' : '#ffffff', flexWrap: 'wrap' }}>
                   <code style={{ fontFamily: "'Geist Mono',monospace", fontSize: 11.5, fontWeight: 600, padding: '3px 7px', borderRadius: 7, background: '#e4f2f4', color: '#0b5f72', whiteSpace: 'nowrap' }}>{`{{${v.name}}}`}</code>
@@ -339,10 +350,10 @@ export default function GeneratePage() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#33474f' }}>{t('gen_lang_title')}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 6, marginTop: 10 }}>
                   {LANGS.map(l => {
-                    const ok = l.k === 'fr' || useAI;
+                    // another language than French is a translation: choosing it turns « Rédaction IA » on
                     const on = language === l.k;
                     return (
-                      <button key={l.k} type="button" disabled={!ok} onClick={() => ok && setLanguage(l.k)} title={ok ? '' : t('gen_lang_locked')} style={{ height: 44, borderRadius: 11, border: `1px solid ${on ? '#0a1c24' : '#d6dfe3'}`, background: on ? '#0a1c24' : '#ffffff', color: on ? '#ffffff' : '#33474f', fontFamily: l.k === 'ar' ? "'Noto Kufi Arabic',sans-serif" : 'inherit', fontSize: 13.5, fontWeight: 600, cursor: ok ? 'pointer' : 'not-allowed', opacity: ok ? 1 : 0.4 }}>{l.label}</button>
+                      <button key={l.k} type="button" onClick={() => { setLanguage(l.k); if (l.k !== 'fr') setUseAI(true); }} title={l.k === 'fr' ? '' : t('gen_lang_locked')} style={{ height: 44, borderRadius: 11, border: `1px solid ${on ? '#0a1c24' : '#d6dfe3'}`, background: on ? '#0a1c24' : '#ffffff', color: on ? '#ffffff' : '#33474f', fontFamily: l.k === 'ar' ? "'Noto Kufi Arabic',sans-serif" : 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', opacity: on || useAI || l.k === 'fr' ? 1 : 0.7 }}>{l.label}</button>
                     );
                   })}
                 </div>
@@ -405,60 +416,9 @@ export default function GeneratePage() {
           </RV>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
-            {/* ── Paper ── */}
+            {/* ── The document: its real page (same as the PDF) ── */}
             <RV variant="up" delay={80} style={{ flex: '2 1 520px', minWidth: 0, padding: 22, borderRadius: 22, background: '#e9eef0' }}>
-              {isRichHtml ? (
-                // Pre-styled template (e.g. imported from a scanned PDF): render the backend's HTML as-is,
-                // in a scrollable frame, instead of forcing it into the plain-text letterhead below.
-                <div style={{ maxWidth: 760, margin: '0 auto', overflow: 'auto', borderRadius: 6, boxShadow: '0 30px 60px -30px rgba(10,28,36,.4), 0 0 0 1px #e2e8eb' }}>
-                  {editing ? (
-                    <div
-                      contentEditable suppressContentEditableWarning dir={rtl ? 'rtl' : 'ltr'}
-                      onBlur={e => { setBody(e.currentTarget.innerHTML); setModified(true); }}
-                      dangerouslySetInnerHTML={{ __html: body }}
-                      style={{ outline: '2px dashed #9fd6df', outlineOffset: -2 }}
-                    />
-                  ) : (
-                    <div dangerouslySetInnerHTML={{ __html: result.content }} />
-                  )}
-                </div>
-              ) : (
-                <div dir={rtl ? 'rtl' : 'ltr'} style={{ position: 'relative', maxWidth: 700, margin: '0 auto', background: '#ffffff', borderRadius: 6, boxShadow: '0 30px 60px -30px rgba(10,28,36,.4), 0 0 0 1px #e2e8eb', padding: '44px 48px 30px', minHeight: 640, display: 'flex', flexDirection: 'column', color: '#1d2a30', fontFamily: rtl ? "'Noto Kufi Arabic',sans-serif" : "Georgia,'Times New Roman',serif" }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    {co.assets.logo
-                      ? <span style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><img src={co.assets.logo} alt="" style={{ maxWidth: 46, maxHeight: 46, objectFit: 'contain' }} /></span>
-                      : <span style={{ width: 46, height: 46, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#06141a,#0e6f84)', color: '#ffffff', fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 800, fontSize: 16, letterSpacing: '-.02em', flexShrink: 0 }}>{companyInitials(co.company.name)}</span>}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 16, color: '#0a1c24' }}>{co.company.name}</div>
-                      {coLine && <div style={{ fontFamily: "'Geist',system-ui,sans-serif", fontSize: 11.5, color: '#5f7079' }}>{coLine}</div>}
-                    </div>
-                  </div>
-                  {coIds && <div style={{ fontFamily: "'Geist Mono',monospace", fontSize: 10, color: '#7d8f97', marginTop: 10, direction: 'ltr', textAlign: rtl ? 'right' : 'left' }}>{coIds}</div>}
-                  <div style={{ height: 2, background: 'linear-gradient(90deg,#0e6f84,#16b6c8)', marginTop: 14 }} />
-                  <div style={{ margin: '34px 0 26px', textAlign: 'center', fontFamily: rtl ? "'Noto Kufi Arabic',sans-serif" : "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: rtl ? '0' : '.12em', color: '#0a1c24' }}>{docTitle}</div>
-                  {!editing ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      {paras.map((p, i) => <p key={i} style={{ margin: 0, fontSize: 14.5, lineHeight: 1.85, textAlign: 'justify', whiteSpace: 'pre-wrap' }}>{p}</p>)}
-                    </div>
-                  ) : (
-                    <textarea value={body.replace(/<[^>]+>/g, '')} onChange={e => { setBody(e.target.value); setModified(true); }} dir={rtl ? 'rtl' : 'ltr'} style={{ width: '100%', minHeight: 300, resize: 'vertical', padding: 12, borderRadius: 8, border: '1.5px dashed #9fd6df', background: '#f8fdfd', fontFamily: 'inherit', fontSize: 14.5, lineHeight: 1.8, color: '#1d2a30', outline: 'none' }} />
-                  )}
-                  <div style={{ marginTop: 28, fontSize: 14, textAlign: rtl ? 'left' : 'right' }}>{tf(t('gen_place_date'), { date: ddmmyyyy(new Date()), city: co.company.city || 'Casablanca' })}</div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 22 }}>
-                    <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: 220 }}>
-                      <span style={{ fontFamily: "'Geist',system-ui,sans-serif", fontSize: 12.5, fontWeight: 600, color: '#33474f' }}>{t('gen_signature_dept')}</span>
-                      {co.assets.signature ? <img src={co.assets.signature} alt="" style={{ maxWidth: 180, maxHeight: 70, objectFit: 'contain' }} /> : <span style={{ fontFamily: "'Brush Script MT','Segoe Script',cursive", fontSize: 26, color: '#0b3f52', transform: 'rotate(-4deg)' }}>{initialsOf(person.manager || 'Wedy RH').slice(0, 1)}. {(person.manager || 'Wedy RH').split(' ').slice(-1)[0]}</span>}
-                      {co.assets.stamp
-                        ? <img src={co.assets.stamp} alt="" style={{ position: 'absolute', right: -6, top: 0, width: 96, height: 96, objectFit: 'contain', opacity: .85, transform: 'rotate(-10deg)' }} />
-                        : <span style={{ position: 'absolute', right: -6, top: 6, width: 88, height: 88, borderRadius: '50%', border: '2.5px solid rgba(14,111,132,.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'rgba(14,111,132,.75)', fontFamily: "'Geist Mono',monospace", fontSize: 8.5, fontWeight: 700, letterSpacing: '.08em', lineHeight: 1.35, transform: 'rotate(-14deg)', direction: 'ltr', textAlign: 'center', textTransform: 'uppercase', padding: 8, overflow: 'hidden' }}><span>{co.company.name}</span>{co.company.city && <span style={{ fontSize: 7 }}>{co.company.city}</span>}</span>}
-                    </div>
-                  </div>
-                  <div style={{ flex: 1 }} />
-                  <div style={{ marginTop: 34, paddingTop: 12, borderTop: '1px solid #eef2f4', display: 'flex', justifyContent: 'space-between', gap: 10, fontFamily: "'Geist Mono',monospace", fontSize: 9.5, color: '#8a9ba3', direction: 'ltr' }}>
-                    <span>{`Wedy · ${verifCode}`}</span>{co.company.email && <span>{co.company.email}</span>}
-                  </div>
-                </div>
-              )}
+              <DocFrame ref={frameRef} html={result.html} editing={editing} title={result.document_type} />
             </RV>
 
             {/* ── Side panel ── */}
@@ -473,8 +433,8 @@ export default function GeneratePage() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, paddingTop: 10, borderTop: '1px solid #eef2f4', fontSize: 12.5, color: '#0f6f49' }}><History size={14} />{t('gen_added_history')}</div>
               </div>
-              <button type="button" onClick={() => { if (editing) { setModified(body !== editorStartRef.current); } setEditing(s => !s); }} className="gen-btn-edit" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, color: '#0a1c24', cursor: 'pointer' }}>
-                {editing ? <Check size={15} /> : <Pencil size={15} />}{editing ? t('gen_edit_done') : t('gen_edit_text')}
+              <button type="button" onClick={() => void toggleEdit()} disabled={saving} className="gen-btn-edit" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, color: '#0a1c24', cursor: 'pointer' }}>
+                {saving ? <Spinner size={14} /> : editing ? <Check size={15} /> : <Pencil size={15} />}{editing ? t('gen_edit_done') : t('gen_edit_text')}
               </button>
               {modified && <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, color: '#8a5207' }}><Pencil size={13} />{t('gen_modified')}</span>}
               <button type="button" onClick={restart} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 42, border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, cursor: 'pointer' }}>

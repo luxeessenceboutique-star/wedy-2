@@ -7,13 +7,13 @@ import type { TKey } from '@/lib/lang';
 /** Wedy fields a placeholder can be mapped to, in the order the import screen lists them. */
 export const FIELD_LABELS: [string, TKey][] = [
   ['civility', 'tpl_v_civility'], ['civility_short', 'tpl_v_civility_short'], ['full_name', 'tpl_v_full_name'], ['cin', 'tpl_v_cin'], ['address', 'tpl_v_address'],
-  ['city', 'tpl_v_city'], ['birth_date', 'tpl_v_birth_date'], ['nationality', 'tpl_v_nationality'], ['email', 'tpl_v_email'],
+  ['city', 'tpl_v_city'], ['birth_date', 'tpl_v_birth_date'], ['birth_place', 'tpl_v_birth_place'], ['nationality', 'tpl_v_nationality'], ['email', 'tpl_v_email'],
   ['phone', 'tpl_v_phone'], ['matricule', 'tpl_v_matricule'], ['cnss_number', 'tpl_v_cnss'], ['bank_account', 'tpl_v_bank'],
   ['position', 'tpl_v_position'], ['department', 'tpl_v_department'], ['manager', 'tpl_v_manager'], ['school', 'tpl_v_school'],
-  ['contract_type', 'tpl_v_contract_type'], ['hire_date', 'tpl_v_hire_date'], ['contract_start', 'tpl_v_contract_start'],
+  ['contract_type', 'tpl_v_contract_type'], ['contract_phrase', 'tpl_v_contract_phrase'], ['hire_date', 'tpl_v_hire_date'], ['contract_start', 'tpl_v_contract_start'],
   ['contract_end', 'tpl_v_contract_end'], ['duration', 'tpl_v_duration'], ['salary', 'tpl_v_salary'],
   ['salary_figures', 'tpl_v_salary_figures'], ['salary_words', 'tpl_v_salary_words'], ['work_mode', 'tpl_v_work_mode'],
-  ['today', 'tpl_v_today'], ['company', 'tpl_v_company'], ['company_address', 'tpl_v_company_address'], ['company_city', 'tpl_v_company_city'],
+  ['today', 'tpl_v_today'], ['today_long', 'tpl_v_today_long'], ['company', 'tpl_v_company'], ['company_address', 'tpl_v_company_address'], ['company_city', 'tpl_v_company_city'],
 ];
 export const FIELD_LABEL: Record<string, TKey> = Object.fromEntries(FIELD_LABELS);
 export const KEEP = '__keep__';
@@ -108,4 +108,26 @@ export const durationText = (start?: string | null, end?: string | null): string
   else if (months) parts.push(`${months} mois`);
   if (days > 0) parts.push(`${days} jour${days > 1 ? 's' : ''}`);
   return parts.join(' et ');
+};
+
+const MONTHS_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+/** « 16 novembre 2026 », « 1er mars 2027 » (backend: generate._long_date). */
+export const longDate = (d: Date) => `${d.getDate() === 1 ? '1er' : d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
+/** What follows « sous contrat » (backend: generate._contract_phrase). */
+export const contractPhrase = (type?: string | null) => {
+  const c = (type ?? '').trim();
+  if (c.toUpperCase() === 'CDI') return 'à durée indéterminée (CDI)';
+  if (c.toUpperCase() === 'CDD') return 'à durée déterminée (CDD)';
+  return c ? `de type ${c}` : '';
+};
+
+const plainText = (html = '') => html.replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, ' ');
+const normWords = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+/** The template is a whole document already (imported, or with its own closing lines): Wedy adds no letterhead,
+ *  title, date or signature around it (backend: document_layout.has_own_layout). */
+export const hasOwnLayout = (body = ''): boolean => {
+  const b = body.replace(/^\s*<!--[\s\S]*?-->/, '');
+  if (/<img\b|position:\s*absolute/i.test(b)) return true;
+  if (/^\s*<div[^>]*style="[^"]*padding:\s*\d/i.test(b)) return true;
+  return /\b(fait a|fait le|signature|cachet|lu et approuve|le directeur|la directrice|la direction)\b/.test(normWords(plainText(b)));
 };

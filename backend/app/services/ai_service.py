@@ -1,3 +1,4 @@
+import re
 import anthropic
 from app.config import settings
 
@@ -24,13 +25,29 @@ When enhancing, preserve all variable placeholders like {{variable_name}} as-is.
 def _enhance_prompt(content: str, document_type: str, language: str, instructions: str) -> tuple[str, str]:
     lang_name = {"fr": "French", "en": "English", "ar": "Arabic"}.get(language, "French")
     extra = f"\nAdditional instructions: {instructions}" if instructions else ""
-    user = (
-        f"The following {document_type} document may be written in a different language than the target. "
-        f"Rewrite it entirely in {lang_name} (translate if needed), keeping the same structure, and improve "
-        f"clarity, formality, and legal precision. Return ONLY the document text in {lang_name}, no commentary, "
-        f"no notes, no markdown.{extra}\n\nDocument:\n{content}"
-    )
+    if re.search(r"<(p|div|br|h[1-6]|table|span|b|strong)\b", content or "", re.I):
+        user = (
+            f"Here is an HR document ({document_type}) as HTML. Return the SAME HTML document written in {lang_name}: "
+            "keep every tag, attribute, style, image and line break exactly as they are and in the same order — only the "
+            f"visible text between the tags changes (translated into {lang_name} if needed, with a formal, legally precise "
+            "wording). Never change names, dates, numbers, amounts, ID numbers or addresses. Do not add or remove "
+            "paragraphs, titles, signatures or dates. Return only the HTML, without ``` fences or any comment."
+            f"{extra}\n\nHTML:\n{content}"
+        )
+    else:
+        user = (
+            f"The following {document_type} document may be written in a different language than the target. "
+            f"Rewrite it entirely in {lang_name} (translate if needed), keeping the same structure and paragraphs, and improve "
+            "clarity, formality and legal precision. Never change names, dates, numbers or amounts. Return ONLY the "
+            f"document text in {lang_name}, no commentary, no notes, no markdown.{extra}\n\nDocument:\n{content}"
+        )
     return SYSTEM_PROMPT, user
+
+
+def _strip_fences(text: str) -> str:
+    t = (text or "").strip()
+    m = re.match(r"^```[a-zA-Z]*\s*\n(.*?)\n?```\s*$", t, re.S)
+    return m.group(1).strip() if m else t
 
 
 def enhance_document(content: str, document_type: str, language: str = "fr", instructions: str = "") -> str:
@@ -40,10 +57,10 @@ def enhance_document(content: str, document_type: str, language: str = "fr", ins
 
     if settings.ANTHROPIC_API_KEY:
         message = get_client().messages.create(
-            model="claude-sonnet-4-6", max_tokens=2048, system=system,
+            model="claude-sonnet-4-6", max_tokens=8000, system=system,
             messages=[{"role": "user", "content": user}],
         )
-        return message.content[0].text
+        return _strip_fences(message.content[0].text)
 
     if settings.OPENAI_API_KEY:
         from openai import OpenAI
@@ -52,10 +69,10 @@ def enhance_document(content: str, document_type: str, language: str = "fr", ins
             base = base.rstrip("/") + "/v1"
         oa = OpenAI(api_key=settings.OPENAI_API_KEY, base_url=base)
         resp = oa.chat.completions.create(
-            model=settings.OPENAI_MODEL, max_tokens=2048,
+            model=settings.OPENAI_MODEL, max_tokens=8000,
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
         )
-        return resp.choices[0].message.content
+        return _strip_fences(resp.choices[0].message.content)
 
     raise RuntimeError("No AI API key configured")
 

@@ -6,6 +6,11 @@ What is detected, wherever it sits in the document (even split between two lines
   - blanks: « CIN n° ________ », « né le ........ » (the words before the blank give its meaning)
   - « Monsieur/Madame », « M./Mme » → the civility of the person
   - {{variables}} already in the document are kept
+  - in a document already filled for someone (an attestation written for « Mme CHAIMAA BYAZ »), the values that are
+    the person's: the name after M. / Mme (not the signatory « Je soussignée, Mme … agissant en qualité de … »), the
+    CIN, « né(e) le … à … », the position after « en qualité de », « depuis le … », « du … au … », the contract
+    « à durée indéterminée (CDI) », the salary, and « Fait à …, le … » (the date of the day). The words written for a
+    man or a woman (« employée », « née », « elle a ») become « employé(e) », « né(e) », « il/elle a ».
 
 Each one is mapped to a Wedy field (name, CIN, address, position, dates, salary in figures / in words, duration…)
 by its wording. What matches nothing becomes a custom field: its label and default value are kept with the template
@@ -43,6 +48,7 @@ KNOWN_FIELDS: dict[str, str] = {
     "address": "Adresse",
     "city": "Ville",
     "birth_date": "Date de naissance",
+    "birth_place": "Lieu de naissance",
     "nationality": "Nationalité",
     "email": "E-mail",
     "phone": "Téléphone",
@@ -54,6 +60,7 @@ KNOWN_FIELDS: dict[str, str] = {
     "manager": "Encadrant / responsable",
     "school": "École / établissement",
     "contract_type": "Type de contrat",
+    "contract_phrase": "Contrat en toutes lettres (« à durée indéterminée (CDI) »)",
     "hire_date": "Date d'embauche",
     "contract_start": "Date de début",
     "contract_end": "Date de fin",
@@ -63,6 +70,7 @@ KNOWN_FIELDS: dict[str, str] = {
     "salary_words": "Salaire en lettres",
     "work_mode": "Mode de travail",
     "today": "Date du jour",
+    "today_long": "Date du jour en lettres (« 16 novembre 2026 »)",
     "company": "Nom de la société",
     "company_address": "Adresse de la société",
     "company_city": "Ville de la société",
@@ -75,6 +83,7 @@ _RULES: list[tuple[str, str]] = [
     (r"\ben chiffres?\b", "salary_figures"),
     (r"\b(nom (et|&) prenoms?|prenoms? (et|&) nom|nom complet|nom du (salarie|stagiaire|beneficiaire|candidat)|stagiaire|salarie|interesse|beneficiaire)\b", "full_name"),
     (r"\b(cin|cni|carte nationale|piece d identite)\b", "cin"),
+    (r"\blieu de naissance\b|\bne( e)? a\b|\bnee a\b", "birth_place"),
     (r"\bdate de naissance\b|\bne( e)? le\b|\bnee le\b", "birth_date"),
     (r"\b(adresse|domicile|residence|demeurant)\b", "address"),
     (r"\bville\b", "city"),
@@ -151,7 +160,142 @@ def find_placeholders(text: str) -> list[dict]:
         if d["start"] >= last_end:
             out.append(d)
             last_end = d["end"]
+    # the values of a filled document, where no placeholder already is
+    taken = [(d["start"], d["end"]) for d in out]
+    for v in find_values(text):
+        if not any(v["start"] < e and s < v["end"] for s, e in taken):
+            out.append(v)
+            taken.append((v["start"], v["end"]))
+    out.sort(key=lambda d: d["start"])
     return out
+
+
+# ── the values of a document already filled for someone ──────────────────────────────────────────────────
+
+_MONTHS = "janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre"
+_DATE = rf"(?:\d{{1,2}}[/.-]\d{{1,2}}[/.-]\d{{2,4}}|\d{{1,2}}(?:er)?\s+(?i:{_MONTHS})\s+\d{{4}})"
+_UP = "A-ZÀ-ÖØ-Þ"
+_WORD = rf"[{_UP}][A-Za-zÀ-ÖØ-öø-ÿ'’\-]+"
+_CIV_WORD = r"(?:M\.|Mr\.?|Mme\.?|Mlle\.?|Monsieur|Madame|Mademoiselle)"
+_PERSON = re.compile(rf"(?<![\w/])({_CIV_WORD})[ \t]+({_WORD}(?:[ \t]+{_WORD}){{0,3}})")
+_PLACE = rf"{_WORD}(?:[ \t-]+{_WORD}){{0,2}}"
+_NOT_A_NAME = {"le", "la", "les", "directeur", "directrice", "gerant", "gerante", "president", "presidente", "responsable"}
+_FEMININE = ("mme", "madame", "mlle", "mademoiselle")
+
+# (pattern, [(field, hint) per group]) — the keywords are case-insensitive, names and places start with a capital
+_VALUE_RULES: list[tuple[str, list[tuple[str, str]]]] = [
+    (rf"(?i:\bn[ée]e?\s+le)\s+({_DATE})", [("birth_date", "né(e) le")]),
+    (rf"(?i:\bn[ée]e?\s+le)\s+{_DATE}\s+(?i:à)\s+({_PLACE})", [("birth_place", "né(e) à")]),
+    (r"(?i:\b(?:CIN|C\.I\.N\.?|carte d.identit[ée] nationale|carte nationale d.identit[ée])\b)[^\n]{0,30}?\b([A-Z]{1,2}[ \t]?\d{3,7})\b",
+     [("cin", "CIN")]),
+    (r"(?i:\bCNSS\b)[^\d\n]{0,25}(\d{6,12})\b", [("cnss_number", "CNSS")]),
+    (rf"(?i:\bdepuis le)\s+({_DATE})", [("hire_date", "depuis le")]),
+    (rf"(?i:\b(?:embauch|recrut|engag)[ée]e?\s+(?:le|depuis le|à compter du))\s+({_DATE})", [("hire_date", "embauché(e) le")]),
+    (rf"(?i:\bdu)\s+({_DATE})\s+(?i:au)\s+({_DATE})", [("contract_start", "du"), ("contract_end", "au")]),
+    (rf"(?i:\bà compter du)\s+({_DATE})", [("contract_start", "à compter du")]),
+    (rf"(?i:\bjusqu.au)\s+({_DATE})", [("contract_end", "jusqu'au")]),
+    (rf"(?i:\b(?:fait|[ée]tabli|d[ée]livr[ée])e?\s+à)\s+({_PLACE})\s*,?\s*(?i:le)\s+({_DATE})", [("company_city", "fait à"), ("today", "date du document")]),
+    (rf"(?m)^[ \t]*({_PLACE})[ \t]*,[ \t]*(?i:le)[ \t]+({_DATE})", [("company_city", "fait à"), ("today", "date du document")]),
+    (r"(?i:(à durée (?:in)?d[ée]termin[ée]e\s*\((?:CDI|CDD)\)))", [("contract_phrase", "contrat")]),
+    (r"(?i:\bcontrat\s+(?:de type\s+)?)(CDI|CDD|ANAPEC)\b", [("contract_type", "contrat")]),
+    (r"(?i:(?:salaire|r[ée]mun[ée]ration|gratification|indemnit[ée])[^.\n]{0,60}?\b(?:de|:))\s*(\d[\d \u00a0\u202f.,]*\d)\s*(?=(?i:MAD|DH|DHS|dirhams?)\b)",
+     [("salary_figures", "salaire")]),
+    (r"(?i:\b(?:en qualit[ée] d[e']|en tant que|au poste d[e']|occupe le poste d[e']|occupe la fonction d[e']|exerce la fonction d[e']))\s*"
+     r"(.+?)(?=\s+(?i:depuis|à compter|au sein|du\s+\d|pour une|au service|au d[ée]partement|aupr[èe]s|jusqu)|\s*[,.;:\n(])",
+     [("position", "poste")]),
+]
+
+
+def _signatory(text: str, start: int, end: int) -> bool:
+    """« Je soussignée, Mme ENNAJI Widad, agissant en qualité de … »: the person who signs, not the one concerned."""
+    before, after = norm(text[max(0, start - 50):start]), norm(text[end:end + 60])
+    return bool(re.search(r"soussign", before) or re.match(r"(agissant|en sa qualite|directeur|directrice|gerant|gerante|president|presidente|drh)\b", after))
+
+
+def find_person(text: str) -> Optional[dict]:
+    """The person a filled document is about: {civility, name, feminine}, or None."""
+    for m in _PERSON.finditer(text):
+        name = m.group(2).strip()
+        if norm(name.split()[0]) in _NOT_A_NAME or len(norm(name)) < 3:
+            continue
+        if _signatory(text, m.start(), m.end()):
+            continue
+        return {"civility": m.group(1), "name": name, "feminine": m.group(1).lower().rstrip(".").startswith(_FEMININE)}
+    return None
+
+
+def find_values(text: str) -> list[dict]:
+    """The person's values in a filled document, as placeholders of kind « value » ({start, end, raw, label, kind, key}).
+    `raw` names the value and its role (« CHAIMAA BYAZ (nom) »): the same town can be a birth place and the place of
+    signature, each is a field of its own."""
+    out: list[dict] = []
+
+    def add(start: int, end: int, key: str, hint: str):
+        value = text[start:end].strip()
+        if not value:
+            return
+        start = start + text[start:end].index(value)
+        out.append({"start": start, "end": start + len(value), "raw": f"{value} ({hint})", "label": KNOWN_FIELDS.get(key, hint),
+                    "kind": "value", "key": key})
+
+    person = find_person(text)
+    if person:
+        for m in re.finditer(r"(?<!\w)" + re.escape(person["name"]) + r"(?!\w)", text, re.IGNORECASE):
+            add(m.start(), m.end(), "full_name", "nom")
+            c = re.search(rf"({_CIV_WORD})[ \t]+$", text[max(0, m.start() - 14):m.start()])
+            if c:
+                cs = m.start() - len(c.group(0))
+                long_form = c.group(1).lower().startswith(("monsieur", "madame", "mademoiselle"))
+                add(cs, cs + len(c.group(1)), "civility" if long_form else "civility_short", "civilité")
+    for pat, groups in _VALUE_RULES:
+        for m in re.finditer(pat, text):
+            for gi, (key, hint) in enumerate(groups, start=1):
+                a, b = m.span(gi)
+                if a < 0:
+                    continue
+                if key == "position":
+                    if re.search(r"agissant\s*$", norm(text[max(0, m.start() - 30):m.start()])) or len(text[a:b]) > 80:
+                        continue
+                    if norm(text[a:b]) in ("", "stagiaire"):
+                        continue
+                if key == "today" and re.search(r"[a-zA-Z]", text[a:b]):
+                    key = "today_long"
+                add(a, b, key, hint)
+    out.sort(key=lambda d: (d["start"], -(d["end"] - d["start"])))
+    kept, last = [], -1
+    for d in out:
+        if d["start"] >= last:
+            kept.append(d)
+            last = d["end"]
+    return kept
+
+
+_GENDERED = r"(employ|salari|n|int[ée]ress|embauch|recrut|engag|affect|int[ée]gr|affili|domicili|attach)"
+_SUBJECT_VERBS = (r"(a exerc[ée]|a fait preuve|a occup[ée]|a effectu[ée]|a su|a toujours|a [ée]t[ée]|s.est|occupe|exerce|assure|"
+                  r"b[ée]n[ée]ficie|est employ|est titulaire|est inscrit|fait partie|a int[ée]gr[ée])")
+
+
+def neutral_gender(html_body: str, feminine: bool) -> str:
+    """The words written for the example person, made to fit anyone: « employée » / « employé » → « employé(e) »,
+    « née » → « né(e) », « elle a exercé » → « il/elle a exercé », « la salariée » → « le/la salarié(e) ».
+    `agree` writes them back for the person at generation. Only the text changes, never the tags."""
+    def fix(t: str) -> str:
+        if feminine:
+            t = re.sub(r"\bla (salari[ée]e|stagiaire|b[ée]n[ée]ficiaire)\b", r"le/la \1", t)
+            t = re.sub(r"\b" + _GENDERED + r"ée(s?)\b", lambda m: m.group(1) + "é(e)" + m.group(2), t)
+            t = re.sub(r"\binscrite\b", "inscrit(e)", t)
+            t = re.sub(r"\b(E|e)lle\s+" + _SUBJECT_VERBS, lambda m: ("Il/Elle " if m.group(1) == "E" else "il/elle ") + m.group(2), t)
+        else:
+            t = re.sub(r"\ble (salari[ée]|stagiaire|b[ée]n[ée]ficiaire)\b", r"le/la \1", t)
+            t = re.sub(r"\b" + _GENDERED + r"é(s?)(?![\w(])", lambda m: m.group(1) + "é(e)" + m.group(2), t)
+            t = re.sub(r"\binscrit(?![\w(])", "inscrit(e)", t)
+            t = re.sub(r"\b(I|i)l\s+" + _SUBJECT_VERBS, lambda m: ("Il/Elle " if m.group(1) == "I" else "il/elle ") + m.group(2), t)
+        return t
+
+    parts = _TAG.split(html_body)
+    for i in range(0, len(parts), 2):
+        parts[i] = fix(parts[i])
+    return "".join(parts)
 
 
 def resolve(ph: dict, text: str, mapping: Optional[dict] = None) -> str:
@@ -160,6 +304,8 @@ def resolve(ph: dict, text: str, mapping: Optional[dict] = None) -> str:
         return re.sub(r"\W", "_", str(mapping[ph["raw"]]))[:48]
     if ph["kind"] == "variable":
         return ph["label"]
+    if ph["kind"] == "value":
+        return ph["key"]
     if ph["kind"] == "civility":  # « M./Mme » keeps the short form of the document
         return "civility" if re.match(r"(monsieur|madame)", ph["raw"], re.IGNORECASE) else "civility_short"
     return map_label(ph["label"], text[ph["end"]:ph["end"] + 12]) or slug_key(ph["label"])
@@ -250,6 +396,22 @@ def apply_fields(body: str, mapping: Optional[dict] = None) -> str:
     for i, t in texts.items():
         parts[i] = _html.escape(t, quote=False)
     return "".join(parts)
+
+
+def build_template(raw_html: str, mapping: Optional[dict] = None) -> tuple[str, list[dict]]:
+    """A document's HTML as a template: (body with {{fields}} and the custom fields' labels, fields found).
+    Used for an uploaded document and to look again at a template already saved."""
+    body = strip_meta(raw_html)
+    fields = analyse_html(body, mapping)
+    person = find_person(_text_runs(body)[2])
+    out = apply_fields(body, mapping)
+    if person and not any(f["key"] == "full_name" and mapping and mapping.get(f["placeholder"]) == KEEP for f in fields):
+        if any(f["key"] == "full_name" for f in fields):
+            out = neutral_gender(out, person["feminine"])
+    old_meta = read_meta(raw_html)
+    meta_fields = [{"key": k, "label": v.get("label", k), "default": v.get("default", "")} for k, v in old_meta.items()
+                   if k not in {f["key"] for f in fields} and "{{" + k + "}}" in out]
+    return with_meta(out, fields + meta_fields), fields
 
 
 # ── field labels / defaults kept with the template ────────────────────────────────────────────────────────

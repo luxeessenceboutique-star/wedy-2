@@ -1,9 +1,10 @@
 """Templates router — /api/templates"""
 import json
 import re
-from typing import Optional
+from typing import Dict, Optional
 import time
 from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile, File, Form, Body
+from pydantic import BaseModel
 from supabase import Client
 from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
@@ -364,10 +365,7 @@ def _smart_template(content: bytes, filename: str, mapping: Optional[dict] = Non
     """The uploaded document as a template: its fields found, mapped to Wedy data (or to the user's choices)."""
     from app.services.pdf_template_extractor import extract_template_smart
     from app.services import template_fields as tfields
-    raw = extract_template_smart(content, filename)
-    fields = tfields.analyse_html(raw, mapping)
-    body = tfields.with_meta(tfields.apply_fields(raw, mapping), fields)
-    return body, fields
+    return tfields.build_template(extract_template_smart(content, filename), mapping)
 
 
 def _parse_mapping(raw: str) -> Optional[dict]:
@@ -748,6 +746,41 @@ async def update_template(
     if not result.data:
         raise HTTPException(status_code=404, detail="Template not found")
     return result.data[0]
+
+
+class FieldsIn(BaseModel):
+    mapping: Dict[str, str] = {}
+
+
+def _template_or_404(db: Client, template_id: str) -> dict:
+    rows = db.table("document_templates").select("*").eq("id", template_id).limit(1).execute().data
+    if not rows:
+        raise HTTPException(status_code=404, detail="Modèle introuvable")
+    return rows[0]
+
+
+@router.post("/{template_id}/analyse")
+def analyse_saved_template(template_id: str, body: FieldsIn = Body(default=FieldsIn()), db: Client = Depends(get_db),
+                           current_user: dict = Depends(require_hr_or_admin)):
+    """Look again for the fields of a saved template (e.g. a document imported already filled for someone):
+    what would change, before anything is saved."""
+    from app.services import template_fields as tfields
+    tpl = _template_or_404(db, template_id)
+    new_body, fields = tfields.build_template(tpl.get("body_template") or "", body.mapping or None)
+    return {"fields": fields, "body_template": new_body}
+
+
+@router.post("/{template_id}/fields")
+def save_template_fields(template_id: str, body: FieldsIn = Body(default=FieldsIn()), db: Client = Depends(get_db),
+                         current_user: dict = Depends(require_hr_or_admin)):
+    """Turn the values found in a saved template into fields (with the user's corrections) and save it."""
+    from app.services import template_fields as tfields
+    tpl = _template_or_404(db, template_id)
+    new_body, fields = tfields.build_template(tpl.get("body_template") or "", body.mapping or None)
+    variables = sorted(set(re.findall(r"\{\{(\w+)\}\}", new_body)))
+    res = db.table("document_templates").update({"body_template": new_body, "variables": variables}).eq("id", template_id).execute()
+    log_action(db, current_user["id"], "UPDATE", "document_template", template_id)
+    return {"template": (res.data or [{**tpl, "body_template": new_body, "variables": variables}])[0], "fields": fields}
 
 
 @router.delete("/{template_id}", status_code=204)

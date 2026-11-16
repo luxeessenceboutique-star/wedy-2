@@ -66,6 +66,24 @@ def _amount(v):
         return None
 
 
+_MONTHS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+
+
+def _long_date(d: date) -> str:
+    return f"{'1er' if d.day == 1 else d.day} {_MONTHS_FR[d.month - 1]} {d.year}"
+
+
+def _contract_phrase(contract_type) -> str:
+    """« à durée indéterminée (CDI) » — what follows « sous contrat » in an attestation."""
+    c = (contract_type or "").strip()
+    u = c.upper()
+    if u == "CDI":
+        return "à durée indéterminée (CDI)"
+    if u == "CDD":
+        return "à durée déterminée (CDD)"
+    return f"de type {c}" if c else ""
+
+
 def build_context(emp: dict, extra: dict = None, company: Optional[dict] = None, meta: Optional[dict] = None) -> dict:
     co = company or app_settings.DEFAULTS["company"]
     ctx = {
@@ -101,6 +119,8 @@ def build_context(emp: dict, extra: dict = None, company: Optional[dict] = None,
         "internship_start": _fmt_date(emp.get("internship_start")),
         "internship_end":   _fmt_date(emp.get("internship_end")) or "à ce jour",
         "birth_date":       _fmt_date(emp.get("birth_date")),
+        "birth_place":      emp.get("birth_place") or ((emp.get("custom_fields") or {}).get("birth_place") if isinstance(emp.get("custom_fields"), dict) else "") or "",
+        "today_long":       _long_date(date.today()),
         "notes":            emp.get("notes") or "",
     }
     intern = emp.get("status") == "intern"
@@ -136,6 +156,8 @@ def build_context(emp: dict, extra: dict = None, company: Optional[dict] = None,
         ctx["salary_words"] = tfields.salary_words(amount) if amount is not None else ""
     if not (extra or {}).get("duration"):
         ctx["duration"] = tfields.duration_text(_parse_any_date(ctx.get("contract_start")), _parse_any_date(ctx.get("contract_end")))
+    if not (extra or {}).get("contract_phrase"):
+        ctx["contract_phrase"] = _contract_phrase(ctx.get("contract_type"))
     civ, short = tfields.civility_pair(ctx.get("civility"), ctx.get("civility_short"))
     ctx["civility"] = civ or "Monsieur/Madame"   # unknown: the document's own wording is kept
     ctx["civility_short"] = short or "M./Mme"
@@ -184,18 +206,31 @@ def generate_doc(
     # « intégré(e) », « il/elle » written for the person once the civility is known
     content = tfields.agree(render_template(tfields.strip_meta(body), ctx), ctx.get("civility", ""))
 
-    # 4. Optional AI enhancement
-    ai_enhanced = False
+    # 4. Optional AI (another language, or a smoother wording): the HTML must come back with its tags, else it is refused
+    ai_enhanced, ai_error = False, None
     if payload.use_ai_enhancement:
         try:
             from app.services.ai_service import enhance_document
-            content = enhance_document(content, template.get("name_fr", "document"), payload.language)
-            ai_enhanced = True
+            out = enhance_document(content, template.get("name_fr", "document"), payload.language)
+            if keeps_layout(content, out):
+                content, ai_enhanced = out, True
+            else:
+                ai_error = "La rédaction IA a changé la mise en page : le modèle a été gardé tel quel."
         except Exception as e:
             print(f"[generate] AI enhancement unavailable, using rendered template as-is: {e}")
+            ai_error = "Rédaction IA indisponible : le modèle a été gardé tel quel."
 
-    # 5. Persist to generated_documents
+    # 5. One page for everything (preview, PDF, DOCX, the person's folder): the template as it is, or on the letterhead
+    import uuid as _uuid
+    from app.services import document_layout
+    doc_id = str(_uuid.uuid4())
+    settings_all = app_settings.load(supabase)[0]
+    content = document_layout.compose(
+        content, title=(template.get(f"name_{payload.language}") or template.get("name_fr") or ""),
+        company=settings_all["company"], assets=settings_all.get("assets") or {}, lang=payload.language,
+        code=doc_id[:8].upper(), signer=employee.get("manager") or "")
     doc_data = {
+        "id":            doc_id,
         "employee_id":   payload.employee_id,
         "template_id":   payload.template_id,
         "document_type": template.get("name_fr", "document"),
@@ -206,178 +241,123 @@ def generate_doc(
         ins = generated_document_repository.create_generated_document(supabase, doc_data)
         doc = ins.data[0] if ins.data else doc_data
     except Exception:
-        doc = {**doc_data, "id": "local", "created_at": str(date.today())}
+        try:  # a table whose id cannot be given: let the database choose it
+            ins = generated_document_repository.create_generated_document(supabase, {k: v for k, v in doc_data.items() if k != "id"})
+            doc = ins.data[0] if ins.data else doc_data
+        except Exception:
+            doc = {**doc_data, "id": "local", "created_at": str(date.today())}
 
-    # 6. Save as physical file in employee's folder (like uploaded files)
-    try:
-        import os, uuid
-        from weasyprint import HTML
-        from app.config import settings
-        
-        # Convert HTML to PDF bytes
-        pdf_bytes = HTML(string=content).write_pdf()
-        
-        # Determine paths
-        safe_name = f"{uuid.uuid4().hex}.pdf"
-        emp_dir = os.path.join(settings.UPLOAD_DIR, "employees", str(payload.employee_id))
-        os.makedirs(emp_dir, exist_ok=True)
-        file_path_rel = os.path.join("employees", str(payload.employee_id), safe_name)
-        full_path = os.path.join(settings.UPLOAD_DIR, file_path_rel)
-        
-        # Write to disk, and keep a durable copy (a redeploy wipes the disk)
-        with open(full_path, "wb") as f:
-            f.write(pdf_bytes)
-        from app.services.storage import durable_put
-        durable_put(file_path_rel.replace("\\", "/"), pdf_bytes, "application/pdf")
-            
-        # Record in employee_files
-        record = {
-            "employee_id": str(payload.employee_id),
-            "name": f"{doc_data['document_type']}_{date.today().isoformat()}.pdf",
-            "file_type": "autre",  # Generic type for generated docs
-            "file_path": file_path_rel.replace("\\", "/"),
-            "file_size": len(pdf_bytes),
-            "mime_type": "application/pdf",
-            "uploaded_by": current_user["id"],
-        }
-        res = generated_document_repository.create_employee_file(supabase, record)
-        if res.data:
-            log_action(supabase, current_user["id"], "UPLOAD_FILE_GENERATED", "employee_file", res.data[0]["id"])
-    except Exception as e:
-        print(f"Failed to save physical file to employee folder: {e}")
+    # 6. The PDF filed in the person's folder (like an uploaded file)
+    _file_pdf(supabase, doc, payload.employee_id, current_user["id"])
 
     log_action(supabase, current_user["id"], "GENERATE_DOCUMENT", "generated_documents",
                doc.get("id", ""))
 
     webhook_service.emit(supabase, "document.generated", {"document_id": (doc or {}).get("id"), "document": template.get("name_fr"),
                                                        "employee_id": payload.employee_id, "employee": employee.get("full_name"), "language": payload.language})
-    return {"document": doc, "content": content, "ai_enhanced": ai_enhanced}
+    from app.services import document_layout as _dl
+    return {"document": doc, "content": content, "html": _dl.full_html(content, doc.get("document_type") or "Document"),
+            "ai_enhanced": ai_enhanced, "ai_error": ai_error}
+
+
+_LAYOUT_TAGS = re.compile(r"<(p|div|br|h[1-6]|li|table|tr|td|b|strong|img)\b", re.I)
+
+
+def keeps_layout(before: str, after: str) -> bool:
+    """The AI's answer kept the document's shape: about the same tags, and not a truncated text."""
+    if not after or not after.strip():
+        return False
+    tb, ta = len(_LAYOUT_TAGS.findall(before or "")), len(_LAYOUT_TAGS.findall(after))
+    if tb and ta < tb * 0.7:
+        return False
+    if after.count("{{") > (before or "").count("{{"):   # the AI wrote a field instead of a value
+        return False
+    txt = lambda h: len(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", h or "")).strip())
+    return txt(after) >= txt(before) * 0.6
+
+
+def _generated_path(employee_id: str, doc_id: str) -> str:
+    return f"employees/{employee_id}/generated-{doc_id}.pdf"
+
+
+def _file_pdf(supabase: Client, doc: dict, employee_id: str, user_id: str, replace: bool = False) -> None:
+    """Write the document's PDF into the person's folder (a durable copy too); on an edit, the same file is rewritten."""
+    try:
+        import os
+        from app.config import settings
+        from app.services import document_layout
+        from app.services.storage import durable_put
+        doc_id = str(doc.get("id") or "")
+        if not doc_id or doc_id == "local":
+            return
+        pdf_bytes = document_layout.html_to_pdf(doc.get("content") or "", doc.get("document_type") or "Document")
+        rel = _generated_path(str(employee_id), doc_id)
+        full = os.path.join(settings.UPLOAD_DIR, rel)
+        os.makedirs(os.path.dirname(full), exist_ok=True)
+        with open(full, "wb") as f:
+            f.write(pdf_bytes)
+        durable_put(rel, pdf_bytes, "application/pdf")
+        rows = supabase.table("employee_files").select("id").eq("file_path", rel).limit(1).execute().data or []
+        if rows:
+            supabase.table("employee_files").update({"file_size": len(pdf_bytes)}).eq("id", rows[0]["id"]).execute()
+            return
+        if replace:
+            return
+        record = {
+            "employee_id": str(employee_id),
+            "name": f"{doc.get('document_type') or 'document'}_{date.today().isoformat()}.pdf",
+            "file_type": "autre",
+            "file_path": rel,
+            "file_size": len(pdf_bytes),
+            "mime_type": "application/pdf",
+            "uploaded_by": user_id,
+        }
+        res = generated_document_repository.create_employee_file(supabase, record)
+        if res.data:
+            log_action(supabase, user_id, "UPLOAD_FILE_GENERATED", "employee_file", res.data[0]["id"])
+    except Exception as e:
+        print(f"Failed to save physical file to employee folder: {e}")
+
+
+class DocumentEdit(BaseModel):
+    content: str
+
+
+@router.patch("/generate/{doc_id}")
+def update_generated_doc(doc_id: str, body: DocumentEdit, supabase: Client = Depends(get_db),
+                         current_user: dict = Depends(require_hr_or_admin)):
+    """Save the text changed by hand in the preview: the PDF / DOCX downloads and the filed copy follow."""
+    res = generated_document_repository.get_generated_document(supabase, doc_id)
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Document introuvable")
+    doc = res.data
+    content = re.sub(r"<script\b[^>]*>.*?</script>", "", body.content or "", flags=re.S | re.I)
+    content = re.sub(r"\son\w+\s*=\s*(\"[^\"]*\"|'[^']*')", "", content)
+    if not re.sub(r"<[^>]+>", "", content).strip():
+        raise HTTPException(status_code=422, detail="Le document est vide")
+    supabase.table("generated_documents").update({"content": content}).eq("id", doc_id).execute()
+    doc = {**doc, "content": content}
+    if doc.get("employee_id"):
+        _file_pdf(supabase, doc, doc["employee_id"], current_user["id"], replace=True)
+    log_action(supabase, current_user["id"], "UPDATE", "generated_documents", doc_id)
+    from app.services import document_layout as _dl
+    return {"document": doc, "content": content, "html": _dl.full_html(content, doc.get("document_type") or "Document")}
+
+
+@router.get("/generate/{doc_id}/html")
+def generated_doc_html(doc_id: str, supabase: Client = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """The document as a full page (view / print in the browser), exactly as in the PDF."""
+    from fastapi.responses import HTMLResponse
+    from app.services import document_layout
+    res = generated_document_repository.get_generated_document(supabase, doc_id)
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Document introuvable")
+    content = res.data.get("content") or ""
+    page = content if document_layout.is_composed(content) else f'<div class="wedy-doc own">{content}</div>'
+    return HTMLResponse(document_layout.full_html(page, res.data.get("document_type") or "Document"))
 
 
 # ── DOCX download ─────────────────────────────────────────────────────────────
-
-def _html_to_docx_bytes(html_content: str) -> bytes:
-    """Convert HTML content to a DOCX file and return bytes."""
-    import re as _re
-    from io import BytesIO
-    from docx import Document as DocxDoc
-    from docx.shared import Pt, Cm
-    from html.parser import HTMLParser
-
-    class _P(HTMLParser):
-        def __init__(self, doc):
-            super().__init__()
-            self._d = doc
-            self._para = None
-            self._bold = False
-            self._italic = False
-            self._under = False
-            self._fsize: float | None = None
-            self._skip_tag: str | None = None
-
-        def _para_open(self, align: int = 0):
-            self._para = self._d.add_paragraph()
-            self._para.alignment = align
-
-        def handle_starttag(self, tag, attrs):
-            if self._skip_tag:
-                return
-            tag = tag.lower()
-            if tag in ('script', 'style', 'head'):
-                self._skip_tag = tag
-                return
-            a = dict(attrs)
-            style = a.get('style', '')
-            align = (1 if 'center' in style else
-                     2 if 'text-align:right' in style.replace(' ', '') else
-                     3 if 'justify' in style else 0)
-            if tag in ('h1', 'h2', 'h3', 'h4'):
-                self._para_open(1)
-                self._bold = True
-                self._fsize = [22, 17, 14, 13][min(int(tag[1]) - 1, 3)]
-            elif tag in ('p', 'div', 'section'):
-                self._para_open(align)
-            elif tag in ('strong', 'b'):
-                self._bold = True
-            elif tag in ('em', 'i'):
-                self._italic = True
-            elif tag == 'u':
-                self._under = True
-            elif tag == 'br':
-                if self._para:
-                    self._para.add_run('\n')
-            elif tag == 'hr':
-                self._d.add_paragraph('─' * 55)
-                self._para = None
-            elif tag == 'span':
-                m = _re.search(r'font-size:\s*([\d.]+)pt', style)
-                if m:
-                    self._fsize = float(m.group(1))
-                if 'bold' in style:
-                    self._bold = True
-                if 'italic' in style:
-                    self._italic = True
-                if 'underline' in style:
-                    self._under = True
-
-        def handle_endtag(self, tag):
-            tag = tag.lower()
-            if self._skip_tag == tag:
-                self._skip_tag = None
-                return
-            if self._skip_tag:
-                return
-            if tag in ('h1', 'h2', 'h3', 'h4', 'p', 'div', 'section'):
-                self._bold = False
-                self._fsize = None
-                self._para = None
-            elif tag in ('strong', 'b'):
-                self._bold = False
-            elif tag in ('em', 'i'):
-                self._italic = False
-            elif tag == 'u':
-                self._under = False
-            elif tag == 'span':
-                self._bold = False
-                self._italic = False
-                self._under = False
-                self._fsize = None
-
-        def handle_data(self, data):
-            if self._skip_tag:
-                return
-            text = data
-            if not text.strip():
-                return
-            if self._para is None:
-                self._para = self._d.add_paragraph()
-            run = self._para.add_run(text)
-            run.bold = self._bold
-            run.italic = self._italic
-            run.underline = self._under
-            if self._fsize:
-                run.font.size = Pt(self._fsize)
-
-    docx = DocxDoc()
-    sec = docx.sections[0]
-    sec.top_margin    = Cm(2.5)
-    sec.bottom_margin = Cm(2.5)
-    sec.left_margin   = Cm(2.8)
-    sec.right_margin  = Cm(2.8)
-
-    try:
-        n = docx.styles['Normal']
-        n.font.name = 'Times New Roman'
-        n.font.size = Pt(12)
-    except Exception:
-        pass
-
-    _P(docx).feed(html_content)
-
-    buf = BytesIO()
-    docx.save(buf)
-    return buf.getvalue()
-
 
 @router.get("/generate/{doc_id}")
 def get_generated_doc(
@@ -406,7 +386,8 @@ def download_docx(
     doc_type = doc.get("document_type", "document")
 
     try:
-        data = _html_to_docx_bytes(html)
+        from app.services.docx_export import html_to_docx
+        data = html_to_docx(html)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erreur génération DOCX : {e}")
 
@@ -499,24 +480,12 @@ def download_pdf(
     html     = doc.get("content", "")
     doc_type = doc.get("document_type", "document")
 
-    full_html = (
-        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
-        "<style>"
-        "body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.7;"
-        "margin:0;padding:0;color:#1a1a1a;}"
-        "@page{size:A4;margin:2.5cm 2.8cm;}"
-        "h1,h2,h3{text-align:center;}"
-        "p{margin:4px 0;}"
-        "</style></head>"
-        f"<body>{html}</body></html>"
-    )
-
     pdf_bytes: bytes | None = None
     try:
-        import weasyprint
-        pdf_bytes = weasyprint.HTML(string=full_html).write_pdf()
-    except Exception:
-        pass
+        from app.services import document_layout
+        pdf_bytes = document_layout.html_to_pdf(html, doc_type)
+    except Exception as e:
+        print(f"[generate] weasyprint unavailable for {doc_id}: {e}")
 
     if not pdf_bytes:
         try:

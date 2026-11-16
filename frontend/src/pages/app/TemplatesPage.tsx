@@ -1,12 +1,13 @@
 ﻿import { useEffect, useRef, useState, type ChangeEvent, type ComponentType, type FormEvent, type MouseEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowLeft, CircleCheck, FileText, FileUp, GraduationCap, PencilLine, ScanSearch, Upload, Users, UsersRound } from 'lucide-react';
 import {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
-  importTemplateFromPdf, previewTemplateImport, seedDefaultTemplates, listDocuments, getApiError,
+  importTemplateFromPdf, previewTemplateImport, seedDefaultTemplates, listDocuments, getApiError, analyseSavedTemplate, saveTemplateFields,
 } from '@/services/api';
 import type { DetectedField, Template } from '@/services/api';
-import { FIELD_LABEL, FIELD_LABELS, KEEP, customKey } from '@/lib/templateFields';
+import { FIELD_LABEL, FIELD_LABELS, KEEP, customKey, hasOwnLayout } from '@/lib/templateFields';
 import { Modal, Spinner } from '@/components/ui';
 import { useNotify } from '@/lib/notify';
 import { useLang, type TKey } from '@/lib/lang';
@@ -99,7 +100,7 @@ export type TemplatesVals = {
   seed: () => void; seeding: boolean; openImport: () => void; addOpen: boolean; toggleAdd: () => void;
   company: string; companyInitials: string; companyAddress: string;
   previewOpen: boolean; closePreview: () => void;
-  pv: { fr: string; upper: string; cat: string; tint: string; color: string; langs: { t: string }[]; nvars: number; edit: () => void; remove: () => void; generate: string };
+  pv: { fr: string; upper: string; cat: string; tint: string; color: string; langs: { t: string }[]; nvars: number; own: boolean; edit: () => void; remove: () => void; detect: () => void; generate: string };
   editorOpen: boolean; editorTitle: string; closeEditor: () => void; newTpl: () => void;
   eName: string; onEName: (e: ChangeEvent<HTMLInputElement>) => void;
   eNameEn: string; onENameEn: (e: ChangeEvent<HTMLInputElement>) => void;
@@ -131,6 +132,8 @@ export default function TemplatesPage() {
   const [detected, setDetected] = useState<string[]>([]);
   const [dirty, setDirty] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [fieldsFor, setFieldsFor] = useState<Template | null>(null);
+  const [params, setParams] = useSearchParams();
   const [addOpen, setAddOpen] = useState(false);
   const edRef = useRef<HTMLDivElement | null>(null);
   const pvRef = useRef<HTMLDivElement | null>(null);
@@ -143,6 +146,10 @@ export default function TemplatesPage() {
   const usage = (docs?.data ?? []).reduce<Record<string, number>>((m, d) => { if (d.template_id) m[d.template_id] = (m[d.template_id] ?? 0) + 1; return m; }, {});
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['templates'] });
+  // « Détecter les champs » asked from Générer (?fields=<id>)
+  const askedFields = params.get('fields');
+  const fieldsTpl = fieldsFor ?? (askedFields ? all.find(x => x.id === askedFields) ?? null : null);
+  const closeFields = () => { setFieldsFor(null); if (askedFields) setParams(p => { p.delete('fields'); return p; }, { replace: true }); };
   const createMut = useMutation({ mutationFn: createTemplate });
   const updateMut = useMutation({ mutationFn: ({ id, body }: { id: string; body: Partial<Template> & { variables?: string[] } }) => updateTemplate(id, body) });
   const deleteMut = useMutation({
@@ -288,8 +295,9 @@ export default function TemplatesPage() {
     previewOpen: !!previewing, closePreview: () => setPreview(null),
     pv: {
       fr: previewing?.name_fr ?? '', upper: (previewing?.name_fr ?? '').toUpperCase(), cat: t(pvCat[0]), tint: pvCat[1], color: pvCat[2],
-      langs: previewing ? langsOf(previewing) : [], nvars: varsIn(previewing?.body_template ?? '').length,
-      edit: () => previewing && openEditor(previewing), remove: () => previewing && remove(previewing), generate: generateLink(previewing?.id ?? ''),
+      langs: previewing ? langsOf(previewing) : [], nvars: varsIn(previewing?.body_template ?? '').length, own: hasOwnLayout(previewing?.body_template ?? ''),
+      edit: () => previewing && openEditor(previewing), remove: () => previewing && remove(previewing),
+      detect: () => { if (previewing) { setFieldsFor(previewing); setPreview(null); } }, generate: generateLink(previewing?.id ?? ''),
     },
     editorOpen: !!editor, editorTitle: editor === 'new' ? t('tpl_nouveau_modele') : t('tpl_edit_title'),
     closeEditor: () => { if (!dirty || window.confirm(t('tpl_discard'))) setEditor(null); }, newTpl: () => openEditor(),
@@ -316,6 +324,7 @@ export default function TemplatesPage() {
     <>
       <TemplatesView v={v} edRef={edRef} pvRef={pvRef} />
       <ImportModal open={importOpen} onClose={() => setImportOpen(false)} onImported={invalidate} />
+      {fieldsTpl && <FieldsModal tpl={fieldsTpl} onClose={closeFields} onSaved={invalidate} />}
     </>
   );
 }
@@ -366,21 +375,6 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
       onImported(); reset(); setLoading(false); onClose();
     } catch (err) { notify.error(getApiError(err, t('tpl_import_error'))); setLoading(false); }
   };
-  const valueOf = (f: DetectedField) => choice[f.placeholder] ?? f.key;
-  // the work mode is not in the person's record: it is asked at generation, with the document's own wording proposed
-  const isCustom = (v: string) => v !== KEEP && (!FIELD_LABEL[v] || v === 'work_mode');
-  // the template as it will read: each field shown as its label
-  const previewHtml = preview
-    .replace(/^\s*<!--wedy-fields:[\s\S]*?-->/, '')
-    .replace(/\{\{(\w+)\}\}/g, (_, k: string) => {
-      // the preview was built with the detected fields: show each one as the user has it now
-      const f = (fields ?? []).find(x => x.key === k);
-      const cur = f ? valueOf(f) : k;
-      if (cur === KEEP && f) return esc(f.placeholder);
-      const label = FIELD_LABEL[cur] ? t(FIELD_LABEL[cur]) : f?.label ?? k;
-      return `<span style="${CHIP};background:${isCustom(cur) ? '#fbefda' : '#e4f2f4'};color:${isCustom(cur) ? '#8a5207' : '#0b5f72'}">${esc(label)}</span>`;
-    });
-
   const review = fields !== null;
   return (
     <Modal open={open} onClose={close} title={t(review ? 'tpl_an_title' : 'tpl_import_title')} icon={review ? <ScanSearch size={17} /> : <FileUp size={17} />} width={review ? 980 : 500}
@@ -430,41 +424,97 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         <div style={{ padding: '10px 12px', borderRadius: 12, background: '#f3f6f7', fontSize: 12.5, color: '#52646d', lineHeight: 1.55 }}>{t('tpl_an_hint')}</div>
       </form>
       ) : (
-      <div className="tpl-an">
-        <div className="tpl-an-list">
-          {!fields.length && <div className="tpl-an-none">{t('tpl_an_none')}</div>}
-          {fields.map(f => {
-            const v = valueOf(f);
-            const custom = isCustom(v), keep = v === KEEP;
-            return (
-              <div key={f.placeholder} className={`tpl-an-row${keep ? ' keep' : ''}`}>
-                <div className="tpl-an-ph" title={f.placeholder}>
-                  <code>{f.placeholder}</code>
-                  {f.count > 1 && <small>×{f.count}</small>}
-                </div>
-                <select value={v} onChange={e => setChoice(c => ({ ...c, [f.placeholder]: e.target.value }))} aria-label={f.placeholder}>
-                  <optgroup label={t('tpl_an_g_wedy')}>
-                    {FIELD_LABELS.map(([k, key]) => <option key={k} value={k}>{t(key)}</option>)}
-                  </optgroup>
-                  <optgroup label={t('tpl_an_g_other')}>
-                    <option value={f.known ? customKey(f.label) : f.key}>{tf(t('tpl_an_custom_opt'), { label: f.label })}</option>
-                    <option value={KEEP}>{t('tpl_an_keep')}</option>
-                  </optgroup>
-                </select>
-                <span className={`tpl-an-tag ${keep ? 'keep' : custom ? 'custom' : 'wedy'}`}>
-                  {keep ? t('tpl_an_t_keep') : custom ? <><PencilLine size={12} />{t('tpl_an_t_custom')}</> : <><CircleCheck size={12} />{t('tpl_an_t_wedy')}</>}
-                </span>
-              </div>
-            );
-          })}
-          <p className="tpl-an-note">{t('tpl_an_note')}</p>
-        </div>
-        <div className="tpl-an-preview">
-          <div className="tpl-an-preview-h">{t('tpl_an_preview')}</div>
-          <div className="tpl-an-paper" dangerouslySetInnerHTML={{ __html: previewHtml }} />
-        </div>
-      </div>
+      <FieldReview fields={fields} preview={preview} choice={choice} setChoice={setChoice} />
       )}
+    </Modal>
+  );
+}
+
+/** The fields found in a document, each with what it becomes (a Wedy field, a field to fill, or text kept), and the
+ *  template as it will read. Shared by the import and by « Détecter les champs » on a saved template. */
+function FieldReview({ fields, preview, choice, setChoice }: {
+  fields: DetectedField[]; preview: string; choice: Record<string, string>; setChoice: (fn: (c: Record<string, string>) => Record<string, string>) => void;
+}) {
+  const { t } = useLang();
+  const valueOf = (f: DetectedField) => choice[f.placeholder] ?? f.key;
+  // the work mode is not in the person's record: it is asked at generation, with the document's own wording proposed
+  const isCustom = (v: string) => v !== KEEP && (!FIELD_LABEL[v] || v === 'work_mode');
+  // the template as it will read: each field shown as its label
+  const previewHtml = preview
+    .replace(/^\s*<!--wedy-fields:[\s\S]*?-->/, '')
+    .replace(/\{\{(\w+)\}\}/g, (_, k: string) => {
+      // the preview was built with the detected fields: show each one as the user has it now
+      const f = fields.find(x => x.key === k);
+      const cur = f ? valueOf(f) : k;
+      if (cur === KEEP && f) return esc(f.placeholder.replace(/ \([^()]*\)$/, ''));
+      const label = FIELD_LABEL[cur] ? t(FIELD_LABEL[cur]) : f?.label ?? k;
+      return `<span style="${CHIP};background:${isCustom(cur) ? '#fbefda' : '#e4f2f4'};color:${isCustom(cur) ? '#8a5207' : '#0b5f72'}">${esc(label)}</span>`;
+    });
+  return (
+      <div className="tpl-an">
+      <div className="tpl-an-list">
+        {!fields.length && <div className="tpl-an-none">{t('tpl_an_none')}</div>}
+        {fields.map(f => {
+          const v = valueOf(f);
+          const custom = isCustom(v), keep = v === KEEP;
+          return (
+            <div key={f.placeholder} className={`tpl-an-row${keep ? ' keep' : ''}`}>
+              <div className="tpl-an-ph" title={f.placeholder}>
+                <code>{f.placeholder}</code>
+                {f.count > 1 && <small>×{f.count}</small>}
+              </div>
+              <select value={v} onChange={e => setChoice(c => ({ ...c, [f.placeholder]: e.target.value }))} aria-label={f.placeholder}>
+                <optgroup label={t('tpl_an_g_wedy')}>
+                  {FIELD_LABELS.map(([k, key]) => <option key={k} value={k}>{t(key)}</option>)}
+                </optgroup>
+                <optgroup label={t('tpl_an_g_other')}>
+                  <option value={f.known ? customKey(f.label) : f.key}>{tf(t('tpl_an_custom_opt'), { label: f.label })}</option>
+                  <option value={KEEP}>{t('tpl_an_keep')}</option>
+                </optgroup>
+              </select>
+              <span className={`tpl-an-tag ${keep ? 'keep' : custom ? 'custom' : 'wedy'}`}>
+                {keep ? t('tpl_an_t_keep') : custom ? <><PencilLine size={12} />{t('tpl_an_t_custom')}</> : <><CircleCheck size={12} />{t('tpl_an_t_wedy')}</>}
+              </span>
+            </div>
+          );
+        })}
+        <p className="tpl-an-note">{t('tpl_an_note')}</p>
+      </div>
+      <div className="tpl-an-preview">
+        <div className="tpl-an-preview-h">{t('tpl_an_preview')}</div>
+        <div className="tpl-an-paper" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+      </div>
+    </div>
+  );
+}
+
+/** « Détecter les champs » on a saved template: a document imported already filled for someone (« Mme CHAIMAA BYAZ »,
+ *  her dates, her position) gets those values turned into fields, after the user has checked them. */
+function FieldsModal({ tpl, onClose, onSaved }: { tpl: Template; onClose: () => void; onSaved: () => void }) {
+  const { t } = useLang();
+  const notify = useNotify();
+  const [choice, setChoice] = useState<Record<string, string>>({});
+  const q = useQuery({ queryKey: ['template-fields', tpl.id], queryFn: () => analyseSavedTemplate(tpl.id), retry: false });
+  const fields = q.data?.fields ?? [];
+  const mapping = () => Object.fromEntries(fields.filter(f => choice[f.placeholder] !== undefined && choice[f.placeholder] !== f.key).map(f => [f.placeholder, choice[f.placeholder]]));
+  const save = useMutation({
+    mutationFn: () => saveTemplateFields(tpl.id, mapping()),
+    onSuccess: r => { notify.success(tf(t('tpl_fields_saved'), { n: new Set(r.fields.map(f => f.key)).size })); onSaved(); onClose(); },
+    onError: e => notify.error(getApiError(e, t('error'))),
+  });
+  const found = fields.filter(f => f.kind !== 'variable');
+  return (
+    <Modal open onClose={onClose} title={tf(t('tpl_fields_title'), { name: tpl.name_fr })} icon={<ScanSearch size={17} />} width={980}
+      subtitle={q.isLoading ? t('tpl_fields_reading') : found.length ? tf(t('tpl_fields_sub'), { n: found.length }) : t('tpl_fields_none')}
+      footer={<>
+        <button type="button" className="btn btn-secondary" onClick={onClose}>{t('cancel')}</button>
+        <button type="button" className="btn btn-primary" onClick={() => save.mutate()} disabled={save.isPending || q.isLoading || !found.length}>
+          {save.isPending ? <Spinner size={14} color="#fff" /> : <CircleCheck size={14} />} {t('tpl_fields_save')}
+        </button>
+      </>}>
+      {q.isLoading ? <div style={{ padding: 40, display: 'flex', justifyContent: 'center' }}><Spinner /></div>
+        : q.isError ? <p style={{ padding: 20, color: '#b3261e' }}>{getApiError(q.error, t('error'))}</p>
+        : <FieldReview fields={fields} preview={q.data?.body_template ?? ''} choice={choice} setChoice={setChoice} />}
     </Modal>
   );
 }

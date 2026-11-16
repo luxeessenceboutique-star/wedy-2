@@ -4,17 +4,18 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CircleAlert, CircleCheck, Mail, Plug, RefreshCw, Send, Settings2, Unplug } from 'lucide-react';
+import { CircleAlert, CircleCheck, Mail, Plug, RefreshCw, Send, Settings2, Stethoscope, Unplug } from 'lucide-react';
 import {
-  chooseSocialAccount, connectSocial, disconnectSocial, getApiError, getMailStatus, getSocialStatus, removeMailAccount, sendTestMail,
+  chooseSocialAccount, connectSocial, diagnoseMail, disconnectSocial, getApiError, getMailStatus, getSocialStatus, removeMailAccount, saveMailAccount, sendTestMail,
   type SocialAccount, type SocialProvider,
 } from '@/services/api';
-import { Spinner } from '@/components/ui';
+import { Modal, Spinner } from '@/components/ui';
 import { useLang, type TKey } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { tf } from '@/lib/format';
 import { useAppSettings } from '@/lib/appSettings';
 import { MailSetupModal } from './MailSetupModal';
+import { MailDiagnosticView } from './MailDiagnostic';
 import './ConnectorsSection.css';
 
 const PROVIDERS: { id: SocialProvider; name: TKey; desc: TKey; mono: string; color: string; env: string }[] = [
@@ -71,10 +72,23 @@ export function ConnectorsSection() {
     onError: e => notify.error(getApiError(e, t('error'))),
   });
   const { data: appSettings } = useAppSettings();
+  // the connection step by step (opened by « Diagnostiquer », and by itself when the test e-mail fails)
+  const [diagOpen, setDiagOpen] = useState(false);
+  const diag = useMutation({ mutationFn: () => diagnoseMail(), onError: e => notify.error(getApiError(e, t('error'))) });
+  const runDiag = () => { setDiagOpen(true); diag.mutate(); };
+  const applyAlt = useMutation({
+    mutationFn: (alt: { port: number; security: 'starttls' | 'ssl' }) => {
+      const a = mailQ.data?.account;
+      if (!a) throw new Error(t('error'));
+      return saveMailAccount({ server: a.server, port: alt.port, security: alt.security, username: a.username, password: '', sender_email: a.from, sender_name: a.from_name });
+    },
+    onSuccess: r => { qc.setQueryData(['mail-status'], r); setDiagOpen(false); notify.success(tf(t('mail_saved'), { to: r.test_sent_to })); },
+    onError: e => notify.error(getApiError(e, t('error'))),
+  });
   const testMail = useMutation({
     mutationFn: sendTestMail,
     onSuccess: r => notify.success(tf(t('soc_mail_test_ok'), { to: r.to })),
-    onError: e => notify.error(getApiError(e, t('error'))),
+    onError: e => { notify.error(getApiError(e, t('error'))); runDiag(); },
   });
 
   const card = (p: (typeof PROVIDERS)[number], a?: SocialAccount) => {
@@ -140,6 +154,7 @@ export function ConnectorsSection() {
               </div>
               <div className="cx-btns">
                 <button type="button" className="cx-btn" onClick={() => testMail.mutate()} disabled={testMail.isPending}>{testMail.isPending ? <Spinner size={13} /> : <Send size={13} />}{t('soc_mail_test')}</button>
+                <button type="button" className="cx-btn" onClick={runDiag} disabled={diag.isPending}>{diag.isPending ? <Spinner size={13} /> : <Stethoscope size={13} />}{t('mdg_btn')}</button>
                 <button type="button" className="cx-btn" onClick={() => setMailSetup(true)}><Settings2 size={13} />{t('mail_edit')}</button>
                 {mail.source === 'platform' && <button type="button" className="cx-btn danger" onClick={() => { if (window.confirm(t('mail_remove_confirm'))) removeMail.mutate(); }}><Unplug size={13} />{t('mail_remove')}</button>}
               </div>
@@ -150,6 +165,15 @@ export function ConnectorsSection() {
           </div>
         </div>
       </div>
+      {diagOpen && (
+        <Modal open onClose={() => setDiagOpen(false)} width={520} icon={<Stethoscope size={17} />} title={t('mdg_title')} subtitle={t('mdg_sub')}
+          footer={<button type="button" className="btn btn-secondary" onClick={() => setDiagOpen(false)}>{t('close')}</button>}>
+          <div style={{ padding: '16px 20px 18px' }}>
+            {diag.isPending || !diag.data ? <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#52646d' }}><Spinner size={16} />{t('mdg_running')}</div>
+              : <MailDiagnosticView d={diag.data} onUse={alt => applyAlt.mutate(alt)} using={applyAlt.isPending} />}
+          </div>
+        </Modal>
+      )}
       {mailSetup && <MailSetupModal status={mail} companyName={appSettings?.company?.name ?? ''} onClose={() => setMailSetup(false)} />}
     </section>
   );

@@ -24,7 +24,7 @@ export function getApiError(err: unknown, fallback = 'Une erreur est survenue'):
   if (Array.isArray(detail) && detail.length > 0) {
     return detail.map((d: any) => (typeof d === 'string' ? d : d?.msg ?? JSON.stringify(d))).join(' · ');
   }
-  if (typeof detail === 'object' && detail.msg) return String(detail.msg);
+  if (typeof detail === 'object' && (detail.msg || detail.message)) return String(detail.msg ?? detail.message);
   return fallback;
 }
 

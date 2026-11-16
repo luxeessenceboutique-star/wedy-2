@@ -121,8 +121,17 @@ export type MailAccount = { server: string; port: number; security: 'starttls' |
 export type MailStatus = { configured: boolean; from: string | null; source: 'platform' | 'env' | null; reminder_minutes: number; public_url: string | null; account: MailAccount | null; env_configured: boolean };
 export type MailAccountIn = { server: string; port: number; security: 'starttls' | 'ssl' | 'none'; username: string; password: string; sender_email: string; sender_name: string };
 /** Save the account after a test e-mail to the signed-in user went out with it (a wrong password is never saved). */
-export const saveMailAccount = (body: MailAccountIn) => api.put<MailStatus & { test_sent_to: string }>('/integrations/mail', body, { timeout: 60000 }).then(r => r.data);
+export const saveMailAccount = (body: MailAccountIn) => api.put<MailStatus & { test_sent_to: string; adjusted: { port: number; security: string } | null }>('/integrations/mail', body, { timeout: 120000 }).then(r => r.data);
 export const removeMailAccount = () => api.delete('/integrations/mail');
+/** Where the connection to the mail server stops (dns, tcp, greeting, tls, login) and which other port works. Sends nothing. */
+export type MailStep = { key: 'dns' | 'tcp' | 'greeting' | 'tls' | 'login'; ok: boolean; detail: string };
+export type MailDiagnostic = {
+  server: string; port: number; security: 'starttls' | 'ssl' | 'none'; source: 'platform' | 'env'; ok: boolean; steps: MailStep[];
+  failed: MailStep['key'] | null; tried: { port: number; security: string; ok: boolean; reached: string | null; detail: string }[];
+  alternative: { port: number; security: 'starttls' | 'ssl' } | null; env_lines?: string[];
+};
+export const diagnoseMail = (account?: MailAccountIn) =>
+  api.post<MailDiagnostic>('/integrations/mail/diagnose', account ? { account } : {}, { timeout: 90000 }).then(r => r.data);
 export const getMailStatus = () => api.get<MailStatus>('/entretiens/mail-status').then(r => r.data);
 export const resendInterviewInvite = (id: string) => api.post<MailResult>(`/entretiens/${id}/send-invite`).then(r => r.data);
 export const sendTestMail = () => api.post<{ sent: boolean; to: string }>('/integrations/mail/test', undefined, { timeout: 60000 }).then(r => r.data);

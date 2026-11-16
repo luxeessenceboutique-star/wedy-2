@@ -177,7 +177,7 @@ def test_hr_sets_the_sending_account_in_wedy():
                "password": "abcd efgh ijkl mnop", "sender_email": "rh@tython.org", "sender_name": "Tython RH"}
 
     def refused(msg):
-        raise mailer.MailError("Identifiant ou mot de passe refusé par le serveur d'e-mails (535).")
+        raise mailer.MailError("Identifiant ou mot de passe refusé par le serveur d'e-mails (535).", kind="auth")
     mailer.transport = refused
     r = c.put("/api/integrations/mail", json=account)
     assert r.status_code == 422 and "refusé" in r.json()["detail"] and not db.tables.get("app_settings")   # a bad password is not saved
@@ -233,6 +233,88 @@ def test_the_smtp_connection_uses_the_account_settings():
         assert calls[0] == ("connect", "FakeSMTP_SSL", "ssl0.ovh.net", 465) and ("starttls",) not in calls
     finally:
         mailer.smtplib.SMTP, mailer.smtplib.SMTP_SSL, mailer.transport = real
+
+
+def _fake_network(behaviour):
+    """Replace DNS, TCP and SMTP so the diagnostic runs offline. behaviour[(port, ssl?)] = "ok" | "closed" | "timeout" | "badpass"."""
+    import smtplib as _smtp
+    import socket as _socket
+
+    class Sock:
+        def close(self): pass
+
+    def create_connection(addr, timeout=None):
+        if behaviour.get((addr[1], "tcp")) == "timeout":
+            raise _socket.timeout("timed out")
+        return Sock()
+
+    def make(cls_ssl):
+        class S:
+            def __init__(self, host, port, context=None, timeout=None):
+                b = behaviour.get((port, cls_ssl), "closed")
+                if b == "closed":
+                    raise _smtp.SMTPServerDisconnected("Connection unexpectedly closed")
+                self.b = b
+            def ehlo(self): return 250, b"smtp.test ready"
+            def has_extn(self, n): return n == "starttls"
+            def starttls(self, context=None): pass
+            def login(self, u, p):
+                if self.b == "badpass":
+                    raise _smtp.SMTPAuthenticationError(535, b"bad")
+            def send_message(self, msg): SENT.append(msg)
+            def quit(self): pass
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+        return S
+
+    saved = (mailer.socket.getaddrinfo, mailer.socket.create_connection, mailer.smtplib.SMTP, mailer.smtplib.SMTP_SSL, mailer.transport)
+    mailer.socket.getaddrinfo = lambda host, port, **k: [(None, None, None, None, ("192.0.2.10", port))]
+    mailer.socket.create_connection = create_connection
+    mailer.smtplib.SMTP, mailer.smtplib.SMTP_SSL, mailer.transport = make(False), make(True), mailer._smtp_send
+
+    def restore():
+        mailer.socket.getaddrinfo, mailer.socket.create_connection, mailer.smtplib.SMTP, mailer.smtplib.SMTP_SSL, mailer.transport = saved
+    return restore
+
+
+def test_the_diagnostic_finds_where_it_stops_and_the_port_that_works():
+    """The production case: « Connection unexpectedly closed » on 587 — the server only speaks SSL on 465."""
+    restore = _fake_network({(587, False): "closed", (465, True): "ok"})
+    try:
+        c, db = client()
+        smtp()
+        mailer.transport = mailer._smtp_send   # the real sending path, on the fake network
+        settings.MAIL_SERVER, settings.MAIL_PORT, settings.MAIL_STARTTLS, settings.MAIL_SSL_TLS = "smtp.test", 587, True, False
+        r = c.post("/api/integrations/mail/test")
+        assert r.status_code == 502 and "a fermé la connexion sans répondre" in r.json()["detail"] and "smtp.test:587" in r.json()["detail"]
+        d = c.post("/api/integrations/mail/diagnose", json={}).json()
+        assert [st["key"] for st in d["steps"]] == ["dns", "tcp", "greeting"] and d["failed"] == "greeting" and not d["ok"]
+        assert d["alternative"] == {"port": 465, "security": "ssl"} and d["env_lines"] == ["MAIL_PORT=465", "MAIL_SSL_TLS=true", "MAIL_STARTTLS=false"]
+        # set in Wedy with the wrong port: the working one is found and kept, and the test e-mail goes out
+        smtp(on=False)
+        mailer.transport = mailer._smtp_send
+        SENT.clear()
+        r = c.put("/api/integrations/mail", json={"server": "smtp.test", "port": 587, "security": "starttls", "username": "rh@tython.org",
+                                                 "password": "pw", "sender_email": "rh@tython.org", "sender_name": "Tython RH"})
+        assert r.status_code == 200, r.text
+        assert r.json()["adjusted"] == {"port": 465, "security": "ssl"} and db.tables["app_settings"][0]["value"]["port"] == 465 and len(SENT) == 1
+    finally:
+        restore()
+
+
+def test_the_diagnostic_tells_a_blocked_port_and_a_wrong_password():
+    restore = _fake_network({(587, "tcp"): "timeout", (465, "tcp"): "timeout", (25, "tcp"): "timeout", (2525, "tcp"): "timeout"})
+    try:
+        d = mailer.diagnose(mailer.Conf(server="smtp.test", port=587, security="starttls", username="u", password="p", sender_email="u@t.ma"))
+        assert d["failed"] == "tcp" and "bloqué en sortie" in d["steps"][-1]["detail"] and d["alternative"] is None and len(d["tried"]) == 3
+    finally:
+        restore()
+    restore = _fake_network({(587, False): "badpass"})
+    try:
+        d = mailer.diagnose(mailer.Conf(server="smtp.test", port=587, security="starttls", username="u", password="p", sender_email="u@t.ma"))
+        assert d["failed"] == "login" and "refusé" in d["steps"][-1]["detail"] and d["tried"] == []   # no other port tried for a password
+    finally:
+        restore()
 
 if __name__ == "__main__":
     fails = 0

@@ -4,7 +4,8 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CircleAlert, Eye, EyeOff, Mail, Send } from 'lucide-react';
-import { getApiError, saveMailAccount, type MailAccountIn, type MailStatus } from '@/services/api';
+import { getApiError, saveMailAccount, type MailAccountIn, type MailDiagnostic, type MailStatus } from '@/services/api';
+import { MailDiagnosticView } from './MailDiagnostic';
 import { Modal, Spinner } from '@/components/ui';
 import { useLang, type TKey } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
@@ -35,6 +36,7 @@ export function MailSetupModal({ status, companyName, onClose }: { status?: Mail
   const [showPw, setShowPw] = useState(false);
   const [advanced, setAdvanced] = useState(providerOf(acc?.server) === 'other');
   const [error, setError] = useState<string | null>(null);
+  const [diag, setDiag] = useState<MailDiagnostic | null>(null);
   const set = <K extends keyof MailAccountIn>(k: K, v: MailAccountIn[K]) => setF(x => ({ ...x, [k]: v }));
   const pick = (p: Provider) => {
     setProvider(p);
@@ -47,12 +49,15 @@ export function MailSetupModal({ status, companyName, onClose }: { status?: Mail
     onSuccess: r => {
       qc.setQueryData(['mail-status'], r);
       qc.invalidateQueries({ queryKey: ['mail-status'] });
-      notify.success(tf(t('mail_saved'), { to: r.test_sent_to }));
+      notify.success(tf(t('mail_saved'), { to: r.test_sent_to }), r.adjusted ? { description: tf(t('mail_adjusted'), { port: r.adjusted.port, mode: r.adjusted.security === 'ssl' ? 'SSL' : 'STARTTLS' }) } : undefined);
       onClose();
     },
-    onError: e => setError(getApiError(e, t('error'))),
+    onError: e => {
+      setError(getApiError(e, t('error')));
+      setDiag((e as { response?: { data?: { detail?: { diagnostic?: MailDiagnostic } } } })?.response?.data?.detail?.diagnostic ?? null);
+    },
   });
-  const submit = (e: FormEvent) => { e.preventDefault(); setError(null); save.mutate(); };
+  const submit = (e: FormEvent) => { e.preventDefault(); setError(null); setDiag(null); save.mutate(); };
   const hint = PROVIDERS.find(x => x.id === provider)!.hint;
   const needPw = !acc?.has_password;
 
@@ -98,6 +103,7 @@ export function MailSetupModal({ status, companyName, onClose }: { status?: Mail
           </div>
         )}
         {error && <p className="mx-error" role="alert"><CircleAlert size={15} />{error}</p>}
+        {diag && <MailDiagnosticView d={diag} />}
         <p className="mx-note">{t('mail_setup_note')}</p>
       </form>
     </Modal>

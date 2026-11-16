@@ -93,7 +93,7 @@ export type TemplatesVals = {
   tpls: {
     fr: string; en: string; cat: string; tint: string; color: string; target: string;
     tIcon: ComponentType<{ size?: number; style?: React.CSSProperties }>;
-    langs: { t: string }[]; nvars: number; used: number; delay: string; preview: () => void; edit: () => void; generate: string;
+    langs: { t: string }[]; nvars: number; used: number; delay: string; preview: () => void; edit: () => void; remove: () => void; deleting: boolean; generate: string;
   }[];
   loading: boolean; noTpls: boolean; noneAtAll: boolean;
   seed: () => void; seeding: boolean; openImport: () => void; addOpen: boolean; toggleAdd: () => void;
@@ -277,7 +277,8 @@ export default function TemplatesPage() {
       return {
         fr: x.name_fr, en: x.name_en && x.name_en !== x.name_fr ? x.name_en : '', cat: t(c[0]), tint: c[1], color: c[2], target: t(tg[0]), tIcon: tg[1],
         langs: langsOf(x), nvars: varsIn(x.body_template ?? '').length, used: usage[x.id] ?? 0, delay: String(Math.min(i, 12) * 45),
-        preview: () => setPreview(x.id), edit: () => openEditor(x), generate: generateLink(x.id),
+        preview: () => setPreview(x.id), edit: () => openEditor(x), remove: () => remove(x),
+        deleting: deleteMut.isPending && deleteMut.variables === x.id, generate: generateLink(x.id),
       };
     }),
     loading: isLoading, noTpls: !isLoading && list.length === 0, noneAtAll: all.length === 0,

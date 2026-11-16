@@ -303,6 +303,25 @@ def test_moroccan_phone_numbers_are_read_however_they_are_written():
         assert not PHONE_RE.search(text), text
 
 
+
+def test_a_phone_photo_reaches_the_ai_upright_as_png():
+    """Photos (JPEG / WebP from a phone) are sent to the vision model as PNG — what it is told — turned upright, at a
+    size it reads in full."""
+    import base64
+    import io
+    from PIL import Image
+    from app.services.cv_parser import extract_pages_as_images
+    img = Image.new("RGB", (3000, 2000), (240, 240, 240))       # a landscape photo of a portrait page…
+    exif = Image.Exif(); exif[0x0112] = 6                        # …taken with the phone turned: EXIF says « rotate »
+    buf = io.BytesIO(); img.save(buf, "JPEG", exif=exif.tobytes())
+    for name, data in (("photo.jpg", buf.getvalue()), ("photo.webp", None)):
+        if data is None:
+            w = io.BytesIO(); Image.new("RGB", (1200, 1700), (250, 250, 250)).save(w, "WEBP"); data = w.getvalue()
+        pages = extract_pages_as_images(data, name)
+        out = Image.open(io.BytesIO(base64.b64decode(pages[0])))
+        assert out.format == "PNG" and max(out.size) <= 1600, (name, out.format, out.size)
+        assert out.size[1] > out.size[0], (name, out.size)       # upright: taller than wide
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

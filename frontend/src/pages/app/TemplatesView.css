@@ -32,3 +32,9 @@
   .tpl-an { grid-template-columns: minmax(0, 1fr); }
   .tpl-an-list, .tpl-an-paper { max-height: none; }
 }
+
+/* delete, top corner of each template card (always visible: touch screens have no hover) */
+.tpl-del { position: absolute; top: 10px; inset-inline-end: 10px; z-index: 2; width: 34px; height: 34px; padding: 0; border-radius: 10px; border: 1px solid #f0c9c0; background: rgba(255,255,255,.94); color: #b8402c; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px -6px rgba(10,28,36,.35); transition: background .15s, border-color .15s; }
+.tpl-del:hover:not(:disabled) { background: #fbe9e6; border-color: #e6a798; }
+.tpl-del:focus-visible { outline: 2px solid #16b6c8; outline-offset: 2px; }
+.tpl-del:disabled { cursor: default; opacity: .8; }

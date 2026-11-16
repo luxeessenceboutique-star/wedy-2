@@ -222,6 +222,18 @@ def test_the_text_agrees_with_the_civility():
     assert build_context({"full_name": "X"}, {}, None, {})["civility_short"] == "M./Mme"
 
 
+
+def test_deleting_a_template_keeps_the_documents_made_with_it():
+    c, db = client()
+    db.tables["document_templates"] = [{"id": "t1", "name_fr": "ATTESTATION DE STAGRE", "code": "att", "body_template": "<p>x</p>"},
+                                       {"id": "t2", "name_fr": "ATTESTATION DE TRAVAIL", "code": "att2", "body_template": "<p>y</p>"}]
+    db.tables["generated_documents"] = [{"id": "d1", "template_id": "t1", "document_type": "attestation"},
+                                        {"id": "d2", "template_id": "t2", "document_type": "attestation"}]
+    assert c.delete("/api/templates/t1").status_code == 204
+    assert [t["id"] for t in db.tables["document_templates"]] == ["t2"]
+    assert {d["id"]: d["template_id"] for d in db.tables["generated_documents"]} == {"d1": None, "d2": "t2"}
+    assert c.delete("/api/templates/t1").status_code == 404
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

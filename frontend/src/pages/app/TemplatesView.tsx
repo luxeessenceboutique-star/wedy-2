@@ -84,7 +84,10 @@ export function TemplatesView({ v, edRef, pvRef }: { v: TemplatesVals; edRef: Re
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(250px,1fr))', gap: '14px' }}>
           {v.tpls.map((t_, t_Index) => (
             <Fragment key={t_Index}>
-              <RV as='div' variant='up' delay={Number(t_.delay)} style={{ display: 'flex', flexDirection: 'column', borderRadius: '18px', background: '#ffffff', border: '1px solid #e2e8eb', overflow: 'hidden', transition: 'box-shadow .25s,border-color .25s,transform .25s' }} className="tpl-h2">
+              <RV as='div' variant='up' delay={Number(t_.delay)} style={{ position: 'relative', display: 'flex', flexDirection: 'column', borderRadius: '18px', background: '#ffffff', border: '1px solid #e2e8eb', overflow: 'hidden', transition: 'box-shadow .25s,border-color .25s,transform .25s' }} className="tpl-h2">
+                <button type="button" onClick={t_.remove} disabled={t_.deleting} aria-label={`${t('tpl_delete')} · ${t_.fr}`} title={t('tpl_delete')} className="tpl-del">
+                  {t_.deleting ? <Spinner size={14} /> : <Trash2 size={15} style={{ display: 'block' }} />}
+                </button>
                 <button type="button" onClick={t_.preview} aria-label={t('tpl_apercu')} style={{ position: 'relative', height: '150px', border: 'none', background: `linear-gradient(180deg,${t_.tint},#ffffff)`, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '20px 0 0', overflow: 'hidden', cursor: 'zoom-in' }}>
                   <span style={{ width: '62%', maxWidth: '170px', height: '160px', borderRadius: '6px', background: '#ffffff', boxShadow: '0 16px 30px -18px rgba(10,28,36,.5)', padding: '14px', display: 'flex', flexDirection: 'column', gap: '6px', transform: 'rotate(-2deg)' }}>
                     <span style={{ height: '6px', width: '44%', borderRadius: '3px', background: '#0a1c24', alignSelf: 'center' }} />
@@ -131,7 +134,7 @@ export function TemplatesView({ v, edRef, pvRef }: { v: TemplatesVals; edRef: Re
                       <span style={{ display: 'inline-flex', width: '14px', height: '14px' }}><Pencil size={14} style={{ display: 'block' }} /></span>
                       {t('tpl_modifier')}
                     </button>
-                    <Link to={t_.generate} aria-label={t('tpl_generer')} style={{ width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff' }} className="tpl-h4">
+                    <Link to={t_.generate} aria-label={t('tpl_generer')} title={t('tpl_generer')} style={{ width: '36px', height: '36px', flex: 'none', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#0e6f84,#16b6c8)', color: '#ffffff' }} className="tpl-h4">
                       <span style={{ display: 'inline-flex', width: '15px', height: '15px' }}><WandSparkles size={15} style={{ display: 'block' }} /></span>
                     </Link>
                   </div>

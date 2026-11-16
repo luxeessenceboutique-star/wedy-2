@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowRight, CalendarDays, CircleAlert, Download, ExternalLink, FileText, MapPin, Pencil, Plus, RotateCcw, ScanSearch, Star, ThumbsDown, Trash2, Upload, UserPlus, X,
+  ArrowRight, CalendarDays, Camera, CircleAlert, Download, ExternalLink, FileText, MapPin, Pencil, Plus, RotateCcw, ScanSearch, Star, ThumbsDown, Trash2, Upload, UserPlus, X,
 } from 'lucide-react';
 import {
   convertProspects, createCvEvent, deleteCvEvent, deleteProspect, getApiError, listAnnonces, listCvEvents, listProspects, scanCv, updateCvEvent, updateProspect, viewEmployeeFile,
@@ -12,6 +12,7 @@ import {
 } from '@/services/api';
 import { Button, Drawer, Input, Modal, Select, Spinner, Textarea } from '@/components/ui';
 import { RV } from '@/components/motion';
+import { CvCamera } from '@/components/evenements/CvCamera';
 import { useLang, type TKey } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { tf } from '@/lib/format';
@@ -53,6 +54,7 @@ export default function EvenementsPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [convertIds, setConvertIds] = useState<string[] | null>(null);
   const [over, setOver] = useState(false);
+  const [camera, setCamera] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const eventsQ = useQuery({ queryKey: ['cv-events'], queryFn: listCvEvents, retry: false });
@@ -223,7 +225,10 @@ export default function EvenementsPage() {
               <span className="ic"><Upload size={22} /></span>
               <b>{t('evt_drop')}</b>
               <small>{t('evt_drop_s')}</small>
-              <Button variant="secondary" size="sm" onClick={e => { e.stopPropagation(); fileInput.current?.click(); }}>{t('evt_pick')}</Button>
+              <div className="evt-drop-btns">
+                <Button size="sm" icon={<Camera size={15} />} onClick={e => { e.stopPropagation(); setCamera(true); }}>{t('evt_cam')}</Button>
+                <Button variant="secondary" size="sm" onClick={e => { e.stopPropagation(); fileInput.current?.click(); }}>{t('evt_pick')}</Button>
+              </div>
               <input ref={fileInput} type="file" multiple hidden accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" onChange={e => { enqueue(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
             </div>
 
@@ -357,6 +362,8 @@ export default function EvenementsPage() {
 
       {convertIds && <ConvertModal ids={convertIds} prospects={prospects} ads={(adsQ.data ?? []).filter(a => a.is_active)} onClose={() => setConvertIds(null)}
         onDone={() => { setSel([]); qc.invalidateQueries({ queryKey: key }); qc.invalidateQueries({ queryKey: ['cv-events'] }); qc.invalidateQueries({ queryKey: ['candidates'] }); }} />}
+
+      {camera && current && <CvCamera eventName={current.name} progress={{ done, total: queue.length }} onSend={file => enqueue([file])} onClose={() => setCamera(false)} />}
     </div>
   );
 }

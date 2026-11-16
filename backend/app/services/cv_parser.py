@@ -81,14 +81,25 @@ def extract_raw_text(file_bytes: bytes, filename: str) -> str:
                 tmp.write(file_bytes); tmp_path = tmp.name
             doc = Document(tmp_path); os.unlink(tmp_path)
             return '\n'.join(p.text for p in doc.paragraphs)
-        elif ext in ('.png', '.jpg', '.jpeg'):
+        elif ext in IMAGE_EXT:
             import pytesseract
-            from PIL import Image
-            img = Image.open(io.BytesIO(file_bytes))
-            return pytesseract.image_to_string(img, lang='fra+eng+ara')
+            return pytesseract.image_to_string(_upright_image(file_bytes, 2600), lang='fra+eng+ara')
     except Exception as e:
         logger.error(f'Text extraction failed: {e}')
     return ''
+
+
+IMAGE_EXT = ('.png', '.jpg', '.jpeg', '.webp')
+
+
+def _upright_image(file_bytes: bytes, max_side: int):
+    """A photo of a CV (phone camera, scanner) as an RGB image: turned upright from its EXIF orientation, at most
+    `max_side` pixels on its long side."""
+    from PIL import Image, ImageOps
+    img = ImageOps.exif_transpose(Image.open(io.BytesIO(file_bytes)))
+    img = img.convert('RGB')
+    img.thumbnail((max_side, max_side))
+    return img
 
 
 def _ocr_pdf(doc) -> str:
@@ -126,8 +137,14 @@ def extract_pages_as_images(file_bytes: bytes, filename: str, dpi: int = 150) ->
                 pages_b64.append(base64.b64encode(img_bytes).decode())
         except Exception as e:
             logger.error(f'Page image extraction failed: {e}')
-    elif ext in ('.png', '.jpg', '.jpeg'):
-        pages_b64.append(base64.b64encode(file_bytes).decode())
+    elif ext in IMAGE_EXT:
+        # re-encoded as PNG (the AI is told « image/png »), upright and at a size the vision models read in full
+        try:
+            buf = io.BytesIO()
+            _upright_image(file_bytes, 1600).save(buf, 'PNG', optimize=True)
+            pages_b64.append(base64.b64encode(buf.getvalue()).decode())
+        except Exception as e:
+            logger.error(f'Image page preparation failed: {e}')
 
     return pages_b64
 

@@ -9,6 +9,8 @@ from app.database import get_db
 from app.dependencies import get_current_user, require_hr_or_admin
 from app.services.ai_service import clean_template_html
 from app.repositories import template_repository
+from app.services.audit import log_action
+from loguru import logger
 
 router = APIRouter(prefix="/templates", tags=["templates"])
 
@@ -754,4 +756,17 @@ async def delete_template(
     db: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
-    template_repository.delete_template(db, template_id)
+    """Delete a template. The documents already generated with it are kept (their link to the template is cleared
+    first, so the delete works whatever the foreign key of the database says)."""
+    found = db.table("document_templates").select("id, name_fr").eq("id", template_id).limit(1).execute().data
+    if not found:
+        raise HTTPException(status_code=404, detail="Modèle introuvable")
+    try:
+        db.table("generated_documents").update({"template_id": None}).eq("template_id", template_id).execute()
+    except Exception as e:  # no such column / table on an old schema: nothing to detach
+        logger.warning(f"[templates] could not detach generated documents from {template_id}: {e}")
+    try:
+        template_repository.delete_template(db, template_id)
+    except Exception as e:
+        raise HTTPException(status_code=409, detail=f"Suppression impossible : {e}")
+    log_action(db, current_user["id"], "DELETE", "document_template", template_id)

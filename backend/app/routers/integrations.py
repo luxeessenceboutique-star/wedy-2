@@ -97,9 +97,27 @@ def ical_feed(token: str, supabase: Client = Depends(get_db)):
 # The SMTP account is set here by HR (no server change needed): saved in app_settings « mail », the password
 # encrypted with SECRET_KEY and never sent back. Without it, the API's environment (MAIL_*) is used.
 
-_TEST_HTML = ("<p style=\"font-family:Arial;font-size:14px\">Bonjour,</p><p style=\"font-family:Arial;font-size:14px\">"
-              "Cet e-mail de test confirme que Wedy peut envoyer les invitations aux entretiens et les rappels avec le lien.</p>")
 _TEST_TEXT = "Bonjour,\n\nCet e-mail de test confirme que Wedy peut envoyer les invitations aux entretiens et les rappels avec le lien."
+_TEST_SUBJECT = "Test d'envoi d'e-mail – Wedy RH"
+
+
+def _test_mail(supabase: Client, conf) -> tuple[str, list]:
+    """The test e-mail, in the same design as the candidates' e-mails: (html, inline pictures)."""
+    from app.services import mail_design, mailer
+    from app.services.interview_mail import REMINDER_MIN
+    try:
+        s = app_settings.load(supabase)[0]
+        company, logo = s.get("company") or {}, mail_design.logo_image(s.get("assets"))
+    except Exception:
+        company, logo = {}, None
+    html = mail_design.page(
+        company=company, has_logo=bool(logo), preheader="L'envoi des e-mails aux candidats fonctionne.", badge=("Test réussi", "green"),
+        title="L'envoi des e-mails fonctionne", subtitle="Ceci est un e-mail de test envoyé depuis Wedy RH.",
+        paragraphs=["Bonjour,", "Si vous lisez ce message, Wedy peut envoyer les e-mails aux candidats depuis cette adresse."],
+        rows=[("Expéditeur", mailer.sender(conf)), ("Invitation", "Dès qu'un entretien est planifié, avec le rendez-vous pour l'agenda"),
+              ("Lien de visio", f"Envoyé {REMINDER_MIN} minutes avant le début de l'entretien"), ("Annulation", "Envoyée si l'entretien est annulé")],
+        notice=("Aucune action n'est nécessaire : vous pouvez supprimer cet e-mail.", "green"), kicker="Wedy RH")
+    return html, ([(mail_design.LOGO_CID, *logo)] if logo else [])
 
 
 class MailAccountIn(BaseModel):
@@ -144,7 +162,8 @@ def mail_save(body: MailAccountIn, supabase: Client = Depends(get_db), current_u
         raise HTTPException(status_code=422, detail="Votre compte n'a pas d'adresse e-mail pour recevoir le test.")
     adjusted = None
     try:
-        mailer.send(to, "Test d'envoi d'e-mail – Wedy RH", _TEST_HTML, _TEST_TEXT, conf=conf)
+        html, inline = _test_mail(supabase, conf)
+        mailer.send(to, _TEST_SUBJECT, html, _TEST_TEXT, conf=conf, inline=inline)
     except mailer.MailError as e:
         if e.kind != "connection":   # a refused password: say it, nothing else to try
             raise HTTPException(status_code=422, detail=str(e))
@@ -154,7 +173,8 @@ def mail_save(body: MailAccountIn, supabase: Client = Depends(get_db), current_u
             raise HTTPException(status_code=422, detail={"message": str(e), "diagnostic": diag})
         conf = mailer.Conf(**{**conf.__dict__, "port": alt["port"], "security": alt["security"]})
         try:
-            mailer.send(to, "Test d'envoi d'e-mail – Wedy RH", _TEST_HTML, _TEST_TEXT, conf=conf)
+            html, inline = _test_mail(supabase, conf)
+            mailer.send(to, _TEST_SUBJECT, html, _TEST_TEXT, conf=conf, inline=inline)
         except mailer.MailError as e2:
             raise HTTPException(status_code=422, detail={"message": str(e2), "diagnostic": diag})
         adjusted = alt
@@ -209,7 +229,9 @@ def mail_test(supabase: Client = Depends(get_db), current_user: dict = Depends(r
     if not to:
         raise HTTPException(status_code=422, detail="Votre compte n'a pas d'adresse e-mail.")
     try:
-        mailer.send(to, "Test d'envoi d'e-mail – Wedy RH", _TEST_HTML, _TEST_TEXT, conf=mailer.current(supabase))
+        conf = mailer.current(supabase)
+        html, inline = _test_mail(supabase, conf)
+        mailer.send(to, _TEST_SUBJECT, html, _TEST_TEXT, conf=conf, inline=inline)
     except mailer.MailError as e:
         raise HTTPException(status_code=502, detail=str(e))
     return {"sent": True, "to": to}

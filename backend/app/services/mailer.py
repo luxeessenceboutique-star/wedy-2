@@ -154,7 +154,7 @@ transport: Callable[[EmailMessage], None] = _smtp_send
 
 
 def send(to: str, subject: str, html: str, text: str, attachments: Optional[list[tuple[str, bytes, str]]] = None,
-         reply_to: Optional[str] = None, conf: Optional[Conf] = None) -> str:
+         reply_to: Optional[str] = None, conf: Optional[Conf] = None, inline: Optional[list[tuple[str, bytes, str]]] = None) -> str:
     """Send one e-mail (HTML + plain text, optional attachments [(name, bytes, mime)]) with `conf` (the environment's
     account when none is given). Returns the Message-ID."""
     conf = conf or env_conf()
@@ -172,6 +172,10 @@ def send(to: str, subject: str, html: str, text: str, attachments: Optional[list
         msg["Reply-To"] = reply_to
     msg.set_content(text)
     msg.add_alternative(html, subtype="html")
+    html_part = msg.get_payload()[-1]
+    for cid, data, mime in inline or []:   # pictures shown in the HTML (cid:…), e.g. the company's logo
+        maintype, _, subtype = mime.partition("/")
+        html_part.add_related(data, maintype=maintype, subtype=subtype or "png", cid=f"<{cid}>", disposition="inline")
     for name, data, mime in attachments or []:  # mime may carry parameters: « text/calendar; method=CANCEL »
         base, _, rest = mime.partition(";")
         maintype, _, subtype = base.strip().partition("/")

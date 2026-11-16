@@ -22,7 +22,7 @@ from typing import Optional
 from supabase import Client
 
 from app.config import settings
-from app.services import mailer
+from app.services import mail_design, mailer
 
 log = logging.getLogger(__name__)
 
@@ -70,9 +70,10 @@ def load(supabase: Client, iv: dict) -> dict:
         ad = _one(supabase, "recruitment_ads", "poste, description", "id", ad_id)
     try:
         from app.services import app_settings
-        company = app_settings.load(supabase)[0].get("company") or {}
+        all_settings = app_settings.load(supabase)[0]
+        company, assets = all_settings.get("company") or {}, all_settings.get("assets") or {}
     except Exception:
-        company = {}
+        company, assets = {}, {}
     start = _parse_dt(meeting.get("starts_at"))
     if not start:
         start = datetime.fromisoformat(f"{iv['date']}T{str(iv.get('start_time') or '09:00')[:5]}:00").replace(tzinfo=tz())
@@ -90,6 +91,7 @@ def load(supabase: Client, iv: dict) -> dict:
     # shown as HR typed them (no time zone conversion that an old tz database could get wrong); `start` / `end` are
     # the exact moments, for the reminder and the calendar file
     shown = None
+    d = start.astimezone(tz()).date()
     try:
         d = date.fromisoformat(str(iv.get("date"))[:10])
         h0 = str(iv.get("start_time") or "")[:5] or start.astimezone(tz()).strftime("%H:%M")
@@ -107,6 +109,7 @@ def load(supabase: Client, iv: dict) -> dict:
         "company": (company.get("name") or "").strip() or "notre entreprise",
         "company_address": ", ".join(x for x in [(company.get("address") or "").strip(), (company.get("city") or "").strip()] if x),
         "reply_to": (company.get("email") or "").strip() or None,
+        "company_info": company, "logo": mail_design.logo_image(assets), "date": d,
         "conf": mailer.current(supabase),   # the SMTP account: the one set in Wedy, else the environment's
     }
 
@@ -142,89 +145,83 @@ def _first(ctx: dict) -> str:
     return (ctx["cand"].get("full_name") or "").strip() or "Madame, Monsieur"
 
 
-def _rows(ctx: dict) -> list[tuple[str, str]]:
-    day, hour, end = ctx["day"], ctx["hour"], ctx["end_hour"]
-    minutes = int((ctx["end"] - ctx["start"]).total_seconds() // 60)
-    rows = [("Date", day), ("Heure", f"{hour} – {end} (heure du Maroc)"), ("Durée", f"{minutes} minutes"), ("Type", ctx["type"])]
-    if ctx["job"]:
-        rows.insert(0, ("Poste", ctx["job"]))
-    if ctx["people"]:
-        rows.append(("Avec", ", ".join(ctx["people"])))
-    if ctx["mode"] == "place":
-        rows.append(("Lieu", ctx["place"]))
-    elif ctx["place"]:
-        rows.append(("Lieu", ctx["place"]))
-    rows.append(("Format", "En présentiel" if ctx["mode"] == "place" else "En visioconférence"))
-    return rows
-
-
-def _page(title: str, intro: list[str], rows: list[tuple[str, str]], after: list[str], button: Optional[tuple[str, str]], company: str) -> str:
-    e = _html.escape
-    table = "".join(
-        f'<tr><td style="padding:7px 14px 7px 0;color:#5f7079;font-size:13px;white-space:nowrap;vertical-align:top">{e(k)}</td>'
-        f'<td style="padding:7px 0;color:#0a1c24;font-size:14px;font-weight:600">{e(v)}</td></tr>' for k, v in rows)
-    btn = ""
-    if button:
-        btn = (f'<p style="margin:22px 0"><a href="{e(button[1])}" style="display:inline-block;padding:13px 22px;border-radius:12px;'
-               f'background:#0e6f84;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none">{e(button[0])}</a></p>'
-               f'<p style="margin:0 0 14px;font-size:12px;color:#7d8f97;word-break:break-all">{e(button[1])}</p>')
-    paras = lambda xs: "".join(f'<p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#33474f">{x}</p>' for x in xs)
-    return (
-        '<!doctype html><html><body style="margin:0;background:#f3f6f7;font-family:Arial,Helvetica,sans-serif">'
-        '<div style="max-width:560px;margin:0 auto;padding:28px 16px">'
-        f'<div style="font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0e6f84;margin-bottom:12px">{e(company)}</div>'
-        '<div style="background:#ffffff;border:1px solid #e2e8eb;border-radius:18px;padding:26px 24px">'
-        f'<h1 style="margin:0 0 16px;font-size:20px;color:#0a1c24">{e(title)}</h1>'
-        f'{paras(intro)}'
-        f'<table style="border-collapse:collapse;margin:8px 0 16px">{table}</table>'
-        f'{btn}{paras(after)}'
-        '</div>'
-        f'<p style="font-size:11.5px;color:#7d8f97;margin:14px 4px 0">E-mail envoyé par {e(company)} via Wedy RH.</p>'
-        '</div></body></html>'
-    )
-
-
 def _text(title: str, intro: list[str], rows: list[tuple[str, str]], after: list[str], link: Optional[str]) -> str:
-    strip = lambda s: _html.unescape(__import__("re").sub(r"<[^>]+>", "", s))
+    strip = lambda s: _html.unescape(__import__("re").sub(r"<[^>]+>", "", s.replace("<br>", "\n")))
     lines = [title, ""] + [strip(x) for x in intro] + [""] + [f"{k} : {v}" for k, v in rows] + [""]
     if link:
         lines += [f"Lien : {link}", ""]
     return "\n".join(lines + [strip(x) for x in after])
 
 
+def _design(ctx: dict, **kw) -> str:
+    return mail_design.page(company=ctx.get("company_info") or {"name": ctx["company"]}, has_logo=bool(ctx.get("logo")), **kw)
+
+
+def _date(ctx: dict, note: str = "Heure du Maroc", tone: str = "teal", hours: Optional[str] = None) -> dict:
+    d = ctx["date"]
+    return {"day_number": str(d.day), "month": mail_design.month_short(d.month), "long_day": ctx["day"][:1].upper() + ctx["day"][1:],
+            "hours": hours or f"{ctx['hour']} – {ctx['end_hour']}", "note": note, "tone": tone}
+
+
+def _details(ctx: dict) -> list[tuple[str, str]]:
+    minutes = int((ctx["end"] - ctx["start"]).total_seconds() // 60)
+    rows = []
+    if ctx["job"]:
+        rows.append(("Poste", ctx["job"]))
+    rows += [("Type", ctx["type"]), ("Durée", f"{minutes} minutes")]
+    if ctx["people"]:
+        rows.append(("Avec", ", ".join(ctx["people"])))
+    rows.append(("Format", "En présentiel" if ctx["mode"] == "place" else "En visioconférence"))
+    if ctx["place"]:
+        rows.append(("Lieu", ctx["place"]))
+    return rows
+
+
+_SIGN = lambda ctx: ["Cordialement,", f"<strong>L'équipe Ressources Humaines</strong> – {_html.escape(ctx['company'])}"]
+
+
 def render_invite(ctx: dict, update: bool = False) -> tuple[str, str, str]:
     e = _html.escape
     day, hour = ctx["day"], ctx["hour"]
     subject = f"{'Entretien modifié' if update else 'Invitation à un entretien'} – {ctx['job'] or ctx['company']} – {day} à {hour}"
+    title = "Votre entretien a été modifié" if update else "Invitation à un entretien"
     intro = [f"Bonjour {e(_first(ctx))},",
-             (f"Votre entretien a été modifié. Voici les nouvelles informations :" if update else
+             ("Votre entretien a été modifié. Voici les nouvelles informations." if update else
               f"Suite à votre candidature{(' au poste de <strong>' + e(ctx['job']) + '</strong>') if ctx['job'] else ''}, "
               f"nous avons le plaisir de vous inviter à un entretien avec <strong>{e(ctx['company'])}</strong>.")]
-    after = []
     if ctx["mode"] == "place":
-        after.append(f"L'entretien se déroulera en présentiel{(' : <strong>' + e(ctx['place']) + '</strong>') if ctx['place'] else ''}. "
-                     "Merci de vous présenter quelques minutes en avance.")
+        notice = (f"<strong>Entretien en présentiel</strong>{(' : ' + e(ctx['place'])) if ctx['place'] else ''}.<br>"
+                  "Merci de vous présenter quelques minutes en avance, avec une pièce d'identité.", "teal")
+        tips = ("Pour bien préparer votre venue", ["Arrivez 5 à 10 minutes en avance.", "Apportez votre CV et une pièce d'identité.",
+                                                   "Relisez l'annonce du poste et préparez vos questions."])
     else:
-        after.append(f"<strong>Le lien pour rejoindre l'entretien vous sera envoyé par e-mail {REMINDER_MIN} minutes avant le début.</strong> "
-                     "Aucun compte n'est nécessaire : il suffit de cliquer sur le lien depuis un ordinateur ou un téléphone, "
-                     "d'autoriser la caméra et le micro, puis d'attendre que le recruteur vous fasse entrer.")
-        after.append("Prévoyez un endroit calme et une bonne connexion internet.")
-    after.append("Un fichier calendrier est joint pour ajouter le rendez-vous à votre agenda. "
-                 "Si vous ne pouvez pas être présent(e), merci de répondre à cet e-mail pour convenir d'un autre créneau.")
-    after.append(f"Cordialement,<br>L'équipe Ressources Humaines – {e(ctx['company'])}")
-    rows = _rows(ctx)
-    title = "Entretien modifié" if update else "Invitation à un entretien"
-    return subject, _page(title, intro, rows, after, None, ctx["company"]), _text(title, intro, rows, after, None)
+        notice = (f"<strong>Le lien pour rejoindre l'entretien vous sera envoyé par e-mail {REMINDER_MIN} minutes avant le début.</strong><br>"
+                  "Aucun compte ni application à installer : il suffira de cliquer sur le lien, d'autoriser la caméra et le micro, "
+                  "puis d'attendre que le recruteur vous fasse entrer.", "teal")
+        tips = ("Pour que tout se passe bien", ["Un endroit calme et bien éclairé.", "Une bonne connexion internet (Wi-Fi ou 4G).",
+                                                "Un ordinateur ou un téléphone avec caméra et micro."])
+    after = ["Le rendez-vous est joint à cet e-mail pour l'ajouter à votre agenda. "
+             "Si vous ne pouvez pas être présent(e), répondez à cet e-mail pour convenir d'un autre créneau."]
+    html = _design(ctx, preheader=f"{ctx['type']} le {day} à {hour}" + (f" – {ctx['job']}" if ctx["job"] else ""),
+                   badge=("Entretien modifié", "amber") if update else ("Invitation", "teal"), title=title,
+                   subtitle=" · ".join(x for x in [ctx["job"], ctx["company"]] if x), paragraphs=intro, date=_date(ctx),
+                   rows=_details(ctx), notice=notice, tips=tips, closing=after + [""] + _SIGN(ctx))
+    rows = [("Date", day), ("Heure", f"{hour} – {ctx['end_hour']} (heure du Maroc)")] + _details(ctx)
+    return subject, html, _text(title, intro, rows, [notice[0]] + after + _SIGN(ctx), None)
 
 
 def render_cancel(ctx: dict) -> tuple[str, str, str]:
     e = _html.escape
     day, hour = ctx["day"], ctx["hour"]
     subject = f"Entretien annulé – {ctx['job'] or ctx['company']} – {day} à {hour}"
-    intro = [f"Bonjour {e(_first(ctx))},", f"Nous vous informons que l'entretien prévu le <strong>{e(day)} à {e(hour)}</strong> est annulé."]
-    after = ["Nous reviendrons vers vous si un nouveau créneau est proposé.",
-             f"Cordialement,<br>L'équipe Ressources Humaines – {e(ctx['company'])}"]
-    return subject, _page("Entretien annulé", intro, [], after, None, ctx["company"]), _text("Entretien annulé", intro, [], after, None)
+    intro = [f"Bonjour {e(_first(ctx))},",
+             f"Nous vous informons que l'entretien prévu le <strong>{e(day)} à {e(hour)}</strong> est annulé. "
+             "Nous vous prions de nous excuser pour ce changement."]
+    after = ["Nous reviendrons vers vous si un nouveau créneau vous est proposé."]
+    html = _design(ctx, preheader=f"L'entretien du {day} à {hour} est annulé", badge=("Annulé", "red"), title="Entretien annulé",
+                   subtitle=" · ".join(x for x in [ctx["job"], ctx["company"]] if x), paragraphs=intro,
+                   date=_date(ctx, note="Ce créneau est annulé", tone="red"), closing=after + [""] + _SIGN(ctx))
+    return subject, html, _text("Entretien annulé", intro, [], after + _SIGN(ctx), None)
 
 
 def render_reminder(ctx: dict, link: str) -> tuple[str, str, str]:
@@ -233,13 +230,14 @@ def render_reminder(ctx: dict, link: str) -> tuple[str, str, str]:
     subject = f"Votre entretien commence à {hour} – lien pour vous connecter"
     intro = [f"Bonjour {e(_first(ctx))},",
              f"Votre entretien{(' pour le poste de <strong>' + e(ctx['job']) + '</strong>') if ctx['job'] else ''} commence à "
-             f"<strong>{e(hour)}</strong> (dans {REMINDER_MIN} minutes). Voici le lien pour le rejoindre :"]
-    after = ["Cliquez sur le bouton depuis un ordinateur ou un téléphone, autorisez la caméra et le micro, "
-             "puis patientez : le recruteur vous fera entrer.",
-             f"Cordialement,<br>L'équipe Ressources Humaines – {e(ctx['company'])}"]
+             f"<strong>{e(hour)}</strong>, dans {REMINDER_MIN} minutes. Cliquez sur le bouton pour le rejoindre :"]
+    after = ["Autorisez la caméra et le micro quand votre navigateur le demande, puis patientez : le recruteur vous fera entrer."]
+    html = _design(ctx, preheader=f"Votre entretien commence à {hour} – voici le lien", badge=(f"Dans {REMINDER_MIN} minutes", "amber"),
+                   title="Votre entretien va commencer", subtitle=" · ".join(x for x in [ctx["job"], ctx["company"]] if x),
+                   paragraphs=intro, button=("Rejoindre l'entretien", link), date=_date(ctx, note="Heure du Maroc"),
+                   notice=(after[0], "teal"), closing=["Bonne chance !", ""] + _SIGN(ctx))
     rows = [("Date", day), ("Heure", f"{hour} (heure du Maroc)")]
-    return subject, _page("Votre entretien va commencer", intro, rows, after, ("Rejoindre l'entretien", link), ctx["company"]), \
-        _text("Votre entretien va commencer", intro, rows, after, link)
+    return subject, html, _text("Votre entretien va commencer", intro, rows, after + _SIGN(ctx), link)
 
 
 def ics(ctx: dict, cancel: bool = False) -> bytes:
@@ -265,6 +263,11 @@ def ics(ctx: dict, cancel: bool = False) -> bytes:
 
 # ── sending ──────────────────────────────────────────────────────────────────────────────────────────────
 
+def _inline(ctx: dict) -> list:
+    """The company's logo shown in the e-mail's header (cid:)."""
+    return [(mail_design.LOGO_CID, *ctx["logo"])] if ctx.get("logo") else []
+
+
 def _save(supabase: Client, iv_id: str, row: dict) -> None:
     try:
         supabase.table("interviews").update(row).eq("id", iv_id).execute()
@@ -287,7 +290,7 @@ def send_invite(supabase: Client, iv: dict, base: str = "", kind: str = "invite"
         subject, html, text = render_invite(ctx, update=kind == "update")
         att = [("entretien.ics", ics(ctx), "text/calendar; method=REQUEST")]
     try:
-        mailer.send(to, subject, html, text, attachments=att, reply_to=ctx["reply_to"], conf=ctx["conf"])
+        mailer.send(to, subject, html, text, attachments=att, reply_to=ctx["reply_to"], conf=ctx["conf"], inline=_inline(ctx))
     except mailer.MailError as e:
         _save(supabase, iv["id"], {"email_error": str(e)[:500]})
         return {"sent": False, "to": to, "error": str(e)}
@@ -336,7 +339,7 @@ def send_due_reminders(supabase: Client, now: Optional[datetime] = None) -> int:
             continue
         subject, html, text = render_reminder(ctx, link)
         try:
-            mailer.send(ctx["cand"]["email"], subject, html, text, reply_to=ctx["reply_to"], conf=ctx["conf"])
+            mailer.send(ctx["cand"]["email"], subject, html, text, reply_to=ctx["reply_to"], conf=ctx["conf"], inline=_inline(ctx))
             _save(supabase, iv["id"], {"email_error": None})
             sent += 1
         except mailer.MailError as e:

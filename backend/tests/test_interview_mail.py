@@ -316,6 +316,30 @@ def test_the_diagnostic_tells_a_blocked_port_and_a_wrong_password():
     finally:
         restore()
 
+
+def test_the_e_mails_carry_the_company_logo_and_design():
+    """The company's logo (Settings) is an inline picture (cid:) — Gmail does not show data: images — and the
+    e-mail is laid out with tables (mail apps), with the date block and the details."""
+    import base64, io
+    from PIL import Image
+    buf = io.BytesIO(); Image.new("RGB", (120, 40), (58, 20, 92)).save(buf, "PNG")
+    c, db = client()
+    db.tables["app_settings"] = [{"key": "company", "value": {"name": "Tython SARL", "city": "Casablanca"}},
+                                 {"key": "assets", "value": {"logo": "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()}}]
+    plan(c, datetime(2026, 11, 17, 10, 30, tzinfo=interview_mail.tz()))
+    msg = SENT[0]
+    html = next(p for p in msg.walk() if p.get_content_type() == "text/html").get_content()
+    logo = [p for p in msg.walk() if p.get_content_maintype() == "image"]
+    assert len(logo) == 1 and logo[0]["Content-ID"] == "<wedy-logo@wedy>" and logo[0].get_payload(decode=True) == buf.getvalue()
+    assert 'src="cid:wedy-logo@wedy"' in html and "data:image" not in html and 'role="presentation"' in html and "display:flex" not in html
+    assert ">17<" in html and "NOV." in html and "10:30 – 11:15" in html and "Invitation" in html
+    # no logo in Settings: the company's name instead, nothing attached
+    c, db = client()
+    db.tables["app_settings"] = [{"key": "company", "value": {"name": "Tython SARL"}}]
+    plan(c, datetime(2026, 11, 17, 10, 30, tzinfo=interview_mail.tz()))
+    assert not [p for p in SENT[0].walk() if p.get_content_maintype() == "image"]
+    assert "Tython SARL" in next(p for p in SENT[0].walk() if p.get_content_type() == "text/html").get_content()
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

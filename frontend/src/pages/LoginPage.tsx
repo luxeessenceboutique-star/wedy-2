@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowBigUp, ArrowLeft, ArrowRight, CircleAlert, Eye, EyeOff, KeyRound, LayoutDashboard, LifeBuoy, Lock, Mail } from 'lucide-react';
 import '@/styles/login.css';
 import { useAuth, isHRRole } from '@/lib/auth';
+import { SHOW_LANDING } from '@/lib/site';
 import { useLang } from '@/lib/lang';
 import { prefersReducedMotion } from '@/lib/inView';
 import { useNotify } from '@/lib/notify';
@@ -136,7 +137,7 @@ export default function LoginPage() {
     <div className="lg">
       <main className="lg-main">
         <div className="lg-top">
-          <R variant="down"><Link to="/" className="lg-back"><ArrowLeft size={15} />{t('login_back_to_site')}</Link></R>
+          {SHOW_LANDING && <R variant="down"><Link to="/" className="lg-back"><ArrowLeft size={15} />{t('login_back_to_site')}</Link></R>}
           <R variant="down" delay={80}>
             <button type="button" className="lg-help" onClick={() => notify.info(t('login_help_hint'), { duration: 6000 })}>
               <LifeBuoy size={15} />{t('login_need_help')}

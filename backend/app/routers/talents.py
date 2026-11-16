@@ -10,6 +10,13 @@ from app.repositories import talent_repository
 router = APIRouter(prefix="/talents", tags=["Talents"])
 
 
+def is_assessed(profile: dict) -> bool:
+    """A profile HR has worked on. Profiles are created with neutral defaults (3/3, low risk) when the page opens:
+    until HR changes something they are « à évaluer » — never shown as a 3/3 evaluation."""
+    created, updated = str(profile.get("created_at") or "")[:19], str(profile.get("updated_at") or "")[:19]
+    return bool(updated) and updated != created
+
+
 def _classify(perf: int, pot: int) -> str:
     if perf >= 4 and pot >= 4: return "star"
     if perf >= 4 and pot <= 2: return "solid"
@@ -26,7 +33,8 @@ def talent_stats(
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        profiles = talent_repository.list_talent_stats(supabase).data or []
+        every = talent_repository.list_talent_stats(supabase).data or []
+        profiles = [p for p in every if is_assessed(p)]   # the 3/3 defaults never worked on are not an evaluation
 
         cats = {}
         for p in profiles:
@@ -40,6 +48,7 @@ def talent_stats(
 
         return {
             "total": len(profiles),
+            "to_assess": len(every) - len(profiles),
             "by_category": cats,
             "high_flight_risk": high_risk,
             "critical_positions": critical,
@@ -118,7 +127,7 @@ def list_talents(
 ):
     try:
         res = talent_repository.list_talents(supabase)
-        return res.data or []
+        return [{**r, "assessed": is_assessed(r)} for r in (res.data or [])]
     except Exception:
         return []
 

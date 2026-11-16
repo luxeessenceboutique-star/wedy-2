@@ -957,9 +957,9 @@ export const en = {
     login_card_doc_title: 'Employment certificate',
     login_card_doc_sub: 'Generated · FR · AR · EN',
     login_card_leave_title: 'Leave approved',
-    login_card_leave_sub: 'Omar Alaoui · 3 days',
+    login_card_leave_sub: 'Approved in one click · the balance updates',
     login_card_copilot_title: 'AI Copilot',
-    login_card_copilot_sub: '2 contracts to renew this month',
+    login_card_copilot_sub: 'Spots the contracts to renew for you',
     login_copyright: '© 2026 Wedy · Powered by Tybotflow',
     login_mosaic_hint: 'Click the avatar ✦',
     // Employees
@@ -3956,4 +3956,7 @@ export const en = {
     tpl_ex_s: 'Choose the one used as the template: the others are left out, so no other name stays in the generated documents.',
     tpl_ex_page: 'Page {n}',
     tpl_ex_noname: '(no name)',
+    // Talents › à évaluer
+    tal_todo: 'To assess',
+    tal_risk_none: 'Flight risk not assessed',
 } as const;

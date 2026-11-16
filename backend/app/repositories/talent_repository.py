@@ -4,7 +4,7 @@ from supabase import Client
 
 def list_talent_stats(supabase: Client):
     return supabase.table("talent_profiles").select(
-        "talent_category,flight_risk,performance_score,potential_score,is_critical_position"
+        "talent_category,flight_risk,performance_score,potential_score,is_critical_position,created_at,updated_at"
     ).execute()
 
 

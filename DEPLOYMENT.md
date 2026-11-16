@@ -293,6 +293,11 @@ Tokens are stored encrypted with `SECRET_KEY` (changing `SECRET_KEY` means conne
 
 ### 4.2 Frontend — `frontend/.env`
 
+> **« / » opens the sign-in** (or the app when already signed in): a company's own instance never shows the Wedy
+> presentation page and its illustrative people. To show that page on « / » (prospects), build with
+> `VITE_SHOW_LANDING=true`; it is always reachable at `/presentation`.
+
+
 Copy `frontend/.env.example` to `frontend/.env`:
 
 ```bash

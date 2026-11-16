@@ -1,6 +1,6 @@
 ﻿import { useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, CircleAlert, CircleCheck, Circle, Clock, Shield, ShieldCheck, Shuffle, Sparkles, TrendingUp, TriangleAlert, Users, X } from 'lucide-react';
+import { ArrowRight, CircleAlert, CircleCheck, CircleHelp, Circle, Clock, Shield, ShieldCheck, Shuffle, Sparkles, TrendingUp, TriangleAlert, Users, X } from 'lucide-react';
 import { api, getApiError } from '@/services/api';
 import { RV } from '@/components/motion';
 import { Spinner } from '@/components/ui';
@@ -12,7 +12,7 @@ import './TalentsPage.css';
 
 type Risk = 'low' | 'medium' | 'high';
 type Profile = {
-  employee_id: string; performance_score: number; potential_score: number; talent_category: string; flight_risk: Risk;
+  employee_id: string; performance_score: number; potential_score: number; talent_category: string; flight_risk: Risk; assessed?: boolean;
   amana_score?: number; itkan_score?: number; iltizam_score?: number; ibdaa_score?: number; nama_score?: number;
   is_critical_position?: boolean; successor_names?: string[]; career_path?: string | null; next_role?: string | null; notes?: string | null;
   employees?: { id: string; full_name: string; position?: string; department?: string };
@@ -43,6 +43,8 @@ const RISK: Record<Risk, [TKey, string, string, string, string, typeof Shield]> 
   low: ['tal_risk_low', '#0f6f49', '#e1f5ec', 'rgba(22,160,107,.3)', '#16a06b', ShieldCheck],
 };
 const NEXT_RISK: Record<Risk, Risk> = { low: 'medium', medium: 'high', high: 'low' };
+// a profile not evaluated yet: no risk shown (its stored « low » is only the default)
+const NO_RISK: [TKey, string, string, string, string, typeof Shield] = ['tal_risk_none', '#52646d', '#f3f6f7', '#e2e8eb', '#a3b1b7', CircleHelp];
 const PDIT: Record<string, [TKey, string, string]> = {
   formation: ['tal_pdi_formation', '#e4f2f4', '#0b5f72'], coaching: ['tal_pdi_coaching', '#ece9fb', '#5444b8'], mentorat: ['tal_pdi_mentorat', '#e1f5ec', '#0f6f49'],
   projet: ['tal_pdi_projet', '#fbefda', '#8a5207'], lecture: ['tal_pdi_lecture', '#eef2f4', '#33474f'], conference: ['tal_pdi_conference', '#ece9fb', '#3d2f99'],
@@ -72,7 +74,11 @@ export default function TalentsPage() {
   const [pdiType, setPdiType] = useState('formation');
 
   const { data: profiles = [], isLoading } = useQuery({ queryKey: ['talents'], queryFn: listTalents });
-  const sorted = useMemo(() => [...profiles].sort((a, b) => (b.performance_score + b.potential_score) - (a.performance_score + a.potential_score)), [profiles]);
+  // a profile never worked on by HR is « à évaluer »: its neutral 3/3 defaults are not shown as an evaluation
+  const done = (p: Profile) => p.assessed !== false;
+  const sorted = useMemo(() => [...profiles].sort((a, b) => Number(b.assessed !== false) - Number(a.assessed !== false)
+    || (b.performance_score + b.potential_score) - (a.performance_score + a.potential_score)), [profiles]);
+  const evaluated = profiles.filter(p => p.assessed !== false);
   const cur = sorted.find(p => p.employee_id === curId) ?? sorted[0];
   const id = cur?.employee_id ?? '';
   const { data: okrs = [] } = useQuery({ queryKey: ['talents', 'okrs', id], queryFn: () => getOkrs(id), enabled: !!id });
@@ -98,7 +104,7 @@ export default function TalentsPage() {
   const pdiCycle = useMutation({ mutationFn: (p: Pdi) => patchPdi(id, p.id, { status: NEXT_PST[p.status] }), onSettled: () => qc.invalidateQueries({ queryKey: ['talents', 'pdi', id] }), onError: fail });
 
   // mobility: profiles with a target role; "Proposer" records the move in the person's development plan
-  const mobility = sorted.filter(p => (p.next_role ?? '').trim() && (p.next_role ?? '').trim() !== (p.employees?.position ?? '').trim())
+  const mobility = sorted.filter(p => done(p) && (p.next_role ?? '').trim() && (p.next_role ?? '').trim() !== (p.employees?.position ?? '').trim())
     .map(p => ({ p, match: Math.round((p.performance_score + p.potential_score) / 10 * 100) })).sort((a, b) => b.match - a.match).slice(0, 4);
   const { data: mobPdi = {} } = useQuery({
     queryKey: ['talents', 'pdi', 'mobility', mobility.map(m => m.p.employee_id).join(',')],
@@ -108,14 +114,14 @@ export default function TalentsPage() {
   const mobTitle = (role: string) => tf(t('tal_mob_pdi'), { role });
   const proposed = (emp: string, role: string) => ((mobPdi as Record<string, Pdi[]>)[emp] ?? []).some(x => x.title === mobTitle(role));
 
-  const shown = sorted.filter(p => cat === 'all' || (p.talent_category || 'key_player') === cat);
-  const high = profiles.filter(p => p.flight_risk === 'high').length;
+  const shown = sorted.filter(p => cat === 'all' || (cat === 'todo' ? !done(p) : done(p) && (p.talent_category || 'key_player') === cat));
+  const high = evaluated.filter(p => p.flight_risk === 'high').length;
   const critical = profiles.filter(p => p.is_critical_position).length;
-  const avgPerf = profiles.length ? profiles.reduce((s, p) => s + p.performance_score, 0) / profiles.length : 0;
+  const avgPerf = evaluated.length ? evaluated.reduce((s, p) => s + p.performance_score, 0) / evaluated.length : 0;
   const pdiDone = pdi.filter(p => p.status === 'completed').length;
   const liveOkrs = okrs.filter(o => o.status !== 'cancelled');
   const okrAvg = liveOkrs.length ? Math.round(liveOkrs.reduce((s, o) => s + (okrDraft[o.id] ?? o.progress), 0) / liveOkrs.length) : 0;
-  const curRisk = RISK[cur?.flight_risk ?? 'low'];
+  const curRisk = cur && !done(cur) ? NO_RISK : RISK[cur?.flight_risk ?? 'low'];
   const RiskIcon = curRisk[5];
   const radar = cur ? VALUES.map(([k], i) => { const r = Math.max(0, Math.min(5, Number(cur[k] ?? 0))) / 5 * 80; return `${(110 + r * Math.cos(ANG[i])).toFixed(1)},${(110 + r * Math.sin(ANG[i])).toFixed(1)}`; }).join(' ') : '';
   const name = cur?.employees?.full_name ?? '—';
@@ -130,7 +136,10 @@ export default function TalentsPage() {
   const setScore = (k: 'performance_score' | 'potential_score', v: number) => cur && patch.mutate({ emp: id, body: { [k]: v, ...(k === 'performance_score' ? { potential_score: cur.potential_score } : { performance_score: cur.performance_score }) } });
   const saveText = (k: 'next_role' | 'career_path' | 'notes', v: string) => { if (cur && (cur[k] ?? '') !== v.trim()) patch.mutate({ emp: id, body: { [k]: v.trim() || null } }); };
 
-  const cats: [string, string, number, string][] = [['all', t('tal_all'), profiles.length, '#0a1c24'], ...Object.keys(CAT).map(k => [k, t(CAT[k][0]), profiles.filter(p => (p.talent_category || 'key_player') === k).length, CAT[k][3]] as [string, string, number, string])];
+  const todo = profiles.length - evaluated.length;
+  const cats: [string, string, number, string][] = [['all', t('tal_all'), profiles.length, '#0a1c24'],
+    ...Object.keys(CAT).map(k => [k, t(CAT[k][0]), evaluated.filter(p => (p.talent_category || 'key_player') === k).length, CAT[k][3]] as [string, string, number, string]),
+    ...(todo ? [['todo', t('tal_todo'), todo, '#a3b1b7'] as [string, string, number, string]] : [])];
   const kpi = (Icon: typeof Users, bg: string, color: string, value: React.ReactNode, label: string, delay: number, valueColor?: string) => (
     <RV as="div" variant="up" delay={delay} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', borderRadius: 18, background: '#ffffff', border: '1px solid #e2e8eb' }}>
       <span style={{ width: 42, height: 42, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', background: bg, color }}><Icon size={19} /></span>
@@ -155,7 +164,7 @@ export default function TalentsPage() {
         {kpi(Users, '#e4f2f4', '#0e6f84', profiles.length, t('tal_k_profiles'), 60)}
         {kpi(TriangleAlert, '#fbe9e6', '#df5740', high, t('tal_k_risk'), 110, high ? '#a33a28' : undefined)}
         {kpi(Shield, '#fbefda', '#b06b0c', critical, t('tal_k_critical'), 160)}
-        {kpi(TrendingUp, '#e1f5ec', '#16a06b', <>{profiles.length ? dec(avgPerf) : '—'}<span style={{ fontSize: 15, color: '#5f7079', fontWeight: 600 }}> / 5</span></>, t('tal_k_perf'), 210)}
+        {kpi(TrendingUp, '#e1f5ec', '#16a06b', <>{evaluated.length ? dec(avgPerf) : '—'}<span style={{ fontSize: 15, color: '#5f7079', fontWeight: 600 }}> / 5</span></>, t('tal_k_perf'), 210)}
       </div>
 
       <RV as="div" variant="up" delay={120} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -176,7 +185,7 @@ export default function TalentsPage() {
           <div style={{ flex: '1.2 1 440px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 12 }}>
               {shown.map((p, k) => {
-                const c = catOf(p.talent_category), r = RISK[p.flight_risk ?? 'low'], on = p.employee_id === cur?.employee_id;
+                const c = catOf(p.talent_category), r = RISK[p.flight_risk ?? 'low'], on = p.employee_id === cur?.employee_id, ok = done(p);
                 const n = p.employees?.full_name ?? '—';
                 return (
                   <RV key={p.employee_id} as="button" variant="up" delay={Math.min(k, 12) * 50} type="button" onClick={() => { setCurId(p.employee_id); setSuccIn(''); setOkrIn(''); }}
@@ -189,14 +198,16 @@ export default function TalentsPage() {
                       </span>
                     </span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
-                      <span style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: c[1], color: c[2], whiteSpace: 'nowrap' }}>{t(c[0])}</span>
-                      <span style={{ marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: r[1], whiteSpace: 'nowrap' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: r[4] }} />{tf(t('tal_risk_short'), { level: t(r[0]) })}</span>
+                      {ok ? <>
+                        <span style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: c[1], color: c[2], whiteSpace: 'nowrap' }}>{t(c[0])}</span>
+                        <span style={{ marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 600, color: r[1], whiteSpace: 'nowrap' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: r[4] }} />{tf(t('tal_risk_short'), { level: t(r[0]) })}</span>
+                      </> : <span style={{ fontSize: 11.5, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: '#f3f6f7', color: '#52646d', whiteSpace: 'nowrap' }}>{t('tal_todo')}</span>}
                     </span>
                     <span style={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 10, width: '100%' }}>
                       {([['tal_perf', p.performance_score, '#16a06b'], ['tal_pot', p.potential_score, '#6d5ad6']] as [TKey, number, string][]).map(([l, v, col]) => (
                         <span key={l}>
-                          <span style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#5f7079' }}><span>{t(l)}</span><span style={{ fontFamily: "'Geist Mono',monospace", color: '#0a1c24' }}>{dec(v)}</span></span>
-                          <span style={{ display: 'block', height: 5, borderRadius: 99, background: '#eef2f4', overflow: 'hidden', marginTop: 5 }}><RV as="span" variant="growx" style={{ display: 'block', height: '100%', width: `${v * 20}%`, borderRadius: 99, background: col, transformOrigin: 'left' }} /></span>
+                          <span style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#5f7079' }}><span>{t(l)}</span><span style={{ fontFamily: "'Geist Mono',monospace", color: '#0a1c24' }}>{ok ? dec(v) : '—'}</span></span>
+                          <span style={{ display: 'block', height: 5, borderRadius: 99, background: '#eef2f4', overflow: 'hidden', marginTop: 5 }}>{ok && <RV as="span" variant="growx" style={{ display: 'block', height: '100%', width: `${v * 20}%`, borderRadius: 99, background: col, transformOrigin: 'left' }} />}</span>
                         </span>
                       ))}
                     </span>
@@ -240,8 +251,8 @@ export default function TalentsPage() {
                   <div style={{ minWidth: 0 }}><div style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em' }}>{name}</div><div style={{ fontSize: 13, color: '#9fb4bb' }}>{[cur.employees?.position, cur.employees?.department].filter(Boolean).join(' · ') || '—'}</div></div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 99, background: 'rgba(255,255,255,.08)', color: '#ffffff' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: catOf(cur.talent_category)[3] }} />{t(catOf(cur.talent_category)[0])}</span>
-                  <button type="button" title={t('tal_change_risk')} onClick={() => patch.mutate({ emp: id, body: { flight_risk: NEXT_RISK[cur.flight_risk ?? 'low'] } })} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 99, border: 'none', background: 'rgba(255,255,255,.08)', color: '#cfdde1', fontFamily: 'inherit', cursor: 'pointer' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: curRisk[4] }} />{tf(t('tal_risk_long'), { level: t(curRisk[0]) })}</button>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 99, background: 'rgba(255,255,255,.08)', color: '#ffffff' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: done(cur) ? catOf(cur.talent_category)[3] : '#a3b1b7' }} />{done(cur) ? t(catOf(cur.talent_category)[0]) : t('tal_todo')}</span>
+                  <button type="button" title={t('tal_change_risk')} onClick={() => patch.mutate({ emp: id, body: { flight_risk: NEXT_RISK[cur.flight_risk ?? 'low'] } })} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 99, border: 'none', background: 'rgba(255,255,255,.08)', color: '#cfdde1', fontFamily: 'inherit', cursor: 'pointer' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: done(cur) ? curRisk[4] : '#a3b1b7' }} />{done(cur) ? tf(t('tal_risk_long'), { level: t(curRisk[0]) }) : t('tal_risk_none')}</button>
                   <button type="button" onClick={() => patch.mutate({ emp: id, body: { is_critical_position: !cur.is_critical_position } })} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 99, border: 'none', background: cur.is_critical_position ? 'rgba(230,169,72,.22)' : 'rgba(255,255,255,.08)', color: cur.is_critical_position ? '#f0bd6a' : '#9fb4bb', fontFamily: 'inherit', cursor: 'pointer' }}><Shield size={12} />{t(cur.is_critical_position ? 'tal_critical_on' : 'tal_critical_off')}</button>
                 </div>
               </div>
@@ -259,9 +270,9 @@ export default function TalentsPage() {
                       {([['performance_score', 'tal_perf', '#16a06b'], ['potential_score', 'tal_pot', '#6d5ad6']] as ['performance_score' | 'potential_score', TKey, string][]).map(([k, l, col]) => (
                         <div key={k} style={{ padding: '12px 14px', borderRadius: 14, background: '#f3f6f7' }}>
                           <div style={{ fontSize: 11.5, color: '#5f7079' }}>{t(l)}</div>
-                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}><span style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-.04em' }}>{dec(cur[k])}</span><span style={{ fontSize: 12, color: '#5f7079' }}>/ 5</span></div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}><span style={{ fontFamily: "'Bricolage Grotesque',system-ui,sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-.04em' }}>{done(cur) ? dec(cur[k]) : '—'}</span><span style={{ fontSize: 12, color: '#5f7079' }}>/ 5</span></div>
                           <div style={{ display: 'flex', gap: 3, marginTop: 6 }}>
-                            {[1, 2, 3, 4, 5].map(n => <button key={n} type="button" aria-label={`${t(l)} ${n}/5`} onClick={() => setScore(k, n)} style={{ flex: 1, height: 6, padding: 0, border: 'none', borderRadius: 99, background: n <= cur[k] ? col : '#e2e8eb', cursor: 'pointer', transition: 'background .3s' }} />)}
+                            {[1, 2, 3, 4, 5].map(n => <button key={n} type="button" aria-label={`${t(l)} ${n}/5`} onClick={() => setScore(k, n)} style={{ flex: 1, height: 6, padding: 0, border: 'none', borderRadius: 99, background: done(cur) && n <= cur[k] ? col : '#e2e8eb', cursor: 'pointer', transition: 'background .3s' }} />)}
                           </div>
                         </div>
                       ))}
@@ -283,7 +294,7 @@ export default function TalentsPage() {
                     <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 14, padding: '12px 14px', borderRadius: 14, background: curRisk[2], border: `1px solid ${curRisk[3]}` }}>
                       <RiskIcon size={17} style={{ color: curRisk[1], flexShrink: 0, marginTop: 1 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: curRisk[1] }}>{tf(t('tal_risk_long'), { level: t(curRisk[0]) })}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: curRisk[1] }}>{done(cur) ? tf(t('tal_risk_long'), { level: t(curRisk[0]) }) : t('tal_risk_none')}</div>
                         <textarea key={`notes-${id}`} defaultValue={cur.notes ?? ''} onBlur={e => saveText('notes', e.target.value)} placeholder={t('tal_why_ph')} rows={2}
                           style={{ width: '100%', marginTop: 2, padding: 0, border: 'none', background: 'transparent', resize: 'vertical', fontFamily: 'inherit', fontSize: 13, lineHeight: 1.5, color: '#33474f', outline: 'none' }} />
                       </div>

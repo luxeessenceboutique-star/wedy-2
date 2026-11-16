@@ -1011,9 +1011,9 @@ export const fr = {
     login_card_doc_title: 'Attestation de travail',
     login_card_doc_sub: 'Générée · FR · AR · EN',
     login_card_leave_title: 'Congé approuvé',
-    login_card_leave_sub: 'Omar Alaoui · 3 jours',
+    login_card_leave_sub: 'Validé en un clic · le solde se met à jour',
     login_card_copilot_title: 'Copilote IA',
-    login_card_copilot_sub: '2 contrats à renouveler ce mois',
+    login_card_copilot_sub: 'Repère les contrats à renouveler pour vous',
     login_copyright: '© 2026 Wedy · Propulsé par Tybotflow',
     login_mosaic_hint: "Cliquez sur l'avatar ✦",
     // Employees
@@ -4010,4 +4010,7 @@ export const fr = {
     tpl_ex_s: 'Choisissez celle qui sert de modèle : les autres sont écartées, pour qu\'aucun autre nom ne reste dans les documents générés.',
     tpl_ex_page: 'Page {n}',
     tpl_ex_noname: '(sans nom)',
+    // Talents › à évaluer
+    tal_todo: 'À évaluer',
+    tal_risk_none: 'Risque de départ non évalué',
 } as const;

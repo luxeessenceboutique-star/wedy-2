@@ -957,9 +957,9 @@ export const ar = {
     login_card_doc_title: 'شهادة عمل',
     login_card_doc_sub: 'تم إنشاؤها · FR · AR · EN',
     login_card_leave_title: 'تمت الموافقة على الإجازة',
-    login_card_leave_sub: 'عمر العلوي · 3 أيام',
+    login_card_leave_sub: 'موافقة بنقرة واحدة · يتحدّث الرصيد تلقائياً',
     login_card_copilot_title: 'المساعد الذكي',
-    login_card_copilot_sub: 'عقدان للتجديد هذا الشهر',
+    login_card_copilot_sub: 'يرصد لك العقود الواجب تجديدها',
     login_copyright: '© 2026 ويدي · بدعم من Tybotflow',
     login_mosaic_hint: 'انقر على الصورة ✦',
     // Employees
@@ -3956,4 +3956,7 @@ export const ar = {
     tpl_ex_s: 'اختر النسخة التي ستُعتمد كنموذج: تُستبعد الأخرى حتى لا يبقى أي اسم آخر في الوثائق المُنشأة.',
     tpl_ex_page: 'الصفحة {n}',
     tpl_ex_noname: '(بدون اسم)',
+    // Talents › à évaluer
+    tal_todo: 'للتقييم',
+    tal_risk_none: 'خطر المغادرة غير مُقيَّم',
 } as const;

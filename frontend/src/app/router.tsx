@@ -5,6 +5,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { AppShellEmployee } from '@/components/layout/AppShellEmployee';
 
 import LandingPage from '@/pages/marketing/LandingPage';
+import { SHOW_LANDING } from '@/lib/site';
 import LoginPage from '@/pages/LoginPage';
 
 // HR pages
@@ -81,11 +82,22 @@ function RequireEmployee({ children }: { children: React.ReactNode }) {
   return <AppShellEmployee>{children}</AppShellEmployee>;
 }
 
+/** « / »: the sign-in (or straight into the app when signed in) — not the presentation page with its illustrative
+ *  people and figures, unless VITE_SHOW_LANDING=true (lib/site.ts). */
+function Home() {
+  const { user, loading } = useAuth();
+  if (SHOW_LANDING) return <LandingPage />;
+  if (loading) return <Loader />;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Navigate to={isHRRole(user.role_name ?? user.role) ? '/app' : '/employee'} replace />;
+}
+
 export function AppRoutes() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/presentation" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/postuler/:id" element={<PostulerPage />} />
       <Route path="/visio/:room" element={<VisioPage />} />

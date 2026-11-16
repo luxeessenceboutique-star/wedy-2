@@ -6,7 +6,7 @@ What is detected, wherever it sits in the document (even split between two lines
   - blanks: « CIN n° ________ », « né le ........ » (the words before the blank give its meaning)
   - « Monsieur/Madame », « M./Mme » → the civility of the person
   - {{variables}} already in the document are kept
-  - in a document already filled for someone (an attestation written for « Mme CHAIMAA BYAZ »), the values that are
+  - in a document already filled for someone (an attestation written for « Mme LINA SAIDI »), the values that are
     the person's: the name after M. / Mme (not the signatory « Je soussignée, Mme … agissant en qualité de … »), the
     CIN, « né(e) le … à … », the position after « en qualité de », « depuis le … », « du … au … », the contract
     « à durée indéterminée (CDI) », the salary, and « Fait à …, le … » (the date of the day). The words written for a
@@ -177,7 +177,7 @@ _DATE = rf"(?:\d{{1,2}}[/.-]\d{{1,2}}[/.-]\d{{2,4}}|\d{{1,2}}(?:er)?\s+(?i:{_MON
 _UP = "A-ZÀ-ÖØ-Þ"
 _WORD = rf"[{_UP}][A-Za-zÀ-ÖØ-öø-ÿ'’\-]+"
 _CIV_WORD = r"(?:M\.|Mr\.?|Mme\.?|Mlle\.?|Monsieur|Madame|Mademoiselle)"
-_PERSON = re.compile(rf"(?<![\w/])({_CIV_WORD})[ \t]+({_WORD}(?:[ \t]+{_WORD}){{0,3}})")
+_PERSON = re.compile(rf"(?<![\w/])(M\.|Mr\.|Mme\.|Mlle\.|Mr|Mme|Mlle|Monsieur|Madame|Mademoiselle)(?:(?<=\.)[ \t]*|[ \t]+)({_WORD}(?:[ \t]+{_WORD}){{0,3}})")
 _PLACE = rf"{_WORD}(?:[ \t-]+{_WORD}){{0,2}}"
 _NOT_A_NAME = {"le", "la", "les", "directeur", "directrice", "gerant", "gerante", "president", "presidente", "responsable"}
 _FEMININE = ("mme", "madame", "mlle", "mademoiselle")
@@ -193,6 +193,7 @@ _VALUE_RULES: list[tuple[str, list[tuple[str, str]]]] = [
     (rf"(?i:\b(?:embauch|recrut|engag)[ée]e?\s+(?:le|depuis le|à compter du))\s+({_DATE})", [("hire_date", "embauché(e) le")]),
     (rf"(?i:\bdu)\s+({_DATE})\s+(?i:au)\s+({_DATE})", [("contract_start", "du"), ("contract_end", "au")]),
     (rf"(?i:\bà compter du)\s+({_DATE})", [("contract_start", "à compter du")]),
+    (rf"(?i:\bdu)\s+({_DATE})\s+(?i:au)\s+(?!\d)", [("contract_start", "du")]),
     (rf"(?i:\bjusqu.au)\s+({_DATE})", [("contract_end", "jusqu'au")]),
     (rf"(?i:\b(?:fait|[ée]tabli|d[ée]livr[ée])e?\s+à)\s+({_PLACE})\s*,?\s*(?i:le)\s+({_DATE})", [("company_city", "fait à"), ("today", "date du document")]),
     (rf"(?m)^[ \t]*({_PLACE})[ \t]*,[ \t]*(?i:le)[ \t]+({_DATE})", [("company_city", "fait à"), ("today", "date du document")]),
@@ -207,7 +208,7 @@ _VALUE_RULES: list[tuple[str, list[tuple[str, str]]]] = [
 
 
 def _signatory(text: str, start: int, end: int) -> bool:
-    """« Je soussignée, Mme ENNAJI Widad, agissant en qualité de … »: the person who signs, not the one concerned."""
+    """« Je soussignée, Mme HAJJI Samira, agissant en qualité de … »: the person who signs, not the one concerned."""
     before, after = norm(text[max(0, start - 50):start]), norm(text[end:end + 60])
     return bool(re.search(r"soussign", before) or re.match(r"(agissant|en sa qualite|directeur|directrice|gerant|gerante|president|presidente|drh)\b", after))
 
@@ -226,7 +227,7 @@ def find_person(text: str) -> Optional[dict]:
 
 def find_values(text: str) -> list[dict]:
     """The person's values in a filled document, as placeholders of kind « value » ({start, end, raw, label, kind, key}).
-    `raw` names the value and its role (« CHAIMAA BYAZ (nom) »): the same town can be a birth place and the place of
+    `raw` names the value and its role (« LINA SAIDI (nom) »): the same town can be a birth place and the place of
     signature, each is a field of its own."""
     out: list[dict] = []
 
@@ -242,7 +243,7 @@ def find_values(text: str) -> list[dict]:
     if person:
         for m in re.finditer(r"(?<!\w)" + re.escape(person["name"]) + r"(?!\w)", text, re.IGNORECASE):
             add(m.start(), m.end(), "full_name", "nom")
-            c = re.search(rf"({_CIV_WORD})[ \t]+$", text[max(0, m.start() - 14):m.start()])
+            c = re.search(rf"(?<![\w/])({_CIV_WORD})[ \t]*$", text[max(0, m.start() - 14):m.start()])
             if c:
                 cs = m.start() - len(c.group(0))
                 long_form = c.group(1).lower().startswith(("monsieur", "madame", "mademoiselle"))
@@ -277,25 +278,95 @@ _SUBJECT_VERBS = (r"(a exerc[ée]|a fait preuve|a occup[ée]|a effectu[ée]|a su
 
 def neutral_gender(html_body: str, feminine: bool) -> str:
     """The words written for the example person, made to fit anyone: « employée » / « employé » → « employé(e) »,
-    « née » → « né(e) », « elle a exercé » → « il/elle a exercé », « la salariée » → « le/la salarié(e) ».
-    `agree` writes them back for the person at generation. Only the text changes, never the tags."""
+    « née » / « né » → « né(e) », « elle a exercé » → « il/elle a exercé », « du salarié » → « du/de la salarié(e) »,
+    « un employé » → « un(e) employé(e) ». `agree` writes them back for the person at generation. Only the text
+    changes, never the tags. (Documents often mix both forms: « Mme X, né le … »: both are made neutral.)"""
+    noun = r"(salari[ée]e?|stagiaire|b[ée]n[ée]ficiaire|employ[ée]e?|int[ée]ress[ée]e?)"
+
     def fix(t: str) -> str:
+        t = re.sub(r"\b(du|de la) " + noun + r"\b", lambda m: "du/de la " + m.group(2), t)
+        t = re.sub(r"\b(au|à la) " + noun + r"\b", lambda m: "au/à la " + m.group(2), t)
+        t = re.sub(r"(?<!de )(?<!à )\b(le|la) " + noun + r"\b", lambda m: "le/la " + m.group(2), t)
+        t = re.sub(r"\b(un|une) " + noun + r"\b", lambda m: "un(e) " + m.group(2), t)
+        t = re.sub(r"\b" + _GENDERED + r"ée(s?)\b", lambda m: m.group(1) + "é(e)" + m.group(2), t)
+        t = re.sub(r"\b" + _GENDERED + r"é(s?)(?![\w(])", lambda m: m.group(1) + "é(e)" + m.group(2), t)
+        t = re.sub(r"\binscrite?(?![\w(])", "inscrit(e)", t)
         if feminine:
-            t = re.sub(r"\bla (salari[ée]e|stagiaire|b[ée]n[ée]ficiaire)\b", r"le/la \1", t)
-            t = re.sub(r"\b" + _GENDERED + r"ée(s?)\b", lambda m: m.group(1) + "é(e)" + m.group(2), t)
-            t = re.sub(r"\binscrite\b", "inscrit(e)", t)
             t = re.sub(r"\b(E|e)lle\s+" + _SUBJECT_VERBS, lambda m: ("Il/Elle " if m.group(1) == "E" else "il/elle ") + m.group(2), t)
-        else:
-            t = re.sub(r"\ble (salari[ée]|stagiaire|b[ée]n[ée]ficiaire)\b", r"le/la \1", t)
-            t = re.sub(r"\b" + _GENDERED + r"é(s?)(?![\w(])", lambda m: m.group(1) + "é(e)" + m.group(2), t)
-            t = re.sub(r"\binscrit(?![\w(])", "inscrit(e)", t)
-            t = re.sub(r"\b(I|i)l\s+" + _SUBJECT_VERBS, lambda m: ("Il/Elle " if m.group(1) == "I" else "il/elle ") + m.group(2), t)
+        t = re.sub(r"\b(I|i)l\s+" + _SUBJECT_VERBS, lambda m: ("Il/Elle " if m.group(1) == "I" else "il/elle ") + m.group(2), t)
         return t
 
     parts = _TAG.split(html_body)
     for i in range(0, len(parts), 2):
         parts[i] = fix(parts[i])
     return "".join(parts)
+
+
+# ── several examples in one document (a PDF with one attestation per page, each for someone else) ───────────
+
+PAGE_MARK = "<!--wedy-page-->"
+_BLOCK_RE = re.compile(r"<(p|h[1-6]|ul|ol|table|div)\b[^>]*>.*?</\1>", re.S | re.I)
+
+
+def _blocks(inner: str) -> list[tuple[int, int, str, bool]]:
+    """Top-level blocks of a flowing body: (start, end, text, is only a picture)."""
+    out = []
+    for m in _BLOCK_RE.finditer(inner):
+        html_part = m.group(0)
+        text = clean_text(_html.unescape(re.sub(r"<[^>]+>", " ", html_part))).strip()
+        out.append((m.start(), m.end(), text, not text and "<img" in html_part))
+    return out
+
+
+def split_examples(body: str) -> list[dict]:
+    """The examples of a document that holds several (same title, someone else each time):
+    [{index, person, title, html}] — or [] when it is one document (a contract over several pages stays whole)."""
+    body = strip_meta(body or "")
+    m = re.match(r"(\s*<div[^>]*>)(.*)(</div>\s*)$", body, re.S)
+    head, inner, tail = m.groups() if m else ("", body, "")
+    if PAGE_MARK in inner:
+        parts = [p for p in inner.split(PAGE_MARK) if p.strip()]
+    else:  # saved before pages were marked: cut where the title comes back
+        blocks = _blocks(inner)
+        titled = [b for b in blocks if b[2]]
+        if not titled:
+            return []
+        title = norm(titled[0][2])
+        starts = []
+        for k, b in enumerate(blocks):
+            if b[2] and norm(b[2]) == title:
+                cut = blocks[k - 1][0] if k and blocks[k - 1][3] else b[0]   # the logo above the title goes with it
+                starts.append(cut)
+        if len(starts) < 2:
+            return []
+        starts[0] = 0
+        parts = [inner[a:b] for a, b in zip(starts, starts[1:] + [len(inner)])]
+    if len(parts) < 2:
+        return []
+    examples = []
+    for i, part in enumerate(parts):
+        plain = _text_runs(part)[2]
+        person = find_person(plain)
+        first = next((ln.strip() for ln in plain.split("\n") if ln.strip()), "")
+        examples.append({"index": i, "person": person["name"] if person else None, "title": first[:80], "html": head + part + tail})
+    people = {norm(e["person"]) for e in examples if e["person"]}
+    titles = {norm(e["title"]) for e in examples}
+    if len(people) >= 2 and len(titles) == 1:
+        return examples
+    return []
+
+
+def pick_example(raw_html: str, example: Optional[int] = None) -> tuple[str, list[dict], Optional[int]]:
+    """(the HTML to make the template from, the examples found [{index, person, title}], the one kept)."""
+    examples = split_examples(raw_html)
+    if not examples:
+        return raw_html.replace(PAGE_MARK, ""), [], None
+    i = example if example is not None and 0 <= example < len(examples) else 0
+    meta = read_meta(raw_html)
+    chosen = examples[i]["html"]
+    if meta:
+        chosen = f"<!--wedy-fields:{json.dumps(meta, ensure_ascii=False)}-->" + chosen
+    return chosen, [{k: e[k] for k in ("index", "person", "title")} for e in examples], i
 
 
 def resolve(ph: dict, text: str, mapping: Optional[dict] = None) -> str:
@@ -401,13 +472,14 @@ def apply_fields(body: str, mapping: Optional[dict] = None) -> str:
 def build_template(raw_html: str, mapping: Optional[dict] = None) -> tuple[str, list[dict]]:
     """A document's HTML as a template: (body with {{fields}} and the custom fields' labels, fields found).
     Used for an uploaded document and to look again at a template already saved."""
-    body = strip_meta(raw_html)
+    body = strip_meta(raw_html).replace(PAGE_MARK, "")
     fields = analyse_html(body, mapping)
     person = find_person(_text_runs(body)[2])
     out = apply_fields(body, mapping)
     if person and not any(f["key"] == "full_name" and mapping and mapping.get(f["placeholder"]) == KEEP for f in fields):
         if any(f["key"] == "full_name" for f in fields):
             out = neutral_gender(out, person["feminine"])
+    out = re.sub(r"\{\{(civility|civility_short)\}\}(\{\{full_name\}\})", r"{{\1}} \2", out)   # « Mme.LINA » → « Mme X »
     old_meta = read_meta(raw_html)
     meta_fields = [{"key": k, "label": v.get("label", k), "default": v.get("default", "")} for k, v in old_meta.items()
                    if k not in {f["key"] for f in fields} and "{{" + k + "}}" in out]
@@ -584,7 +656,7 @@ def civility_pair(civility: str = "", short: str = "") -> tuple[str, str]:
 
 
 _PAIRS = [("il/elle", "il", "elle"), ("elle/il", "il", "elle"), ("le/la", "le", "la"), ("la/le", "le", "la"),
-          ("lui/elle", "lui", "elle"), ("celui/celle", "celui", "celle"), ("du/de la", "du", "de la")]
+          ("lui/elle", "lui", "elle"), ("celui/celle", "celui", "celle"), ("du/de la", "du", "de la"), ("au/à la", "au", "à la")]
 
 
 def agree(html: str, civility: str) -> str:

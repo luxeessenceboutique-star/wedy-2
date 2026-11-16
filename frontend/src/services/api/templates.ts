@@ -29,14 +29,16 @@ export const importTemplateFromPdf = (form: FormData) =>
 /** A field found in an uploaded document: its text there, what it was mapped to, how many times it appears. */
 export type DetectedField = { placeholder: string; label: string; key: string; known: boolean; count: number; kind: 'bracket' | 'blank' | 'civility' | 'variable' | 'value'; default: string };
 /** Look again at the fields of a saved template (a document imported already filled for someone): nothing is saved. */
-export const analyseSavedTemplate = (id: string, mapping: Record<string, string> = {}) =>
-  api.post<{ body_template: string; fields: DetectedField[] }>(`/templates/${id}/analyse`, { mapping }).then(r => r.data);
+/** A document holding several examples (one attestation per page, each for someone else): one of them is kept. */
+export type TemplateExample = { index: number; person: string | null; title: string };
+export const analyseSavedTemplate = (id: string, mapping: Record<string, string> = {}, example: number | null = null) =>
+  api.post<{ body_template: string; fields: DetectedField[]; examples: TemplateExample[]; example: number | null }>(`/templates/${id}/analyse`, { mapping, example }).then(r => r.data);
 /** Turn the values found into fields (with the user's corrections) and save the template. */
-export const saveTemplateFields = (id: string, mapping: Record<string, string> = {}) =>
-  api.post<{ template: Template; fields: DetectedField[] }>(`/templates/${id}/fields`, { mapping }).then(r => r.data);
+export const saveTemplateFields = (id: string, mapping: Record<string, string> = {}, example: number | null = null) =>
+  api.post<{ template: Template; fields: DetectedField[] }>(`/templates/${id}/fields`, { mapping, example }).then(r => r.data);
 /** Read an uploaded document without saving it: its fields (and the template it would give). `mapping` = the user's corrections. */
 export const previewTemplateImport = (form: FormData) =>
-  api.post<{ body_template: string; variables: string[]; fields: DetectedField[]; known_fields: Record<string, string> }>('/templates/preview-import', form, { timeout: 120000 }).then(r => r.data);
+  api.post<{ body_template: string; variables: string[]; fields: DetectedField[]; known_fields: Record<string, string>; examples: TemplateExample[]; example: number | null }>('/templates/preview-import', form, { timeout: 120000 }).then(r => r.data);
 
 export const seedDefaultTemplates = () =>
   api.post<{ created: string[]; skipped: string[] }>('/templates/seed-defaults').then(r => r.data);

@@ -361,11 +361,21 @@ async def create_template(
     return result.data[0]
 
 
-def _smart_template(content: bytes, filename: str, mapping: Optional[dict] = None) -> tuple[str, list[dict]]:
-    """The uploaded document as a template: its fields found, mapped to Wedy data (or to the user's choices)."""
+def _smart_template(content: bytes, filename: str, mapping: Optional[dict] = None, example: Optional[int] = None) -> tuple[str, list[dict], list[dict], Optional[int]]:
+    """The uploaded document as a template: its fields found, mapped to Wedy data (or to the user's choices).
+    A document holding several examples (one attestation per page, each for someone else) gives one of them."""
     from app.services.pdf_template_extractor import extract_template_smart
     from app.services import template_fields as tfields
-    return tfields.build_template(extract_template_smart(content, filename), mapping)
+    raw, examples, chosen = tfields.pick_example(extract_template_smart(content, filename), example)
+    body, fields = tfields.build_template(raw, mapping)
+    return body, fields, examples, chosen
+
+
+def _example(raw: str) -> Optional[int]:
+    try:
+        return int(raw) if str(raw).strip() != "" else None
+    except ValueError:
+        return None
 
 
 def _parse_mapping(raw: str) -> Optional[dict]:
@@ -387,6 +397,7 @@ async def import_template_from_file(
     category: str = Form("autre"),
     target_type: str = Form("employee"),
     mapping: str = Form(""),
+    example: str = Form(""),
     db: Client = Depends(get_db),
     current_user: dict = Depends(require_hr_or_admin),
 ):
@@ -400,7 +411,7 @@ async def import_template_from_file(
     user_mapping = _parse_mapping(mapping)
 
     try:
-        body_template, fields = _smart_template(content, filename, user_mapping)
+        body_template, fields, _examples, _chosen = _smart_template(content, filename, user_mapping, _example(example))
     except HTTPException:
         raise
     except Exception as e:
@@ -450,6 +461,7 @@ async def import_template_from_file(
 async def preview_import(
     file: UploadFile = File(...),
     mapping: str = Form(""),
+    example: str = Form(""),
     current_user: dict = Depends(require_hr_or_admin),
 ):
     filename = file.filename or ""
@@ -461,7 +473,7 @@ async def preview_import(
     content = await file.read()
 
     try:
-        body_template, fields = _smart_template(content, filename, _parse_mapping(mapping))
+        body_template, fields, examples, chosen = _smart_template(content, filename, _parse_mapping(mapping), _example(example))
     except HTTPException:
         raise
     except Exception as e:
@@ -473,6 +485,7 @@ async def preview_import(
     from app.services.template_fields import KNOWN_FIELDS
     variables = sorted(set(re.findall(r"\{\{(\w+)\}\}", body_template)))
     return {"body_template": body_template, "variables": variables, "raw_text": body_template, "fields": fields,
+            "examples": examples, "example": chosen,
             "known_fields": KNOWN_FIELDS}
 
 
@@ -750,6 +763,7 @@ async def update_template(
 
 class FieldsIn(BaseModel):
     mapping: Dict[str, str] = {}
+    example: Optional[int] = None   # several examples in the document: the one kept
 
 
 def _template_or_404(db: Client, template_id: str) -> dict:
@@ -766,8 +780,9 @@ def analyse_saved_template(template_id: str, body: FieldsIn = Body(default=Field
     what would change, before anything is saved."""
     from app.services import template_fields as tfields
     tpl = _template_or_404(db, template_id)
-    new_body, fields = tfields.build_template(tpl.get("body_template") or "", body.mapping or None)
-    return {"fields": fields, "body_template": new_body}
+    raw, examples, chosen = tfields.pick_example(tpl.get("body_template") or "", body.example)
+    new_body, fields = tfields.build_template(raw, body.mapping or None)
+    return {"fields": fields, "body_template": new_body, "examples": examples, "example": chosen}
 
 
 @router.post("/{template_id}/fields")
@@ -776,7 +791,8 @@ def save_template_fields(template_id: str, body: FieldsIn = Body(default=FieldsI
     """Turn the values found in a saved template into fields (with the user's corrections) and save it."""
     from app.services import template_fields as tfields
     tpl = _template_or_404(db, template_id)
-    new_body, fields = tfields.build_template(tpl.get("body_template") or "", body.mapping or None)
+    raw, _examples, _chosen = tfields.pick_example(tpl.get("body_template") or "", body.example)
+    new_body, fields = tfields.build_template(raw, body.mapping or None)
     variables = sorted(set(re.findall(r"\{\{(\w+)\}\}", new_body)))
     res = db.table("document_templates").update({"body_template": new_body, "variables": variables}).eq("id", template_id).execute()
     log_action(db, current_user["id"], "UPDATE", "document_template", template_id)

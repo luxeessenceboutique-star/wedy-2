@@ -4004,4 +4004,10 @@ export const fr = {
     tpl_fields_none: 'Aucune valeur propre à une personne trouvée dans ce modèle.',
     tpl_fields_save: 'Enregistrer les champs',
     tpl_fields_saved: 'Modèle mis à jour · {n} champ(s) rempli(s) pour chaque personne',
+    // Modèles › plusieurs exemples
+    tpl_ex_label: 'Exemple gardé comme modèle',
+    tpl_ex_title: 'Ce document contient {n} « {title} » différentes, une par personne',
+    tpl_ex_s: 'Choisissez celle qui sert de modèle : les autres sont écartées, pour qu\'aucun autre nom ne reste dans les documents générés.',
+    tpl_ex_page: 'Page {n}',
+    tpl_ex_noname: '(sans nom)',
 } as const;

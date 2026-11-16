@@ -88,7 +88,7 @@ function coverage(text: string, words: string[]): number {
   return hit.filter(Boolean).length / s.length;
 }
 
-/** How close two person names are (0..1): spelling slips (Amar / Ammar, Grida / Gridda), word order and joined words
+/** How close two person names are (0..1): spelling slips (Amin / Amine, Karim / Kareem), word order and joined words
  *  (« Salaheddine Elgharabi » = « EL GHARABI Salah eddine ») are tolerated. */
 export function nameScore(a: string, b: string): number {
   const ta = norm(a).split(' ').filter(Boolean), tb = norm(b).split(' ').filter(Boolean);

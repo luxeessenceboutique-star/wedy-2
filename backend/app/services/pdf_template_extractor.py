@@ -291,6 +291,7 @@ def extract_template_smart(file_bytes: bytes, filename: str = "template.pdf") ->
         _LEGACY_SUBST.reset(token)
 
 
+PAGE_MARK = "<!--wedy-page-->"
 _ZW = dict.fromkeys(map(ord, "\u200b\u200c\u200d\u2060\ufeff"), None)
 _BULLETS = ("●", "•", "▪", "◦", "–", "-", "*", "➢", "✓")
 
@@ -378,7 +379,9 @@ def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
         return re.sub(r"\s*<br>\s*", "<br>", "".join(out)).strip()
 
     html: list[str] = []
-    for width, spans, images in pages:
+    for page_no, (width, spans, images) in enumerate(pages):
+        if page_no and html:
+            html.append(PAGE_MARK)  # where a page of the original ends: one PDF can hold several examples
         # 1. lines: spans whose vertical centres are close, left to right
         lines = []
         cur = []

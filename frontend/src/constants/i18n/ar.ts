@@ -3950,4 +3950,10 @@ export const ar = {
     tpl_fields_none: 'لم يتم العثور على أي قيمة خاصة بشخص في هذا النموذج.',
     tpl_fields_save: 'حفظ الحقول',
     tpl_fields_saved: 'تم تحديث النموذج · {n} حقل يُملأ لكل شخص',
+    // Modèles › plusieurs exemples
+    tpl_ex_label: 'المثال المعتمد كنموذج',
+    tpl_ex_title: 'تحتوي هذه الوثيقة على {n} « {title} » مختلفة، واحدة لكل شخص',
+    tpl_ex_s: 'اختر النسخة التي ستُعتمد كنموذج: تُستبعد الأخرى حتى لا يبقى أي اسم آخر في الوثائق المُنشأة.',
+    tpl_ex_page: 'الصفحة {n}',
+    tpl_ex_noname: '(بدون اسم)',
 } as const;

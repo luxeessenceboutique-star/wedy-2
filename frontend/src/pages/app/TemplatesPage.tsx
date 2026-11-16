@@ -1,12 +1,12 @@
 ﻿import { useEffect, useRef, useState, type ChangeEvent, type ComponentType, type FormEvent, type MouseEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowLeft, CircleCheck, FileText, FileUp, GraduationCap, PencilLine, ScanSearch, Upload, Users, UsersRound } from 'lucide-react';
+import { ArrowLeft, CircleCheck, FileText, FileUp, Files, GraduationCap, PencilLine, ScanSearch, Upload, Users, UsersRound } from 'lucide-react';
 import {
   listTemplates, createTemplate, updateTemplate, deleteTemplate,
   importTemplateFromPdf, previewTemplateImport, seedDefaultTemplates, listDocuments, getApiError, analyseSavedTemplate, saveTemplateFields,
 } from '@/services/api';
-import type { DetectedField, Template } from '@/services/api';
+import type { DetectedField, Template, TemplateExample } from '@/services/api';
 import { FIELD_LABEL, FIELD_LABELS, KEEP, customKey, hasOwnLayout } from '@/lib/templateFields';
 import { Modal, Spinner } from '@/components/ui';
 import { useNotify } from '@/lib/notify';
@@ -344,9 +344,11 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
   const [fields, setFields] = useState<DetectedField[] | null>(null);
   const [preview, setPreview] = useState('');
   const [choice, setChoice] = useState<Record<string, string>>({});
+  const [examples, setExamples] = useState<TemplateExample[]>([]);
+  const [example, setExample] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const reset = () => { setFile(null); setName(''); setFields(null); setPreview(''); setChoice({}); };
+  const reset = () => { setFile(null); setName(''); setFields(null); setPreview(''); setChoice({}); setExamples([]); setExample(null); };
   const close = () => { if (loading) return; reset(); onClose(); };
   const pick = (f: File) => { setFile(f); setFields(null); setChoice({}); if (!name.trim()) setName(f.name.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim()); };
   // only what the user changed is sent: the server finds the rest itself
@@ -355,15 +357,19 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
     const fd = new FormData();
     fd.append('file', file as File); fd.append('name_fr', name.trim()); fd.append('name_en', name.trim());
     fd.append('category', category); fd.append('target_type', targetType); fd.append('mapping', mapping());
+    if (example !== null) fd.append('example', String(example));
     return fd;
   };
-  const analyse = async (e?: FormEvent) => {
+  const analyse = async (e?: FormEvent, pickExample?: number) => {
     e?.preventDefault();
     if (!file || !name.trim()) { notify.error(t('tpl_import_required')); return; }
     setLoading(true);
     try {
-      const r = await previewTemplateImport(form());
-      setFields(r.fields); setPreview(r.body_template);
+      const fd = form();
+      if (pickExample !== undefined) { fd.set('example', String(pickExample)); fd.set('mapping', '{}'); }
+      const r = await previewTemplateImport(fd);
+      setFields(r.fields); setPreview(r.body_template); setExamples(r.examples ?? []); setExample(r.example ?? null);
+      if (pickExample !== undefined) setChoice({});
     } catch (err) { notify.error(getApiError(err, t('tpl_import_error'))); }
     setLoading(false);
   };
@@ -380,7 +386,7 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
     <Modal open={open} onClose={close} title={t(review ? 'tpl_an_title' : 'tpl_import_title')} icon={review ? <ScanSearch size={17} /> : <FileUp size={17} />} width={review ? 980 : 500}
       subtitle={review ? tf(t(fields.length ? 'tpl_an_sub' : 'tpl_an_sub_none'), { n: fields.length, file: file?.name ?? '' }) : t('tpl_import_sub')}
       footer={review ? <>
-        <button type="button" className="btn btn-secondary" onClick={() => { setFields(null); setPreview(''); }} disabled={loading}><ArrowLeft size={14} /> {t('tpl_an_back')}</button>
+        <button type="button" className="btn btn-secondary" onClick={() => { setFields(null); setPreview(''); setExamples([]); setExample(null); }} disabled={loading}><ArrowLeft size={14} /> {t('tpl_an_back')}</button>
         <button type="button" className="btn btn-primary" onClick={() => void save()} disabled={loading}>
           {loading ? <Spinner size={14} color="#fff" /> : <Upload size={14} />} {t('tpl_import')}
         </button>
@@ -424,7 +430,10 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
         <div style={{ padding: '10px 12px', borderRadius: 12, background: '#f3f6f7', fontSize: 12.5, color: '#52646d', lineHeight: 1.55 }}>{t('tpl_an_hint')}</div>
       </form>
       ) : (
-      <FieldReview fields={fields} preview={preview} choice={choice} setChoice={setChoice} />
+      <>
+        {examples.length > 1 && <ExamplePicker examples={examples} value={example ?? 0} busy={loading} onPick={i => void analyse(undefined, i)} />}
+        <FieldReview fields={fields} preview={preview} choice={choice} setChoice={setChoice} />
+      </>
       )}
     </Modal>
   );
@@ -488,17 +497,19 @@ function FieldReview({ fields, preview, choice, setChoice }: {
   );
 }
 
-/** « Détecter les champs » on a saved template: a document imported already filled for someone (« Mme CHAIMAA BYAZ »,
+/** « Détecter les champs » on a saved template: a document imported already filled for someone (« Mme LINA SAIDI »,
  *  her dates, her position) gets those values turned into fields, after the user has checked them. */
 function FieldsModal({ tpl, onClose, onSaved }: { tpl: Template; onClose: () => void; onSaved: () => void }) {
   const { t } = useLang();
   const notify = useNotify();
   const [choice, setChoice] = useState<Record<string, string>>({});
-  const q = useQuery({ queryKey: ['template-fields', tpl.id], queryFn: () => analyseSavedTemplate(tpl.id), retry: false });
+  const [example, setExample] = useState<number | null>(null);
+  const q = useQuery({ queryKey: ['template-fields', tpl.id, example], queryFn: () => analyseSavedTemplate(tpl.id, {}, example), retry: false, placeholderData: prev => prev });
   const fields = q.data?.fields ?? [];
+  const examples = q.data?.examples ?? [];
   const mapping = () => Object.fromEntries(fields.filter(f => choice[f.placeholder] !== undefined && choice[f.placeholder] !== f.key).map(f => [f.placeholder, choice[f.placeholder]]));
   const save = useMutation({
-    mutationFn: () => saveTemplateFields(tpl.id, mapping()),
+    mutationFn: () => saveTemplateFields(tpl.id, mapping(), q.data?.example ?? null),
     onSuccess: r => { notify.success(tf(t('tpl_fields_saved'), { n: new Set(r.fields.map(f => f.key)).size })); onSaved(); onClose(); },
     onError: e => notify.error(getApiError(e, t('error'))),
   });
@@ -514,7 +525,30 @@ function FieldsModal({ tpl, onClose, onSaved }: { tpl: Template; onClose: () => 
       </>}>
       {q.isLoading ? <div style={{ padding: 40, display: 'flex', justifyContent: 'center' }}><Spinner /></div>
         : q.isError ? <p style={{ padding: 20, color: '#b3261e' }}>{getApiError(q.error, t('error'))}</p>
-        : <FieldReview fields={fields} preview={q.data?.body_template ?? ''} choice={choice} setChoice={setChoice} />}
+        : <>
+            {examples.length > 1 && <ExamplePicker examples={examples} value={q.data?.example ?? 0} busy={q.isFetching} onPick={i => { setChoice({}); setExample(i); }} />}
+            <FieldReview fields={fields} preview={q.data?.body_template ?? ''} choice={choice} setChoice={setChoice} />
+          </>}
     </Modal>
+  );
+}
+
+/** A document holding several examples (one attestation per page, each written for someone else): the one that
+ *  becomes the template. The others are left out, so a generated document never carries their names. */
+function ExamplePicker({ examples, value, busy, onPick }: { examples: TemplateExample[]; value: number; busy: boolean; onPick: (i: number) => void }) {
+  const { t } = useLang();
+  return (
+    <div className="tpl-ex" role="radiogroup" aria-label={t('tpl_ex_label')}>
+      <div className="tpl-ex-h"><Files size={15} /><b>{tf(t('tpl_ex_title'), { n: examples.length, title: examples[0]?.title ?? '' })}</b>{busy && <Spinner size={13} />}</div>
+      <small>{t('tpl_ex_s')}</small>
+      <div className="tpl-ex-list">
+        {examples.map(e => (
+          <label key={e.index} className={`tpl-ex-item${e.index === value ? ' on' : ''}`}>
+            <input type="radio" name="tpl-example" checked={e.index === value} disabled={busy} onChange={() => onPick(e.index)} />
+            <span><b>{tf(t('tpl_ex_page'), { n: e.index + 1 })}</b><small>{e.person ?? t('tpl_ex_noname')}</small></span>
+          </label>
+        ))}
+      </div>
+    </div>
   );
 }

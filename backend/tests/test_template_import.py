@@ -194,7 +194,7 @@ def make_attestation_pdf():
     for k, line in enumerate(["TYTHON SARL", "Mme Widad", "Directrice RH"]):
         page.insert_text((72, 420 + k * 16), line, fontsize=12, fontname="tibo")
     page.insert_text((363, 500), "Signature et cachet", fontsize=12, fontname="tibo")
-    page.insert_text((352, 516), "Madame Widad Ennaji", fontsize=12, fontname="tibo")
+    page.insert_text((352, 516), "Madame Samira Hajji", fontsize=12, fontname="tibo")
     return doc.tobytes()
 
 
@@ -207,7 +207,7 @@ def test_a_pdf_keeps_its_logo_title_lines_and_signature_block():
     title = _re.search(r"<(h\d|p) style=\"([^\"]*)\">(?:<strong>)?ATTESTATION DE STAGE", html)
     assert title and "text-align:center" in title.group(2)                 # the centred title stays centred
     assert "TYTHON SARL</strong><br><strong>Mme Widad</strong><br><strong>Directrice RH" in html.replace("</strong><strong>", "")
-    assert "Signature et cachet</strong><br><strong>Madame Widad Ennaji" in html and "margin-inline-start" in html
+    assert "Signature et cachet</strong><br><strong>Madame Samira Hajji" in html and "margin-inline-start" in html
     fields = {f["placeholder"]: f["key"] for f in tf.analyse_html(html)}
     assert fields["M./Mme"] == "civility_short" and fields["[Nom et Prénom]"] == "full_name" and fields["[Date de rédaction]"] == "today"
 

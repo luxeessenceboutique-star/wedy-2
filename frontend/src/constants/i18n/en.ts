@@ -3950,4 +3950,10 @@ export const en = {
     tpl_fields_none: 'No value specific to a person found in this template.',
     tpl_fields_save: 'Save the fields',
     tpl_fields_saved: 'Template updated · {n} field(s) filled for each person',
+    // Modèles › plusieurs exemples
+    tpl_ex_label: 'Example kept as the template',
+    tpl_ex_title: 'This document holds {n} different “{title}”, one per person',
+    tpl_ex_s: 'Choose the one used as the template: the others are left out, so no other name stays in the generated documents.',
+    tpl_ex_page: 'Page {n}',
+    tpl_ex_noname: '(no name)',
 } as const;

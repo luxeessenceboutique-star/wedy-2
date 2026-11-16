@@ -205,6 +205,8 @@ def generate_doc(
     ctx = build_context(employee, payload.extra_variables or {}, app_settings.load(supabase)[0]["company"], tfields.read_meta(body))
     # « intégré(e) », « il/elle » written for the person once the civility is known
     content = tfields.agree(render_template(tfields.strip_meta(body), ctx), ctx.get("civility", ""))
+    # « du 01/02/2024 au à ce jour » (no end date) → « du 01/02/2024 à ce jour »
+    content = re.sub(r"\bau(\s*(?:<[^>]+>\s*)*)à ce jour", r"\1à ce jour", content)
 
     # 4. Optional AI (another language, or a smoother wording): the HTML must come back with its tags, else it is refused
     ai_enhanced, ai_error = False, None

@@ -4,15 +4,17 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CircleAlert, CircleCheck, Mail, Plug, RefreshCw, Send, Unplug } from 'lucide-react';
+import { CircleAlert, CircleCheck, Mail, Plug, RefreshCw, Send, Settings2, Unplug } from 'lucide-react';
 import {
-  chooseSocialAccount, connectSocial, disconnectSocial, getApiError, getMailStatus, getSocialStatus, sendTestMail,
+  chooseSocialAccount, connectSocial, disconnectSocial, getApiError, getMailStatus, getSocialStatus, removeMailAccount, sendTestMail,
   type SocialAccount, type SocialProvider,
 } from '@/services/api';
 import { Spinner } from '@/components/ui';
 import { useLang, type TKey } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { tf } from '@/lib/format';
+import { useAppSettings } from '@/lib/appSettings';
+import { MailSetupModal } from './MailSetupModal';
 import './ConnectorsSection.css';
 
 const PROVIDERS: { id: SocialProvider; name: TKey; desc: TKey; mono: string; color: string; env: string }[] = [
@@ -57,6 +59,18 @@ export function ConnectorsSection() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['social-status'] }),
     onError: e => notify.error(getApiError(e, t('error'))),
   });
+  // « Configurer l'envoi » — also opened from the interview planning (?mail=setup)
+  const [mailSetup, setMailSetupState] = useState(() => params.get('mail') === 'setup');
+  const setMailSetup = (open: boolean) => {
+    setMailSetupState(open);
+    if (!open && params.get('mail')) navigate('/app/integrations', { replace: true });
+  };
+  const removeMail = useMutation({
+    mutationFn: removeMailAccount,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['mail-status'] }); notify.success(t('mail_removed')); },
+    onError: e => notify.error(getApiError(e, t('error'))),
+  });
+  const { data: appSettings } = useAppSettings();
   const testMail = useMutation({
     mutationFn: sendTestMail,
     onSuccess: r => notify.success(tf(t('soc_mail_test_ok'), { to: r.to })),
@@ -115,17 +129,28 @@ export function ConnectorsSection() {
           <div className="cx-head">
             <span className="cx-mono" style={{ background: '#0e6f84' }}><Mail size={16} /></span>
             <div className="cx-title"><b>{t('soc_mail')}</b><small>{t('soc_mail_desc')}</small></div>
-            <span className={`cx-state ${mail?.configured ? 'ok' : 'off'}`}>{mail?.configured ? <><CircleCheck size={13} />{t('soc_state_on')}</> : t('soc_state_server')}</span>
+            <span className={`cx-state ${mail?.configured ? 'ok' : 'off'}`}>{mail?.configured ? <><CircleCheck size={13} />{t('soc_state_on')}</> : t('mail_state_todo')}</span>
           </div>
           <div className="cx-body">
             {mailQ.isLoading ? <Spinner size={14} /> : mail?.configured ? <>
               <div className="cx-line"><span>{t('soc_mail_from')}</span><b>{mail.from}</b></div>
-              <div className="cx-meta">{tf(t('soc_mail_flow'), { n: mail.reminder_minutes })}</div>
-              <div className="cx-btns"><button type="button" className="cx-btn" onClick={() => testMail.mutate()} disabled={testMail.isPending}>{testMail.isPending ? <Spinner size={13} /> : <Send size={13} />}{t('soc_mail_test')}</button></div>
-            </> : <><p className="cx-note"><CircleAlert size={14} />{t('soc_mail_server_note')}</p><code className="cx-env">MAIL_SERVER · MAIL_PORT · MAIL_USERNAME · MAIL_PASSWORD · MAIL_FROM</code></>}
+              <div className="cx-meta">
+                {mail.source === 'platform' && mail.account?.updated_by_name ? tf(t('mail_set_by'), { name: mail.account.updated_by_name, d: fmt(mail.account.updated_at) }) : mail.source === 'env' ? t('mail_set_server') : null}
+                {' '}{tf(t('soc_mail_flow'), { n: mail.reminder_minutes })}
+              </div>
+              <div className="cx-btns">
+                <button type="button" className="cx-btn" onClick={() => testMail.mutate()} disabled={testMail.isPending}>{testMail.isPending ? <Spinner size={13} /> : <Send size={13} />}{t('soc_mail_test')}</button>
+                <button type="button" className="cx-btn" onClick={() => setMailSetup(true)}><Settings2 size={13} />{t('mail_edit')}</button>
+                {mail.source === 'platform' && <button type="button" className="cx-btn danger" onClick={() => { if (window.confirm(t('mail_remove_confirm'))) removeMail.mutate(); }}><Unplug size={13} />{t('mail_remove')}</button>}
+              </div>
+            </> : <>
+              <p className="cx-hint">{t('mail_todo_note')}</p>
+              <button type="button" className="cx-btn primary" style={{ background: '#0e6f84' }} onClick={() => setMailSetup(true)}><Settings2 size={13} />{t('mail_setup_btn')}</button>
+            </>}
           </div>
         </div>
       </div>
+      {mailSetup && <MailSetupModal status={mail} companyName={appSettings?.company?.name ?? ''} onClose={() => setMailSetup(false)} />}
     </section>
   );
 }

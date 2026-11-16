@@ -495,9 +495,9 @@ def schedule_interview(payload: InterviewCreate, request: Request, supabase: Cli
 
 
 @router.get("/mail-status")
-def interview_mail_status(_user: dict = Depends(require_hr_or_admin)):
-    """Whether e-mails can be sent (SMTP set on the server), from which address, how long before the link goes out."""
-    return interview_mail.mail_status()
+def interview_mail_status(supabase: Client = Depends(get_db), _user: dict = Depends(require_hr_or_admin)):
+    """Whether e-mails can be sent (account set in Wedy or on the server), from which address, how long before the link goes out."""
+    return interview_mail.mail_status(supabase)
 
 
 @router.post("/{id}/send-invite")

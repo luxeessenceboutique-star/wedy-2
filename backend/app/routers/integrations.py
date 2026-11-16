@@ -6,7 +6,10 @@ can read the team's approved leave, so HR can regenerate or revoke it.
 import secrets
 from datetime import date, datetime, timedelta
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from fastapi.responses import Response
 from supabase import Client
 
@@ -91,25 +94,84 @@ def ical_feed(token: str, supabase: Client = Depends(get_db)):
 
 
 # ── E-mails (interview invitations and reminders) ─────────────────────────────
+# The SMTP account is set here by HR (no server change needed): saved in app_settings « mail », the password
+# encrypted with SECRET_KEY and never sent back. Without it, the API's environment (MAIL_*) is used.
+
+_TEST_HTML = ("<p style=\"font-family:Arial;font-size:14px\">Bonjour,</p><p style=\"font-family:Arial;font-size:14px\">"
+              "Cet e-mail de test confirme que Wedy peut envoyer les invitations aux entretiens et les rappels avec le lien.</p>")
+_TEST_TEXT = "Bonjour,\n\nCet e-mail de test confirme que Wedy peut envoyer les invitations aux entretiens et les rappels avec le lien."
+
+
+class MailAccountIn(BaseModel):
+    server: str = Field(min_length=3, max_length=120)
+    port: int = Field(587, ge=1, le=65535)
+    security: Literal["starttls", "ssl", "none"] = "starttls"
+    username: str = Field("", max_length=200)
+    password: str = Field("", max_length=300)        # empty: keep the one already saved
+    sender_email: str = Field(min_length=3, max_length=200)
+    sender_name: str = Field("", max_length=120)
+    no_auth: bool = False
+
 
 @router.get("/mail")
-def mail_status(current_user: dict = Depends(require_hr_or_admin)):
+def mail_status(supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
     from app.services.interview_mail import mail_status as status
-    return status()
+    return status(supabase)
+
+
+@router.put("/mail")
+def mail_save(body: MailAccountIn, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
+    """Save the account after a test e-mail to the signed-in user went out with it: a wrong password never replaces
+    a working account."""
+    from app.services import mailer
+    from app.services.interview_mail import mail_status as status
+    saved = mailer.stored(supabase) or {}
+    password = body.password or (mailer.unseal(saved.get("password_enc") or "") if saved else "")
+    if "@" not in body.sender_email:
+        raise HTTPException(status_code=422, detail="Adresse d'envoi invalide.")
+    conf = mailer.Conf(server=body.server.strip(), port=body.port, security=body.security, username=body.username.strip(),
+                       password=password, sender_email=body.sender_email.strip(), sender_name=body.sender_name.strip(),
+                       no_auth=body.no_auth, source="platform")
+    if not mailer.configured(conf):
+        raise HTTPException(status_code=422, detail="Renseignez l'identifiant et le mot de passe du compte d'envoi.")
+    to = (current_user.get("email") or "").strip()
+    if not to:
+        raise HTTPException(status_code=422, detail="Votre compte n'a pas d'adresse e-mail pour recevoir le test.")
+    try:
+        mailer.send(to, "Test d'envoi d'e-mail – Wedy RH", _TEST_HTML, _TEST_TEXT, conf=conf)
+    except mailer.MailError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    value = {"server": conf.server, "port": conf.port, "security": conf.security, "username": conf.username,
+             "password_enc": mailer.seal(password), "from": conf.sender_email, "from_name": conf.sender_name,
+             "no_auth": conf.no_auth, "updated_at": datetime.utcnow().isoformat(),
+             "updated_by_name": current_user.get("full_name") or current_user.get("email") or ""}
+    try:
+        supabase.table("app_settings").upsert({"key": "mail", "value": value, "updated_by": current_user.get("id"),
+                                               "updated_at": datetime.utcnow().isoformat()}).execute()
+    except Exception as e:
+        if app_settings.missing_table(e):
+            raise HTTPException(status_code=503, detail="Table des réglages absente : lancez la migration app_settings.sql.")
+        raise HTTPException(status_code=400, detail=str(e)[:200])
+    log_action(supabase, current_user["id"], "UPDATE", "mail_account", conf.sender_email)
+    return {**status(supabase), "test_sent_to": to}
+
+
+@router.delete("/mail", status_code=204)
+def mail_remove(supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
+    """Forget the account set in Wedy (the environment's one, if any, is used again)."""
+    supabase.table("app_settings").delete().eq("key", "mail").execute()
+    log_action(supabase, current_user["id"], "DELETE", "mail_account", "mail")
 
 
 @router.post("/mail/test")
-def mail_test(current_user: dict = Depends(require_hr_or_admin)):
-    """Send a test e-mail to the signed-in user: checks the SMTP settings of the server."""
+def mail_test(supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
+    """Send a test e-mail to the signed-in user with the account in use."""
     from app.services import mailer
     to = (current_user.get("email") or "").strip()
     if not to:
         raise HTTPException(status_code=422, detail="Votre compte n'a pas d'adresse e-mail.")
-    html = ("<p style=\"font-family:Arial;font-size:14px\">Bonjour,</p><p style=\"font-family:Arial;font-size:14px\">"
-            "Cet e-mail de test confirme que Wedy peut envoyer les invitations aux entretiens et les rappels avec le lien.</p>")
     try:
-        mailer.send(to, "Test d'envoi d'e-mail – Wedy RH", html,
-                    "Bonjour,\n\nCet e-mail de test confirme que Wedy peut envoyer les invitations aux entretiens et les rappels avec le lien.")
+        mailer.send(to, "Test d'envoi d'e-mail – Wedy RH", _TEST_HTML, _TEST_TEXT, conf=mailer.current(supabase))
     except mailer.MailError as e:
         raise HTTPException(status_code=502, detail=str(e))
     return {"sent": True, "to": to}

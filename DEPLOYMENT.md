@@ -257,8 +257,12 @@ candidate receives an invitation: job, date, time, duration, type, interviewers,
 calendar file (.ics) — and is told the link will come 15 minutes before. 15 minutes before the start, a second e-mail
 carries the link (the external link HR typed, or the Wedy Visio guest link). Cancelling the interview sends a cancellation.
 
-Needs the SMTP settings of section 4.1 (`MAIL_SERVER`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`,
-`MAIL_FROM_NAME`; `MAIL_SSL_TLS=true` or port 465 for SSL, otherwise STARTTLS). Gmail / Google Workspace: use an
+The sending account is set **in Wedy** by HR: Intégrations › « E-mails aux candidats » › « Configurer l'envoi »
+(Google, Microsoft 365, OVH, Zoho or any SMTP server). Wedy sends a test e-mail to the signed-in user first and only
+saves the account if it went out; the password is encrypted with `SECRET_KEY` (changing `SECRET_KEY` means typing it
+again) and never sent back to the browser. Without it, the SMTP settings of section 4.1 are used (`MAIL_SERVER`,
+`MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`, `MAIL_FROM_NAME`; `MAIL_SSL_TLS=true` or port 465 for SSL,
+otherwise STARTTLS). Needs the `app_settings.sql` migration (the account is the row `key = 'mail'`). Gmail / Google Workspace: use an
 *app password*. A relay that authenticates by IP only: set `MAIL_NO_AUTH=true`. Check in Wedy › Intégrations ›
 « E-mails aux candidats » › « M'envoyer un e-mail de test ».
 

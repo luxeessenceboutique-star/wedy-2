@@ -89,7 +89,7 @@ def test_no_e_mail_without_address_without_smtp_or_when_unticked():
     assert plan(c, datetime.now(timezone.utc) + timedelta(days=1)).json()["email"]["error"].startswith("Le candidat n'a pas")
     c, _ = client()
     smtp(on=False)
-    assert "pas configurés" in plan(c, datetime.now(timezone.utc) + timedelta(days=1)).json()["email"]["error"]
+    assert "pas encore configurés" in plan(c, datetime.now(timezone.utc) + timedelta(days=1)).json()["email"]["error"]
     c, _ = client()
     assert plan(c, datetime.now(timezone.utc) + timedelta(days=1), notify=False).json()["email"] is None and not SENT
 
@@ -166,6 +166,73 @@ def test_the_default_settings_do_not_count_as_a_mail_server():
         os.environ.pop("MAIL_NO_AUTH")
     settings.MAIL_USERNAME, settings.MAIL_PASSWORD = "rh@tython.ma", "x"
     assert mailer.configured()
+
+
+def test_hr_sets_the_sending_account_in_wedy():
+    """No server change: the account is typed in Intégrations › E-mails, tested, saved encrypted, then used."""
+    c, db = client()
+    smtp(on=False)                                   # nothing in the environment
+    assert c.get("/api/integrations/mail").json()["configured"] is False
+    account = {"server": "smtp.gmail.com", "port": 587, "security": "starttls", "username": "rh@tython.org",
+               "password": "abcd efgh ijkl mnop", "sender_email": "rh@tython.org", "sender_name": "Tython RH"}
+
+    def refused(msg):
+        raise mailer.MailError("Identifiant ou mot de passe refusé par le serveur d'e-mails (535).")
+    mailer.transport = refused
+    r = c.put("/api/integrations/mail", json=account)
+    assert r.status_code == 422 and "refusé" in r.json()["detail"] and not db.tables.get("app_settings")   # a bad password is not saved
+    mailer.transport = fake_transport
+    SENT.clear()
+    r = c.put("/api/integrations/mail", json=account)
+    assert r.status_code == 200, r.text
+    st = r.json()
+    assert st["configured"] and st["source"] == "platform" and st["test_sent_to"] == "rh@tython.ma" and "Tython RH" in st["from"]
+    assert st["account"]["has_password"] and "password" not in st["account"] and SENT[0]["From"] == "Tython RH <rh@tython.org>"
+    saved = db.tables["app_settings"][0]["value"]
+    assert "abcd" not in str(saved) and mailer.unseal(saved["password_enc"]) == "abcd efgh ijkl mnop"
+    # the interview invitation goes out from this account
+    SENT.clear()
+    out = plan(c, datetime.now(timezone.utc) + timedelta(days=1)).json()["email"]
+    assert out["sent"] and SENT[0]["From"] == "Tython RH <rh@tython.org>"
+    assert "rh@tython.org" in [p for p in SENT[0].walk() if p.get_content_type() == "text/calendar"][0].get_content()
+    # a change without typing the password again keeps it
+    r = c.put("/api/integrations/mail", json={**account, "password": "", "sender_name": "Tython Recrutement"})
+    assert r.status_code == 200 and mailer.unseal(db.tables["app_settings"][0]["value"]["password_enc"]) == "abcd efgh ijkl mnop"
+    assert c.get("/api/entretiens/mail-status").json()["from"] == "Tython Recrutement <rh@tython.org>"
+    # removed: back to the environment (nothing there)
+    assert c.delete("/api/integrations/mail").status_code == 204
+    assert c.get("/api/integrations/mail").json()["configured"] is False
+
+
+def test_the_smtp_connection_uses_the_account_settings():
+    """The real sending path (no network: the SMTP classes are replaced) connects as the account says."""
+    calls = []
+
+    class FakeSMTP:
+        def __init__(self, host, port, context=None, timeout=None): calls.append(("connect", type(self).__name__, host, port))
+        def ehlo(self): pass
+        def starttls(self, context=None): calls.append(("starttls",))
+        def login(self, u, p): calls.append(("login", u, p))
+        def send_message(self, msg): calls.append(("send", msg["To"]))
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+
+    class FakeSMTP_SSL(FakeSMTP):
+        pass
+
+    real = (mailer.smtplib.SMTP, mailer.smtplib.SMTP_SSL, mailer.transport)
+    mailer.smtplib.SMTP, mailer.smtplib.SMTP_SSL, mailer.transport = FakeSMTP, FakeSMTP_SSL, mailer._smtp_send
+    try:
+        gmail = mailer.Conf(server="smtp.gmail.com", port=587, security="starttls", username="rh@tython.org", password="app-pass",
+                            sender_email="rh@tython.org", source="platform")
+        mailer.send("nadia@mail.ma", "s", "<p>x</p>", "x", conf=gmail)
+        assert calls == [("connect", "FakeSMTP", "smtp.gmail.com", 587), ("starttls",), ("login", "rh@tython.org", "app-pass"), ("send", "nadia@mail.ma")]
+        calls.clear()
+        ovh = mailer.Conf(server="ssl0.ovh.net", port=465, security="ssl", username="rh@tython.org", password="p", sender_email="rh@tython.org")
+        mailer.send("nadia@mail.ma", "s", "<p>x</p>", "x", conf=ovh)
+        assert calls[0] == ("connect", "FakeSMTP_SSL", "ssl0.ovh.net", 465) and ("starttls",) not in calls
+    finally:
+        mailer.smtplib.SMTP, mailer.smtplib.SMTP_SSL, mailer.transport = real
 
 if __name__ == "__main__":
     fails = 0

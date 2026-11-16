@@ -30,6 +30,7 @@ class Query:
     def insert(self, d): self.op, self.payload = "insert", d; return self
     def update(self, d): self.op, self.payload = "update", d; return self
     def delete(self): self.op = "delete"; return self
+    def upsert(self, d, on_conflict=None): self.op, self.payload, self.conflict = "upsert", d, on_conflict; return self
 
     def execute(self):
         rows = self.db.tables.setdefault(self.t, [])
@@ -38,6 +39,16 @@ class Query:
             out = []
             for d in items:
                 d = dict(d); d.setdefault("id", str(uuid.uuid4())); rows.append(d); out.append(copy.deepcopy(d))
+            return Res(out)
+        if self.op == "upsert":   # on the primary key (« key » for app_settings, else « id »), or the column given
+            out = []
+            for d in (self.payload if isinstance(self.payload, list) else [self.payload]):
+                col = getattr(self, "conflict", None) or ("key" if "key" in d else "id")
+                hit = next((r for r in rows if col in d and r.get(col) == d[col]), None)
+                if hit:
+                    hit.update(copy.deepcopy(d)); out.append(copy.deepcopy(hit))
+                else:
+                    d = dict(d); d.setdefault("id", str(uuid.uuid4())); rows.append(d); out.append(copy.deepcopy(d))
             return Res(out)
         m = [r for r in rows if all(f(r) for f in self.f)]
         if self.op == "update":

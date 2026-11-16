@@ -107,6 +107,7 @@ def load(supabase: Client, iv: dict) -> dict:
         "company": (company.get("name") or "").strip() or "notre entreprise",
         "company_address": ", ".join(x for x in [(company.get("address") or "").strip(), (company.get("city") or "").strip()] if x),
         "reply_to": (company.get("email") or "").strip() or None,
+        "conf": mailer.current(supabase),   # the SMTP account: the one set in Wedy, else the environment's
     }
 
 
@@ -252,7 +253,7 @@ def ics(ctx: dict, cancel: bool = False) -> bytes:
         f"SEQUENCE:{int(time.time()) // 60 % 100000}", f"DTSTART:{utc(ctx['start'])}", f"DTEND:{utc(ctx['end'])}",
         f"SUMMARY:{esc(ctx['type'] + (' – ' + ctx['job'] if ctx['job'] else '') + ' – ' + ctx['company'])}",
         f"LOCATION:{esc(where)}", f"DESCRIPTION:{esc('Entretien avec ' + ctx['company'])}",
-        f"ORGANIZER;CN={esc(settings.MAIL_FROM_NAME or ctx['company'])}:mailto:{settings.MAIL_FROM}",
+        f"ORGANIZER;CN={esc(ctx['conf'].sender_name or ctx['company'])}:mailto:{ctx['conf'].sender_email}",
         f"ATTENDEE;CN={esc(ctx['cand'].get('full_name') or '')};RSVP=TRUE:mailto:{ctx['cand'].get('email') or ''}",
         f"STATUS:{'CANCELLED' if cancel else 'CONFIRMED'}",
     ]
@@ -277,8 +278,8 @@ def send_invite(supabase: Client, iv: dict, base: str = "", kind: str = "invite"
     to = (ctx["cand"].get("email") or "").strip()
     if not to:
         return {"sent": False, "to": None, "error": "Le candidat n'a pas d'adresse e-mail dans sa fiche."}
-    if not mailer.configured():
-        return {"sent": False, "to": to, "error": "Les e-mails ne sont pas configurés sur le serveur (MAIL_SERVER, MAIL_FROM…)."}
+    if not mailer.configured(ctx["conf"]):
+        return {"sent": False, "to": to, "error": "Les e-mails ne sont pas encore configurés : Intégrations › E-mails aux candidats."}
     if kind == "cancel":
         subject, html, text = render_cancel(ctx)
         att = [("annulation.ics", ics(ctx, cancel=True), "text/calendar; method=CANCEL")]
@@ -286,7 +287,7 @@ def send_invite(supabase: Client, iv: dict, base: str = "", kind: str = "invite"
         subject, html, text = render_invite(ctx, update=kind == "update")
         att = [("entretien.ics", ics(ctx), "text/calendar; method=REQUEST")]
     try:
-        mailer.send(to, subject, html, text, attachments=att, reply_to=ctx["reply_to"])
+        mailer.send(to, subject, html, text, attachments=att, reply_to=ctx["reply_to"], conf=ctx["conf"])
     except mailer.MailError as e:
         _save(supabase, iv["id"], {"email_error": str(e)[:500]})
         return {"sent": False, "to": to, "error": str(e)}
@@ -302,7 +303,8 @@ def send_invite(supabase: Client, iv: dict, base: str = "", kind: str = "invite"
 
 def send_due_reminders(supabase: Client, now: Optional[datetime] = None) -> int:
     """E-mail the link of the video interviews starting in the next 15 minutes (each one once). Returns how many."""
-    if not mailer.configured():
+    conf = mailer.current(supabase)
+    if not mailer.configured(conf):
         return 0
     now = now or datetime.now(timezone.utc)
     today = now.astimezone(tz()).date()
@@ -334,7 +336,7 @@ def send_due_reminders(supabase: Client, now: Optional[datetime] = None) -> int:
             continue
         subject, html, text = render_reminder(ctx, link)
         try:
-            mailer.send(ctx["cand"]["email"], subject, html, text, reply_to=ctx["reply_to"])
+            mailer.send(ctx["cand"]["email"], subject, html, text, reply_to=ctx["reply_to"], conf=ctx["conf"])
             _save(supabase, iv["id"], {"email_error": None})
             sent += 1
         except mailer.MailError as e:
@@ -356,9 +358,17 @@ async def reminder_loop(get_client, every: int = 60) -> None:
         await asyncio.sleep(every)
 
 
-def mail_status() -> dict:
-    return {"configured": mailer.configured(), "from": mailer.sender() if mailer.configured() else None,
-            "reminder_minutes": REMINDER_MIN, "public_url": (os.getenv("APP_PUBLIC_URL") or "").strip() or None}
+def mail_status(supabase: Optional[Client] = None) -> dict:
+    """Whether e-mails can go out, from which address, and the account's settings (never its password)."""
+    conf = mailer.current(supabase)
+    ok = mailer.configured(conf)
+    saved = mailer.stored(supabase) or {}
+    return {"configured": ok, "from": mailer.sender(conf) if ok else None, "source": conf.source if ok else None,
+            "reminder_minutes": REMINDER_MIN, "public_url": (os.getenv("APP_PUBLIC_URL") or "").strip() or None,
+            "account": {"server": conf.server, "port": conf.port, "security": conf.security, "username": conf.username,
+                        "from": conf.sender_email, "from_name": conf.sender_name, "has_password": bool(conf.password),
+                        "updated_at": saved.get("updated_at"), "updated_by_name": saved.get("updated_by_name")} if conf.source == "platform" else None,
+            "env_configured": mailer.configured(mailer.env_conf())}
 
 
 def today() -> date:

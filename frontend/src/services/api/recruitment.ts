@@ -116,10 +116,16 @@ export type InterviewPerson = { employee_id?: string | null; name: string };
 export type MeetingSpec = { starts_at: string; duration_min: number; place?: string; visio_url?: string };
 /** Result of an e-mail to the candidate: sent or why not (no address, e-mails not set up on the server…). */
 export type MailResult = { sent: boolean; to: string | null; error: string | null };
-export type MailStatus = { configured: boolean; from: string | null; reminder_minutes: number; public_url: string | null };
+/** The SMTP account set in Wedy (its password is never sent back, only whether there is one). */
+export type MailAccount = { server: string; port: number; security: 'starttls' | 'ssl' | 'none'; username: string; from: string; from_name: string; has_password: boolean; updated_at?: string | null; updated_by_name?: string | null };
+export type MailStatus = { configured: boolean; from: string | null; source: 'platform' | 'env' | null; reminder_minutes: number; public_url: string | null; account: MailAccount | null; env_configured: boolean };
+export type MailAccountIn = { server: string; port: number; security: 'starttls' | 'ssl' | 'none'; username: string; password: string; sender_email: string; sender_name: string };
+/** Save the account after a test e-mail to the signed-in user went out with it (a wrong password is never saved). */
+export const saveMailAccount = (body: MailAccountIn) => api.put<MailStatus & { test_sent_to: string }>('/integrations/mail', body, { timeout: 60000 }).then(r => r.data);
+export const removeMailAccount = () => api.delete('/integrations/mail');
 export const getMailStatus = () => api.get<MailStatus>('/entretiens/mail-status').then(r => r.data);
 export const resendInterviewInvite = (id: string) => api.post<MailResult>(`/entretiens/${id}/send-invite`).then(r => r.data);
-export const sendTestMail = () => api.post<{ sent: boolean; to: string }>('/integrations/mail/test').then(r => r.data);
+export const sendTestMail = () => api.post<{ sent: boolean; to: string }>('/integrations/mail/test', undefined, { timeout: 60000 }).then(r => r.data);
 
 export const scheduleInterview = (body: Partial<Interview> & { slot_id?: string; interviewers?: InterviewPerson[]; meeting?: MeetingSpec; notify_candidate?: boolean }) =>
   api.post<Interview>('/entretiens', body).then(r => r.data);

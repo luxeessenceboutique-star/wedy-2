@@ -1,5 +1,6 @@
 import { useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { CalendarClock, Check, Mail, Video, X } from 'lucide-react';
 import { scheduleInterview, listEmployees, getApiError, getMailStatus } from '@/services/api';
 import type { Employee, Interview, InterviewPerson } from '@/services/api';
@@ -132,7 +133,7 @@ export function ScheduleInterviewDrawer({ open, onClose, candidates, defaultDate
           <span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#0a1c24' }}><Mail size={14} color="#0e6f84" />{t('itv_mail_invite')}</span>
             <span style={{ display: 'block', marginTop: 2, fontSize: 12, color: canMail ? '#5f7079' : '#a35b12', lineHeight: 1.45 }}>
-              {!mailQ.data ? '…' : !mailOn ? t('itv_mail_off') : !f.candidate_id ? t('itv_mail_pick') : !candMail ? t('itv_mail_no_address')
+              {!mailQ.data ? '…' : !mailOn ? <>{t('itv_mail_off')} <Link to="/app/integrations?mail=setup" style={{ color: '#0e6f84', fontWeight: 600, textDecoration: 'underline' }}>{t('mail_setup_btn')}</Link></> : !f.candidate_id ? t('itv_mail_pick') : !candMail ? t('itv_mail_no_address')
                 : tf(t(visioMode ? 'itv_mail_invite_s' : 'itv_mail_invite_place_s'), { to: candMail, n: mailQ.data.reminder_minutes })}
             </span>
           </span>

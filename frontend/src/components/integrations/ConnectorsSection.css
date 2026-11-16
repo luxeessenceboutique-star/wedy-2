@@ -29,3 +29,23 @@
 .cx-btn.primary { border: none; color: #fff; align-self: flex-start; }
 .cx-btn.danger { color: #a33a28; }
 .cx-btn:disabled { opacity: .6; cursor: default; }
+
+/* « Configurer l'envoi » (MailSetupModal.tsx) */
+.mx-form { padding: 16px 20px 18px; display: flex; flex-direction: column; gap: 12px; }
+.mx-providers { display: flex; flex-wrap: wrap; gap: 6px; }
+.mx-providers button { height: 34px; padding: 0 12px; border-radius: 99px; border: 1px solid #d6dfe3; background: #fff; font-family: inherit; font-size: 12.5px; font-weight: 600; color: #33474f; cursor: pointer; }
+.mx-providers button.on { background: #0a1c24; border-color: #0a1c24; color: #fff; }
+.mx-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+.mx-grid.three { grid-template-columns: minmax(0, 2fr) minmax(0, .8fr) minmax(0, 1.2fr); }
+.mx-grid label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; font-weight: 600; color: #33474f; min-width: 0; }
+.mx-grid input, .mx-grid select { height: 40px; padding: 0 11px; border-radius: 10px; border: 1px solid #d6dfe3; font-family: inherit; font-size: 13.5px; color: #0a1c24; background: #fff; outline: none; min-width: 0; }
+.mx-grid input:focus, .mx-grid select:focus { border-color: #16b6c8; box-shadow: 0 0 0 3px rgba(22,182,200,.15); }
+.mx-pw { position: relative; display: flex; }
+.mx-pw input { flex: 1; padding-inline-end: 38px; }
+.mx-pw button { position: absolute; inset-inline-end: 6px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: none; border-radius: 8px; background: transparent; color: #5f7079; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.mx-hint { margin: 0; padding: 10px 12px; border-radius: 12px; background: #f2f9fa; border: 1px solid #cfe8ec; font-size: 12.5px; line-height: 1.5; color: #0b5f72; }
+.mx-adv-toggle { align-self: flex-start; border: none; background: transparent; padding: 0; font-family: inherit; font-size: 12.5px; font-weight: 600; color: #0e6f84; cursor: pointer; }
+.mx-error { margin: 0; display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: #fbe9e6; color: #a33a28; font-size: 12.5px; line-height: 1.5; }
+.mx-error svg { flex-shrink: 0; margin-top: 1px; }
+.mx-note { margin: 0; font-size: 12px; color: #7d8f97; line-height: 1.45; }
+@media (max-width: 560px) { .mx-grid, .mx-grid.three { grid-template-columns: minmax(0, 1fr); } }

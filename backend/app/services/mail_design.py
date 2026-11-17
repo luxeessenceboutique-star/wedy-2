@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import base64
 import html as _html
+import io
+import os
 import re
 from typing import Optional
 
@@ -22,16 +24,54 @@ MONTHS_SHORT = ["JANV.", "FÉVR.", "MARS", "AVR.", "MAI", "JUIN", "JUIL.", "AOÛ
 e = _html.escape
 
 
-def logo_image(assets: Optional[dict]) -> Optional[tuple[bytes, str]]:
-    """The logo of Settings as (bytes, mime) for an inline image; None for none or for SVG (not shown by mail apps)."""
+BRAND_LOGO = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "brand", "tython-logo.png")
+
+
+def logo_image(assets: Optional[dict], company: Optional[dict] = None) -> Optional[tuple[bytes, str]]:
+    """The logo for the e-mail header as (PNG / JPEG / GIF bytes, mime): the one of Settings, re-encoded for mail
+    apps (no WebP / SVG there) and kept small; without one, Tython's own logo for Tython's company."""
     src = (assets or {}).get("logo") if isinstance(assets, dict) else None
-    m = re.match(r"data:(image/(?:png|jpe?g|gif|webp));base64,(.+)", src or "", re.S)
-    if not m:
-        return None
-    try:
-        return base64.b64decode(m.group(2)), m.group(1).replace("jpg", "jpeg")
+    m = re.match(r"data:(image/[a-z+.-]+);base64,(.+)", src or "", re.S)
+    data = None
+    if m and "svg" not in m.group(1):
+        try:
+            data = base64.b64decode(m.group(2))
+        except Exception:
+            data = None
+    if data is None:
+        name = ((company or {}).get("name") or "Tython").lower()
+        if "tython" not in name or not os.path.exists(BRAND_LOGO):
+            return None
+        with open(BRAND_LOGO, "rb") as fh:
+            data = fh.read()
+    try:   # PNG, at most 600 px wide (sharp on retina screens at the 150-180 px shown)
+        from PIL import Image
+        im = Image.open(io.BytesIO(data))
+        im = im.convert("RGBA") if im.mode not in ("RGBA", "RGB") else im
+        if im.width > 600:
+            im = im.resize((600, max(1, round(im.height * 600 / im.width))))
+        out = io.BytesIO()
+        im.save(out, "PNG", optimize=True)
+        return out.getvalue(), "image/png"
     except Exception:
         return None
+
+
+def logo_is_light(data: Optional[bytes]) -> bool:
+    """A white / pale logo (made for dark backgrounds) sits directly on the dark header; a dark one gets a white card."""
+    if not data:
+        return False
+    try:
+        from PIL import Image
+        im = Image.open(io.BytesIO(data)).convert("RGBA")
+        im.thumbnail((200, 200))
+        px = [(r, g, b) for r, g, b, a in im.getdata() if a > 60]
+        if not px:
+            return False
+        lum = sum(0.299 * r + 0.587 * g + 0.114 * b for r, g, b in px) / len(px)
+        return lum > 190
+    except Exception:
+        return False
 
 
 def _badge(text: str, tone: str) -> str:
@@ -105,18 +145,23 @@ def _section(inner: str, top: int = 22) -> str:
     return f'<tr><td class="px" style="padding:{top}px 32px 0">{inner}</td></tr>'
 
 
-def page(*, company: dict, has_logo: bool, preheader: str, badge: Optional[tuple[str, str]], title: str, subtitle: str = "",
+def page(*, company: dict, has_logo: bool, preheader: str, badge: Optional[tuple[str, str]], title: str, subtitle: str = "", logo_light: bool = False,
          paragraphs: list[str] = (), date: Optional[dict] = None, rows: list[tuple[str, str]] = (),
          notice: Optional[tuple[str, str]] = None, button: Optional[tuple[str, str]] = None,
          tips: Optional[tuple[str, list[str]]] = None, closing: list[str] = (), kicker: str = "Recrutement") -> str:
     """One e-mail. `paragraphs`, `notice` text, `tips` items and `closing` are HTML (already escaped by the caller)."""
     name = (company.get("name") or "").strip() or "Wedy RH"
     address = ", ".join(x for x in [(company.get("address") or "").strip(), (company.get("city") or "").strip()] if x)
-    brand = (f'<img src="cid:{LOGO_CID}" alt="{e(name)}" height="38" style="display:block;height:38px;max-width:180px;border:0">'
-             if has_logo else f'<span style="font:800 20px {FONT};color:#ffffff;letter-spacing:-.01em">{e(name)}</span>')
-    brand_cell = (f'<td valign="middle"><table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate">'
-                  f'<tr><td bgcolor="#ffffff" style="background:#ffffff;border-radius:12px;padding:8px 12px">{brand}</td></tr></table></td>'
-                  if has_logo else f'<td valign="middle">{brand}</td>')
+    if has_logo and logo_light:   # a white logo, straight on the dark header
+        brand_cell = (f'<td valign="middle"><img src="cid:{LOGO_CID}" alt="{e(name)}" height="48" '
+                      f'style="display:block;height:48px;width:auto;max-width:220px;border:0"></td>')
+    elif has_logo:                # a coloured / dark logo, on a white card
+        brand_cell = (f'<td valign="middle"><table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate">'
+                      f'<tr><td bgcolor="#ffffff" style="background:#ffffff;border-radius:12px;padding:8px 12px">'
+                      f'<img src="cid:{LOGO_CID}" alt="{e(name)}" height="36" style="display:block;height:36px;width:auto;max-width:180px;border:0">'
+                      f'</td></tr></table></td>')
+    else:
+        brand_cell = f'<td valign="middle"><span style="font:800 20px {FONT};color:#ffffff;letter-spacing:-.01em">{e(name)}</span></td>'
     body = []
     head = (_badge(*badge) + '<div style="height:12px;line-height:12px">&nbsp;</div>') if badge else ""
     body.append(_section(

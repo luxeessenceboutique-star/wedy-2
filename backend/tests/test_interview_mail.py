@@ -330,15 +330,26 @@ def test_the_e_mails_carry_the_company_logo_and_design():
     msg = SENT[0]
     html = next(p for p in msg.walk() if p.get_content_type() == "text/html").get_content()
     logo = [p for p in msg.walk() if p.get_content_maintype() == "image"]
-    assert len(logo) == 1 and logo[0]["Content-ID"] == "<wedy-logo@wedy>" and logo[0].get_payload(decode=True) == buf.getvalue()
+    assert len(logo) == 1 and logo[0]["Content-ID"] == "<wedy-logo@wedy>" and logo[0].get_content_type() == "image/png"
+    assert Image.open(io.BytesIO(logo[0].get_payload(decode=True))).size == (120, 40)
     assert 'src="cid:wedy-logo@wedy"' in html and "data:image" not in html and 'role="presentation"' in html and "display:flex" not in html
     assert ">17<" in html and "NOV." in html and "10:30 – 11:15" in html and "Invitation" in html
-    # no logo in Settings: the company's name instead, nothing attached
+    assert "border-radius:12px;padding:8px 12px" in html   # a dark logo sits on a white card
+    # no logo in Settings: Tython's own logo (white, straight on the dark header)
     c, db = client()
     db.tables["app_settings"] = [{"key": "company", "value": {"name": "Tython SARL"}}]
     plan(c, datetime(2026, 11, 17, 10, 30, tzinfo=interview_mail.tz()))
+    logo = [p for p in SENT[0].walk() if p.get_content_maintype() == "image"]
+    html = next(p for p in SENT[0].walk() if p.get_content_type() == "text/html").get_content()
+    from app.services import mail_design
+    assert len(logo) == 1 and mail_design.logo_is_light(logo[0].get_payload(decode=True)) and 'height="48"' in html
+    assert "border-radius:12px;padding:8px 12px" not in html
+    # another company without a logo: its name, nothing attached
+    c, db = client()
+    db.tables["app_settings"] = [{"key": "company", "value": {"name": "Acme SARL"}}]
+    plan(c, datetime(2026, 11, 17, 10, 30, tzinfo=interview_mail.tz()))
     assert not [p for p in SENT[0].walk() if p.get_content_maintype() == "image"]
-    assert "Tython SARL" in next(p for p in SENT[0].walk() if p.get_content_type() == "text/html").get_content()
+    assert "Acme SARL" in next(p for p in SENT[0].walk() if p.get_content_type() == "text/html").get_content()
 
 if __name__ == "__main__":
     fails = 0

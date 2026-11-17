@@ -109,7 +109,7 @@ def load(supabase: Client, iv: dict) -> dict:
         "company": (company.get("name") or "").strip() or "notre entreprise",
         "company_address": ", ".join(x for x in [(company.get("address") or "").strip(), (company.get("city") or "").strip()] if x),
         "reply_to": (company.get("email") or "").strip() or None,
-        "company_info": company, "logo": mail_design.logo_image(assets), "date": d,
+        "company_info": company, "logo": mail_design.logo_image(assets, company), "date": d,
         "conf": mailer.current(supabase),   # the SMTP account: the one set in Wedy, else the environment's
     }
 
@@ -154,7 +154,9 @@ def _text(title: str, intro: list[str], rows: list[tuple[str, str]], after: list
 
 
 def _design(ctx: dict, **kw) -> str:
-    return mail_design.page(company=ctx.get("company_info") or {"name": ctx["company"]}, has_logo=bool(ctx.get("logo")), **kw)
+    logo = ctx.get("logo")
+    return mail_design.page(company=ctx.get("company_info") or {"name": ctx["company"]}, has_logo=bool(logo),
+                            logo_light=mail_design.logo_is_light(logo[0] if logo else None), **kw)
 
 
 def _date(ctx: dict, note: str = "Heure du Maroc", tone: str = "teal", hours: Optional[str] = None) -> dict:

@@ -107,11 +107,13 @@ def _test_mail(supabase: Client, conf) -> tuple[str, list]:
     from app.services.interview_mail import REMINDER_MIN
     try:
         s = app_settings.load(supabase)[0]
-        company, logo = s.get("company") or {}, mail_design.logo_image(s.get("assets"))
+        company = s.get("company") or {}
+        logo = mail_design.logo_image(s.get("assets"), company)
     except Exception:
-        company, logo = {}, None
+        company, logo = {}, mail_design.logo_image(None, {})
     html = mail_design.page(
-        company=company, has_logo=bool(logo), preheader="L'envoi des e-mails aux candidats fonctionne.", badge=("Test réussi", "green"),
+        company=company, has_logo=bool(logo), logo_light=mail_design.logo_is_light(logo[0] if logo else None),
+        preheader="L'envoi des e-mails aux candidats fonctionne.", badge=("Test réussi", "green"),
         title="L'envoi des e-mails fonctionne", subtitle="Ceci est un e-mail de test envoyé depuis Wedy RH.",
         paragraphs=["Bonjour,", "Si vous lisez ce message, Wedy peut envoyer les e-mails aux candidats depuis cette adresse."],
         rows=[("Expéditeur", mailer.sender(conf)), ("Invitation", "Dès qu'un entretien est planifié, avec le rendez-vous pour l'agenda"),

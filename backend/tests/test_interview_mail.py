@@ -351,6 +351,90 @@ def test_the_e_mails_carry_the_company_logo_and_design():
     assert not [p for p in SENT[0].walk() if p.get_content_maintype() == "image"]
     assert "Acme SARL" in next(p for p in SENT[0].walk() if p.get_content_type() == "text/html").get_content()
 
+class _OldQuery:
+    """The interviews table of a database where interview_emails_social.sql was not run: no e-mail columns."""
+    COLS = ("invite_sent_at", "reminder_sent_at", "email_error", "public_base_url")
+
+    def __init__(self, q):
+        self.q = q
+
+    def __getattr__(self, name):
+        attr = getattr(self.q, name)
+        if not callable(attr):
+            return attr
+
+        def call(*a, **k):
+            if name == "is_" and a and a[0] in self.COLS:
+                raise Exception(f"{{'code': '42703', 'message': 'column interviews.{a[0]} does not exist'}}")
+            if name in ("update", "insert") and a and isinstance(a[0], dict) and any(c in a[0] for c in self.COLS):
+                raise Exception("{'code': 'PGRST204', 'message': \"Could not find the 'invite_sent_at' column of 'interviews' in the schema cache\"}")
+            out = attr(*a, **k)
+            return self if out is self.q else out
+        return call
+
+
+class OldDB(FakeDB):
+    def table(self, t):
+        q = super().table(t)
+        return _OldQuery(q) if t == "interviews" else q
+
+
+def old_client():
+    SENT.clear()
+    smtp()
+    db = OldDB()
+    db.tables["employees"] = [{"id": CAND, "full_name": "Nadia Tazi", "email": "nadia@mail.ma", "position": "Développeuse React", "status": "candidate", "custom_fields": {}}]
+    db.tables["interviews"], db.tables["meetings"] = [], []
+    app.dependency_overrides[get_db] = lambda: db
+    app.dependency_overrides[get_current_user] = lambda: USER
+    app.dependency_overrides[require_hr_or_admin] = lambda: USER
+    return TestClient(app), db
+
+
+def test_without_the_migration_the_link_still_goes_out_15_minutes_before_once():
+    c, db = old_client()
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    iv = plan(c, now + timedelta(minutes=40)).json()
+    assert iv["email"]["sent"] and len(SENT) == 1
+    state = next(r for r in db.tables["app_settings"] if r["key"] == "interview_mail_state")["value"][iv["id"]]
+    assert state["invite_sent_at"] and state["public_base_url"] == "https://wedy.tython.ma"
+    room = c.get(f"/api/entretiens/{iv['id']}").json()["interview"]          # the room shows it was sent
+    assert room["invite_sent_at"] and room["reminder_sent_at"] is None
+    SENT.clear()
+    assert interview_mail.send_due_reminders(db, now) == 0                          # too early
+    assert interview_mail.send_due_reminders(db, now + timedelta(minutes=26)) == 1  # 14 min before
+    assert "lien pour vous connecter" in SENT[0]["Subject"] and "https://wedy.tython.ma/visio/m-" in body_of(SENT[0])
+    assert interview_mail.send_due_reminders(db, now + timedelta(minutes=27)) == 0  # only once
+    assert c.get("/api/entretiens").json()[0]["reminder_sent_at"]
+    # a failed sending is tried again the next minute
+    c, db = old_client()
+    plan(c, now + timedelta(minutes=10), link="https://meet.google.com/abc-defg-hij")
+
+    def broken(msg):
+        raise mailer.MailError("serveur indisponible")
+    mailer.transport = broken
+    assert interview_mail.send_due_reminders(db, now) == 0
+    mailer.transport = fake_transport
+    SENT.clear()
+    assert interview_mail.send_due_reminders(db, now + timedelta(minutes=1)) == 1 and "meet.google.com/abc-defg-hij" in body_of(SENT[0])
+
+
+def test_on_site_without_an_agenda_meeting_gets_no_video_link():
+    c, db = client()
+    now = datetime.now(timezone.utc)
+    local = (now + timedelta(minutes=10)).astimezone(interview_mail.tz())
+    r = c.post("/api/entretiens", json={"candidate_id": CAND, "date": local.date().isoformat(), "start_time": local.strftime("%H:%M"),
+                                         "end_time": (local + timedelta(minutes=45)).strftime("%H:%M"), "type": "rh",
+                                         "place": "55 bd Zerktouni, Casablanca", "notify_candidate": True},
+               headers={"x-forwarded-host": "wedy.tython.ma", "x-forwarded-proto": "https"})
+    assert r.status_code == 200, r.text
+    text = body_of(SENT[0])
+    assert "En présentiel" in text and "55 bd Zerktouni" in text and "15 minutes avant" not in text
+    assert c.get(f"/api/entretiens/{r.json()['id']}").json()["interview"]["place"] == "55 bd Zerktouni, Casablanca"
+    SENT.clear()
+    assert interview_mail.send_due_reminders(db, now) == 0 and not SENT
+
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

@@ -106,6 +106,7 @@ export type Interview = {
   recruiter_name?: string;
   /** e-mails to the candidate: invitation, link 15 min before, last error */
   invite_sent_at?: string | null;
+  place?: string | null;             // on site without an agenda meeting (else the meeting's place)
   reminder_sent_at?: string | null;
   email_error?: string | null;
   email?: MailResult | null;
@@ -136,7 +137,7 @@ export const getMailStatus = () => api.get<MailStatus>('/entretiens/mail-status'
 export const resendInterviewInvite = (id: string) => api.post<MailResult>(`/entretiens/${id}/send-invite`).then(r => r.data);
 export const sendTestMail = () => api.post<{ sent: boolean; to: string }>('/integrations/mail/test', undefined, { timeout: 60000 }).then(r => r.data);
 
-export const scheduleInterview = (body: Partial<Interview> & { slot_id?: string; interviewers?: InterviewPerson[]; meeting?: MeetingSpec; notify_candidate?: boolean }) =>
+export const scheduleInterview = (body: Partial<Interview> & { slot_id?: string; interviewers?: InterviewPerson[]; meeting?: MeetingSpec; place?: string; notify_candidate?: boolean }) =>
   api.post<Interview>('/entretiens', body).then(r => r.data);
 export const updateInterviewStatus = (id: string, status: string) =>
   api.patch<Interview>(`/entretiens/${id}/status`, null, { params: { status } }).then(r => r.data);

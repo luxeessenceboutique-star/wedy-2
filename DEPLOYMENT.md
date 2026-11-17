@@ -252,7 +252,8 @@ from the proxy headers; set `APP_PUBLIC_URL=https://your-domain` in `backend/.en
 
 ### 4.1d Interview e-mails to candidates
 
-When HR plans an interview (Entretiens › « Planifier », box « Envoyer l'invitation par e-mail » ticked by default), the
+When HR plans an interview (Entretiens › « Planifier »: format « À distance » — Wedy Visio or an external Meet / Teams /
+Zoom link — or « En présentiel » with the address; box « Envoyer les e-mails au candidat » ticked by default), the
 candidate receives an invitation: job, date, time, duration, type, interviewers, place or « en visioconférence », and a
 calendar file (.ics) — and is told the link will come 15 minutes before. 15 minutes before the start, a second e-mail
 carries the link (the external link HR typed, or the Wedy Visio guest link). Cancelling the interview sends a cancellation.
@@ -271,7 +272,8 @@ otherwise STARTTLS). Needs the `app_settings.sql` migration (the account is the 
 - Links point to `APP_PUBLIC_URL` when set (recommended: `APP_PUBLIC_URL=https://your-wedy-domain`), else to the address
   HR used when planning.
 - Time zone: `APP_TIMEZONE` (default `Africa/Casablanca`). The `tzdata` package is in `requirements.txt`.
-- Migration: `interview_emails_social.sql`.
+- Migration: `interview_emails_social.sql` (recommended; until it is run the e-mail state is kept in `app_settings`,
+  key `interview_mail_state`, and the 15-minute link still goes out once).
 
 ---
 

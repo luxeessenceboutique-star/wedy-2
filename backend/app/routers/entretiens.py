@@ -66,6 +66,7 @@ class InterviewCreate(InterviewBase):
     slot_id: Optional[UUID] = None
     interviewers: List[Person] = []
     meeting: Optional[MeetingSpec] = None
+    place: Optional[str] = Field(None, max_length=300)   # on site: the address (also in the meeting when there is one)
     notify_candidate: bool = True            # e-mail the invitation (and the link 15 min before)
 
 
@@ -415,7 +416,7 @@ def _create_meeting(supabase: Client, user_id: str, cand: dict, kind: str, spec:
 @router.get("", response_model=List[InterviewOut])
 def list_interviews(supabase: Client = Depends(get_db), _user: dict = Depends(require_hr_or_admin)):
     res = entretien_repository.list_interviews(supabase)
-    return res.data or []
+    return interview_mail.with_state(supabase, res.data or [])
 
 
 @router.get("/board")
@@ -456,7 +457,7 @@ def interviews_board(supabase: Client = Depends(get_db), _user: dict = Depends(r
 @router.post("", response_model=InterviewOut)
 def schedule_interview(payload: InterviewCreate, request: Request, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
     # candidate_name / job_title / recruiter_name are display-only: not columns of interviews
-    data = payload.model_dump(exclude={"slot_id", "candidate_name", "job_title", "recruiter_name", "interviewers", "meeting", "notify_candidate"})
+    data = payload.model_dump(exclude={"slot_id", "candidate_name", "job_title", "recruiter_name", "interviewers", "meeting", "notify_candidate", "place"})
     data["date"] = str(data["date"])
     data["candidate_id"] = str(data["candidate_id"])
     if data.get("recruiter_id"):
@@ -487,6 +488,10 @@ def schedule_interview(payload: InterviewCreate, request: Request, supabase: Cli
             interview = supabase.table("interviews").update(extra).eq("id", interview["id"]).execute().data[0]
         except Exception:
             pass  # columns not migrated yet: the interview is planned anyway
+    place = (payload.place or "").strip()
+    if place and not payload.meeting and not (payload.meet_link or "").strip():
+        interview_mail.keep_place(supabase, interview["id"], place)
+        interview["place"] = place
     log_action(supabase, current_user["id"], "CREATE", "interview", interview["id"])
     if payload.notify_candidate:  # the invitation (the link itself goes out 15 min before)
         from app.routers.annonces import _public_base
@@ -518,7 +523,7 @@ def update_interview_status(id: UUID, status: str, request: Request, supabase: C
     res = entretien_repository.update_interview_status(supabase, str(id), status)
     if not res.data:
         raise HTTPException(status_code=404, detail="Entretien non trouvé")
-    iv = res.data[0]
+    iv = interview_mail.with_state(supabase, [res.data[0]])[0]
     if status.lower() in ("cancelled", "canceled") and iv.get("invite_sent_at"):  # the candidate was invited: tell them
         from app.routers.annonces import _public_base
         iv["email"] = interview_mail.send_invite(supabase, iv, _public_base(request), kind="cancel")
@@ -530,12 +535,14 @@ def update_interview_status(id: UUID, status: str, request: Request, supabase: C
 @router.get("/{id}")
 def get_interview(id: UUID, supabase: Client = Depends(get_db), _user: dict = Depends(require_hr_or_admin)):
     """The interview, its candidate, job post, meeting, CV availability and the candidate's other interviews."""
-    iv = _get(supabase, str(id))
+    iv = interview_mail.with_state(supabase, [_get(supabase, str(id))])[0]
     cand = _candidate(supabase, iv["candidate_id"])
     if not cand:
         raise HTTPException(status_code=404, detail="Candidat introuvable")
     cv = _cv_file(supabase, cand)
     others = [o for o in (supabase.table("interviews").select("*").eq("candidate_id", iv["candidate_id"]).execute().data or []) if o["id"] != iv["id"]]
+    if not iv.get("meeting_id") and not iv.get("meet_link"):   # on site without an agenda meeting: its address
+        iv["place"] = interview_mail.place_of(supabase, iv["id"]) or None
     return {
         "interview": iv,
         "candidate": cand,

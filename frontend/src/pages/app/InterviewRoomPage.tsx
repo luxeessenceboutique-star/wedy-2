@@ -509,7 +509,7 @@ export default function InterviewRoomPage() {
             <div className="room-card room-meet">
               <div className="room-card-h"><b><Video size={14} />{t('itv_meeting')}</b>{room.meeting && <Link to="/app/meetings">{t('itv_see_meetings')}</Link>}</div>
               <div className="room-meet-row"><CalendarClock size={14} /><span>{dateLabel}<br /><small>{timeLabel} · {durationMin(iv.start_time, iv.end_time)} min</small></span></div>
-              {room.meeting?.place && <div className="room-meet-row"><MapPin size={14} /><span>{room.meeting.place}</span></div>}
+              {(room.meeting?.place || iv.place) && <div className="room-meet-row"><MapPin size={14} /><span>{room.meeting?.place || iv.place}</span></div>}
               <div className="room-visio">
                 <div className="room-meet-row"><Video size={14} /><span><b>{t('vz_brand')}</b><br /><small>{t('vz_card_s')}</small></span></div>
                 <div className="room-visio-btns">
@@ -522,7 +522,7 @@ export default function InterviewRoomPage() {
                 <div className="room-mail">
                   <div className="room-meet-row"><Mail size={14} /><span>
                     <b>{iv.invite_sent_at ? tf(t('itv_mail_status_invited'), { d: fmtSent(iv.invite_sent_at) }) : t('itv_mail_status_not_invited')}</b><br />
-                    <small>{room.meeting?.place && !visio ? cand.email
+                    <small>{(room.meeting?.place || iv.place) && !visio ? cand.email
                       : iv.reminder_sent_at ? tf(t('itv_mail_status_link_sent'), { d: fmtSent(iv.reminder_sent_at) }) : tf(t('itv_mail_status_link_planned'), { n: 15 })}</small>
                     {iv.email_error && <small className="room-mail-err">{tf(t('itv_mail_error'), { e: iv.email_error })}</small>}
                   </span></div>

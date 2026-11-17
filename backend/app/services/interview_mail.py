@@ -84,8 +84,10 @@ def load(supabase: Client, iv: dict) -> dict:
         end = datetime.fromisoformat(f"{iv['date']}T{str(iv['end_time'])[:5]}:00").replace(tzinfo=start.tzinfo)
     if not end or end <= start:
         end = start + timedelta(minutes=60)
-    place = (meeting.get("place") or "").strip()
+    place = (meeting.get("place") or iv.get("place") or "").strip()
     link = (meeting.get("visio_url") or iv.get("meet_link") or "").strip()
+    if not meeting and not place and not link and iv.get("id"):   # on site without an agenda meeting
+        place = place_of(supabase, iv["id"])
     mode = "external" if link else ("place" if place else "wedy")
     people = [p.get("name") for p in (iv.get("interviewers") or []) if isinstance(p, dict) and p.get("name")]
     # shown as HR typed them (no time zone conversion that an old tz database could get wrong); `start` / `end` are
@@ -270,11 +272,71 @@ def _inline(ctx: dict) -> list:
     return [(mail_design.LOGO_CID, *ctx["logo"])] if ctx.get("logo") else []
 
 
+# Where the e-mails' state lives: the interview's own columns (migration interview_emails_social.sql); until they
+# exist, a row of app_settings (« interview_mail_state », per interview) — so the link still goes out once, 15
+# minutes before, on a database that has not been migrated yet.
+_STATE_KEY = "interview_mail_state"
+_STATE_COLS = ("invite_sent_at", "reminder_sent_at", "email_error", "public_base_url")
+_STORE_KEYS = (*_STATE_COLS, "place")   # place: an interview on site planned without an agenda meeting (no column for it)
+
+
+def _missing_columns(e: Exception) -> bool:
+    m = str(e).lower()
+    return "42703" in m or "pgrst204" in m or (any(c in m for c in _STATE_COLS) and ("does not exist" in m or "could not find" in m or "schema cache" in m))
+
+
+def _store_read(supabase: Client) -> dict:
+    try:
+        rows = supabase.table("app_settings").select("value").eq("key", _STATE_KEY).limit(1).execute().data or []
+    except Exception:
+        return {}
+    v = rows[0].get("value") if rows else None
+    return v if isinstance(v, dict) else {}
+
+
+def _store_write(supabase: Client, iv_id: str, row: dict) -> None:
+    state = _store_read(supabase)
+    cur = dict(state.get(str(iv_id)) or {})
+    cur.update({k: v for k, v in row.items() if k in _STORE_KEYS})
+    now = datetime.now(timezone.utc)
+    cur["at"] = now.isoformat()
+    state[str(iv_id)] = cur
+    cutoff = (now - timedelta(days=60)).isoformat()
+    state = {k: v for k, v in state.items() if str((v or {}).get("at") or "") >= cutoff}
+    try:
+        supabase.table("app_settings").upsert({"key": _STATE_KEY, "value": state, "updated_at": now.isoformat()}).execute()
+    except Exception as e:
+        log.warning(f"[interview-mail] could not keep the e-mail state of {iv_id}: {e}")
+
+
+def with_state(supabase: Client, rows: list[dict]) -> list[dict]:
+    """The interviews with their e-mail state (from their columns, or from the store while not migrated)."""
+    if not rows or all("reminder_sent_at" in r for r in rows):
+        return rows
+    state = _store_read(supabase)
+    return [{**{c: None for c in _STATE_COLS}, **r, **{k: v for k, v in (state.get(str(r.get("id"))) or {}).items() if k in _STATE_COLS}}
+            if "reminder_sent_at" not in r else r for r in rows]
+
+
+def place_of(supabase: Client, iv_id: str) -> str:
+    """The address kept for an interview on site planned without an agenda meeting (else "")."""
+    return str((_store_read(supabase).get(str(iv_id)) or {}).get("place") or "").strip()
+
+
+def keep_place(supabase: Client, iv_id: str, place: str) -> None:
+    """The address of an interview on site that has no meeting in the agenda: so its e-mails say « en présentiel »."""
+    if (place or "").strip():
+        _store_write(supabase, iv_id, {"place": place.strip()[:300]})
+
+
 def _save(supabase: Client, iv_id: str, row: dict) -> None:
     try:
         supabase.table("interviews").update(row).eq("id", iv_id).execute()
-    except Exception as e:  # columns not migrated yet: the e-mail was sent all the same
-        log.info(f"[interview-mail] could not record {list(row)} on {iv_id}: {e}")
+    except Exception as e:
+        if _missing_columns(e):   # not migrated yet: kept in the store, the reminder still works
+            _store_write(supabase, iv_id, row)
+        else:
+            log.info(f"[interview-mail] could not record {list(row)} on {iv_id}: {e}")
 
 
 def send_invite(supabase: Client, iv: dict, base: str = "", kind: str = "invite") -> dict:
@@ -314,10 +376,18 @@ def send_due_reminders(supabase: Client, now: Optional[datetime] = None) -> int:
     now = now or datetime.now(timezone.utc)
     today = now.astimezone(tz()).date()
     days = [str(today + timedelta(days=d)) for d in (-1, 0, 1)]
+    migrated = True
     try:
         rows = supabase.table("interviews").select("*").in_("date", days).is_("reminder_sent_at", "null").execute().data or []
-    except Exception:
-        return 0  # columns not migrated yet
+    except Exception as e:
+        if not _missing_columns(e):
+            return 0
+        migrated = False    # the state is in the store: the interviews of these days, minus those already reminded
+        try:
+            rows = supabase.table("interviews").select("*").in_("date", days).execute().data or []
+        except Exception:
+            return 0
+        rows = [r for r in with_state(supabase, rows) if not r.get("reminder_sent_at")]
     sent = 0
     for iv in rows:
         if str(iv.get("status") or "").lower() in DONE:
@@ -333,12 +403,17 @@ def send_due_reminders(supabase: Client, now: Optional[datetime] = None) -> int:
             _save(supabase, iv["id"], {"email_error": "Lien non envoyé : adresse de Wedy inconnue (APP_PUBLIC_URL)."})
             continue
         # claim it: only the one that sets reminder_sent_at sends (no double e-mail)
-        try:
-            claim = supabase.table("interviews").update({"reminder_sent_at": now.isoformat()}).eq("id", iv["id"]).is_("reminder_sent_at", "null").execute()
-        except Exception:
-            continue
-        if not claim.data:
-            continue
+        if migrated:
+            try:
+                claim = supabase.table("interviews").update({"reminder_sent_at": now.isoformat()}).eq("id", iv["id"]).is_("reminder_sent_at", "null").execute()
+            except Exception:
+                continue
+            if not claim.data:
+                continue
+        else:
+            if (_store_read(supabase).get(str(iv["id"])) or {}).get("reminder_sent_at"):
+                continue
+            _store_write(supabase, iv["id"], {"reminder_sent_at": now.isoformat()})
         subject, html, text = render_reminder(ctx, link)
         try:
             mailer.send(ctx["cand"]["email"], subject, html, text, reply_to=ctx["reply_to"], conf=ctx["conf"], inline=_inline(ctx))

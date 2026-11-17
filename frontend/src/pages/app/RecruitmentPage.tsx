@@ -10,6 +10,7 @@ import { useLang } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { tf } from '@/lib/format';
 import { avatarGradient, initialsOf } from '@/lib/visual';
+import { DecisionMailDialog, type DecisionTarget } from '@/components/recruitment/DecisionMailDialog';
 import { STAGES, NO_AD, adGroups, adIdOf, stageOf, scoreOf, sourceOf, stageSince, scoreColor, daysSince, upcomingByCandidate, type Stage } from '@/lib/recruitment';
 import './RecruitmentPage.css';
 
@@ -28,6 +29,7 @@ export default function RecruitmentPage() {
   const adSel = params.get('ad') ?? '';
   const setAdSel = (id: string) => setParams(p => { const n = new URLSearchParams(p); if (id) n.set('ad', id); else n.delete('ad'); return n; }, { replace: true });
   const [over, setOver] = useState<Stage | null>(null);
+  const [decisionMail, setDecisionMail] = useState<DecisionTarget | null>(null);
 
   const { data: candidates = [], isLoading } = useQuery<Employee[]>({ queryKey: ['candidates'], queryFn: listCandidates });
   const { data: interviews = [] } = useQuery({ queryKey: ['interviews'], queryFn: listInterviews });
@@ -54,6 +56,8 @@ export default function RecruitmentPage() {
     onSuccess: (_, { e, stage }) => {
       const label = t(STAGES.find(s => s[0] === stage)![1]);
       notify.success(stage === 'hired' ? tf(t('rec_hired_toast'), { name: e.full_name }) : `${e.full_name} → ${label}`);
+      // accepted (offer / hired): the « candidature retenue » e-mail to the candidate, read before it goes
+      if (stage === 'offer' || stage === 'hired') setDecisionMail({ id: e.id, full_name: e.full_name, kind: 'accept', ...(stage === 'hired' ? { intern: false } : {}) });
     },
     onError: (err, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['candidates'], ctx.prev); notify.error(getApiError(err, t('error'))); },
     onSettled: () => { qc.invalidateQueries({ queryKey: ['candidates'] }); qc.invalidateQueries({ queryKey: ['employees'] }); },
@@ -214,6 +218,7 @@ export default function RecruitmentPage() {
         </div>
       </div>
 
+      <DecisionMailDialog target={decisionMail} onClose={() => setDecisionMail(null)} />
     </div>
   );
 }

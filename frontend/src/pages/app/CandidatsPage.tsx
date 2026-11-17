@@ -12,6 +12,7 @@ import { tf } from '@/lib/format';
 import { avatarGradient, initialsOf } from '@/lib/visual';
 import { NO_AD, adGroups, adIdOf, STAGE_CHIP, stageOf, scoreOf, sourceOf, yearsOf, scoreColor, upcomingByCandidate, type Stage } from '@/lib/recruitment';
 import { ScheduleInterviewDrawer } from '@/components/recruitment/ScheduleInterviewDrawer';
+import { DecisionMailDialog, DecisionMailLine, type DecisionTarget } from '@/components/recruitment/DecisionMailDialog';
 import './CandidatsPage.css';
 
 const STAGE_LABEL: Record<Stage, TKey> = {
@@ -31,6 +32,7 @@ export default function CandidatsPage() {
   const [params, setParams] = useSearchParams();
   const [q, setQ] = useState('');
   const [stage, setStage] = useState<'all' | Stage>('all');
+  const [decisionMail, setDecisionMail] = useState<DecisionTarget | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [schedFor, setSchedFor] = useState<string | null>(null);
   const openId = params.get('c');
@@ -62,7 +64,10 @@ export default function CandidatsPage() {
       const custom_fields = { ...(c.custom_fields ?? {}), recruitment_stage: 'hired', stage_changed_at: new Date().toISOString() };
       return as === 'employee' ? promoteToEmployee(c.id, { hire_date: today, custom_fields }) : promoteToIntern(c.id, { internship_start: today, custom_fields });
     },
-    onSuccess: (_, { c, as }) => { refresh(); setOpen(null); notify.success(tf(t(as === 'employee' ? 'cand_promoted_emp' : 'cand_promoted_intern'), { name: c.full_name })); },
+    onSuccess: (_, { c, as }) => {
+      refresh(); setOpen(null); notify.success(tf(t(as === 'employee' ? 'cand_promoted_emp' : 'cand_promoted_intern'), { name: c.full_name }));
+      setDecisionMail({ id: c.id, full_name: c.full_name, kind: 'accept', intern: as === 'intern' });   // tell them
+    },
     onError: fail,
   });
   const remove = useMutation({
@@ -207,9 +212,12 @@ export default function CandidatsPage() {
                 {curStage === 'rejected' ? (
                   <button type="button" onClick={() => setStageMut.mutate({ c: cur, s: 'new' })} style={{ flex: 1, height: 46, borderRadius: 12, border: '1px solid #d6dfe3', background: '#ffffff', color: '#33474f', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }} className="cand-h3">{t('cand_reconsider')}</button>
                 ) : (
-                  <button type="button" onClick={() => { setStageMut.mutate({ c: cur, s: 'rejected' }, { onSuccess: () => notify.success(tf(t('cand_rejected_toast'), { name: cur.full_name })) }); }} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 46, borderRadius: 12, border: '1px solid #f0c9c0', background: '#ffffff', color: '#a33a28', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }} className="cand-h2">{t('cand_reject')}</button>
+                  <button type="button" onClick={() => { setStageMut.mutate({ c: cur, s: 'rejected' }, { onSuccess: () => { notify.success(tf(t('cand_rejected_toast'), { name: cur.full_name })); setDecisionMail({ id: cur.id, full_name: cur.full_name, kind: 'reject' }); } }); }} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, height: 46, borderRadius: 12, border: '1px solid #f0c9c0', background: '#ffffff', color: '#a33a28', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }} className="cand-h2">{t('cand_reject')}</button>
                 )}
               </div>
+              {(curStage === 'rejected' || curStage === 'offer') && (
+                <DecisionMailLine candidate={cur} kind={curStage === 'rejected' ? 'reject' : 'accept'} onOpen={setDecisionMail} />
+              )}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 14, borderTop: '1px solid #eef2f4' }}>
                 <button type="button" disabled={promote.isPending} onClick={() => { if (window.confirm(tf(t('rec_confirm_hire'), { name: cur.full_name }))) promote.mutate({ c: cur, as: 'employee' }); }} className="cand-ghost"><UserPlus size={14} />{t('cand_hire_employee')}</button>
                 <button type="button" disabled={promote.isPending} onClick={() => { if (window.confirm(tf(t('cand_confirm_intern'), { name: cur.full_name }))) promote.mutate({ c: cur, as: 'intern' }); }} className="cand-ghost"><GraduationCap size={14} />{t('cand_hire_intern')}</button>
@@ -220,6 +228,7 @@ export default function CandidatsPage() {
         </>
       )}
 
+      <DecisionMailDialog target={decisionMail} onClose={() => setDecisionMail(null)} />
       <ScheduleInterviewDrawer open={!!schedFor} onClose={() => setSchedFor(null)} candidates={cands} candidateId={schedFor ?? ''}
         onScheduled={c => { if (c) setStageMut.mutate({ c, s: 'interview' }); }} />
       <AddCandidateDrawer open={addOpen} onClose={() => setAddOpen(false)} onCreated={refresh} ads={ads} defaultAd={adSel !== NO_AD ? adSel : ''} />

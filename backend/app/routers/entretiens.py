@@ -505,6 +505,51 @@ def interview_mail_status(supabase: Client = Depends(get_db), _user: dict = Depe
     return interview_mail.mail_status(supabase)
 
 
+# ── Decision e-mail (candidature retenue / refus) ─────────────────────────────
+
+class DecisionMailIn(BaseModel):
+    kind: Literal["accept", "reject"]
+    subject: Optional[str] = Field(None, max_length=300)
+    message: Optional[str] = Field(None, max_length=8000)
+    intern: Optional[bool] = None           # accepted for an internship (else read from the candidate's status)
+
+
+def _decision_ctx(supabase: Client, candidate_id: UUID) -> dict:
+    from app.services import decision_mail
+    ctx = decision_mail.context(supabase, str(candidate_id))
+    if not ctx:
+        raise HTTPException(status_code=404, detail="Candidat introuvable")
+    return ctx
+
+
+@router.post("/decision-mail/{candidate_id}/preview")
+def decision_mail_preview(candidate_id: UUID, payload: DecisionMailIn, supabase: Client = Depends(get_db), _user: dict = Depends(require_hr_or_admin)):
+    """The e-mail Wedy proposes (or the one HR edited), as the candidate will see it, and what was already sent."""
+    from app.services import decision_mail
+    ctx = _decision_ctx(supabase, candidate_id)
+    subject, message = decision_mail.defaults(ctx, payload.kind, payload.intern)
+    subject = (payload.subject or "").strip() or subject
+    message = (payload.message or "").strip() or message
+    html, _text = decision_mail.render(ctx, payload.kind, subject, message)
+    from app.services import mailer
+    return {"to": (ctx["cand"].get("email") or "").strip() or None, "subject": subject, "message": message,
+            "html": decision_mail.preview_html(ctx, html), "configured": mailer.configured(ctx["conf"]),
+            "sent": ctx["custom"].get("decision_mail")}
+
+
+@router.post("/decision-mail/{candidate_id}")
+def decision_mail_send(candidate_id: UUID, payload: DecisionMailIn, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
+    """Send the decision e-mail (the words HR read and possibly changed)."""
+    from app.services import decision_mail
+    ctx = _decision_ctx(supabase, candidate_id)
+    subject, message = decision_mail.defaults(ctx, payload.kind, payload.intern)
+    out = decision_mail.send(supabase, ctx, payload.kind, (payload.subject or "").strip() or subject,
+                             (payload.message or "").strip() or message, by=current_user.get("full_name") or current_user.get("email"))
+    if out["sent"]:
+        log_action(supabase, current_user["id"], "DECISION_MAIL_" + payload.kind.upper(), "candidate", str(candidate_id))
+    return out
+
+
 @router.post("/{id}/send-invite")
 def resend_invite(id: UUID, request: Request, supabase: Client = Depends(get_db), current_user: dict = Depends(require_hr_or_admin)):
     """Send (again) the invitation e-mail to the candidate."""

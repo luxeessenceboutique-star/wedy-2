@@ -23,6 +23,7 @@ import { tf } from '@/lib/format';
 import { avatarGradient, initialsOf } from '@/lib/visual';
 import { INTERVIEW_KIND } from '@/lib/recruitment';
 import { DECISIONS, RECO, RECO_ORDER, durationMin, elapsed, interviewStart, overallScore, scoreTone } from '@/lib/interview';
+import { DecisionMailDialog, DecisionMailLine, type DecisionTarget } from '@/components/recruitment/DecisionMailDialog';
 import { ScheduleInterviewDrawer } from '@/components/recruitment/ScheduleInterviewDrawer';
 import { VisioCall } from '@/components/visio/VisioCall';
 import './InterviewRoomPage.css';
@@ -186,6 +187,7 @@ export default function InterviewRoomPage() {
   const [linkBusy, setLinkBusy] = useState(false);
   const [decision, setDecision] = useState<InterviewDecision>('later');
   const [nextRound, setNextRound] = useState(false);
+  const [decisionMail, setDecisionMail] = useState<DecisionTarget | null>(null);   // the e-mail telling the candidate the decision
   const candQ = useQuery<Employee[]>({ queryKey: ['candidates'], queryFn: listCandidates, enabled: nextRound });
   const finishMut = useMutation({
     mutationFn: async () => {
@@ -200,7 +202,10 @@ export default function InterviewRoomPage() {
       const msg: Record<InterviewDecision, TKey> = { next: 'itv_done_next', offer: 'itv_done_offer', reject: 'itv_done_reject', hire_employee: 'itv_done_hire', hire_intern: 'itv_done_intern', later: 'itv_done_later' };
       notify.success(tf(t(msg[r.decision]), { name }));
       if (r.decision === 'next') setNextRound(true);
-      if (r.decision === 'hire_intern') window.setTimeout(() => nav('/app/interns'), 900);
+      // accepted (offer / hiring) or rejected: the e-mail to the candidate, read by HR before it goes
+      const kind = r.decision === 'reject' ? 'reject' : (r.decision === 'offer' || r.decision === 'hire_employee' || r.decision === 'hire_intern') ? 'accept' : null;
+      if (kind && cand) setDecisionMail({ id: cand.id, full_name: cand.full_name, kind, intern: r.decision === 'hire_intern' ? true : r.decision === 'hire_employee' ? false : undefined });
+      else if (r.decision === 'hire_intern') window.setTimeout(() => nav('/app/interns'), 900);
     },
     onError: failMig,
   });
@@ -547,6 +552,9 @@ export default function InterviewRoomPage() {
                 <CheckCircle2 size={18} />
                 <div><b>{t('itv_closed')}</b><small>{iv.ended_at ? new Date(iv.ended_at).toLocaleString(loc, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}{STAGE_KEY[custom.recruitment_stage] ? ` · ${t(STAGE_KEY[custom.recruitment_stage])}` : ''}</small></div>
                 <Link to={`/app/candidats?c=${cand.id}`}>{t('itv_see_cand')}</Link>
+                {(custom.recruitment_stage === 'rejected' || custom.recruitment_stage === 'offer' || custom.recruitment_stage === 'hired') && (
+                  <DecisionMailLine candidate={cand} kind={custom.recruitment_stage === 'rejected' ? 'reject' : 'accept'} onOpen={setDecisionMail} />
+                )}
               </div>
             ) : (
               <button type="button" className="room-btn dark full room-btn-lg" onClick={() => setFinishOpen(true)} disabled={!room.migrated}><Flag size={15} />{t('itv_finish')}</button>
@@ -576,6 +584,9 @@ export default function InterviewRoomPage() {
                 </button>
               ))}
             </div>
+            {(decision === 'reject' || decision === 'offer' || decision === 'hire_employee' || decision === 'hire_intern') && (
+              <p className="room-muted" style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '10px 0 0' }}><Mail size={13} />{t(decision === 'reject' ? 'dm_next_reject' : 'dm_next_accept')}</p>
+            )}
             <footer>
               <button type="button" className="room-btn" onClick={() => setFinishOpen(false)}>{t('cancel')}</button>
               <button type="button" className="room-btn dark" onClick={() => finishMut.mutate()} disabled={finishMut.isPending}>{finishMut.isPending ? <Spinner size={13} color="#fff" /> : <Check size={14} />}{t('itv_finish_confirm')}</button>
@@ -583,6 +594,8 @@ export default function InterviewRoomPage() {
           </div>
         </div>
       )}
+
+      <DecisionMailDialog target={decisionMail} onClose={() => { const was = decisionMail; setDecisionMail(null); if (was?.intern) nav('/app/interns'); }} />
 
       <ScheduleInterviewDrawer open={nextRound} onClose={() => setNextRound(false)} candidates={candQ.data?.length ? candQ.data : [cand]} candidateId={cand.id}
         defaultType={NEXT_TYPE[iv.type] ?? 'final'} onScheduled={(_, n) => { if (n?.id) nav(`/app/entretiens/${n.id}`); }} />

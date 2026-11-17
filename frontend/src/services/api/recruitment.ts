@@ -134,6 +134,15 @@ export type MailDiagnostic = {
 export const diagnoseMail = (account?: MailAccountIn) =>
   api.post<MailDiagnostic>('/integrations/mail/diagnose', account ? { account } : {}, { timeout: 90000 }).then(r => r.data);
 export const getMailStatus = () => api.get<MailStatus>('/entretiens/mail-status').then(r => r.data);
+/** The e-mail telling the candidate the decision: « candidature retenue » or the refusal (read and edited by HR first). */
+export type DecisionKind = 'accept' | 'reject';
+export type DecisionMailRecord = { kind: DecisionKind; sent_at: string; to: string; subject?: string; by?: string | null };
+export type DecisionMailPreview = { to: string | null; subject: string; message: string; html: string; configured: boolean; sent: DecisionMailRecord | null };
+export type DecisionMailIn = { kind: DecisionKind; subject?: string; message?: string; intern?: boolean };
+export const previewDecisionMail = (candidateId: string, body: DecisionMailIn) =>
+  api.post<DecisionMailPreview>(`/entretiens/decision-mail/${candidateId}/preview`, body).then(r => r.data);
+export const sendDecisionMail = (candidateId: string, body: DecisionMailIn) =>
+  api.post<MailResult & { record: DecisionMailRecord | null }>(`/entretiens/decision-mail/${candidateId}`, body, { timeout: 60000 }).then(r => r.data);
 export const resendInterviewInvite = (id: string) => api.post<MailResult>(`/entretiens/${id}/send-invite`).then(r => r.data);
 export const sendTestMail = () => api.post<{ sent: boolean; to: string }>('/integrations/mail/test', undefined, { timeout: 60000 }).then(r => r.data);
 

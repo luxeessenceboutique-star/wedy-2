@@ -272,6 +272,8 @@ otherwise STARTTLS). Needs the `app_settings.sql` migration (the account is the 
 - Links point to `APP_PUBLIC_URL` when set (recommended: `APP_PUBLIC_URL=https://your-wedy-domain`), else to the address
   HR used when planning.
 - Time zone: `APP_TIMEZONE` (default `Africa/Casablanca`). The `tzdata` package is in `requirements.txt`.
+- Decision e-mails (« candidature retenue » / refus): proposed by Wedy after the decision, read and edited by HR,
+  sent with the same account; nothing to configure (recorded on the candidate's file).
 - Migration: `interview_emails_social.sql` (recommended; until it is run the e-mail state is kept in `app_settings`,
   key `interview_mail_state`, and the 15-minute link still goes out once).
 

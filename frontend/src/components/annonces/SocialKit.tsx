@@ -1,6 +1,7 @@
 // « Diffuser l'annonce »: the recruitment visual of a job post (square, LinkedIn, story — 3 styles), the post text for
 // each network written by Wedy, and the ways to publish: LinkedIn and Facebook share dialogs (their link preview shows
-// the visual), Instagram (download + caption, or the phone's share sheet), Indeed (job description to paste), WhatsApp.
+// the visual), Instagram (download + caption, or the phone's share sheet), Indeed (job description to paste), Moovwin
+// (each field of its form ready to copy, MoovwinPanel), WhatsApp.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link as RouterLink } from 'react-router-dom';
@@ -12,9 +13,11 @@ import { useLang, type TKey } from '@/lib/lang';
 import { useNotify } from '@/lib/notify';
 import { useAppSettings } from '@/lib/appSettings';
 import { FORMATS, canvasBlob, pointsFrom, renderJobVisual, type VisualFormat, type VisualTheme } from '@/lib/jobVisual';
+import { MoovwinPanel } from './MoovwinPanel';
+import { MOOVWIN_COLOR } from '@/lib/moovwin';
 import './SocialKit.css';
 
-type Net = 'linkedin' | 'facebook' | 'instagram' | 'indeed';
+type Net = 'linkedin' | 'facebook' | 'instagram' | 'indeed' | 'moovwin';
 const LABELS: Record<'fr' | 'en' | 'ar', { hiring: string; apply: string; scan: string }> = {
   fr: { hiring: 'Nous recrutons', apply: 'Postulez en 2 minutes', scan: 'Scannez le code ou ouvrez le lien' },
   en: { hiring: "We're hiring", apply: 'Apply in 2 minutes', scan: 'Scan the code or open the link' },
@@ -22,7 +25,7 @@ const LABELS: Record<'fr' | 'en' | 'ar', { hiring: string; apply: string; scan: 
 };
 const FORMAT_KEYS: [VisualFormat, TKey, TKey][] = [['square', 'sk_f_square', 'sk_f_square_s'], ['linkedin', 'sk_f_linkedin', 'sk_f_linkedin_s'], ['story', 'sk_f_story', 'sk_f_story_s']];
 const THEMES: [VisualTheme, string][] = [['ocean', 'linear-gradient(135deg,#06141a,#0b4a58,#16b6c8)'], ['light', 'linear-gradient(135deg,#f3f6f7,#d7eef1)'], ['night', 'linear-gradient(135deg,#0a0f1f,#3b2f8f)']];
-const NETS: [Net, string, string][] = [['linkedin', 'LinkedIn', '#0a66c2'], ['facebook', 'Facebook', '#1877f2'], ['instagram', 'Instagram', '#d62976'], ['indeed', 'Indeed', '#2557a7']];
+const NETS: [Net, string, string][] = [['linkedin', 'LinkedIn', '#0a66c2'], ['facebook', 'Facebook', '#1877f2'], ['instagram', 'Instagram', '#d62976'], ['indeed', 'Indeed', '#2557a7'], ['moovwin', 'Moovwin', MOOVWIN_COLOR]];
 
 /** Used on the visuals until a logo is uploaded in the settings. */
 const DEFAULT_LOGO = '/brand/tython-logo.png';
@@ -112,7 +115,7 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
     queryFn: () => getSocialPosts(ad!.id, { lang: vlang, company, share_url: share }),
     enabled: open && !!ad, staleTime: Infinity, retry: false,
   });
-  const textOf = (n: Net) => texts[n] ?? socialQ.data?.[n] ?? '';
+  const textOf = (n: Net) => texts[n] ?? (n === 'moovwin' ? '' : socialQ.data?.[n]) ?? '';
 
   // ── direct publishing (the company's pages connected once in Intégrations) ──
   const qc = useQueryClient();
@@ -142,7 +145,7 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
     } catch (e) { setPub({ busy: false, results: {} }); notify.error(getApiError(e, t('error'))); }
   };
 
-  const fileName = (f: VisualFormat) => `${(ad?.poste || 'annonce').toLowerCase().replace(/[^a-z0-9؀-ۿ]+/gi, '-').replace(/^-|-$/g, '')}-${f}.png`;
+  const fileName = (f: VisualFormat) => `${(ad?.poste || 'annonce').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9؀-ۿ]+/gi, '-').replace(/^-|-$/g, '')}-${f}.png`;
   const renderBlob = async (f: VisualFormat) => { const c = document.createElement('canvas'); await renderJobVisual(c, f, theme, dataFor(f)); return canvasBlob(c); };
   const generate = async () => {
     if (!ad || genBusy) return;
@@ -181,8 +184,8 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
   const whatsapp = () => openWin(`https://wa.me/?text=${encodeURIComponent(`${t('sk_wa_text')} ${ad?.poste ?? ''}\n${share}`)}`);
 
   const [w, h] = FORMATS[fmt];
-  const netHint: Record<Net, TKey> = { linkedin: 'sk_h_linkedin', facebook: 'sk_h_facebook', instagram: 'sk_h_instagram', indeed: 'sk_h_indeed' };
-  const netBtn: Record<Net, TKey> = { linkedin: 'sk_b_linkedin', facebook: 'sk_b_facebook', instagram: 'sk_b_instagram', indeed: 'sk_b_indeed' };
+  const netHint: Record<Exclude<Net, 'moovwin'>, TKey> = { linkedin: 'sk_h_linkedin', facebook: 'sk_h_facebook', instagram: 'sk_h_instagram', indeed: 'sk_h_indeed' };
+  const netBtn: Record<Exclude<Net, 'moovwin'>, TKey> = { linkedin: 'sk_b_linkedin', facebook: 'sk_b_facebook', instagram: 'sk_b_instagram', indeed: 'sk_b_indeed' };
 
   return (
     <Drawer open={open && !!ad} onClose={onClose} width={1040} icon={<Megaphone size={19} />} title={t(fresh ? 'sk_title_fresh' : 'sk_title')} subtitle={ad ? `${ad.poste}${ad.description ? ` · ${ad.description}` : ''}` : ''}>
@@ -281,6 +284,9 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
                 <button key={n} type="button" onClick={() => setNet(n)} style={{ flex: 1, height: 34, border: 'none', borderRadius: 9, background: net === n ? '#fff' : 'transparent', boxShadow: net === n ? '0 1px 3px rgba(10,28,36,.14)' : 'none', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 700, color: net === n ? color : '#52646d', cursor: 'pointer' }}>{label}</button>
               ))}
             </div>
+            {net === 'moovwin' ? (
+              <MoovwinPanel ad={ad} company={settingsQ.data?.company ?? {}} description={textOf('indeed')} share={share} onCover={() => download('linkedin')} />
+            ) : <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: '#5f7079', flex: 1 }}>{t(netHint[net])}</span>
               {socialQ.data && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 7, background: socialQ.data.source === 'ai' ? '#ece9fb' : '#eef2f4', color: socialQ.data.source === 'ai' ? '#5444b8' : '#33474f' }}>{socialQ.data.source === 'ai' ? <><Sparkles size={11} />{t('sk_by_wedy')}</> : t('sk_standard')}</span>}
@@ -293,6 +299,7 @@ export function SocialKit({ ad, open, onClose, lang: initialLang = 'fr', fresh }
               <button type="button" style={{ ...btn, background: NETS.find(x => x[0] === net)![2], color: '#fff', border: 'none', flex: '1 1 200px' }} onClick={() => publish(net)} disabled={!textOf(net)}><ExternalLink size={15} />{t(netBtn[net])}</button>
               <button type="button" style={btn} onClick={() => copy(textOf(net))} disabled={!textOf(net)}><Copy size={14} />{t('sk_copy_text')}</button>
             </div>
+            </>}
             <button type="button" style={{ ...btn, alignSelf: 'flex-start', color: '#128c4a' }} onClick={whatsapp}><Share2 size={14} />{t('sk_whatsapp')}</button>
             <p style={{ margin: 0, fontSize: 11.5, color: '#7d8f97', lineHeight: 1.5 }}><Check size={12} style={{ verticalAlign: '-2px' }} /> {t('sk_note')}</p>
           </div>

@@ -278,7 +278,10 @@ export async function renderJobVisual(canvas: HTMLCanvasElement, fmt: VisualForm
 
 /** Key points for the visual: the bullets of the generated ad (missions, then profile), else the comma-separated notes. */
 export function pointsFrom(ad: { contenu?: string; competences?: string | null }): string[] {
-  const bullets = (ad.contenu || '').split('\n').map(l => l.trim()).filter(l => /^[•\-*–]/.test(l)).map(l => l.replace(/^[•\-*–]\s*/, '').replace(/[.;]$/, ''));
+  // list items only: « **Missions** » (a markdown heading) is not one; the bold marks are dropped
+  const bullets = (ad.contenu || '').split('\n').map(l => l.trim())
+    .filter(l => /^[•\-*–]/.test(l) && !/^\*\*[^*]+\*\*\s*:?$/.test(l))
+    .map(l => l.replace(/^[•\-*–]\s*/, '').replace(/\*\*/g, '').replace(/[.;]$/, '').trim()).filter(Boolean);
   const short = bullets.filter(b => b.length <= 90);
   if (short.length) return short.slice(0, 4);
   return (ad.competences || '').split(/[,;\n]/).map(s => s.trim()).filter(Boolean).slice(0, 4);

@@ -220,6 +220,39 @@ def test_the_public_jpeg_of_the_visual():
     assert r.status_code == 200 and r.headers["content-type"] == "image/jpeg" and r.content[:2] == b"\xff\xd8"
 
 
+
+def test_moovwin_is_recorded_by_hand_with_the_offer_link():
+    """Moovwin has no publishing API: HR posts the offer there, then records it with its link (kept in the history)."""
+    c, db = client()
+    assert c.post("/api/social/manual", json={"ad_id": AD, "network": "moovwin", "url": "moovwin.com/jobs/123"}).status_code == 422
+    r = c.post("/api/social/manual", json={"ad_id": AD, "network": "moovwin", "url": "https://moovwin.com/jobs/dev-react-123/"})
+    assert r.json() == {"saved": True, "network": "moovwin", "url": "https://moovwin.com/jobs/dev-react-123/"}
+    hist = c.get(f"/api/social/history/{AD}").json()
+    assert hist[0]["network"] == "moovwin" and hist[0]["ok"] and hist[0]["post_url"].endswith("dev-react-123/")
+    del db.tables["social_posts"]                       # migration not run: said, not hidden
+    db.table = (lambda real: (lambda t: (_ for _ in ()).throw(Exception("relation social_posts does not exist")) if t == "social_posts" else real(t)))(db.table)
+    assert c.post("/api/social/manual", json={"ad_id": AD, "network": "moovwin", "url": ""}).json()["saved"] is False
+
+
+def test_the_public_feed_lists_the_active_offers():
+    """The XML feed a job board (Moovwin, aggregators) can import: active offers only, with the apply link."""
+    c, db = client()
+    db.tables["recruitment_ads"].append({"id": "00000000-0000-4000-8000-0000000000a2", "poste": "Comptable", "description": "CDD · Rabat",
+                                         "contenu": "Gestion <b>&</b> ]]> clôtures", "is_active": False})
+    db.tables["recruitment_ads"][0]["is_active"] = True
+    db.tables["app_settings"] = [{"key": "company", "value": {"name": "Tython SARL", "city": "Casablanca"}}]
+    r = c.get("/api/annonces/feed.xml", headers={"x-forwarded-host": "wedy.tython.ma", "x-forwarded-proto": "https"})
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/xml")
+    import xml.etree.ElementTree as ET
+    root = ET.fromstring(r.content)
+    jobs = root.findall("job")
+    assert len(jobs) == 1 and jobs[0].findtext("title") == "Développeur React (H/F)" and jobs[0].findtext("company") == "Tython SARL"
+    assert jobs[0].findtext("url") == f"https://wedy.tython.ma/postuler/{AD}" and jobs[0].findtext("category") == "Informatique / Développement"
+    assert root.findtext("publisher") == "Tython SARL"
+    db.tables["recruitment_ads"][1]["is_active"] = True                 # CDATA survives « ]]> » and markup in the text
+    root = ET.fromstring(c.get("/api/annonces/feed.xml").content)
+    assert [j.findtext("description") for j in root.findall("job")][1] == "Gestion <b>&</b> ]]> clôtures"
+
 if __name__ == "__main__":
     fails = 0
     for name, fn in list(globals().items()):

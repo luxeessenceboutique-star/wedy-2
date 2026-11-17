@@ -14,3 +14,26 @@
 .sk-direct-none { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: #52646d; line-height: 1.45; }
 .sk-direct-none > span { flex: 1 1 220px; }
 .sk-direct-link { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px; border-radius: 10px; border: 1px solid #cfe8ec; background: #fff; color: #0e6f84; font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+
+/* Moovwin (MoovwinPanel.tsx): each field of its form ready to copy */
+.mw { display: flex; flex-direction: column; gap: 12px; }
+.mw-hint { margin: 0; font-size: 12.5px; line-height: 1.5; color: #5f7079; }
+.mw-done { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; background: #e1f5ec; color: #0f6f49; font-size: 13px; font-weight: 600; }
+.mw-done a { display: inline-flex; align-items: center; gap: 4px; margin-inline-start: auto; color: #0f6f49; }
+.mw-fields { display: flex; flex-direction: column; gap: 10px; }
+.mw-field { display: flex; flex-direction: column; gap: 5px; }
+.mw-field > small { font-size: 11.5px; color: #7d8f97; line-height: 1.4; }
+.mw-field-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12.5px; font-weight: 600; color: #33474f; }
+.mw-field-h button { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: 8px; border: 1px solid #f3c7ab; background: #fff7f2; color: #b4440a; font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; }
+.mw-field-h button:disabled { opacity: .45; cursor: default; }
+.mw-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 13px; border-radius: 11px; border: 1px solid #d6dfe3; background: #fff; color: #0a1c24; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; align-self: flex-start; }
+.mw-btn.primary { background: #e8590c; border-color: #e8590c; color: #fff; }
+.mw-btn:disabled { opacity: .6; cursor: default; }
+.mw-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.mw-actions .mw-btn.primary { flex: 1 1 200px; }
+.mw-mark { display: flex; flex-direction: column; gap: 7px; padding: 12px; border-radius: 14px; background: #fff7f2; border: 1px solid #f6d7c3; }
+.mw-mark b { font-size: 12.5px; color: #0a1c24; }
+.mw-mark-row { display: flex; gap: 6px; align-items: center; }
+.mw-feed { font-size: 12.5px; color: #52646d; }
+.mw-feed summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 600; color: #33474f; }
+.mw-feed p { margin: 6px 0 8px; line-height: 1.5; }

@@ -395,13 +395,15 @@ def post_instagram(supabase: Client, text: str, image_url: Optional[str], wait: 
     return {"post_id": mid, "url": url}
 
 
-def record(supabase: Client, ad_id: str, network: str, result: dict, user_id: Optional[str]) -> None:
+def record(supabase: Client, ad_id: str, network: str, result: dict, user_id: Optional[str]) -> bool:
+    """Keep a publication in the ad's history. False when the table is not there (migration not run)."""
     try:
         supabase.table("social_posts").insert({"ad_id": ad_id, "network": network, "ok": bool(result.get("ok")),
                                                "post_id": result.get("post_id"), "post_url": result.get("url"),
                                                "error": (result.get("error") or "")[:500] or None, "posted_by": user_id}).execute()
+        return True
     except Exception:
-        pass  # not migrated: the post itself is done
+        return False  # not migrated: the post itself is done
 
 
 def history(supabase: Client, ad_id: str) -> list[dict]:

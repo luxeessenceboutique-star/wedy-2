@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
@@ -39,6 +39,66 @@ class JobAdOut(JobAdBase):
 def list_annonces(supabase: Client = Depends(get_db)):
     res = annonce_repository.list_annonces(supabase)
     return res.data or []
+
+
+_CATEGORY_RULES = [
+    (r"d[ée]velopp|developer|full ?stack|front|back ?end|data|\bia\b|\bai\b|devops|informati|logiciel|software|cloud|r[ée]seau|syst[eè]me", "Informatique / Développement"),
+    (r"commercial|vente|sales|business|account|client", "Commercial / Vente"),
+    (r"marketing|communication|social media|community|seo|contenu", "Marketing / Communication"),
+    (r"compta|finance|audit|contr[ôo]le de gestion|tr[ée]sor|fiscal", "Finance / Comptabilité"),
+    (r"\brh\b|ressources humaines|recrut|talent|paie", "Ressources humaines"),
+    (r"design|\bux\b|\bui\b|graphi|cr[ée]ati", "Design / Création"),
+    (r"assistant|administrati|secr[ée]tari|office", "Administratif"),
+    (r"logisti|transport|achat|supply", "Logistique / Achats"),
+]
+
+
+def job_category(title: str) -> str:
+    """The usual job-board category of a job title (Moovwin, Indeed…): the closest one to choose on the board."""
+    import re as _re
+    t = (title or "").lower()
+    return next((cat for pat, cat in _CATEGORY_RULES if _re.search(pat, t)), "Autre")
+
+
+@router.get("/feed.xml")
+def jobs_feed(request: Request, supabase: Client = Depends(get_db)):
+    """Public XML feed of the active job offers, in the usual job-board format (Indeed / Jooble style): a job board
+    that imports feeds (Moovwin, aggregators) publishes the company's offers from it automatically."""
+    from fastapi.responses import Response as _Response
+    from xml.sax.saxutils import escape as _x
+    from app.services import app_settings
+    base = _public_base(request)
+    try:
+        company = app_settings.load(supabase)[0].get("company") or {}
+    except Exception:
+        company = {}
+    ads = [a for a in (annonce_repository.list_annonces(supabase).data or []) if a.get("is_active")]
+    cdata = lambda v: "<![CDATA[" + str(v or "").replace("]]>", "]]]]><![CDATA[>") + "]]>"
+    items = []
+    for a in ads:
+        contract, _, city = (a.get("description") or "").partition("·")
+        apply_url, image_url = f"{base}/postuler/{a['id']}", f"{base}/api/annonces/{a['id']}/visual/linkedin.jpg"
+        items.append(
+            "  <job>\n"
+            f"    <title>{cdata(a.get('poste'))}</title>\n"
+            f"    <date>{_x(str(a.get('created_at') or '')[:10])}</date>\n"
+            f"    <referencenumber>{_x(str(a['id']))}</referencenumber>\n"
+            f"    <url>{_x(apply_url)}</url>\n"
+            f"    <company>{cdata(company.get('name') or '')}</company>\n"
+            f"    <city>{cdata(city.strip() or company.get('city') or '')}</city>\n"
+            "    <country>MA</country>\n"
+            f"    <jobtype>{cdata(contract.strip())}</jobtype>\n"
+            f"    <category>{cdata(job_category(a.get('poste') or ''))}</category>\n"
+            f"    <experience>{cdata(a.get('experience') or '')}</experience>\n"
+            f"    <skills>{cdata(a.get('competences') or '')}</skills>\n"
+            f"    <description>{cdata(a.get('contenu') or '')}</description>\n"
+            f"    <image>{_x(image_url)}</image>\n"
+            "  </job>")
+    xml = ('<?xml version="1.0" encoding="utf-8"?>\n<source>\n'
+           f"  <publisher>{cdata(company.get('name') or 'Wedy RH')}</publisher>\n  <publisherurl>{_x(base)}</publisherurl>\n"
+           f"  <lastBuildDate>{datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')}</lastBuildDate>\n"
+           + "\n".join(items) + "\n</source>\n")
+    return _Response(xml, media_type="application/xml; charset=utf-8", headers={"Cache-Control": "public, max-age=600"})
 
 
 @router.get("/{id}", response_model=JobAdOut)

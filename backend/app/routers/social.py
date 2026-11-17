@@ -126,6 +126,24 @@ def social_publish(body: PublishIn, request: Request, supabase: Client = Depends
     return {"results": out}
 
 
+class ManualIn(BaseModel):
+    ad_id: UUID
+    network: Literal["moovwin", "indeed", "rekrute", "emploi"]
+    url: str = Field("", max_length=600)
+
+
+@router.post("/manual")
+def social_manual(body: ManualIn, supabase: Client = Depends(get_db), user: dict = Depends(require_hr_or_admin)):
+    """A job board without a publishing API (Moovwin…): HR posts the offer there, then records it here with its link."""
+    url = body.url.strip()
+    if url and not url.startswith(("http://", "https://")):
+        raise HTTPException(status_code=422, detail="Le lien de l'offre doit commencer par https://")
+    saved = social.record(supabase, str(body.ad_id), body.network, {"ok": True, "url": url or None}, user.get("id"))
+    if saved:
+        log_action(supabase, user["id"], "PUBLISH", "recruitment_ad", str(body.ad_id))
+    return {"saved": saved, "network": body.network, "url": url or None}
+
+
 @router.get("/history/{ad_id}")
 def social_history(ad_id: UUID, supabase: Client = Depends(get_db), _user: dict = Depends(require_hr_or_admin)):
     return social.history(supabase, str(ad_id))

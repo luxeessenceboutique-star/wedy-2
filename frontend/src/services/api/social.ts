@@ -20,3 +20,12 @@ export const chooseSocialAccount = (p: SocialProvider, account_id: string) => ap
 export const disconnectSocial = (p: SocialProvider) => api.delete(`/social/${p}`);
 export const publishAd = (body: { ad_id: string; networks: SocialNetwork[]; texts: Partial<Record<SocialNetwork, string>>; share_url?: string }) =>
   api.post<{ results: Partial<Record<SocialNetwork, PublishResult>> }>('/social/publish', body, { timeout: 120000 }).then(r => r.data.results);
+
+/** Job boards without a publishing API (Moovwin…): the offer is posted there by hand, then recorded with its link. */
+export type ManualBoard = 'moovwin' | 'indeed' | 'rekrute' | 'emploi';
+export type SocialHistoryItem = { network: string; ok: boolean; post_url: string | null; error: string | null; created_at: string };
+export const getSocialHistory = (adId: string) => api.get<SocialHistoryItem[]>(`/social/history/${adId}`).then(r => r.data);
+export const markPublished = (body: { ad_id: string; network: ManualBoard; url: string }) =>
+  api.post<{ saved: boolean; network: ManualBoard; url: string | null }>('/social/manual', body).then(r => r.data);
+/** Public XML feed of the active offers (for job boards that import feeds). */
+export const jobsFeedUrl = () => `${window.location.origin}/api/annonces/feed.xml`;

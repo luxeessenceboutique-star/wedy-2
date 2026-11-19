@@ -177,33 +177,58 @@ _DATE = rf"(?:\d{{1,2}}[/.-]\d{{1,2}}[/.-]\d{{2,4}}|\d{{1,2}}(?:er)?\s+(?i:{_MON
 _UP = "A-ZÀ-ÖØ-Þ"
 _WORD = rf"[{_UP}][A-Za-zÀ-ÖØ-öø-ÿ'’\-]+"
 _CIV_WORD = r"(?:M\.|Mr\.?|Mme\.?|Mlle\.?|Monsieur|Madame|Mademoiselle)"
-_PERSON = re.compile(rf"(?<![\w/])(M\.|Mr\.|Mme\.|Mlle\.|Mr|Mme|Mlle|Monsieur|Madame|Mademoiselle)(?:(?<=\.)[ \t]*|[ \t]+)({_WORD}(?:[ \t]+{_WORD}){{0,3}})")
+_CIV_SLOT = r"(?:Monsieur\s*/\s*Madame|Madame\s*/\s*Monsieur|M\.?\s*/\s*Mme\.?|Mr\.?\s*/\s*Mme\.?)"
+_PERSON = re.compile(rf"(?<![\w/])({_CIV_SLOT}|M\.|Mr\.|Mme\.|Mlle\.|Mr|Mme|Mlle|Monsieur|Madame|Mademoiselle)"
+                     rf"(?:(?<=\.)[ \t]*|[ \t]*:[ \t]*|[ \t]+)({_WORD}(?:[ \t]+{_WORD}){{0,3}})")
 _PLACE = rf"{_WORD}(?:[ \t-]+{_WORD}){{0,2}}"
 _NOT_A_NAME = {"le", "la", "les", "directeur", "directrice", "gerant", "gerante", "president", "presidente", "responsable"}
 _FEMININE = ("mme", "madame", "mlle", "mademoiselle")
 
-# (pattern, [(field, hint) per group]) — the keywords are case-insensitive, names and places start with a capital
+# fields that are not Wedy data: asked when generating, with the example's value proposed
+CUSTOM_VALUE_FIELDS = {"trial_period": "Période d'essai", "salary_net": "Salaire net"}
+_KEEP_DEFAULT = {"trial_period", "work_mode"}   # the example's value is a good default for everyone
+_UNIT = r"(?:jours?|mois|semaines?|ans?|ann[ée]es?)"
+_STOP = (r"(?=\s+(?i:(?:depuis|[aà] compter|au sein|pour une|au service|au d[ée]partement|aupr[èe]s|jusqu|afin|pour|"
+         r"selon|avec|dans|charg[ée]|rattach[ée]|et ce|sous)\b|du\s+\d)|\s*[,.;:\n(«»“”])")
+
+# (pattern, [(field, hint) per group]) — the keywords are case-insensitive (and do without accents: scans), names and
+# places start with a capital
 _VALUE_RULES: list[tuple[str, list[tuple[str, str]]]] = [
+    (r"(?i:\b(?:CIN|C\.I\.N\.?|carte d.identit[ée] nationale|carte nationale d.identit[ée]))(?:\s*(?i:n°|no\.?|num[ée]ro|:|°))*\s*[a-z]?\s*"
+     r"([A-Z]{1,2}[ \t]?\d{3,8}|[A-Z][A-Z0-9]{1,2}\d{4,8})\b", [("cin", "CIN")]),
+    (r"(?i:\b(?:demeurant|domicili[ée]e?|r[ée]sidant)\s+(?:[aà]u?x?\s+|:\s*)?)(.+?)"
+     r"(?=\s*,\s*(?i:ci.apr|titulaire|n[ée]e?\b|de nationalit|immatricul|t[ée]l)|\s*[;\n]|\s*$)", [("address", "adresse")]),
+    (rf"(?i:\b(?:prenant|prend|prendra)\s+effet\s+(?:le|[aà] compter du|[aà] partir du))\s+({_DATE})", [("contract_start", "prend effet le")]),
+    (rf"(?i:\b[aà] partir du)\s+({_DATE})", [("contract_start", "à partir du")]),
+    (rf"(?i:\b(?:d[ée]butera|commencera|d[ée]bute|commence)\s+le)\s+({_DATE})", [("contract_start", "débute le")]),
+    (rf"(?i:\bdate (?:de d[ée]but|d.effet|d.entr[ée]e)\s*:?)\s*({_DATE})", [("contract_start", "date de début")]),
+    (rf"(?i:\b(?:arrivant|arrivera|venant|viendra)\s+(?:automatiquement\s+)?[aà]\s+(?:son\s+)?[ée]ch[ée]ance\s+le)\s+({_DATE})",
+     [("contract_end", "échéance le")]),
+    (rf"(?i:\b(?:prendra fin|prend fin|se terminera|expirera|s.ach[eè]vera)\s+le)\s+({_DATE})", [("contract_end", "prend fin le")]),
+    (rf"(?i:\bdate de fin\s*:?)\s*({_DATE})", [("contract_end", "date de fin")]),
+    (rf"(?i:\b(?:pour une|d.une)\s+dur[ée]e\s+(?:d[ée]termin[ée]e\s+)?de|\bdur[ée]e du (?:contrat|stage)\s*(?:est de|:)?)\s+(\d+\s*{_UNIT})",
+     [("duration", "durée")]),
+    (rf"(?i:\bp[ée]riode d.essai\s+(?:de|d.une dur[ée]e de|est (?:fix[ée]e\s+)?[aà]|:)\s*)(\d+\s*{_UNIT}(?:\s+(?i:renouvelable)(?:\s+(?i:une fois))?)?)",
+     [("trial_period", "période d'essai")]),
+    (r"(?i:\bmode de travail\s+(?:en\s+)?)((?i:hybride|pr[ée]sentiel|t[ée]l[ée]travail|[aà] distance|remote)(?:\s*\([^)\n]{0,60}\))?)",
+     [("work_mode", "mode de travail")]),
+    (r"(?i:\ben\s+(?:sa\s+)?qualit[ée]\s+d[e'’])\s*[«“\"]\s*([^»”\"\n]{2,80}?)\s*[»”\"]", [("position", "poste")]),
+    (r"(?i:\b(?:en (?:sa )?qualit[ée] d[e'’]|en tant que|au poste d[e'’]|occupe(?:ra)? (?:le poste|la fonction) d[e'’]|"
+     r"exerce(?:ra)? (?:la fonction|les fonctions) d[e'’]))\s*(?![«“\"])(.+?)" + _STOP, [("position", "poste")]),
     (rf"(?i:\bn[ée]e?\s+le)\s+({_DATE})", [("birth_date", "né(e) le")]),
     (rf"(?i:\bn[ée]e?\s+le)\s+{_DATE}\s+(?i:à)\s+({_PLACE})", [("birth_place", "né(e) à")]),
-    (r"(?i:\b(?:CIN|C\.I\.N\.?|carte d.identit[ée] nationale|carte nationale d.identit[ée])\b)[^\n]{0,30}?\b([A-Z]{1,2}[ \t]?\d{3,7})\b",
-     [("cin", "CIN")]),
     (r"(?i:\bCNSS\b)[^\d\n]{0,25}(\d{6,12})\b", [("cnss_number", "CNSS")]),
     (rf"(?i:\bdepuis le)\s+({_DATE})", [("hire_date", "depuis le")]),
     (rf"(?i:\b(?:embauch|recrut|engag)[ée]e?\s+(?:le|depuis le|à compter du))\s+({_DATE})", [("hire_date", "embauché(e) le")]),
     (rf"(?i:\bdu)\s+({_DATE})\s+(?i:au)\s+({_DATE})", [("contract_start", "du"), ("contract_end", "au")]),
-    (rf"(?i:\bà compter du)\s+({_DATE})", [("contract_start", "à compter du")]),
+    (rf"(?i:\b[aà] compter du)\s+({_DATE})", [("contract_start", "à compter du")]),
     (rf"(?i:\bdu)\s+({_DATE})\s+(?i:au)\s+(?!\d)", [("contract_start", "du")]),
     (rf"(?i:\bjusqu.au)\s+({_DATE})", [("contract_end", "jusqu'au")]),
-    (rf"(?i:\b(?:fait|[ée]tabli|d[ée]livr[ée])e?\s+à)\s+({_PLACE})\s*,?\s*(?i:le)\s+({_DATE})", [("company_city", "fait à"), ("today", "date du document")]),
+    (rf"(?i:\b(?:fait|[ée]tabli|d[ée]livr[ée])e?(?:\s+en\s+(?:double|deux|trois|\w+)\s+(?:exemplaires?|originaux)(?:\s+originaux)?)?\s+[aà])\s+({_PLACE})\s*,?\s*(?i:le)\s+({_DATE})",
+     [("company_city", "fait à"), ("today", "date du document")]),
     (rf"(?m)^[ \t]*({_PLACE})[ \t]*,[ \t]*(?i:le)[ \t]+({_DATE})", [("company_city", "fait à"), ("today", "date du document")]),
     (r"(?i:(à durée (?:in)?d[ée]termin[ée]e\s*\((?:CDI|CDD)\)))", [("contract_phrase", "contrat")]),
     (r"(?i:\bcontrat\s+(?:de type\s+)?)(CDI|CDD|ANAPEC)\b", [("contract_type", "contrat")]),
-    (r"(?i:(?:salaire|r[ée]mun[ée]ration|gratification|indemnit[ée])[^.\n]{0,60}?\b(?:de|:))\s*(\d[\d \u00a0\u202f.,]*\d)\s*(?=(?i:MAD|DH|DHS|dirhams?)\b)",
-     [("salary_figures", "salaire")]),
-    (r"(?i:\b(?:en qualit[ée] d[e']|en tant que|au poste d[e']|occupe le poste d[e']|occupe la fonction d[e']|exerce la fonction d[e']))\s*"
-     r"(.+?)(?=\s+(?i:depuis|à compter|au sein|du\s+\d|pour une|au service|au d[ée]partement|aupr[èe]s|jusqu)|\s*[,.;:\n(])",
-     [("position", "poste")]),
 ]
 
 
@@ -213,37 +238,114 @@ def _signatory(text: str, start: int, end: int) -> bool:
     return bool(re.search(r"soussign", before) or re.match(r"(agissant|en sa qualite|directeur|directrice|gerant|gerante|president|presidente|drh)\b", after))
 
 
+def parties(text: str) -> tuple[Optional[tuple[int, int]], Optional[tuple[int, int]]]:
+    """In a contract « Entre les soussignés : <the employer>, d'une part, et <the employee>, d'autre part »:
+    (the employer's block, the employee's block) as spans of the text, each None when not found.
+    What is in the employer's block (company name, head office, RC, ICE, CNSS, its manager) never becomes a field."""
+    one = re.search(r"(?i)\bd\W{0,2}\s?une\s+part\b", text)
+    other = re.search(r"(?i)\bd\W{0,2}\s?autre\s+part\b", text)
+    employer = employee = None
+    if one:
+        start = re.search(r"(?i)\bentre\s+(?:les\s+)?soussign", text)
+        employer = (start.start() if start and start.start() < one.start() else 0, one.end())
+        if other and other.start() > one.end():
+            employee = (one.end(), other.start())
+    else:   # « …, représentée par M. X, ci-après dénommée « l'Employeur » »: that sentence
+        e = re.search(r"(?i)ci.apr[eè]s\s+(?:d[eé]nomm[eé]e?|appel[eé]e?|d[eé]sign[eé]e?)\s*[«\"“]?\s*l.\s*employeur", text)
+        if e:
+            employer = (max(text.rfind("\n\n", 0, e.start()), 0), e.end())
+    return employer, employee
+
+
+def _within(span: Optional[tuple[int, int]], pos: int) -> bool:
+    return bool(span) and span[0] <= pos < span[1]
+
+
+def company_people(text: str) -> set[str]:
+    """The names of the people who act for the company (its manager « représentée par M. X », the one who signs for it)."""
+    employer, _ = parties(text)
+    names = set()
+    for m in _PERSON.finditer(text):
+        before = norm(text[max(0, m.start() - 40):m.start()])
+        after = norm(text[m.end():m.end() + 40])
+        if _within(employer, m.start()) or re.search(r"(represente e? par|represente par|soussigne e?)$", before) \
+                or re.match(r"(agissant|directeur|directrice|gerant|gerante|president|presidente|drh|pdg|ceo)\b", after):
+            names.add(norm(m.group(2)))
+    return names
+
+
 def find_person(text: str) -> Optional[dict]:
-    """The person a filled document is about: {civility, name, feminine}, or None."""
+    """The person a filled document is about: {civility, name, feminine}, or None. In a contract: the employee, never
+    the one who represents the company (« représentée par M. X, gérant »)."""
+    employer, employee = parties(text)
+    company = company_people(text)
+    best = None
     for m in _PERSON.finditer(text):
         name = m.group(2).strip()
         if norm(name.split()[0]) in _NOT_A_NAME or len(norm(name)) < 3:
             continue
-        if _signatory(text, m.start(), m.end()):
+        if _within(employer, m.start()) or norm(name) in company or _signatory(text, m.start(), m.end()):
             continue
-        return {"civility": m.group(1), "name": name, "feminine": m.group(1).lower().rstrip(".").startswith(_FEMININE)}
-    return None
+        score = 0
+        if _within(employee, m.start()):
+            score += 5
+        if re.search(r"ci apres (denomme|appele|designe)e? (le|la|l) ?(salarie|employe|stagiaire|collaborat|beneficiaire)|titulaire de|"
+                     r"demeurant|domicilie|\bne e? le\b|\bnee le\b", norm(text[m.end():m.end() + 160])):
+            score += 3
+        if best is None or score > best[0]:
+            civ = m.group(1)
+            slot = bool(re.match(_CIV_SLOT + "$", civ))
+            best = (score, {"civility": civ, "name": name, "feminine": (not slot) and civ.lower().rstrip(".").startswith(_FEMININE)})
+    return best[1] if best else None
+
+
+_MONEY = re.compile(r"(\d[\d \u00a0\u202f.,]*\d|\d)\s*(MAD|DH|DHS|Dhs|dirhams?|Dirhams?)\b(\s*\(\s*([a-zà-ÿ][a-zà-ÿ \-]*?)\s*(?:dirhams?|DH|MAD)?\s*(?:bruts?|nets?)?\s*\))?")
+_PAY_WORD = r"(salaire|r[ée]mun[ée]ration|gratification|indemnit[ée] (?:de stage|mensuelle))"
+
+
+def _salaries(text: str) -> list[tuple[int, int, str, Optional[tuple[int, int]]]]:
+    """The pay amounts: (start, end, « net » / « brut » / « », span of the amount in words or None)."""
+    out = []
+    for m in _MONEY.finditer(text):
+        before = text[max(0, m.start() - 120):m.start()]
+        sentence = re.split(r"\.(?:\s|$)", before)[-1]
+        k = list(re.finditer(_PAY_WORD, sentence, re.I))
+        if not k:
+            continue
+        tail = sentence[k[-1].start():]
+        kind = "net" if re.search(r"\bnets?\b", tail, re.I) else "brut" if re.search(r"\bbruts?\b", tail, re.I) else ""
+        out.append((m.start(1), m.end(1), kind, m.span(4) if m.group(4) else None))
+    return out
 
 
 def find_values(text: str) -> list[dict]:
     """The person's values in a filled document, as placeholders of kind « value » ({start, end, raw, label, kind, key}).
     `raw` names the value and its role (« LINA SAIDI (nom) »): the same town can be a birth place and the place of
-    signature, each is a field of its own."""
+    signature, each is a field of its own. In a contract, what belongs to the employer (its block « Entre les
+    soussignés … d'une part », the one who represents it) stays as it is."""
     out: list[dict] = []
+    employer, _ = parties(text)
+    title = next((ln for ln in text.split("\n") if ln.strip()), "")
+    is_contract = bool(re.search(r"\b(contrat|convention|avenant)\b", norm(title)))
 
     def add(start: int, end: int, key: str, hint: str):
         value = text[start:end].strip()
-        if not value:
+        if not value or _within(employer, start):
+            return
+        if is_contract and key in ("contract_phrase", "contract_type"):   # a CDD stays a CDD: it is the document itself
             return
         start = start + text[start:end].index(value)
-        out.append({"start": start, "end": start + len(value), "raw": f"{value} ({hint})", "label": KNOWN_FIELDS.get(key, hint),
-                    "kind": "value", "key": key})
+        ph = {"start": start, "end": start + len(value), "raw": f"{value} ({hint})",
+              "label": KNOWN_FIELDS.get(key) or CUSTOM_VALUE_FIELDS.get(key, hint), "kind": "value", "key": key}
+        if key in _KEEP_DEFAULT:
+            ph["default"] = value
+        out.append(ph)
 
     person = find_person(text)
     if person:
         for m in re.finditer(r"(?<!\w)" + re.escape(person["name"]) + r"(?!\w)", text, re.IGNORECASE):
             add(m.start(), m.end(), "full_name", "nom")
-            c = re.search(rf"(?<![\w/])({_CIV_WORD})[ \t]*$", text[max(0, m.start() - 14):m.start()])
+            c = re.search(rf"(?<![\w/])({_CIV_WORD})[ \t]*:?[ \t]*$", text[max(0, m.start() - 16):m.start()])
             if c:
                 cs = m.start() - len(c.group(0))
                 long_form = c.group(1).lower().startswith(("monsieur", "madame", "mademoiselle"))
@@ -257,11 +359,26 @@ def find_values(text: str) -> list[dict]:
                 if key == "position":
                     if re.search(r"agissant\s*$", norm(text[max(0, m.start() - 30):m.start()])) or len(text[a:b]) > 80:
                         continue
-                    if norm(text[a:b]) in ("", "stagiaire"):
+                    if norm(text[a:b]) in ("", "stagiaire", "salarie", "employe"):
                         continue
                 if key == "today" and re.search(r"[a-zA-Z]", text[a:b]):
                     key = "today_long"
                 add(a, b, key, hint)
+    # the pay: the gross one is Wedy's salary; a net one next to it is asked apart
+    pay = _salaries(text)
+    two = any(k == "net" for _, _, k, _ in pay) and any(k == "brut" for _, _, k, _ in pay)
+    for a, b, kind, words in pay:
+        key = "salary_net" if two and kind == "net" else "salary_figures"
+        add(a, b, key, "salaire net" if key == "salary_net" else "salaire")
+        if words and key == "salary_figures":
+            add(words[0], words[1], "salary_words", "salaire en lettres")
+    # the same position / CIN written again elsewhere (« exercera les fonctions de … »): the same field
+    for key in ("position", "cin"):
+        for v in {text[d["start"]:d["end"]] for d in out if d["key"] == key}:
+            if len(v.strip()) < 4:
+                continue
+            for m in re.finditer(r"(?<!\w)" + re.escape(v) + r"(?!\w)", text, re.IGNORECASE):
+                add(m.start(), m.end(), key, "poste" if key == "position" else "CIN")
     out.sort(key=lambda d: (d["start"], -(d["end"] - d["start"])))
     kept, last = [], -1
     for d in out:
@@ -291,9 +408,14 @@ def neutral_gender(html_body: str, feminine: bool) -> str:
         t = re.sub(r"\b" + _GENDERED + r"ée(s?)\b", lambda m: m.group(1) + "é(e)" + m.group(2), t)
         t = re.sub(r"\b" + _GENDERED + r"é(s?)(?![\w(])", lambda m: m.group(1) + "é(e)" + m.group(2), t)
         t = re.sub(r"\binscrite?(?![\w(])", "inscrit(e)", t)
+        # « ci-après dénommé « le Salarié » » (never the company: « dénommée « l'Employeur » » stays)
+        t = re.sub(r"\b(d[ée]nomm|d[ée]sign)[ée]e?(?![\w(])(?=\s*[«\"“]?\s*(?:(?:le|la)\s+(?:salari|stagiaire|b[ée]n[ée]ficiaire|collaborat|employ[ée](?!ur))|l.\s*employ[ée](?!ur)))",
+                   lambda m: m.group(1) + "é(e)", t, flags=re.I)
         if feminine:
             t = re.sub(r"\b(E|e)lle\s+" + _SUBJECT_VERBS, lambda m: ("Il/Elle " if m.group(1) == "E" else "il/elle ") + m.group(2), t)
-        t = re.sub(r"\b(I|i)l\s+" + _SUBJECT_VERBS, lambda m: ("Il/Elle " if m.group(1) == "I" else "il/elle ") + m.group(2), t)
+        # « il a été convenu / il est entendu » speak of nobody: kept
+        t = re.sub(r"\b(I|i)l\s+(?!a\s+[ée]t[ée]\s+(?:convenu|arr[êe]t[ée]|d[ée]cid[ée]|entendu|stipul[ée]|pr[ée]vu|expos[ée]))" + _SUBJECT_VERBS,
+                   lambda m: ("Il/Elle " if m.group(1) == "I" else "il/elle ") + m.group(2), t)
         return t
 
     parts = _TAG.split(html_body)
@@ -423,7 +545,7 @@ def analyse_html(body: str, mapping: Optional[dict] = None) -> list[dict]:
         key = resolve(ph, plain, mapping)
         f = fields.setdefault(ph["raw"], {
             "placeholder": ph["raw"], "label": ph["label"], "key": key, "known": key in KNOWN_FIELDS,
-            "count": 0, "kind": ph["kind"], "default": default_for(key, ph["label"]),
+            "count": 0, "kind": ph["kind"], "default": ph.get("default") or default_for(key, ph["label"]),
         })
         f["count"] += 1
     return list(fields.values())
@@ -480,6 +602,12 @@ def build_template(raw_html: str, mapping: Optional[dict] = None) -> tuple[str, 
         if any(f["key"] == "full_name" for f in fields):
             out = neutral_gender(out, person["feminine"])
     out = re.sub(r"\{\{(civility|civility_short)\}\}(\{\{full_name\}\})", r"{{\1}} \2", out)   # « Mme.LINA » → « Mme X »
+    out = re.sub(r"\b(CIN|C\.I\.N\.?)[a-z](\{\{cin\}\})", r"\1 : \2", out)   # a scan's stray letter between « CIN » and the number
+    if not (mapping and mapping.get("__no_date__") == KEEP):
+        out, n = re.subn(r"(\b[Ff]ait\b[^<>{}]{0,80}?\b[aà]\s+[^<>{},]{2,40},\s*le)\s*(?:\.{2,}|_{2,}|…+)?\s*(?=<)", r"\1 {{today}}", out)
+        if n and not any(f["key"] == "today" for f in fields):
+            fields.append({"placeholder": "(date du document)", "label": KNOWN_FIELDS["today"], "key": "today", "known": True,
+                           "count": n, "kind": "value", "default": ""})
     old_meta = read_meta(raw_html)
     meta_fields = [{"key": k, "label": v.get("label", k), "default": v.get("default", "")} for k, v in old_meta.items()
                    if k not in {f["key"] for f in fields} and "{{" + k + "}}" in out]

@@ -292,6 +292,94 @@ def extract_template_smart(file_bytes: bytes, filename: str = "template.pdf") ->
 
 
 PAGE_MARK = "<!--wedy-page-->"
+SCAN_MARK = "<!--wedy-scan-->"   # the text was read by OCR from a scan: to be read again by HR
+_JUNK = re.compile(r"[■□▪◆^£$\\|{}~¤¥©®¬¦µ]")
+# « l’ » read as F / T / 1 / I by OCR, before the words a contract uses
+_L_WORDS = (r"(?:entreprise|[eé]tablissement|autorit[eé]|employeur|un|une|autre|autorisation|activit[eé]|ex[eé]cution|"
+            r"expiration|embauche|article|accord|ensemble|int[eé]ress[eé]e?|horaire|objet|application|ann[eé]e|adresse|"
+            r"essai|exercice|occasion|usage|int[eé]rieur|initiative|indemnit[eé]|identit[eé]|anciennet[eé]|avenant)")
+
+
+def _is_ocr_page(page) -> bool:
+    """Most of the page's text is invisible (render mode 3): a scan whose text was read by OCR."""
+    try:
+        trace = page.get_texttrace()
+    except Exception:
+        return False
+    hidden = sum(len(t.get("chars", ())) for t in trace if t.get("type") == 3)
+    total = sum(len(t.get("chars", ())) for t in trace)
+    return total > 0 and hidden / total > 0.5
+
+
+def _ocr_fix(text: str) -> str:
+    """The usual OCR misreadings of a French contract: « 1’expiration » / « I’embauche » / « Fentreprise » → « l’… »,
+    « proIongée » → « prolongée »."""
+    text = re.sub(r"(?<![\w’'])[1I|](?=[’']\s*[a-zà-ÿ])", "l", text)
+    text = re.sub(r"(?<![\w’'])[FT](?=" + _L_WORDS + r"\b)", "l’", text)
+    return re.sub(r"(?<=[a-zà-ÿ])I(?=[a-zà-ÿ])", "l", text)
+
+
+def _letters(t: str) -> float:
+    chars = [c for c in t if not c.isspace()]
+    return sum(c.isalpha() for c in chars) / len(chars) if chars else 0.0
+
+
+def _ocr_junk(t: str) -> bool:
+    """A line that is a stamp, a signature or handwriting read as characters."""
+    t = t.strip()
+    if not t:
+        return True
+    if re.search(r"\b(CIN|C\.I\.N|CNSS|RC|ICE|IF|N°)", t):   # identifiers: kept whatever they look like
+        return False
+    chars = len(re.sub(r"\s", "", t))
+    if chars <= 3:
+        return not re.fullmatch(r"(?i:et|de|à|a)\s*[:,.]?", t)
+    if _letters(t) < 0.6:
+        return True
+    words = re.findall(r"[A-Za-zÀ-ÿ]{3,}", t)
+    if not words:
+        return True
+    tokens = re.findall(r"\S+", t)
+    weird = sum(1 for w in tokens if re.search(r"[a-zà-ÿ][A-Z]|[A-Za-z]\d|\d[A-Za-z]", w))
+    return len(tokens) <= 4 and weird >= 1 and len(words) <= 2
+
+
+def _ocr_part(ln: list) -> list:
+    kept = []
+    for k, sp in enumerate(ln):
+        m = _JUNK.search(sp["text"])
+        if not m:
+            kept.append(sp)
+            continue
+        rest = sp["text"][m.start():] + " ".join(x["text"] for x in ln[k + 1:])
+        if _letters(rest) < 0.6:
+            head = sp["text"][:m.start()].rstrip(" .,'’\"-<")
+            if head.strip():
+                kept.append({**sp, "text": head})
+            break
+        kept.append({**sp, "text": _JUNK.sub("", sp["text"])})
+    return [] if _ocr_junk(" ".join(s["text"] for s in kept)) else kept
+
+
+def _ocr_line(ln: list, width: float = 600) -> list:
+    """A line of a scan without its parasites: each part of it (parts are far apart: a stamp next to a line) is
+    judged alone; a junk tail is cut (« Fait à Casablanca, le..£<^'.1 » → « …, le »), a stray symbol inside a
+    sentence is dropped, a part that is only junk goes. « 1 ’ expiration » read in pieces becomes « l’expiration »."""
+    parts, cur = [], []
+    for sp in ln:
+        if cur and sp["x0"] - cur[-1]["x1"] > max(40, width * 0.08):
+            parts.append(cur)
+            cur = []
+        cur.append(sp)
+    if cur:
+        parts.append(cur)
+    kept = [sp for part in parts for sp in _ocr_part(part)]
+    for k in range(len(kept) - 2):
+        if kept[k]["text"] in ("1", "I", "|") and kept[k + 1]["text"] in ("’", "'") and re.match(r"[a-zà-ÿ]", kept[k + 2]["text"]):
+            kept[k] = {**kept[k], "text": "l"}
+    return kept
+
+
 _ZW = dict.fromkeys(map(ord, "\u200b\u200c\u200d\u2060\ufeff"), None)
 _BULLETS = ("●", "•", "▪", "◦", "–", "-", "*", "➢", "✓")
 
@@ -311,9 +399,12 @@ def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
     pages = []
     sizes: list[float] = []
     fonts: dict[str, int] = {}
+    any_ocr = False
     for page in doc:
         spans, images = [], []
         pw, ph = page.rect.width, page.rect.height
+        ocr = _is_ocr_page(page)   # a scan with the text read by OCR (invisible layer over the page picture)
+        any_ocr = any_ocr or ocr
         for blk in page.get_text("dict").get("blocks", []):
             if blk.get("type") == 1:  # an image: kept as a picture of its area (exact look, rotation included)
                 x0, y0, x1, y1 = blk["bbox"]
@@ -330,12 +421,19 @@ def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
             if blk.get("type") != 0:
                 continue
             for ln in blk.get("lines", []):
+                d = ln.get("dir") or (1.0, 0.0)
+                if abs(d[1]) > 0.05 or d[0] < 0:   # slanted / upside-down text: a watermark (« SPÉCIMEN »), not the document
+                    continue
                 for sp in ln.get("spans", []):
+                    if not ocr and sp.get("alpha", 255) < 128:   # faint text: a watermark (a scan's OCR layer is invisible)
+                        continue
                     raw = (sp.get("text") or "").replace(" ", " ")
                     # Google Docs writes some spaces as pairs of zero-width spaces: two or more of them are a space
                     lead = len(raw) - len(raw.lstrip("​"))
                     trail = len(raw) - len(raw.rstrip("​"))
                     text = re.sub("​{2,}", " ", raw.strip("​")).translate(_ZW)
+                    if ocr:
+                        text = _ocr_fix(text)
                     if not text.strip():
                         continue
                     x0, y0, x1, y1 = sp["bbox"]
@@ -349,7 +447,7 @@ def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
                     sizes.extend([size] * n)
                     fam = "serif" if re.search(r"times|serif|georgia|garamond|cambria|book|roman", font) else "sans"
                     fonts[fam] = fonts.get(fam, 0) + n
-        pages.append((pw, spans, images))
+        pages.append((pw, spans, images, ocr))
     if len(sizes) < 120:
         return None
     body = statistics.median(sizes)
@@ -379,7 +477,7 @@ def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
         return re.sub(r"\s*<br>\s*", "<br>", "".join(out)).strip()
 
     html: list[str] = []
-    for page_no, (width, spans, images) in enumerate(pages):
+    for page_no, (width, spans, images, ocr) in enumerate(pages):
         if page_no and html:
             html.append(PAGE_MARK)  # where a page of the original ends: one PDF can hold several examples
         # 1. lines: spans whose vertical centres are close, left to right
@@ -392,6 +490,13 @@ def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
             cur.append(sp)
         if cur:
             lines.append(sorted(cur, key=lambda s: s["x0"]))
+        if ocr:   # the stamp, the signature and the handwriting read as characters: dropped
+            lines = [kept for kept in (_ocr_line(ln, width) for ln in lines) if kept]
+            # under the « Signature … » labels of a scan: handwriting and stamps, unless a real sentence
+            sig = [k for k, ln in enumerate(lines) if re.match(r"\s*signature", " ".join(sp["text"] for sp in ln), re.I)]
+            if sig:
+                tail = lines[sig[-1] + 1:]
+                lines = lines[:sig[-1] + 1] + [ln for ln in tail if len(ln) >= 8 and _letters(" ".join(sp["text"] for sp in ln)) > 0.8]
         if not lines and not images:
             continue
         left = min([ln[0]["x0"] for ln in lines] + [im["x0"] for im in images])
@@ -487,7 +592,8 @@ def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
                 continue
             if p["kind"] == "cols":
                 rows = []
-                while i < len(paras) and (paras[i]["kind"] == "cols" or (rows and paras[i]["side"] and not paras[i]["heading"])):
+                # a picture (signature, stamp) ends the table: it has no side / heading of its own
+                while i < len(paras) and (paras[i]["kind"] == "cols" or (rows and paras[i]["kind"] != "image" and paras[i].get("side") and not paras[i].get("heading"))):
                     q = paras[i]
                     cols = q["cols"] if q["kind"] == "cols" else [[], q["segs"]]
                     lc, rc = to_html(cols[0]), to_html([s for c in cols[1:] for s in c])
@@ -519,7 +625,8 @@ def _pdf_to_flow_html(file_bytes: bytes) -> Optional[str]:
 
     family = "'Times New Roman',Times,serif" if serif else "Arial,Helvetica,sans-serif"
     return (
-        f'<div style="font-family:{family};font-size:{body:.0f}pt;line-height:1.55;color:#111;'
+        (SCAN_MARK if any_ocr else "")
+        + f'<div style="font-family:{family};font-size:{body:.0f}pt;line-height:1.55;color:#111;'
         'max-width:720px;margin:0 auto;padding:48px 56px;background:#fff;">\n'
         + "\n".join(html)
         + "\n</div>"

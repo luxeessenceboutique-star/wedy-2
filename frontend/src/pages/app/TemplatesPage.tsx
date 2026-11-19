@@ -345,10 +345,11 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
   const [preview, setPreview] = useState('');
   const [choice, setChoice] = useState<Record<string, string>>({});
   const [examples, setExamples] = useState<TemplateExample[]>([]);
+  const [scanned, setScanned] = useState(false);   // the text was read by OCR from a scan
   const [example, setExample] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const reset = () => { setFile(null); setName(''); setFields(null); setPreview(''); setChoice({}); setExamples([]); setExample(null); };
+  const reset = () => { setFile(null); setName(''); setFields(null); setPreview(''); setChoice({}); setExamples([]); setExample(null); setScanned(false); };
   const close = () => { if (loading) return; reset(); onClose(); };
   const pick = (f: File) => { setFile(f); setFields(null); setChoice({}); if (!name.trim()) setName(f.name.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim()); };
   // only what the user changed is sent: the server finds the rest itself
@@ -368,7 +369,7 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
       const fd = form();
       if (pickExample !== undefined) { fd.set('example', String(pickExample)); fd.set('mapping', '{}'); }
       const r = await previewTemplateImport(fd);
-      setFields(r.fields); setPreview(r.body_template); setExamples(r.examples ?? []); setExample(r.example ?? null);
+      setFields(r.fields); setPreview(r.body_template); setExamples(r.examples ?? []); setExample(r.example ?? null); setScanned(!!r.scanned);
       if (pickExample !== undefined) setChoice({});
     } catch (err) { notify.error(getApiError(err, t('tpl_import_error'))); }
     setLoading(false);
@@ -431,6 +432,11 @@ function ImportModal({ open, onClose, onImported }: { open: boolean; onClose: ()
       </form>
       ) : (
       <>
+        {scanned && (
+          <div role="note" style={{ display: 'flex', gap: 9, alignItems: 'flex-start', margin: '14px 20px 0', padding: '10px 12px', borderRadius: 12, background: '#fdf1dc', color: '#8a5207', fontSize: 12.5, lineHeight: 1.5 }}>
+            <ScanSearch size={15} style={{ flexShrink: 0, marginTop: 2 }} /><span><b>{t('tpl_scan_title')}</b> {t('tpl_scan_text')}</span>
+          </div>
+        )}
         {examples.length > 1 && <ExamplePicker examples={examples} value={example ?? 0} busy={loading} onPick={i => void analyse(undefined, i)} />}
         <FieldReview fields={fields} preview={preview} choice={choice} setChoice={setChoice} />
       </>

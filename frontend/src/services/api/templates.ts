@@ -38,7 +38,7 @@ export const saveTemplateFields = (id: string, mapping: Record<string, string> =
   api.post<{ template: Template; fields: DetectedField[] }>(`/templates/${id}/fields`, { mapping, example }).then(r => r.data);
 /** Read an uploaded document without saving it: its fields (and the template it would give). `mapping` = the user's corrections. */
 export const previewTemplateImport = (form: FormData) =>
-  api.post<{ body_template: string; variables: string[]; fields: DetectedField[]; known_fields: Record<string, string>; examples: TemplateExample[]; example: number | null }>('/templates/preview-import', form, { timeout: 120000 }).then(r => r.data);
+  api.post<{ body_template: string; variables: string[]; fields: DetectedField[]; known_fields: Record<string, string>; examples: TemplateExample[]; example: number | null; scanned?: boolean }>('/templates/preview-import', form, { timeout: 120000 }).then(r => r.data);
 
 export const seedDefaultTemplates = () =>
   api.post<{ created: string[]; skipped: string[] }>('/templates/seed-defaults').then(r => r.data);

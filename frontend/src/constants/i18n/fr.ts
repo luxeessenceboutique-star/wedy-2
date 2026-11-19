@@ -4179,4 +4179,7 @@ export const fr = {
     org_moved: '{name} → {dept}',
     org_under: '{name} est maintenant rattaché(e) à {boss}',
     org_drag_hint: 'Glissez une carte sur un service pour l\'y déplacer, ou sur une personne pour la placer sous sa responsabilité. Cliquez sur une carte pour la modifier.',
+    // Scanned template
+    tpl_scan_title: 'Document scanné.',
+    tpl_scan_text: 'Son texte a été lu automatiquement : le tampon et la signature ont été retirés, mais des accents ou quelques mots peuvent être faux. Relisez l\'aperçu, ou importez plutôt la version Word / PDF d\'origine (non scannée).',
 } as const;

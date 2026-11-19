@@ -4125,4 +4125,7 @@ export const en = {
     org_moved: '{name} → {dept}',
     org_under: '{name} now reports to {boss}',
     org_drag_hint: 'Drag a card onto a department to move it, or onto a person to put it under them. Click a card to edit it.',
+    // Scanned template
+    tpl_scan_title: 'Scanned document.',
+    tpl_scan_text: 'Its text was read automatically: the stamp and signature were removed, but some accents or words may be wrong. Read the preview, or import the original Word / PDF (not scanned) instead.',
 } as const;

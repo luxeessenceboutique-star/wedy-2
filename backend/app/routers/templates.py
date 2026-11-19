@@ -364,11 +364,19 @@ async def create_template(
 def _smart_template(content: bytes, filename: str, mapping: Optional[dict] = None, example: Optional[int] = None) -> tuple[str, list[dict], list[dict], Optional[int]]:
     """The uploaded document as a template: its fields found, mapped to Wedy data (or to the user's choices).
     A document holding several examples (one attestation per page, each for someone else) gives one of them."""
-    from app.services.pdf_template_extractor import extract_template_smart
-    from app.services import template_fields as tfields
-    raw, examples, chosen = tfields.pick_example(extract_template_smart(content, filename), example)
-    body, fields = tfields.build_template(raw, mapping)
+    body, fields, examples, chosen, _scanned = _smart_template_info(content, filename, mapping, example)
     return body, fields, examples, chosen
+
+
+def _smart_template_info(content: bytes, filename: str, mapping: Optional[dict] = None, example: Optional[int] = None):
+    """…and whether the document is a scan (its text was read by OCR: HR reads it again before using it)."""
+    from app.services.pdf_template_extractor import SCAN_MARK, extract_template_smart
+    from app.services import template_fields as tfields
+    html = extract_template_smart(content, filename)
+    scanned = SCAN_MARK in html
+    raw, examples, chosen = tfields.pick_example(html.replace(SCAN_MARK, ""), example)
+    body, fields = tfields.build_template(raw, mapping)
+    return body, fields, examples, chosen, scanned
 
 
 def _example(raw: str) -> Optional[int]:
@@ -473,7 +481,7 @@ async def preview_import(
     content = await file.read()
 
     try:
-        body_template, fields, examples, chosen = _smart_template(content, filename, _parse_mapping(mapping), _example(example))
+        body_template, fields, examples, chosen, scanned = _smart_template_info(content, filename, _parse_mapping(mapping), _example(example))
     except HTTPException:
         raise
     except Exception as e:
@@ -485,7 +493,7 @@ async def preview_import(
     from app.services.template_fields import KNOWN_FIELDS
     variables = sorted(set(re.findall(r"\{\{(\w+)\}\}", body_template)))
     return {"body_template": body_template, "variables": variables, "raw_text": body_template, "fields": fields,
-            "examples": examples, "example": chosen,
+            "examples": examples, "example": chosen, "scanned": scanned,
             "known_fields": KNOWN_FIELDS}
 
 

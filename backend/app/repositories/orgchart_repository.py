@@ -14,14 +14,18 @@ def list_employees_for_orgchart(supabase: Client):
     return supabase.table("employees").select("id, full_name, position, department, photo_url, status").neq("status", "candidate").execute()
 
 
+PEOPLE_COLS = "id, full_name, position, department, manager, email, photo_url, status"
+
+
 def list_people(supabase: Client):
-    return (
-        supabase.table("employees")
-        .select("id, full_name, position, department, manager, email, photo_url, status")
-        .in_("status", ["active", "on-leave", "intern"])
-        .order("full_name")
-        .execute()
-    )
+    """Everyone on the chart, with the reporting line (manager_id) when the column exists."""
+    q = lambda cols: (supabase.table("employees").select(cols).in_("status", ["active", "on-leave", "intern"]).order("full_name").execute())
+    try:
+        return q(PEOPLE_COLS + ", manager_id")
+    except Exception as e:
+        if "manager_id" not in str(e):
+            raise
+        return q(PEOPLE_COLS)
 
 
 def create_project(supabase: Client, data: dict):
